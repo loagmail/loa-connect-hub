@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  STUDENT
+  FACULTY
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  createdAt    DateTime @default(now())
+
+  facultySchedules FacultySchedule[]
+  studentAppointments Appointment[] @relation("StudentAppointments")
+  facultyAppointments Appointment[] @relation("FacultyAppointments")
+
+  accounts  Account[]
+  sessions  Session[]
+}
+
+model FacultySchedule {
+  id          String   @id @default(cuid())
+  facultyId   String
+  date        String   // YYYY-MM-DD
+  startTime   String   // HH:mm
+  endTime     String   // HH:mm
+  isAvailable Boolean  @default(true)
+
+  faculty     User          @relation(fields: [facultyId], references: [id])
+  appointments Appointment[]
+}
+
+model Appointment {
+  id         String            @id @default(cuid())
+  studentId  String
+  facultyId  String
+  scheduleId String
+  status     AppointmentStatus @default(PENDING)
+  teamsLink  String?
+  requestedAt DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  student  User             @relation("StudentAppointments", fields: [studentId], references: [id])
+  faculty  User             @relation("FacultyAppointments", fields: [facultyId], references: [id])
+  schedule FacultySchedule  @relation(fields: [scheduleId], references: [id])
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @default("")
+  access_token      String? @default("")
+  expires_at        Int?
+  token_type        String? @default("")
+  scope             String? @default("")
+  id_token          String? @default("")
+  session_state     String? @default("")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
