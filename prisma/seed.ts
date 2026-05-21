@@ -12,8 +12,11 @@ async function main() {
   const passwordHash = await hash("password123", 12)
 
   // Clear existing data for clean re-seed
+  await prisma.facultyAvailabilityRule.deleteMany()
   await prisma.appointment.deleteMany()
   await prisma.facultySchedule.deleteMany()
+  await prisma.internalMeetingParticipant.deleteMany()
+  await prisma.internalMeeting.deleteMany()
   await prisma.session.deleteMany()
   await prisma.account.deleteMany()
   await prisma.user.deleteMany()
@@ -70,6 +73,25 @@ async function main() {
     await prisma.facultySchedule.create({ data: s })
   }
 
+  // Default availability rules for faculty: Mon-Fri 08:00-18:00, Sat-Sun blocked
+  const allFaculty = [faculty1, faculty2, faculty3]
+  const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+  for (const faculty of allFaculty) {
+    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+      const isWeekend = dayOfWeek >= 5 // Saturday=5, Sunday=6
+      await prisma.facultyAvailabilityRule.create({
+        data: {
+          facultyId: faculty.id,
+          dayOfWeek,
+          isBlocked: isWeekend,
+          startTime: isWeekend ? null : "08:00",
+          endTime: isWeekend ? null : "18:00",
+        },
+      })
+    }
+  }
+
   console.log({
     admin: { name: admin.name, role: admin.role },
     faculty: [
@@ -84,12 +106,9 @@ async function main() {
     ],
     totalUsers: 7,
     totalSlots: schedules.length,
+    availabilityRules: `${allFaculty.length} faculty × 7 days = ${allFaculty.length * 7} rules`,
   })
 }
-
-main()
-  .then(() => prisma.$disconnect())
-  .catch((e) => { console.error(e); prisma.$disconnect(); process.exit(1) })
 
 main()
   .then(() => prisma.$disconnect())

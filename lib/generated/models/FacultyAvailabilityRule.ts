@@ -431,14 +431,6 @@ export type FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput 
   deleteMany?: Prisma.FacultyAvailabilityRuleScalarWhereInput | Prisma.FacultyAvailabilityRuleScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type FacultyAvailabilityRuleCreateWithoutFacultyInput = {
   id?: string
   dayOfWeek: number

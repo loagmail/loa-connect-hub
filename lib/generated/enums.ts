@@ -29,6 +29,15 @@ export const AppointmentStatus = {
 export type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus]
 
 
+export const TeamsSyncStatus = {
+  UNWRITTEN: 'UNWRITTEN',
+  WRITTEN: 'WRITTEN',
+  FAILED: 'FAILED'
+} as const
+
+export type TeamsSyncStatus = (typeof TeamsSyncStatus)[keyof typeof TeamsSyncStatus]
+
+
 export const MeetingStatus = {
   CONFIRMED: 'CONFIRMED',
   CANCELLED: 'CANCELLED'

@@ -4,6 +4,12 @@ interface MeetingInput {
   endDateTime: string
 }
 
+interface CalendarEvent {
+  subject: string
+  start: { dateTime: string }
+  end: { dateTime: string }
+}
+
 export async function createOnlineMeeting(accessToken: string, input: MeetingInput): Promise<string> {
   const response = await fetch("https://graph.microsoft.com/v1.0/me/onlineMeetings", {
     method: "POST",
@@ -25,6 +31,30 @@ export async function createOnlineMeeting(accessToken: string, input: MeetingInp
 
   const meeting = await response.json()
   return meeting.joinUrl || meeting.joinWebUrl
+}
+
+/**
+ * Fetch calendar events for the signed-in user within a time range.
+ * Requires delegated token with Calendars.Read permission.
+ */
+export async function getCalendarView(
+  accessToken: string,
+  startDateTime: string,
+  endDateTime: string
+): Promise<CalendarEvent[]> {
+  const url = `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${encodeURIComponent(startDateTime)}&endDateTime=${encodeURIComponent(endDateTime)}&$select=subject,start,end`
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  if (!response.ok) {
+    console.warn("Failed to fetch calendar view:", await response.text())
+    return []
+  }
+
+  const data = await response.json()
+  return data.value || []
 }
 
 interface GraphUser {

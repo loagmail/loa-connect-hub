@@ -10,7 +10,7 @@ interface FacultyUser {
 }
 
 interface Conflict {
-  type: "appointment" | "meeting"
+  type: "appointment" | "meeting" | "teams"
   userName: string
   title: string
   date: string
@@ -216,7 +216,7 @@ export default function NewMeetingPage() {
               {conflicts.map((c, i) => (
                 <li key={i} className="text-xs text-amber-700">
                   <span className="font-medium">{c.userName}</span> has a{c.type === "appointment" ? "n" : ""}{" "}
-                  <span className="font-semibold">{c.type === "appointment" ? "appointment" : "meeting"}</span>:{" "}
+                  <span className="font-semibold">{c.type === "appointment" ? "appointment" : c.type === "teams" ? "Teams calendar event" : "meeting"}</span>:{" "}
                   &ldquo;{c.title}&rdquo; at {c.startTime}&ndash;{c.endTime}
                 </li>
               ))}

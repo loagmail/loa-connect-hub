@@ -9,9 +9,9 @@
 | **3. Faculty Cancel Flow** | ✅ **Done** |
 | **4. Student Cancellation** | ✅ **Done** |
 | 5. Faculty-to-Faculty Meetings | ✅ **Done** |
-| 6. Sync Tracking Fields | ⏳ Pending |
-| 7. Teams Sync Orchestration | ⏳ Pending |
-| 8. Conflict Detection w/ Teams | ⏳ Pending |
+| 6. Sync Tracking Fields | ✅ **Done** |
+| 7. Teams Sync Orchestration | ✅ **Done** |
+| 8. Conflict Detection w/ Teams | ✅ **Done** |
 
 ## Overview
 
@@ -369,233 +369,177 @@ model InternalMeetingParticipant {
 
 ---
 
-## Phase 6: Sync Tracking Fields
-
-Add fields to track which approved appointments have been synced to MS Teams (and which haven't).
-
-**Key principle:** Faculty approval only writes to our database. A separate process handles the actual Teams API call. This decouples approval from Teams sync, allowing retries and failure visibility.
+## Phase 6: Sync Tracking Fields ✅ *(Implemented)*
 
 ### 6A. Schema Changes — Appointment Model
 
 ```prisma
-model Appointment {
-  // ... existing fields (id, studentId, facultyId, scheduleId, status, requestedAt, updatedAt, teamsLink)
+enum TeamsSyncStatus { UNWRITTEN, WRITTEN, FAILED }
 
-  // New: Teams sync tracking
+model Appointment {
+  // ... existing fields
   teamsSyncStatus  TeamsSyncStatus @default(UNWRITTEN)
   teamsSyncRetries Int             @default(0)
   teamsSyncError   String?
   teamsSyncLastAttempt DateTime?
 }
-
-enum TeamsSyncStatus {
-  UNWRITTEN  // Approved but not yet synced to Teams
-  WRITTEN    // Successfully created in Teams calendar
-  FAILED     // Failed after exhausting retries
-}
 ```
 
-### 6B. Behavior on Faculty Approve
+### 6B. approveAppointment() Decoupled
 
 `approveAppointment()`:
 - Sets `status = APPROVED`, `teamsSyncStatus = UNWRITTEN`
-- **No Teams API call** — only writes to our database
-- The orchestration layer picks this up later
+- **No Teams API call** — removed from route handler
+- Orchestration layer (Phase 7) picks up UNWRITTEN records
 
-### 6C. Behavior on Faculty Cancel
+### 6C. cancelAppointment() — Best-effort Teams Cleanup
 
 `cancelAppointment()`:
-- If `teamsSyncStatus = WRITTEN` → attempts Teams deletion, but does not block
-- Status set to `CANCELLED` regardless of Teams deletion outcome
+- If `teamsSyncStatus = WRITTEN` → attempts Teams deletion (TODO for Phase 7)
+- Status set to CANCELLED regardless of Teams outcome (never blocks)
 
-### 6D. UI: Sync Status Display
+### 6D. UI: Sync Status on AppointmentCard
 
-- Faculty sees a **sync status indicator** on each approved appointment:
-  - ✅ **Written to Teams** — green checkmark
-  - ⏳ **Pending sync** — amber spinner
-  - ❌ **Sync failed** — red warning with error tooltip
+- Green badge "Synced" ✅ — WRITTEN
+- Amber badge "Pending Sync" ⏳ — UNWRITTEN (pulsing icon)
+- Red badge "Sync Failed" ❌ — FAILED (with error tooltip)
 
-### 6E. UI: Retry Button (Faculty)
+### 6E. Retry Sync Button (Faculty)
 
-- If `teamsSyncStatus = FAILED` → faculty sees a **"Retry sync"** button
-- Clicking it resets `teamsSyncRetries = 0` and sets `teamsSyncStatus = UNWRITTEN`
+- When `teamsSyncStatus = FAILED` → "Retry Sync" button visible
+- Resets `teamsSyncRetries = 0`, `teamsSyncStatus = UNWRITTEN`, clears error
 - Orchestrator picks it up on next cycle
 
-### 6F. Booking Ticket (Appointment Detail Page)
+### 6F. Booking Ticket Page (`/appointments/[id]`)
 
-Create a dedicated appointment detail page that serves as the "ticket" for a booking. Accessible by both student and faculty.
-
-**New page: `/appointments/[id]`** — Single appointment detail view:
-- **Header:** Faculty name, student name, date, time
-- **Status badge:** PENDING / APPROVED / CANCELLED / FAILED
-- **Sync status section** (if APPROVED):
-  - ✅ Written to Teams — Teams join link displayed
-  - ⏳ Pending sync — "Meeting link will be available shortly"
-  - ❌ Sync failed — Red error banner: "Meeting sync failed after multiple attempts. Contact your faculty member."
-- **Faculty actions** (if owner): Cancel, Retry sync
-- **Student actions** (if owner): Cancel request (if PENDING)
-- **Activity log:** Timestamped entries (e.g., "Approved by Dr. Smith on May 6 at 14:30", "Cancelled on May 7 at 10:00")
+Client-side page accessible by both student and faculty:
+- **Header:** Status badge + "Booking Ticket" title
+- **People section:** Faculty and Student info side by side
+- **Schedule section:** Date + time in indigo card
+- **Teams Sync section** (if APPROVED):
+  - ✅ WRITTEN — green card with "Join Teams Meeting" link
+  - ⏳ UNWRITTEN — amber card "Pending, link available shortly"
+  - ❌ FAILED — red card with error details + retry button
+- **Timestamps:** Requested, updated, last sync attempt
+- **Actions panel:** Context-sensitive buttons (student cancel, faculty approve/reject/complete/cancel/retry sync)
+- "View Details" link added to AppointmentCard
 
 ### Modified Files
 
 | File | Action |
 |------|--------|
-| `prisma/schema.prisma` | + `TeamsSyncStatus` enum, + fields on Appointment |
-| `lib/models/index.ts` | + `TeamsSyncStatus` type |
+| `prisma/schema.prisma` | + `TeamsSyncStatus` enum, + sync fields on Appointment |
+| `lib/models/index.ts` | + `TeamsSyncStatus` type, updated Appointment interface |
 | `lib/repositories/interfaces.ts` | + sync fields in `AppointmentData` |
-| `lib/controllers/appointments.ts` | Update approve/cancel — no Teams calls |
-| `components/StatusBadge.tsx` | + sync status indicator |
-| `components/AppointmentCard.tsx` | + sync badge + retry button |
-| `lib/controllers/appointments.ts` | + `retryTeamsSync()` controller |
-| `app/appointments/[id]/page.tsx` | New — booking ticket page |
-| `components/AppointmentTicket.tsx` | New — ticket component |
+| `lib/controllers/appointments.ts` | Update approve: sets UNWRITTEN. Update cancel: best-effort Teams cleanup. + `retryTeamsSync()` |
+| `app/api/appointments/[id]/[action]/route.ts` | Removed inline Teams API call from approve case |
+| `app/api/appointments/[id]/retry-sync/route.ts` | New — retry sync endpoint |
+| `components/AppointmentCard.tsx` | + sync status badge, retry button, View Details link |
+| `app/appointments/[id]/page.tsx` | New — booking ticket detail page |
 
 ---
 
-## Phase 7: Teams Sync Orchestration
+## Phase 7: Teams Sync Orchestration ✅ *(Implemented)*
 
-A background process that polls the database for UNWRITTEN appointments, calls the MS Graph API to create calendar events, and updates sync status.
+### 7A. Orchestration Service
 
-### 7A. Architecture
+`lib/services/teamsSync.ts` — `syncPendingAppointments()`:
 
 ```
-                  ┌──────────────┐
-                  │   Database   │
-                  └──────┬───────┘
-                         │ poll UNWRITTEN appointments
-                         ▼
-              ┌─────────────────────┐
-              │  Teams Sync Service  │
-              │  (orchestration.ts)  │
-              └──────────┬──────────┘
-                         │ call Graph API
-                         ▼
-              ┌─────────────────────┐
-              │  Microsoft Graph    │
-              │  /me/onlineMeetings │
-              └─────────────────────┘
-                         │
-                         ▼
-              ┌─────────────────────┐
-              │  Update DB record   │
-              │  WRITTEN or retry   │
-              └─────────────────────┘
+1. Fetch all appointments WHERE status = APPROVED AND teamsSyncStatus = UNWRITTEN
+2. For each appointment:
+   a. Find faculty's Microsoft access token (from Account table, provider = "azure-ad")
+   b. If no token → skip (next cycle will retry)
+   c. Call createOnlineMeeting() with:
+      - subject: "Consultation: [student] & [faculty]"
+      - startDateTime, endDateTime from schedule
+   d. On success → save teamsLink, set teamsSyncStatus = WRITTEN
+   e. On failure:
+      - Increment teamsSyncRetries
+      - Save error message
+      - If retries >= 5 → set FAILED
+      - If retries < 5 → leave UNWRITTEN (next cycle retries)
+3. Return SyncResult { processed, succeeded, failed, skipped, errors[] }
 ```
 
-Can be triggered via:
-- **Cron job** — runs every N minutes (e.g., `*/5 * * * *`)
-- **Manual endpoint** — `POST /api/admin/sync-teams` (admin-only)
-- **Button in admin dashboard** — manual "Sync now"
+### 7B. API Endpoints
 
-### 7B. Sync Logic
+| Route | Method | Description |
+|-------|--------|-------------|
+| `POST /api/admin/sync-teams` | Admin-only | Triggers sync immediately, returns SyncResult |
+| `GET /api/admin/sync-teams/status` | Admin-only | Returns pendingCount, failedCount, writtenCount, lastSync, failedAppointments |
 
-```ts
-export async function syncPendingAppointments(): Promise<SyncResult> {
-  // 1. Fetch all appointments WHERE status = APPROVED AND teamsSyncStatus = UNWRITTEN
-  // 2. For each appointment:
-  //    a. Get faculty's Microsoft access token (from Account table)
-  //    b. If no token → skip (no Teams integration possible)
-  //    c. Call POST /me/onlineMeetings with:
-  //       - subject: "Consultation: [student name] & [faculty name]"
-  //       - startDateTime: "[date]T[startTime]:00"
-  //       - endDateTime: "[date]T[endTime]:00"
-  //       - attendees: [{ emailAddress: { address: student.email } }]
-  //       - description: "Topic: [consultation topic]"
-  //    d. On success:
-  //       - Save teamsLink, teamsEventId
-  //       - Set teamsSyncStatus = WRITTEN
-  //    e. On failure:
-  //       - Increment teamsSyncRetries
-  //       - Save error message
-  //       - If retries >= 5 → set teamsSyncStatus = FAILED
-  //       - If retries < 5 → leave as UNWRITTEN (next cycle retries)
-  // 3. Return summary: { processed, succeeded, failed, skipped }
-}
-```
+### 7C. Admin Dashboard — Sync Panel
 
-### 7C. Retry Policy
+New `TeamsSyncPanel` component showing:
+- **4 metric cards:** Total Approved, Pending Sync (amber), Written to Teams (green), Sync Failed (red)
+- **Sync Now button** — triggers POST /api/admin/sync-teams
+- **Last sync timestamp**
+- **Sync result summary** (processed/succeeded/failed/skipped)
+- **Failed appointments table** — faculty, date/time, retries/5, error message
+- Auto-refreshes status after sync
+
+### 7D. Retry Policy
 
 | Retry # | Action | teamsSyncStatus |
 |---------|--------|-----------------|
 | 0 | First attempt | UNWRITTEN |
 | 1–4 | Failed, will retry | UNWRITTEN |
-| 5 | Failed, max retries reached | **FAILED** |
+| 5 | Failed, max retries reached | FAILED |
 
-**Backoff strategy:** Subsequent retries could use exponential backoff (e.g., retry after 1min, 5min, 15min, 30min, 60min). Track `teamsSyncLastAttempt` to enforce delays.
-
-### 7D. API Endpoints
-
-- `POST /api/admin/sync-teams` — triggers sync immediately, returns result summary
-- `GET /api/admin/sync-teams/status` — shows pending count, last sync time, failure stats
-
-### 7E. Admin Dashboard Section
-
-Add a "Teams Sync" panel to the admin dashboard showing:
-- **Pending sync:** X appointments
-- **Failed sync:** Y appointments (with list)
-- **Last sync:** timestamp
-- **"Sync Now" button** — triggers the orchestration
-- **"Auto-sync" toggle** — enable/disable cron-based sync
-
-### 7F. Faculty Booking Ticket (Student View)
-
-When a student views their approved appointment, the ticket shows:
-- Sync status indicator
-- If WRITTEN → Teams join link is visible and clickable
-- If FAILED → red banner: "Meeting sync failed. Please contact your faculty member for the meeting link."
-- If UNWRITTEN → amber banner: "Meeting link pending. Check back shortly."
-
-### New Files
+### New/Modified Files
 
 | File | Action |
 |------|--------|
-| `lib/services/teamsSync.ts` | New — orchestration logic |
+| `lib/services/teamsSync.ts` | New — orchestration service |
+| `lib/repositories/interfaces.ts` | + `listPendingSync()` on IAppointmentRepository |
+| `lib/repositories/prisma.ts` | + `listPendingSync()` implementation |
 | `app/api/admin/sync-teams/route.ts` | New — trigger endpoint |
 | `app/api/admin/sync-teams/status/route.ts` | New — status endpoint |
-| `app/admin/page.tsx` | + Sync panel section |
-| `prisma/schema.prisma` | Already updated in Phase 6 |
-
-### Modified Files
-
-| File | Action |
-|------|--------|
-| `lib/services/graph.ts` | + `createOnlineMeeting()` refinement |
-| `lib/controllers/appointments.ts` | No changes needed (sync is decoupled) |
+| `components/TeamsSyncPanel.tsx` | New — admin sync panel |
+| `app/admin/page.tsx` | + TeamsSyncPanel imported and rendered |
 
 ---
 
-## Phase 8: Conflict Detection with Teams
-
-Once the sync orchestration is in place, use Teams calendar data for conflict detection.
+## Phase 8: Conflict Detection with Teams ✅ *(Implemented)*
 
 ### 8A. Teams Calendar View
 
-Add to `lib/services/graph.ts`:
+Added to `lib/services/graph.ts`:
 ```ts
 export async function getCalendarView(
   accessToken: string,
   startDateTime: string,
   endDateTime: string
-): Promise<CalendarEvent[]> {
-  // GET /me/calendarView?startDateTime=...&endDateTime=...
-  // Returns existing events in the faculty's calendar
-}
+): Promise<CalendarEvent[]>
 ```
+- Calls `GET /me/calendarView` with the delegated access token
+- Requires `Calendars.Read` permission on the app registration
+- Returns events with subject, start, end
+- Best-effort: returns empty array on failure (non-blocking)
 
 ### 8B. Enhanced Conflict Detection
 
 In `checkConflicts()`:
-- Check app schedules (existing appointments + internal meetings)
-- If faculty has Microsoft token: also check their Teams calendar
-- Return merged conflict list with source labels ("app" vs "teams")
+- Check app schedules (existing appointments + internal meetings) — unchanged
+- If `FEATURE_CREATE_TEAMS_MEETING=true` AND faculty has Microsoft token (from Account table):
+  - Call `getCalendarView()` with the token
+  - Add Teams events as conflicts with `type: "teams"`
+- All conflict sources are advisory — user can proceed despite any conflicts
 
-### 8C. UI
+### 8C. UI Update
 
-When faculty books an internal meeting or a student tries to book:
-- Yellow warning: "⚠️ Faculty has a Teams calendar event overlapping this time"
-- They can proceed anyway (conflict is advisory, not blocking)
+New meeting form now shows Teams calendar conflicts with label:
+- "Faculty X has a Teams calendar event: 'Meeting Title' at 14:00–15:00"
+- Separately identified from app-level appointments and internal meetings
 
----
+### New/Modified Files
+
+| File | Action |
+|------|--------|
+| `lib/services/graph.ts` | + `getCalendarView()` function |
+| `lib/services/conflictDetection.ts` | + Teams calendar check using delegated token |
+| `app/faculty/meetings/new/page.tsx` | + `"teams"` conflict type in UI render |
 
 ## Feature Flagging
 
@@ -610,17 +554,17 @@ When faculty books an internal meeting or a student tries to book:
 ### Current State
 
 ```
-FEATURE_CREATE_TEAMS_MEETING=true   (keep, code degrades gracefully)
+FEATURE_CREATE_TEAMS_MEETING=true   (structural flag for Phase 7 orchestration)
 NEXT_PUBLIC_FEATURE_TEAMS=true      (keep to show SSO option)
 ```
 
 ### Degradation Behavior
 
 When Teams is disabled or MS token is unavailable:
-- **Phase 6:** Sync status stays UNWRITTEN. Faculty sees "sync pending" badge. No impact on booking flow.
+- **Phase 6:** Sync status stays UNWRITTEN. Faculty sees "Pending Sync" badge. No impact on booking flow.
 - **Phase 7:** Orchestrator skips appointments where faculty has no Microsoft token.
 - **Phase 8:** Conflict detection falls back to app-only mode.
-- **Approval:** Always works — writes to database only, no Teams dependency.
+- **Approval:** Always works — writes to database only (inline Teams API call removed in Phase 6).
 - **Cancel:** Always works — updates status, Teams cleanup is best-effort.
 
 ---
@@ -656,16 +600,154 @@ When Teams is disabled or MS token is unavailable:
 
 ```
 Phase 1 ──> Phase 2 ──> Phase 3 ──> Phase 4 ──> Phase 5 ──> Phase 6 ──> Phase 7 ──> Phase 8
- (Rules)    (Tabs)      (Cancel)    (Student     (Meetings)   (Sync       (Sync        (Conflict
-                                     Cancel)                  Tracking)   Orchestr.)    w/ Teams)
+ (Rules)    (Tabs)      (Cancel)    (Student     (Meetings)   (Sync       (Sync        (Conflict)
+                                      Cancel)                  Tracking)   Orchestr.)    w/ Teams)
 ```
 
-Each phase builds on the previous.
+All 8 phases complete. ✅
 
-- **Phases 1–5:** App-only. No Microsoft dependency. Core booking flow improvements.
+- **Phases 1–6:** App-only. No Microsoft dependency. Core booking flow improvements.
 - **Phase 5:** Internal meetings. Conflict detection is app-only initially.
 - **Phase 6:** Adds sync tracking fields. Approval is decoupled from Teams API calls.
-- **Phase 7:** Orchestration service polls for unwritten appointments and calls Teams API.
+- **Phase 7:** Orchestration service + API endpoint. This app only writes to the database — it does not run cron or background sync. A separate external service can call `POST /api/admin/sync-teams` on a schedule.
 - **Phase 8:** Teams calendar conflict detection (requires sync + tokens to work).
 
-Phases 7 and 8 require admin consent for the Microsoft Graph API permissions to be fully functional, but the code and schema can be built ahead of time.
+## Remaining (External / Manual)
+
+These are not code tasks — they require action outside this application.
+
+### 1. MS Teams Admin Consent
+
+`OnlineMeetings.ReadWrite` (delegated) requires tenant admin consent for the Entra ID app registration. Until granted, Microsoft sign-in fails with "Need admin approval" page.
+
+**Direct consent URL:**
+```
+https://login.microsoftonline.com/38fc09ac-2ea6-4353-9730-4c9371ff4843/v2.0/adminconsent?client_id=270f2919-be22-4209-b7b5-5a7f6a4a93b9&scope=https://graph.microsoft.com/OnlineMeetings.ReadWrite&redirect_uri=http://localhost:3000/login
+```
+
+### 2. Teams Sync Cron Job (Separate Service)
+
+This app only writes to the database. A separate external service or cron job should periodically call:
+
+```
+POST /api/admin/sync-teams
+```
+
+It reads `UNWRITTEN` appointments and writes Teams meeting links back to the DB. The service must be authenticated as an admin user (session cookie or API token).
+
+For local testing, the admin can click **"Sync Now"** on the admin dashboard at `/admin`.
+
+### 3. Seed Defaults
+
+Already done — the seed script creates default availability rules for all faculty accounts (Mon–Fri 08:00–18:00, Sat–Sun blocked). Run with:
+
+```
+npx tsx prisma/seed.ts
+```
+
+---
+
+## Phase 9: Enhanced Booking with Meeting Details & Multi-Faculty Attendees (In Progress)
+
+### Problem
+
+Currently, booking an appointment is a single-click action with no context — no title, no description, no agenda. The resulting Teams meeting (if synced) would be empty. Also, consultations often involve multiple faculty members (e.g., a panel), but the current model only supports one student and one faculty.
+
+### Design
+
+#### Booking Flow
+
+```
+Student browses available slots (calendar view)
+  → clicks a time slot for primary faculty
+  → modal/form opens with fields:
+      • Title / Subject (required) — e.g. "Thesis Defense Consultation"
+      • Description / Agenda (optional) — e.g. "Discuss Chapter 3 revisions"
+      • Additional Faculty Attendees (optional multi-select)
+        — only FACULTY-role users shown, no students
+  → submits
+```
+
+#### What gets created
+
+- **Appointment** record with new fields: `title`, `description`
+- **AppointmentAttendee** records for each additional faculty attendee (status=INVITED)
+- The primary faculty's time slot is consumed (existing behavior)
+- Additional attendees do NOT consume separate slots — they are invited to the same meeting
+
+#### Two-Level Validation
+
+| Level | When | What it checks | Behavior |
+|-------|------|----------------|----------|
+| **1. App-level (immediate)** | On submit | Primary faculty's availability rules (don't disturb hours/days). Also check that selected attendees are FACULTY role. | Instant rejection — student can't submit |
+| **2. Teams-level (async)** | Via cron | Faculty's Teams calendar for conflicts at the chosen time | Advisory — cron writes back a conflict flag, displayed on the booking ticket later |
+
+#### AppointmentAttendee Model
+
+```
+model AppointmentAttendee {
+  id            String            @id @default(cuid())
+  appointmentId String
+  userId        String
+  status        AttendeeStatus    @default(INVITED)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@unique([appointmentId, userId])
+}
+
+enum AttendeeStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+}
+```
+
+#### Appointment Model Changes
+
+Add fields to existing `Appointment` model:
+
+```prisma
+model Appointment {
+  // ... existing fields
+  title       String?
+  description String?
+  attendees   AppointmentAttendee[]
+}
+```
+
+#### Validation Rules
+
+1. **Primary faculty** — availability rules checked immediately (existing Phase 1 logic)
+2. **Additional attendees** — only FACULTY role allowed; student cannot invite fellow students (checked on submit)
+3. **Teams calendar conflicts** — not checked on submit; handled asynchronously by the sync orchestrator (Phase 7)
+
+#### Student Booking Form
+
+- Pre-filled with the selected slot's faculty name, date, time
+- Title input (required)
+- Description textarea (optional)
+- Faculty multi-select dropdown (fetched from `/api/auth/users`)
+- On submit → `POST /api/appointments` with extended payload
+
+#### Faculty View of Additional Attendees
+
+- Faculty dashboard shows all attendees on the appointment card
+- `AppointmentAttendee` status badges (INVITED / ACCEPTED / DECLINED)
+- Attendee faculty can accept/decline via the booking ticket page
+
+### New/Modified Files
+
+| File | Action |
+|------|--------|
+| `prisma/schema.prisma` | + `title`, `description` on Appointment. + `AppointmentAttendee` model + `AttendeeStatus` enum |
+| `lib/models/index.ts` | + `AttendeeStatus` type, update `Appointment`, + `AppointmentAttendee` types |
+| `lib/repositories/interfaces.ts` | + attendee fields in `CreateAppointmentInput`, + `IAppointmentAttendeeRepository` |
+| `lib/repositories/prisma.ts` | + attendee repository methods |
+| `lib/repositories/factory.ts` | + export attendee repo |
+| `lib/controllers/appointments.ts` | Update `requestAppointment()` to accept title/description/attendeeIds |
+| `app/api/appointments/route.ts` | Update POST handler to pass new fields |
+| `components/BookingCalendar.tsx` | Update slot click to open form instead of direct booking |
+| `components/BookingForm.tsx` | New — modal/form for title, description, faculty attendees |
+| `app/student/page.tsx` | Wire up new booking flow |

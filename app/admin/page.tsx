@@ -4,6 +4,7 @@ import { CalendarView } from "@/components/CalendarView"
 import { userRepository } from "@/lib/repositories/factory"
 import { getAllAppointments } from "@/lib/controllers/appointments"
 import { fetchUsersFromGraph } from "@/lib/services/graph"
+import TeamsSyncPanel from "@/components/TeamsSyncPanel"
 
 async function getUsers() {
   const users = await userRepository.listByRole("STUDENT")
@@ -51,6 +52,9 @@ export default async function AdminDashboard() {
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Completed Consults</p>
         </div>
       </div>
+
+      {/* Teams Sync Panel */}
+      <TeamsSyncPanel />
 
       {/* Global Calendar */}
       <section className="space-y-4">

@@ -20,8 +20,18 @@ export type AppointmentModel = runtime.Types.Result.DefaultSelection<Prisma.$App
 
 export type AggregateAppointment = {
   _count: AppointmentCountAggregateOutputType | null
+  _avg: AppointmentAvgAggregateOutputType | null
+  _sum: AppointmentSumAggregateOutputType | null
   _min: AppointmentMinAggregateOutputType | null
   _max: AppointmentMaxAggregateOutputType | null
+}
+
+export type AppointmentAvgAggregateOutputType = {
+  teamsSyncRetries: number | null
+}
+
+export type AppointmentSumAggregateOutputType = {
+  teamsSyncRetries: number | null
 }
 
 export type AppointmentMinAggregateOutputType = {
@@ -31,6 +41,10 @@ export type AppointmentMinAggregateOutputType = {
   scheduleId: string | null
   status: $Enums.AppointmentStatus | null
   teamsLink: string | null
+  teamsSyncStatus: $Enums.TeamsSyncStatus | null
+  teamsSyncRetries: number | null
+  teamsSyncError: string | null
+  teamsSyncLastAttempt: Date | null
   requestedAt: Date | null
   updatedAt: Date | null
 }
@@ -42,6 +56,10 @@ export type AppointmentMaxAggregateOutputType = {
   scheduleId: string | null
   status: $Enums.AppointmentStatus | null
   teamsLink: string | null
+  teamsSyncStatus: $Enums.TeamsSyncStatus | null
+  teamsSyncRetries: number | null
+  teamsSyncError: string | null
+  teamsSyncLastAttempt: Date | null
   requestedAt: Date | null
   updatedAt: Date | null
 }
@@ -53,11 +71,23 @@ export type AppointmentCountAggregateOutputType = {
   scheduleId: number
   status: number
   teamsLink: number
+  teamsSyncStatus: number
+  teamsSyncRetries: number
+  teamsSyncError: number
+  teamsSyncLastAttempt: number
   requestedAt: number
   updatedAt: number
   _all: number
 }
 
+
+export type AppointmentAvgAggregateInputType = {
+  teamsSyncRetries?: true
+}
+
+export type AppointmentSumAggregateInputType = {
+  teamsSyncRetries?: true
+}
 
 export type AppointmentMinAggregateInputType = {
   id?: true
@@ -66,6 +96,10 @@ export type AppointmentMinAggregateInputType = {
   scheduleId?: true
   status?: true
   teamsLink?: true
+  teamsSyncStatus?: true
+  teamsSyncRetries?: true
+  teamsSyncError?: true
+  teamsSyncLastAttempt?: true
   requestedAt?: true
   updatedAt?: true
 }
@@ -77,6 +111,10 @@ export type AppointmentMaxAggregateInputType = {
   scheduleId?: true
   status?: true
   teamsLink?: true
+  teamsSyncStatus?: true
+  teamsSyncRetries?: true
+  teamsSyncError?: true
+  teamsSyncLastAttempt?: true
   requestedAt?: true
   updatedAt?: true
 }
@@ -88,6 +126,10 @@ export type AppointmentCountAggregateInputType = {
   scheduleId?: true
   status?: true
   teamsLink?: true
+  teamsSyncStatus?: true
+  teamsSyncRetries?: true
+  teamsSyncError?: true
+  teamsSyncLastAttempt?: true
   requestedAt?: true
   updatedAt?: true
   _all?: true
@@ -131,6 +173,18 @@ export type AppointmentAggregateArgs<ExtArgs extends runtime.Types.Extensions.In
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: AppointmentAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: AppointmentSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: AppointmentMinAggregateInputType
@@ -161,6 +215,8 @@ export type AppointmentGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   _count?: AppointmentCountAggregateInputType | true
+  _avg?: AppointmentAvgAggregateInputType
+  _sum?: AppointmentSumAggregateInputType
   _min?: AppointmentMinAggregateInputType
   _max?: AppointmentMaxAggregateInputType
 }
@@ -172,9 +228,15 @@ export type AppointmentGroupByOutputType = {
   scheduleId: string
   status: $Enums.AppointmentStatus
   teamsLink: string | null
+  teamsSyncStatus: $Enums.TeamsSyncStatus
+  teamsSyncRetries: number
+  teamsSyncError: string | null
+  teamsSyncLastAttempt: Date | null
   requestedAt: Date
   updatedAt: Date
   _count: AppointmentCountAggregateOutputType | null
+  _avg: AppointmentAvgAggregateOutputType | null
+  _sum: AppointmentSumAggregateOutputType | null
   _min: AppointmentMinAggregateOutputType | null
   _max: AppointmentMaxAggregateOutputType | null
 }
@@ -204,6 +266,10 @@ export type AppointmentWhereInput = {
   scheduleId?: Prisma.StringFilter<"Appointment"> | string
   status?: Prisma.EnumAppointmentStatusFilter<"Appointment"> | $Enums.AppointmentStatus
   teamsLink?: Prisma.StringNullableFilter<"Appointment"> | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFilter<"Appointment"> | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFilter<"Appointment"> | number
+  teamsSyncError?: Prisma.StringNullableFilter<"Appointment"> | string | null
+  teamsSyncLastAttempt?: Prisma.DateTimeNullableFilter<"Appointment"> | Date | string | null
   requestedAt?: Prisma.DateTimeFilter<"Appointment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Appointment"> | Date | string
   student?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -218,6 +284,10 @@ export type AppointmentOrderByWithRelationInput = {
   scheduleId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   teamsLink?: Prisma.SortOrderInput | Prisma.SortOrder
+  teamsSyncStatus?: Prisma.SortOrder
+  teamsSyncRetries?: Prisma.SortOrder
+  teamsSyncError?: Prisma.SortOrderInput | Prisma.SortOrder
+  teamsSyncLastAttempt?: Prisma.SortOrderInput | Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   student?: Prisma.UserOrderByWithRelationInput
@@ -235,6 +305,10 @@ export type AppointmentWhereUniqueInput = Prisma.AtLeast<{
   scheduleId?: Prisma.StringFilter<"Appointment"> | string
   status?: Prisma.EnumAppointmentStatusFilter<"Appointment"> | $Enums.AppointmentStatus
   teamsLink?: Prisma.StringNullableFilter<"Appointment"> | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFilter<"Appointment"> | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFilter<"Appointment"> | number
+  teamsSyncError?: Prisma.StringNullableFilter<"Appointment"> | string | null
+  teamsSyncLastAttempt?: Prisma.DateTimeNullableFilter<"Appointment"> | Date | string | null
   requestedAt?: Prisma.DateTimeFilter<"Appointment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Appointment"> | Date | string
   student?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -249,11 +323,17 @@ export type AppointmentOrderByWithAggregationInput = {
   scheduleId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   teamsLink?: Prisma.SortOrderInput | Prisma.SortOrder
+  teamsSyncStatus?: Prisma.SortOrder
+  teamsSyncRetries?: Prisma.SortOrder
+  teamsSyncError?: Prisma.SortOrderInput | Prisma.SortOrder
+  teamsSyncLastAttempt?: Prisma.SortOrderInput | Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AppointmentCountOrderByAggregateInput
+  _avg?: Prisma.AppointmentAvgOrderByAggregateInput
   _max?: Prisma.AppointmentMaxOrderByAggregateInput
   _min?: Prisma.AppointmentMinOrderByAggregateInput
+  _sum?: Prisma.AppointmentSumOrderByAggregateInput
 }
 
 export type AppointmentScalarWhereWithAggregatesInput = {
@@ -266,6 +346,10 @@ export type AppointmentScalarWhereWithAggregatesInput = {
   scheduleId?: Prisma.StringWithAggregatesFilter<"Appointment"> | string
   status?: Prisma.EnumAppointmentStatusWithAggregatesFilter<"Appointment"> | $Enums.AppointmentStatus
   teamsLink?: Prisma.StringNullableWithAggregatesFilter<"Appointment"> | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusWithAggregatesFilter<"Appointment"> | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntWithAggregatesFilter<"Appointment"> | number
+  teamsSyncError?: Prisma.StringNullableWithAggregatesFilter<"Appointment"> | string | null
+  teamsSyncLastAttempt?: Prisma.DateTimeNullableWithAggregatesFilter<"Appointment"> | Date | string | null
   requestedAt?: Prisma.DateTimeWithAggregatesFilter<"Appointment"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Appointment"> | Date | string
 }
@@ -274,6 +358,10 @@ export type AppointmentCreateInput = {
   id?: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutStudentAppointmentsInput
@@ -288,6 +376,10 @@ export type AppointmentUncheckedCreateInput = {
   scheduleId: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
 }
@@ -296,6 +388,10 @@ export type AppointmentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutStudentAppointmentsNestedInput
@@ -310,6 +406,10 @@ export type AppointmentUncheckedUpdateInput = {
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -321,6 +421,10 @@ export type AppointmentCreateManyInput = {
   scheduleId: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
 }
@@ -329,6 +433,10 @@ export type AppointmentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -340,6 +448,10 @@ export type AppointmentUncheckedUpdateManyInput = {
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -361,8 +473,16 @@ export type AppointmentCountOrderByAggregateInput = {
   scheduleId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   teamsLink?: Prisma.SortOrder
+  teamsSyncStatus?: Prisma.SortOrder
+  teamsSyncRetries?: Prisma.SortOrder
+  teamsSyncError?: Prisma.SortOrder
+  teamsSyncLastAttempt?: Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type AppointmentAvgOrderByAggregateInput = {
+  teamsSyncRetries?: Prisma.SortOrder
 }
 
 export type AppointmentMaxOrderByAggregateInput = {
@@ -372,6 +492,10 @@ export type AppointmentMaxOrderByAggregateInput = {
   scheduleId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   teamsLink?: Prisma.SortOrder
+  teamsSyncStatus?: Prisma.SortOrder
+  teamsSyncRetries?: Prisma.SortOrder
+  teamsSyncError?: Prisma.SortOrder
+  teamsSyncLastAttempt?: Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -383,8 +507,16 @@ export type AppointmentMinOrderByAggregateInput = {
   scheduleId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   teamsLink?: Prisma.SortOrder
+  teamsSyncStatus?: Prisma.SortOrder
+  teamsSyncRetries?: Prisma.SortOrder
+  teamsSyncError?: Prisma.SortOrder
+  teamsSyncLastAttempt?: Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type AppointmentSumOrderByAggregateInput = {
+  teamsSyncRetries?: Prisma.SortOrder
 }
 
 export type AppointmentCreateNestedManyWithoutStudentInput = {
@@ -517,10 +649,30 @@ export type EnumAppointmentStatusFieldUpdateOperationsInput = {
   set?: $Enums.AppointmentStatus
 }
 
+export type EnumTeamsSyncStatusFieldUpdateOperationsInput = {
+  set?: $Enums.TeamsSyncStatus
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
 export type AppointmentCreateWithoutStudentInput = {
   id?: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
   faculty: Prisma.UserCreateNestedOneWithoutFacultyAppointmentsInput
@@ -533,6 +685,10 @@ export type AppointmentUncheckedCreateWithoutStudentInput = {
   scheduleId: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
 }
@@ -550,6 +706,10 @@ export type AppointmentCreateWithoutFacultyInput = {
   id?: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutStudentAppointmentsInput
@@ -562,6 +722,10 @@ export type AppointmentUncheckedCreateWithoutFacultyInput = {
   scheduleId: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
 }
@@ -601,6 +765,10 @@ export type AppointmentScalarWhereInput = {
   scheduleId?: Prisma.StringFilter<"Appointment"> | string
   status?: Prisma.EnumAppointmentStatusFilter<"Appointment"> | $Enums.AppointmentStatus
   teamsLink?: Prisma.StringNullableFilter<"Appointment"> | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFilter<"Appointment"> | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFilter<"Appointment"> | number
+  teamsSyncError?: Prisma.StringNullableFilter<"Appointment"> | string | null
+  teamsSyncLastAttempt?: Prisma.DateTimeNullableFilter<"Appointment"> | Date | string | null
   requestedAt?: Prisma.DateTimeFilter<"Appointment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Appointment"> | Date | string
 }
@@ -625,6 +793,10 @@ export type AppointmentCreateWithoutScheduleInput = {
   id?: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutStudentAppointmentsInput
@@ -637,6 +809,10 @@ export type AppointmentUncheckedCreateWithoutScheduleInput = {
   facultyId: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
 }
@@ -672,6 +848,10 @@ export type AppointmentCreateManyStudentInput = {
   scheduleId: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
 }
@@ -682,6 +862,10 @@ export type AppointmentCreateManyFacultyInput = {
   scheduleId: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
 }
@@ -690,6 +874,10 @@ export type AppointmentUpdateWithoutStudentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   faculty?: Prisma.UserUpdateOneRequiredWithoutFacultyAppointmentsNestedInput
@@ -702,6 +890,10 @@ export type AppointmentUncheckedUpdateWithoutStudentInput = {
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -712,6 +904,10 @@ export type AppointmentUncheckedUpdateManyWithoutStudentInput = {
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -720,6 +916,10 @@ export type AppointmentUpdateWithoutFacultyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutStudentAppointmentsNestedInput
@@ -732,6 +932,10 @@ export type AppointmentUncheckedUpdateWithoutFacultyInput = {
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -742,6 +946,10 @@ export type AppointmentUncheckedUpdateManyWithoutFacultyInput = {
   scheduleId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -752,6 +960,10 @@ export type AppointmentCreateManyScheduleInput = {
   facultyId: string
   status?: $Enums.AppointmentStatus
   teamsLink?: string | null
+  teamsSyncStatus?: $Enums.TeamsSyncStatus
+  teamsSyncRetries?: number
+  teamsSyncError?: string | null
+  teamsSyncLastAttempt?: Date | string | null
   requestedAt?: Date | string
   updatedAt?: Date | string
 }
@@ -760,6 +972,10 @@ export type AppointmentUpdateWithoutScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutStudentAppointmentsNestedInput
@@ -772,6 +988,10 @@ export type AppointmentUncheckedUpdateWithoutScheduleInput = {
   facultyId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -782,6 +1002,10 @@ export type AppointmentUncheckedUpdateManyWithoutScheduleInput = {
   facultyId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumAppointmentStatusFieldUpdateOperationsInput | $Enums.AppointmentStatus
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncStatus?: Prisma.EnumTeamsSyncStatusFieldUpdateOperationsInput | $Enums.TeamsSyncStatus
+  teamsSyncRetries?: Prisma.IntFieldUpdateOperationsInput | number
+  teamsSyncError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  teamsSyncLastAttempt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -795,6 +1019,10 @@ export type AppointmentSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   scheduleId?: boolean
   status?: boolean
   teamsLink?: boolean
+  teamsSyncStatus?: boolean
+  teamsSyncRetries?: boolean
+  teamsSyncError?: boolean
+  teamsSyncLastAttempt?: boolean
   requestedAt?: boolean
   updatedAt?: boolean
   student?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -809,6 +1037,10 @@ export type AppointmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   scheduleId?: boolean
   status?: boolean
   teamsLink?: boolean
+  teamsSyncStatus?: boolean
+  teamsSyncRetries?: boolean
+  teamsSyncError?: boolean
+  teamsSyncLastAttempt?: boolean
   requestedAt?: boolean
   updatedAt?: boolean
   student?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -823,6 +1055,10 @@ export type AppointmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   scheduleId?: boolean
   status?: boolean
   teamsLink?: boolean
+  teamsSyncStatus?: boolean
+  teamsSyncRetries?: boolean
+  teamsSyncError?: boolean
+  teamsSyncLastAttempt?: boolean
   requestedAt?: boolean
   updatedAt?: boolean
   student?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -837,11 +1073,15 @@ export type AppointmentSelectScalar = {
   scheduleId?: boolean
   status?: boolean
   teamsLink?: boolean
+  teamsSyncStatus?: boolean
+  teamsSyncRetries?: boolean
+  teamsSyncError?: boolean
+  teamsSyncLastAttempt?: boolean
   requestedAt?: boolean
   updatedAt?: boolean
 }
 
-export type AppointmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "studentId" | "facultyId" | "scheduleId" | "status" | "teamsLink" | "requestedAt" | "updatedAt", ExtArgs["result"]["appointment"]>
+export type AppointmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "studentId" | "facultyId" | "scheduleId" | "status" | "teamsLink" | "teamsSyncStatus" | "teamsSyncRetries" | "teamsSyncError" | "teamsSyncLastAttempt" | "requestedAt" | "updatedAt", ExtArgs["result"]["appointment"]>
 export type AppointmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   faculty?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -872,6 +1112,10 @@ export type $AppointmentPayload<ExtArgs extends runtime.Types.Extensions.Interna
     scheduleId: string
     status: $Enums.AppointmentStatus
     teamsLink: string | null
+    teamsSyncStatus: $Enums.TeamsSyncStatus
+    teamsSyncRetries: number
+    teamsSyncError: string | null
+    teamsSyncLastAttempt: Date | null
     requestedAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["appointment"]>
@@ -1306,6 +1550,10 @@ export interface AppointmentFieldRefs {
   readonly scheduleId: Prisma.FieldRef<"Appointment", 'String'>
   readonly status: Prisma.FieldRef<"Appointment", 'AppointmentStatus'>
   readonly teamsLink: Prisma.FieldRef<"Appointment", 'String'>
+  readonly teamsSyncStatus: Prisma.FieldRef<"Appointment", 'TeamsSyncStatus'>
+  readonly teamsSyncRetries: Prisma.FieldRef<"Appointment", 'Int'>
+  readonly teamsSyncError: Prisma.FieldRef<"Appointment", 'String'>
+  readonly teamsSyncLastAttempt: Prisma.FieldRef<"Appointment", 'DateTime'>
   readonly requestedAt: Prisma.FieldRef<"Appointment", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Appointment", 'DateTime'>
 }

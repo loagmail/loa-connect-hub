@@ -106,6 +106,10 @@ export const AppointmentScalarFieldEnum = {
   scheduleId: 'scheduleId',
   status: 'status',
   teamsLink: 'teamsLink',
+  teamsSyncStatus: 'teamsSyncStatus',
+  teamsSyncRetries: 'teamsSyncRetries',
+  teamsSyncError: 'teamsSyncError',
+  teamsSyncLastAttempt: 'teamsSyncLastAttempt',
   requestedAt: 'requestedAt',
   updatedAt: 'updatedAt'
 } as const

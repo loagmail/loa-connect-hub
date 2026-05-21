@@ -1145,6 +1145,10 @@ export const AppointmentScalarFieldEnum = {
   scheduleId: 'scheduleId',
   status: 'status',
   teamsLink: 'teamsLink',
+  teamsSyncStatus: 'teamsSyncStatus',
+  teamsSyncRetries: 'teamsSyncRetries',
+  teamsSyncError: 'teamsSyncError',
+  teamsSyncLastAttempt: 'teamsSyncLastAttempt',
   requestedAt: 'requestedAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1286,6 +1290,20 @@ export type EnumAppointmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType
 
 
 /**
+ * Reference to a field of type 'TeamsSyncStatus'
+ */
+export type EnumTeamsSyncStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TeamsSyncStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
  * Reference to a field of type 'MeetingStatus'
  */
 export type EnumMeetingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MeetingStatus'>
@@ -1296,13 +1314,6 @@ export type EnumMeetingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'ParticipantStatus'
  */
 export type EnumParticipantStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ParticipantStatus'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
 
 

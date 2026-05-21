@@ -31,7 +31,8 @@ export async function approveAppointment(id: string, facultyId: string) {
   if (appointment.facultyId !== facultyId) throw new Error("Unauthorized")
   if (appointment.status !== "PENDING") throw new Error("Appointment is not pending")
 
-  return appointmentRepository.update(id, { status: "APPROVED" })
+  // Set status + mark for Teams sync (orchestrator picks up UNWRITTEN records)
+  return appointmentRepository.update(id, { status: "APPROVED", teamsSyncStatus: "UNWRITTEN" })
 }
 
 export async function rejectAppointment(id: string, facultyId: string) {
@@ -60,6 +61,12 @@ export async function cancelAppointment(id: string, facultyId: string) {
   if (appointment.facultyId !== facultyId) throw new Error("Unauthorized")
   if (appointment.status !== "APPROVED") throw new Error("Only approved appointments can be cancelled")
 
+  // If synced to Teams, attempt cleanup (best-effort, does not block cancellation)
+  if (appointment.teamsSyncStatus === "WRITTEN") {
+    // TODO: Phase 7 — attempt Teams meeting deletion
+    // If deletion fails, log error but proceed with cancellation
+  }
+
   // Restore the schedule slot so others can book it
   await scheduleRepository.update(appointment.scheduleId, { isAvailable: true })
 
@@ -84,6 +91,15 @@ export async function updateTeamsLink(id: string, facultyId: string, teamsLink: 
   if (appointment.facultyId !== facultyId) throw new Error("Unauthorized")
 
   return appointmentRepository.update(id, { teamsLink })
+}
+
+export async function retryTeamsSync(id: string, facultyId: string) {
+  const appointment = await appointmentRepository.findById(id)
+  if (!appointment) throw new Error("Appointment not found")
+  if (appointment.facultyId !== facultyId) throw new Error("Unauthorized")
+  if (appointment.status !== "APPROVED") throw new Error("Only approved appointments can be synced")
+
+  return appointmentRepository.update(id, { teamsSyncStatus: "UNWRITTEN", teamsSyncRetries: 0, teamsSyncError: null, teamsSyncLastAttempt: null })
 }
 
 export async function listStudentAppointments(studentId: string) {

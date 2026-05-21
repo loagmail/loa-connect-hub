@@ -7,8 +7,6 @@ import {
   cancelAppointment,
   updateTeamsLink,
 } from "@/lib/controllers/appointments"
-import { createTeamsMeetingForAppointment } from "@/lib/controllers/teamsMeeting"
-import { appointmentRepository } from "@/lib/repositories/factory"
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string; action: string }> }) {
   const session = await auth()
@@ -25,17 +23,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     switch (action) {
       case "approve":
         appointment = await approveAppointment(id, facultyId)
-        if (process.env.FEATURE_CREATE_TEAMS_MEETING === "true") {
-          const accessToken = (session as any).accessToken
-          if (accessToken) {
-            try {
-              await createTeamsMeetingForAppointment(id, facultyId, accessToken)
-              appointment = await appointmentRepository.findById(id)
-            } catch (e) {
-              console.error("Failed to create Teams meeting:", e)
-            }
-          }
-        }
+        // Teams sync is handled asynchronously by the orchestration layer (Phase 7)
         break
       case "reject":
         appointment = await rejectAppointment(id, facultyId)

@@ -3,12 +3,16 @@
 import { useState } from "react"
 import { StatusBadge } from "./StatusBadge"
 import { TeamsLinkInput } from "./TeamsLinkInput"
+import Link from "next/link"
 
 interface AppointmentCardProps {
   appointment: {
     id: string
     status: string
     teamsLink: string | null
+    teamsSyncStatus?: string
+    teamsSyncRetries?: number
+    teamsSyncError?: string | null
     requestedAt: string
     student?: { name: string; email: string }
     faculty?: { name: string; email: string }
@@ -56,6 +60,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
   const [message, setMessage] = useState("")
   const [localStatus, setLocalStatus] = useState<string | null>(null)
   const [localTeamsLink, setLocalTeamsLink] = useState<string | null>(appointment.teamsLink)
+  const [localSyncStatus, setLocalSyncStatus] = useState<string | undefined>(appointment.teamsSyncStatus)
 
   const effectiveStatus = localStatus || appointment.status
 
@@ -102,6 +107,35 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
         <div className="space-y-3 flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={effectiveStatus} />
+            {/* Sync status indicator for APPROVED appointments */}
+            {(effectiveStatus === "APPROVED" || localSyncStatus) && (
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                localSyncStatus === "WRITTEN"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : localSyncStatus === "FAILED"
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-amber-50 text-amber-700 border-amber-200"
+              }`}
+                title={appointment.teamsSyncError || ""}
+              >
+                {localSyncStatus === "WRITTEN" && (
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {localSyncStatus === "FAILED" && (
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+                {localSyncStatus === "UNWRITTEN" && !localTeamsLink && (
+                  <svg className="w-3 h-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+                {localSyncStatus === "WRITTEN" ? "Synced" : localSyncStatus === "FAILED" ? "Sync Failed" : "Pending Sync"}
+              </span>
+            )}
             {localTeamsLink && (
               <a
                 href={localTeamsLink}
@@ -241,6 +275,33 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                 {loading === "cancel" ? "Cancelling..." : "Cancel"}
               </button>
             </div>
+            {/* Retry sync for failed syncs */}
+            {localSyncStatus === "FAILED" && (
+              <button
+                onClick={async () => {
+                  setLoading("retry-sync")
+                  try {
+                    const res = await fetch(`/api/appointments/${appointment.id}/retry-sync`, { method: "POST" })
+                    const data = await res.json()
+                    if (res.ok) {
+                      setLocalSyncStatus("UNWRITTEN")
+                      setMessage("Sync retry queued!")
+                      setTimeout(() => setMessage(""), 3000)
+                    } else {
+                      setMessage(data.error || "Retry failed")
+                    }
+                  } catch {
+                    setMessage("An error occurred")
+                  } finally {
+                    setLoading("")
+                  }
+                }}
+                disabled={loading !== ""}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+              >
+                {loading === "retry-sync" ? "Retrying..." : "Retry Sync"}
+              </button>
+            )}
             <div className="w-full">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Microsoft Teams Link</p>
               <TeamsLinkInput appointmentId={appointment.id} />
@@ -251,11 +312,23 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
 
       {message && (
         <p className={`mt-4 text-sm font-semibold ${
-          message.includes("successfully") ? "text-emerald-600" : "text-rose-600"
+          message.includes("successfully") || message.includes("queued") ? "text-emerald-600" : "text-rose-600"
         }`}>
           {message}
         </p>
       )}
+
+      <div className="mt-4 pt-3 border-t border-slate-100">
+        <Link
+          href={`/appointments/${appointment.id}`}
+          className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1"
+        >
+          View Details
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
     </div>
   )
 }

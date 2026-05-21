@@ -100,6 +100,17 @@ export const appointmentRepository: IAppointmentRepository = {
     })
     return appointments as any
   },
+  async listPendingSync() {
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        status: "APPROVED",
+        teamsSyncStatus: "UNWRITTEN",
+      },
+      include: { student: true, faculty: true, schedule: true },
+      orderBy: { updatedAt: "asc" },
+    })
+    return appointments as any
+  },
   async findById(id) {
     const appointment = await prisma.appointment.findUnique({
       where: { id },

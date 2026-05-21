@@ -21,6 +21,12 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+enum TeamsSyncStatus {
+  UNWRITTEN
+  WRITTEN
+  FAILED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -60,6 +66,10 @@ model Appointment {
   scheduleId String
   status     AppointmentStatus @default(PENDING)
   teamsLink  String?
+  teamsSyncStatus  TeamsSyncStatus @default(UNWRITTEN)
+  teamsSyncRetries Int             @default(0)
+  teamsSyncError   String?
+  teamsSyncLastAttempt DateTime?
   requestedAt DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 

@@ -1,5 +1,6 @@
 export type Role = "STUDENT" | "FACULTY" | "ADMIN"
 export type AppointmentStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED"
+export type TeamsSyncStatus = "UNWRITTEN" | "WRITTEN" | "FAILED"
 export type MeetingStatus = "CONFIRMED" | "CANCELLED"
 export type ParticipantStatus = "PENDING" | "ACCEPTED" | "DECLINED"
 
@@ -28,6 +29,10 @@ export interface Appointment {
   scheduleId: string
   status: AppointmentStatus
   teamsLink: string | null
+  teamsSyncStatus: TeamsSyncStatus
+  teamsSyncRetries: number
+  teamsSyncError: string | null
+  teamsSyncLastAttempt: Date | null
   requestedAt: Date
   updatedAt: Date
   student?: User

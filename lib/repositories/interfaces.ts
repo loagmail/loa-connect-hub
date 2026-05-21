@@ -37,6 +37,10 @@ export interface AppointmentData {
   scheduleId: string
   status: "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED"
   teamsLink: string | null
+  teamsSyncStatus: "UNWRITTEN" | "WRITTEN" | "FAILED"
+  teamsSyncRetries: number
+  teamsSyncError: string | null
+  teamsSyncLastAttempt: Date | null
   requestedAt: Date
   updatedAt: Date
 }
@@ -68,6 +72,7 @@ export interface IAppointmentRepository {
   listByStudent(studentId: string): Promise<AppointmentData[]>
   listByFaculty(facultyId: string): Promise<AppointmentData[]>
   listAll(): Promise<AppointmentData[]>
+  listPendingSync(): Promise<AppointmentData[]>
   findById(id: string): Promise<AppointmentData | null>
   update(id: string, data: Partial<AppointmentData>): Promise<AppointmentData>
 }
