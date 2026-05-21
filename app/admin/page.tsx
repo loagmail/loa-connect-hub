@@ -64,9 +64,9 @@ export default async function AdminDashboard() {
             id: a.id,
             title: `${a.student?.name || "Student"} \u2192 ${a.faculty?.name || "Faculty"}`,
             subtitle: `${a.student?.email || ""} \u2022 ${a.faculty?.email || ""}`,
-            date: a.schedule?.date || "",
-            startTime: a.schedule?.startTime || "",
-            endTime: a.schedule?.endTime || "",
+            date: a.date || "",
+            startTime: a.startTime || "",
+            endTime: a.endTime || "",
             status: a.status,
             type: "appointment" as const,
             teamsLink: a.teamsLink,
@@ -162,7 +162,7 @@ export default async function AdminDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{apt.student?.name || "\u2014"}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">{apt.faculty?.name || "\u2014"}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium tabular-nums">
-                    {apt.schedule?.date && apt.schedule?.startTime ? `${apt.schedule.date} @ ${apt.schedule.startTime}-${apt.schedule.endTime}` : "\u2014"}
+                    {apt.date && apt.startTime ? `${apt.date} @ ${apt.startTime}-${apt.endTime}` : "\u2014"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${

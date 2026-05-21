@@ -46,9 +46,9 @@ export async function syncPendingAppointments(): Promise<SyncResult> {
 
       const studentName = appointment.student?.name || "Student"
       const facultyName = appointment.faculty?.name || "Faculty"
-      const date = appointment.schedule?.date || "Unknown date"
-      const startTime = appointment.schedule?.startTime || "00:00"
-      const endTime = appointment.schedule?.endTime || "01:00"
+      const date = appointment.date || "Unknown date"
+      const startTime = appointment.startTime || "00:00"
+      const endTime = appointment.endTime || "01:00"
 
       const joinUrl = await createOnlineMeeting(account.access_token, {
         subject: `Consultation: ${studentName} & ${facultyName}`,

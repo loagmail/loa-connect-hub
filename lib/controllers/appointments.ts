@@ -1,28 +1,57 @@
-import { appointmentRepository, scheduleRepository } from "@/lib/repositories/factory"
+import { appointmentRepository, userRepository } from "@/lib/repositories/factory"
 
 export async function requestAppointment(input: {
   studentId: string
-  scheduleId: string
+  facultyId: string
+  date: string
+  startTime: string
+  endTime: string
+  title?: string
+  description?: string
+  attendeeIds?: string[]
 }) {
-  const schedule = await scheduleRepository.findById(input.scheduleId)
-  if (!schedule) throw new Error("Schedule not found")
-  if (!schedule.isAvailable) throw new Error("Schedule is not available")
-
+  // Check for conflicting appointments
   const existingAppts = await appointmentRepository.listByStudent(input.studentId)
   const conflicting = existingAppts.find(
-    (a) => a.scheduleId === input.scheduleId && a.status !== "REJECTED"
+    (a) =>
+      a.status !== "REJECTED" &&
+      a.status !== "CANCELLED" &&
+      a.date === input.date &&
+      a.startTime < input.endTime &&
+      a.endTime > input.startTime
   )
-  if (conflicting) throw new Error("You already have an appointment for this schedule")
+  if (conflicting) throw new Error("You already have an appointment that overlaps with this time")
+
+  // Validate additional attendees are FACULTY role
+  if (input.attendeeIds && input.attendeeIds.length > 0) {
+    for (const attendeeId of input.attendeeIds) {
+      const user = await userRepository.findById(attendeeId)
+      if (!user || user.role !== "FACULTY") {
+        throw new Error(`User ${attendeeId} is not a faculty member`)
+      }
+    }
+  }
 
   const appointment = await appointmentRepository.create({
     studentId: input.studentId,
-    facultyId: schedule.facultyId,
-    scheduleId: input.scheduleId,
+    facultyId: input.facultyId,
+    date: input.date,
+    startTime: input.startTime,
+    endTime: input.endTime,
+    title: input.title ?? null,
+    description: input.description ?? null,
   })
 
-  await scheduleRepository.update(input.scheduleId, { isAvailable: false })
+  // Add additional faculty attendees
+  if (input.attendeeIds && input.attendeeIds.length > 0) {
+    for (const attendeeId of input.attendeeIds) {
+      if (attendeeId !== input.facultyId) {
+        await appointmentRepository.addAttendee(appointment.id, attendeeId)
+      }
+    }
+  }
 
-  return appointment
+  return appointmentRepository.findById(appointment.id)
 }
 
 export async function approveAppointment(id: string, facultyId: string) {
@@ -40,8 +69,6 @@ export async function rejectAppointment(id: string, facultyId: string) {
   if (!appointment) throw new Error("Appointment not found")
   if (appointment.facultyId !== facultyId) throw new Error("Unauthorized")
   if (appointment.status !== "PENDING") throw new Error("Appointment is not pending")
-
-  await scheduleRepository.update(appointment.scheduleId, { isAvailable: true })
 
   return appointmentRepository.update(id, { status: "REJECTED" })
 }
@@ -67,9 +94,6 @@ export async function cancelAppointment(id: string, facultyId: string) {
     // If deletion fails, log error but proceed with cancellation
   }
 
-  // Restore the schedule slot so others can book it
-  await scheduleRepository.update(appointment.scheduleId, { isAvailable: true })
-
   return appointmentRepository.update(id, { status: "CANCELLED" })
 }
 
@@ -78,9 +102,6 @@ export async function studentCancelAppointment(id: string, studentId: string) {
   if (!appointment) throw new Error("Appointment not found")
   if (appointment.studentId !== studentId) throw new Error("Unauthorized")
   if (appointment.status !== "PENDING") throw new Error("Only pending appointments can be cancelled")
-
-  // Restore the schedule slot so others can book it
-  await scheduleRepository.update(appointment.scheduleId, { isAvailable: true })
 
   return appointmentRepository.update(id, { status: "CANCELLED" })
 }

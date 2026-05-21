@@ -385,8 +385,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
-  FacultySchedule: 'FacultySchedule',
   Appointment: 'Appointment',
+  AppointmentAttendee: 'AppointmentAttendee',
   InternalMeeting: 'InternalMeeting',
   InternalMeetingParticipant: 'InternalMeetingParticipant',
   FacultyAvailabilityRule: 'FacultyAvailabilityRule',
@@ -408,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "facultySchedule" | "appointment" | "internalMeeting" | "internalMeetingParticipant" | "facultyAvailabilityRule" | "account" | "session" | "verificationToken"
+    modelProps: "user" | "appointment" | "appointmentAttendee" | "internalMeeting" | "internalMeetingParticipant" | "facultyAvailabilityRule" | "account" | "session" | "verificationToken"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -486,80 +486,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    FacultySchedule: {
-      payload: Prisma.$FacultySchedulePayload<ExtArgs>
-      fields: Prisma.FacultyScheduleFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.FacultyScheduleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.FacultyScheduleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>
-        }
-        findFirst: {
-          args: Prisma.FacultyScheduleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.FacultyScheduleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>
-        }
-        findMany: {
-          args: Prisma.FacultyScheduleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>[]
-        }
-        create: {
-          args: Prisma.FacultyScheduleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>
-        }
-        createMany: {
-          args: Prisma.FacultyScheduleCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.FacultyScheduleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>[]
-        }
-        delete: {
-          args: Prisma.FacultyScheduleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>
-        }
-        update: {
-          args: Prisma.FacultyScheduleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>
-        }
-        deleteMany: {
-          args: Prisma.FacultyScheduleDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.FacultyScheduleUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.FacultyScheduleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>[]
-        }
-        upsert: {
-          args: Prisma.FacultyScheduleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultySchedulePayload>
-        }
-        aggregate: {
-          args: Prisma.FacultyScheduleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateFacultySchedule>
-        }
-        groupBy: {
-          args: Prisma.FacultyScheduleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.FacultyScheduleGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.FacultyScheduleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.FacultyScheduleCountAggregateOutputType> | number
-        }
-      }
-    }
     Appointment: {
       payload: Prisma.$AppointmentPayload<ExtArgs>
       fields: Prisma.AppointmentFieldRefs
@@ -631,6 +557,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AppointmentCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AppointmentCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppointmentAttendee: {
+      payload: Prisma.$AppointmentAttendeePayload<ExtArgs>
+      fields: Prisma.AppointmentAttendeeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppointmentAttendeeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppointmentAttendeeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>
+        }
+        findFirst: {
+          args: Prisma.AppointmentAttendeeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppointmentAttendeeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>
+        }
+        findMany: {
+          args: Prisma.AppointmentAttendeeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>[]
+        }
+        create: {
+          args: Prisma.AppointmentAttendeeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>
+        }
+        createMany: {
+          args: Prisma.AppointmentAttendeeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppointmentAttendeeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>[]
+        }
+        delete: {
+          args: Prisma.AppointmentAttendeeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>
+        }
+        update: {
+          args: Prisma.AppointmentAttendeeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>
+        }
+        deleteMany: {
+          args: Prisma.AppointmentAttendeeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppointmentAttendeeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppointmentAttendeeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>[]
+        }
+        upsert: {
+          args: Prisma.AppointmentAttendeeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppointmentAttendeePayload>
+        }
+        aggregate: {
+          args: Prisma.AppointmentAttendeeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppointmentAttendee>
+        }
+        groupBy: {
+          args: Prisma.AppointmentAttendeeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppointmentAttendeeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppointmentAttendeeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppointmentAttendeeCountAggregateOutputType> | number
         }
       }
     }
@@ -1126,23 +1126,15 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-export const FacultyScheduleScalarFieldEnum = {
-  id: 'id',
-  facultyId: 'facultyId',
-  date: 'date',
-  startTime: 'startTime',
-  endTime: 'endTime',
-  isAvailable: 'isAvailable'
-} as const
-
-export type FacultyScheduleScalarFieldEnum = (typeof FacultyScheduleScalarFieldEnum)[keyof typeof FacultyScheduleScalarFieldEnum]
-
-
 export const AppointmentScalarFieldEnum = {
   id: 'id',
   studentId: 'studentId',
   facultyId: 'facultyId',
-  scheduleId: 'scheduleId',
+  date: 'date',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  title: 'title',
+  description: 'description',
   status: 'status',
   teamsLink: 'teamsLink',
   teamsSyncStatus: 'teamsSyncStatus',
@@ -1154,6 +1146,16 @@ export const AppointmentScalarFieldEnum = {
 } as const
 
 export type AppointmentScalarFieldEnum = (typeof AppointmentScalarFieldEnum)[keyof typeof AppointmentScalarFieldEnum]
+
+
+export const AppointmentAttendeeScalarFieldEnum = {
+  id: 'id',
+  appointmentId: 'appointmentId',
+  userId: 'userId',
+  status: 'status'
+} as const
+
+export type AppointmentAttendeeScalarFieldEnum = (typeof AppointmentAttendeeScalarFieldEnum)[keyof typeof AppointmentAttendeeScalarFieldEnum]
 
 
 export const InternalMeetingScalarFieldEnum = {
@@ -1189,7 +1191,9 @@ export const FacultyAvailabilityRuleScalarFieldEnum = {
   dayOfWeek: 'dayOfWeek',
   isBlocked: 'isBlocked',
   startTime: 'startTime',
-  endTime: 'endTime'
+  endTime: 'endTime',
+  startDate: 'startDate',
+  endDate: 'endDate'
 } as const
 
 export type FacultyAvailabilityRuleScalarFieldEnum = (typeof FacultyAvailabilityRuleScalarFieldEnum)[keyof typeof FacultyAvailabilityRuleScalarFieldEnum]
@@ -1276,13 +1280,6 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
 
 
 /**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-/**
  * Reference to a field of type 'AppointmentStatus'
  */
 export type EnumAppointmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AppointmentStatus'>
@@ -1304,6 +1301,13 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
 
 
 /**
+ * Reference to a field of type 'AttendeeStatus'
+ */
+export type EnumAttendeeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendeeStatus'>
+    
+
+
+/**
  * Reference to a field of type 'MeetingStatus'
  */
 export type EnumMeetingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MeetingStatus'>
@@ -1314,6 +1318,13 @@ export type EnumMeetingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'ParticipantStatus'
  */
 export type EnumParticipantStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ParticipantStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -1434,8 +1445,8 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
-  facultySchedule?: Prisma.FacultyScheduleOmit
   appointment?: Prisma.AppointmentOmit
+  appointmentAttendee?: Prisma.AppointmentAttendeeOmit
   internalMeeting?: Prisma.InternalMeetingOmit
   internalMeetingParticipant?: Prisma.InternalMeetingParticipantOmit
   facultyAvailabilityRule?: Prisma.FacultyAvailabilityRuleOmit

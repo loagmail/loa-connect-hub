@@ -3,16 +3,22 @@ import { redirect } from "next/navigation"
 import { AppointmentCard } from "@/components/AppointmentCard"
 import { CalendarView } from "@/components/CalendarView"
 import BookingCalendar from "@/components/BookingCalendar"
-import { listAvailableSchedules } from "@/lib/controllers/schedules"
 import { listStudentAppointments } from "@/lib/controllers/appointments"
+import { userRepository, availabilityRuleRepository } from "@/lib/repositories/factory"
 
 export default async function StudentDashboard() {
   const session = await auth()
   if (!session?.user) redirect("/login")
   if ((session.user as any).role !== "STUDENT") redirect("/login")
 
-  const schedules = await listAvailableSchedules()
   const appointments = await listStudentAppointments((session.user as any).id)
+  const facultyUsers = await userRepository.listByRole("FACULTY")
+  const facultyWithRules = await Promise.all(
+    facultyUsers.map(async (f) => {
+      const rules = await availabilityRuleRepository.listByFaculty(f.id)
+      return { id: f.id, name: f.name, email: f.email, rules }
+    })
+  )
 
   const upcomingCount = appointments.filter((a: any) => a.status === "APPROVED" || a.status === "PENDING").length
   const pendingCount = appointments.filter((a: any) => a.status === "PENDING").length
@@ -26,8 +32,8 @@ export default async function StudentDashboard() {
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Upcoming Appointments</p>
         </div>
         <div className="card p-5 bg-white">
-          <p className="text-3xl font-bold text-slate-900">{schedules.length}</p>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Available Slots</p>
+          <p className="text-3xl font-bold text-slate-900">{facultyWithRules.length}</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Faculty Available</p>
         </div>
         <div className="card p-5 bg-white">
           <p className="text-3xl font-bold text-slate-900">{pendingCount}</p>
@@ -38,7 +44,7 @@ export default async function StudentDashboard() {
       {/* Calendar Booking */}
       <section className="space-y-4">
         <h2 className="text-lg font-bold text-slate-900">Browse Available Slots</h2>
-        <BookingCalendar schedules={schedules as any} />
+        <BookingCalendar facultyWithRules={facultyWithRules as any} />
       </section>
 
       {/* Calendar Timeline */}
@@ -50,9 +56,9 @@ export default async function StudentDashboard() {
             id: a.id,
             title: `Consultation with ${a.faculty?.name || "Faculty"}`,
             subtitle: a.faculty?.email,
-            date: a.schedule?.date || "",
-            startTime: a.schedule?.startTime || "",
-            endTime: a.schedule?.endTime || "",
+            date: a.date || "",
+            startTime: a.startTime || "",
+            endTime: a.endTime || "",
             status: a.status,
             type: "appointment" as const,
             teamsLink: a.teamsLink,

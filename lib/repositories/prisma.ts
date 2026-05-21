@@ -1,16 +1,14 @@
 import { prisma } from "@/lib/prisma"
 import type {
   IUserRepository,
-  IScheduleRepository,
   IAppointmentRepository,
   IAvailabilityRuleRepository,
   IMeetingRepository,
   UserData,
   CreateUserInput,
-  ScheduleData,
-  CreateScheduleInput,
   AppointmentData,
   CreateAppointmentInput,
+  AppointmentAttendeeData,
   AvailabilityRuleData,
   UpsertAvailabilityRuleInput,
   MeetingData,
@@ -39,38 +37,11 @@ export const userRepository: IUserRepository = {
   },
 }
 
-export const scheduleRepository: IScheduleRepository = {
-  async create(input) {
-    const schedule = await prisma.facultySchedule.create({ data: input })
-    return schedule as ScheduleData
-  },
-  async listAvailable() {
-    const schedules = await prisma.facultySchedule.findMany({
-      where: { isAvailable: true },
-      include: { faculty: true },
-    })
-    return schedules as any
-  },
-  async listByFaculty(facultyId) {
-    const schedules = await prisma.facultySchedule.findMany({
-      where: { facultyId },
-      orderBy: { date: "asc" },
-    })
-    return schedules as ScheduleData[]
-  },
-  async findById(id) {
-    const schedule = await prisma.facultySchedule.findUnique({ where: { id } })
-    if (!schedule) return null
-    return schedule as ScheduleData
-  },
-  async update(id, data) {
-    const schedule = await prisma.facultySchedule.update({ where: { id }, data })
-    return schedule as ScheduleData
-  },
-  async delete(id) {
-    await prisma.facultySchedule.delete({ where: { id } })
-  },
-}
+const appointmentIncludes = {
+  student: true,
+  faculty: true,
+  attendees: { include: { user: true } },
+} as const
 
 export const appointmentRepository: IAppointmentRepository = {
   async create(input) {
@@ -81,7 +52,7 @@ export const appointmentRepository: IAppointmentRepository = {
     const appointments = await prisma.appointment.findMany({
       where: { studentId },
       orderBy: { requestedAt: "desc" },
-      include: { faculty: true, schedule: true },
+      include: appointmentIncludes,
     })
     return appointments as any
   },
@@ -89,14 +60,14 @@ export const appointmentRepository: IAppointmentRepository = {
     const appointments = await prisma.appointment.findMany({
       where: { facultyId },
       orderBy: { requestedAt: "desc" },
-      include: { student: true, schedule: true },
+      include: appointmentIncludes,
     })
     return appointments as any
   },
   async listAll() {
     const appointments = await prisma.appointment.findMany({
       orderBy: { requestedAt: "desc" },
-      include: { student: true, faculty: true, schedule: true },
+      include: appointmentIncludes,
     })
     return appointments as any
   },
@@ -106,7 +77,7 @@ export const appointmentRepository: IAppointmentRepository = {
         status: "APPROVED",
         teamsSyncStatus: "UNWRITTEN",
       },
-      include: { student: true, faculty: true, schedule: true },
+      include: appointmentIncludes,
       orderBy: { updatedAt: "asc" },
     })
     return appointments as any
@@ -114,7 +85,7 @@ export const appointmentRepository: IAppointmentRepository = {
   async findById(id) {
     const appointment = await prisma.appointment.findUnique({
       where: { id },
-      include: { student: true, faculty: true, schedule: true },
+      include: appointmentIncludes,
     })
     if (!appointment) return null
     return appointment as any
@@ -123,9 +94,30 @@ export const appointmentRepository: IAppointmentRepository = {
     const appointment = await prisma.appointment.update({
       where: { id },
       data: data as any,
-      include: { student: true, faculty: true, schedule: true },
+      include: appointmentIncludes,
     })
     return appointment as any
+  },
+  async addAttendee(appointmentId, userId) {
+    const attendee = await prisma.appointmentAttendee.create({
+      data: { appointmentId, userId },
+    })
+    return attendee as AppointmentAttendeeData
+  },
+  async listAttendees(appointmentId) {
+    const attendees = await prisma.appointmentAttendee.findMany({
+      where: { appointmentId },
+      include: { user: true },
+    })
+    return attendees as any
+  },
+  async updateAttendeeStatus(appointmentId, userId, status) {
+    const attendee = await prisma.appointmentAttendee.update({
+      where: { appointmentId_userId: { appointmentId, userId } },
+      data: { status },
+      include: { user: true },
+    })
+    return attendee as any
   },
 }
 
@@ -137,18 +129,19 @@ export const availabilityRuleRepository: IAvailabilityRuleRepository = {
     })
     return rules as AvailabilityRuleData[]
   },
-  async findByFacultyAndDay(facultyId, dayOfWeek) {
+  async findByFacultyAndDay(facultyId, dayOfWeek, startDate) {
+    if (!startDate) return null // require startDate for the new unique constraint
     const rule = await prisma.facultyAvailabilityRule.findUnique({
-      where: { facultyId_dayOfWeek: { facultyId, dayOfWeek } },
+      where: { facultyId_dayOfWeek_startDate: { facultyId, dayOfWeek, startDate } },
     })
     if (!rule) return null
     return rule as AvailabilityRuleData
   },
   async upsert(input) {
     const rule = await prisma.facultyAvailabilityRule.upsert({
-      where: { facultyId_dayOfWeek: { facultyId: input.facultyId, dayOfWeek: input.dayOfWeek } },
-      update: { isBlocked: input.isBlocked, startTime: input.startTime ?? null, endTime: input.endTime ?? null },
-      create: { facultyId: input.facultyId, dayOfWeek: input.dayOfWeek, isBlocked: input.isBlocked, startTime: input.startTime ?? null, endTime: input.endTime ?? null },
+      where: { facultyId_dayOfWeek_startDate: { facultyId: input.facultyId, dayOfWeek: input.dayOfWeek, startDate: input.startDate } },
+      update: { isBlocked: input.isBlocked, startTime: input.startTime ?? null, endTime: input.endTime ?? null, endDate: input.endDate ?? null },
+      create: { facultyId: input.facultyId, dayOfWeek: input.dayOfWeek, isBlocked: input.isBlocked, startTime: input.startTime ?? null, endTime: input.endTime ?? null, startDate: input.startDate, endDate: input.endDate ?? null },
     })
     return rule as AvailabilityRuleData
   },
@@ -219,13 +212,11 @@ export const meetingRepository: IMeetingRepository = {
       where: {
         OR: [{ facultyId }, { studentId: facultyId }],
         status: { in: ["PENDING", "APPROVED"] },
-        schedule: {
-          date,
-          startTime: { lt: endTime },
-          endTime: { gt: startTime },
-        },
+        date,
+        startTime: { lt: endTime },
+        endTime: { gt: startTime },
       } as any,
-      include: { student: true, faculty: true, schedule: true },
+      include: { student: true, faculty: true },
     })
     return appointments as any
   },

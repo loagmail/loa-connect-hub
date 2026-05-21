@@ -41,6 +41,8 @@ export type FacultyAvailabilityRuleMinAggregateOutputType = {
   isBlocked: boolean | null
   startTime: string | null
   endTime: string | null
+  startDate: string | null
+  endDate: string | null
 }
 
 export type FacultyAvailabilityRuleMaxAggregateOutputType = {
@@ -50,6 +52,8 @@ export type FacultyAvailabilityRuleMaxAggregateOutputType = {
   isBlocked: boolean | null
   startTime: string | null
   endTime: string | null
+  startDate: string | null
+  endDate: string | null
 }
 
 export type FacultyAvailabilityRuleCountAggregateOutputType = {
@@ -59,6 +63,8 @@ export type FacultyAvailabilityRuleCountAggregateOutputType = {
   isBlocked: number
   startTime: number
   endTime: number
+  startDate: number
+  endDate: number
   _all: number
 }
 
@@ -78,6 +84,8 @@ export type FacultyAvailabilityRuleMinAggregateInputType = {
   isBlocked?: true
   startTime?: true
   endTime?: true
+  startDate?: true
+  endDate?: true
 }
 
 export type FacultyAvailabilityRuleMaxAggregateInputType = {
@@ -87,6 +95,8 @@ export type FacultyAvailabilityRuleMaxAggregateInputType = {
   isBlocked?: true
   startTime?: true
   endTime?: true
+  startDate?: true
+  endDate?: true
 }
 
 export type FacultyAvailabilityRuleCountAggregateInputType = {
@@ -96,6 +106,8 @@ export type FacultyAvailabilityRuleCountAggregateInputType = {
   isBlocked?: true
   startTime?: true
   endTime?: true
+  startDate?: true
+  endDate?: true
   _all?: true
 }
 
@@ -192,6 +204,8 @@ export type FacultyAvailabilityRuleGroupByOutputType = {
   isBlocked: boolean
   startTime: string | null
   endTime: string | null
+  startDate: string
+  endDate: string | null
   _count: FacultyAvailabilityRuleCountAggregateOutputType | null
   _avg: FacultyAvailabilityRuleAvgAggregateOutputType | null
   _sum: FacultyAvailabilityRuleSumAggregateOutputType | null
@@ -224,6 +238,8 @@ export type FacultyAvailabilityRuleWhereInput = {
   isBlocked?: Prisma.BoolFilter<"FacultyAvailabilityRule"> | boolean
   startTime?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
   endTime?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
+  startDate?: Prisma.StringFilter<"FacultyAvailabilityRule"> | string
+  endDate?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
   faculty?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
@@ -234,12 +250,14 @@ export type FacultyAvailabilityRuleOrderByWithRelationInput = {
   isBlocked?: Prisma.SortOrder
   startTime?: Prisma.SortOrderInput | Prisma.SortOrder
   endTime?: Prisma.SortOrderInput | Prisma.SortOrder
+  startDate?: Prisma.SortOrder
+  endDate?: Prisma.SortOrderInput | Prisma.SortOrder
   faculty?: Prisma.UserOrderByWithRelationInput
 }
 
 export type FacultyAvailabilityRuleWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  facultyId_dayOfWeek?: Prisma.FacultyAvailabilityRuleFacultyIdDayOfWeekCompoundUniqueInput
+  facultyId_dayOfWeek_startDate?: Prisma.FacultyAvailabilityRuleFacultyIdDayOfWeekStartDateCompoundUniqueInput
   AND?: Prisma.FacultyAvailabilityRuleWhereInput | Prisma.FacultyAvailabilityRuleWhereInput[]
   OR?: Prisma.FacultyAvailabilityRuleWhereInput[]
   NOT?: Prisma.FacultyAvailabilityRuleWhereInput | Prisma.FacultyAvailabilityRuleWhereInput[]
@@ -248,8 +266,10 @@ export type FacultyAvailabilityRuleWhereUniqueInput = Prisma.AtLeast<{
   isBlocked?: Prisma.BoolFilter<"FacultyAvailabilityRule"> | boolean
   startTime?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
   endTime?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
+  startDate?: Prisma.StringFilter<"FacultyAvailabilityRule"> | string
+  endDate?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
   faculty?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "facultyId_dayOfWeek">
+}, "id" | "facultyId_dayOfWeek_startDate">
 
 export type FacultyAvailabilityRuleOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -258,6 +278,8 @@ export type FacultyAvailabilityRuleOrderByWithAggregationInput = {
   isBlocked?: Prisma.SortOrder
   startTime?: Prisma.SortOrderInput | Prisma.SortOrder
   endTime?: Prisma.SortOrderInput | Prisma.SortOrder
+  startDate?: Prisma.SortOrder
+  endDate?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.FacultyAvailabilityRuleCountOrderByAggregateInput
   _avg?: Prisma.FacultyAvailabilityRuleAvgOrderByAggregateInput
   _max?: Prisma.FacultyAvailabilityRuleMaxOrderByAggregateInput
@@ -275,6 +297,8 @@ export type FacultyAvailabilityRuleScalarWhereWithAggregatesInput = {
   isBlocked?: Prisma.BoolWithAggregatesFilter<"FacultyAvailabilityRule"> | boolean
   startTime?: Prisma.StringNullableWithAggregatesFilter<"FacultyAvailabilityRule"> | string | null
   endTime?: Prisma.StringNullableWithAggregatesFilter<"FacultyAvailabilityRule"> | string | null
+  startDate?: Prisma.StringWithAggregatesFilter<"FacultyAvailabilityRule"> | string
+  endDate?: Prisma.StringNullableWithAggregatesFilter<"FacultyAvailabilityRule"> | string | null
 }
 
 export type FacultyAvailabilityRuleCreateInput = {
@@ -283,6 +307,8 @@ export type FacultyAvailabilityRuleCreateInput = {
   isBlocked?: boolean
   startTime?: string | null
   endTime?: string | null
+  startDate: string
+  endDate?: string | null
   faculty: Prisma.UserCreateNestedOneWithoutAvailabilityRulesInput
 }
 
@@ -293,6 +319,8 @@ export type FacultyAvailabilityRuleUncheckedCreateInput = {
   isBlocked?: boolean
   startTime?: string | null
   endTime?: string | null
+  startDate: string
+  endDate?: string | null
 }
 
 export type FacultyAvailabilityRuleUpdateInput = {
@@ -301,6 +329,8 @@ export type FacultyAvailabilityRuleUpdateInput = {
   isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   endTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.StringFieldUpdateOperationsInput | string
+  endDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   faculty?: Prisma.UserUpdateOneRequiredWithoutAvailabilityRulesNestedInput
 }
 
@@ -311,6 +341,8 @@ export type FacultyAvailabilityRuleUncheckedUpdateInput = {
   isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   endTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.StringFieldUpdateOperationsInput | string
+  endDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type FacultyAvailabilityRuleCreateManyInput = {
@@ -320,6 +352,8 @@ export type FacultyAvailabilityRuleCreateManyInput = {
   isBlocked?: boolean
   startTime?: string | null
   endTime?: string | null
+  startDate: string
+  endDate?: string | null
 }
 
 export type FacultyAvailabilityRuleUpdateManyMutationInput = {
@@ -328,6 +362,8 @@ export type FacultyAvailabilityRuleUpdateManyMutationInput = {
   isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   endTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.StringFieldUpdateOperationsInput | string
+  endDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type FacultyAvailabilityRuleUncheckedUpdateManyInput = {
@@ -337,6 +373,8 @@ export type FacultyAvailabilityRuleUncheckedUpdateManyInput = {
   isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   endTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.StringFieldUpdateOperationsInput | string
+  endDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type FacultyAvailabilityRuleListRelationFilter = {
@@ -349,9 +387,10 @@ export type FacultyAvailabilityRuleOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type FacultyAvailabilityRuleFacultyIdDayOfWeekCompoundUniqueInput = {
+export type FacultyAvailabilityRuleFacultyIdDayOfWeekStartDateCompoundUniqueInput = {
   facultyId: string
   dayOfWeek: number
+  startDate: string
 }
 
 export type FacultyAvailabilityRuleCountOrderByAggregateInput = {
@@ -361,6 +400,8 @@ export type FacultyAvailabilityRuleCountOrderByAggregateInput = {
   isBlocked?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
+  startDate?: Prisma.SortOrder
+  endDate?: Prisma.SortOrder
 }
 
 export type FacultyAvailabilityRuleAvgOrderByAggregateInput = {
@@ -374,6 +415,8 @@ export type FacultyAvailabilityRuleMaxOrderByAggregateInput = {
   isBlocked?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
+  startDate?: Prisma.SortOrder
+  endDate?: Prisma.SortOrder
 }
 
 export type FacultyAvailabilityRuleMinOrderByAggregateInput = {
@@ -383,6 +426,8 @@ export type FacultyAvailabilityRuleMinOrderByAggregateInput = {
   isBlocked?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
   endTime?: Prisma.SortOrder
+  startDate?: Prisma.SortOrder
+  endDate?: Prisma.SortOrder
 }
 
 export type FacultyAvailabilityRuleSumOrderByAggregateInput = {
@@ -431,12 +476,18 @@ export type FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput 
   deleteMany?: Prisma.FacultyAvailabilityRuleScalarWhereInput | Prisma.FacultyAvailabilityRuleScalarWhereInput[]
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type FacultyAvailabilityRuleCreateWithoutFacultyInput = {
   id?: string
   dayOfWeek: number
   isBlocked?: boolean
   startTime?: string | null
   endTime?: string | null
+  startDate: string
+  endDate?: string | null
 }
 
 export type FacultyAvailabilityRuleUncheckedCreateWithoutFacultyInput = {
@@ -445,6 +496,8 @@ export type FacultyAvailabilityRuleUncheckedCreateWithoutFacultyInput = {
   isBlocked?: boolean
   startTime?: string | null
   endTime?: string | null
+  startDate: string
+  endDate?: string | null
 }
 
 export type FacultyAvailabilityRuleCreateOrConnectWithoutFacultyInput = {
@@ -482,6 +535,8 @@ export type FacultyAvailabilityRuleScalarWhereInput = {
   isBlocked?: Prisma.BoolFilter<"FacultyAvailabilityRule"> | boolean
   startTime?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
   endTime?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
+  startDate?: Prisma.StringFilter<"FacultyAvailabilityRule"> | string
+  endDate?: Prisma.StringNullableFilter<"FacultyAvailabilityRule"> | string | null
 }
 
 export type FacultyAvailabilityRuleCreateManyFacultyInput = {
@@ -490,6 +545,8 @@ export type FacultyAvailabilityRuleCreateManyFacultyInput = {
   isBlocked?: boolean
   startTime?: string | null
   endTime?: string | null
+  startDate: string
+  endDate?: string | null
 }
 
 export type FacultyAvailabilityRuleUpdateWithoutFacultyInput = {
@@ -498,6 +555,8 @@ export type FacultyAvailabilityRuleUpdateWithoutFacultyInput = {
   isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   endTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.StringFieldUpdateOperationsInput | string
+  endDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type FacultyAvailabilityRuleUncheckedUpdateWithoutFacultyInput = {
@@ -506,6 +565,8 @@ export type FacultyAvailabilityRuleUncheckedUpdateWithoutFacultyInput = {
   isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   endTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.StringFieldUpdateOperationsInput | string
+  endDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyInput = {
@@ -514,6 +575,8 @@ export type FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyInput = {
   isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   startTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   endTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  startDate?: Prisma.StringFieldUpdateOperationsInput | string
+  endDate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -525,6 +588,8 @@ export type FacultyAvailabilityRuleSelect<ExtArgs extends runtime.Types.Extensio
   isBlocked?: boolean
   startTime?: boolean
   endTime?: boolean
+  startDate?: boolean
+  endDate?: boolean
   faculty?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["facultyAvailabilityRule"]>
 
@@ -535,6 +600,8 @@ export type FacultyAvailabilityRuleSelectCreateManyAndReturn<ExtArgs extends run
   isBlocked?: boolean
   startTime?: boolean
   endTime?: boolean
+  startDate?: boolean
+  endDate?: boolean
   faculty?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["facultyAvailabilityRule"]>
 
@@ -545,6 +612,8 @@ export type FacultyAvailabilityRuleSelectUpdateManyAndReturn<ExtArgs extends run
   isBlocked?: boolean
   startTime?: boolean
   endTime?: boolean
+  startDate?: boolean
+  endDate?: boolean
   faculty?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["facultyAvailabilityRule"]>
 
@@ -555,9 +624,11 @@ export type FacultyAvailabilityRuleSelectScalar = {
   isBlocked?: boolean
   startTime?: boolean
   endTime?: boolean
+  startDate?: boolean
+  endDate?: boolean
 }
 
-export type FacultyAvailabilityRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "facultyId" | "dayOfWeek" | "isBlocked" | "startTime" | "endTime", ExtArgs["result"]["facultyAvailabilityRule"]>
+export type FacultyAvailabilityRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "facultyId" | "dayOfWeek" | "isBlocked" | "startTime" | "endTime" | "startDate" | "endDate", ExtArgs["result"]["facultyAvailabilityRule"]>
 export type FacultyAvailabilityRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   faculty?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -580,6 +651,8 @@ export type $FacultyAvailabilityRulePayload<ExtArgs extends runtime.Types.Extens
     isBlocked: boolean
     startTime: string | null
     endTime: string | null
+    startDate: string
+    endDate: string | null
   }, ExtArgs["result"]["facultyAvailabilityRule"]>
   composites: {}
 }
@@ -1010,6 +1083,8 @@ export interface FacultyAvailabilityRuleFieldRefs {
   readonly isBlocked: Prisma.FieldRef<"FacultyAvailabilityRule", 'Boolean'>
   readonly startTime: Prisma.FieldRef<"FacultyAvailabilityRule", 'String'>
   readonly endTime: Prisma.FieldRef<"FacultyAvailabilityRule", 'String'>
+  readonly startDate: Prisma.FieldRef<"FacultyAvailabilityRule", 'String'>
+  readonly endDate: Prisma.FieldRef<"FacultyAvailabilityRule", 'String'>
 }
     
 

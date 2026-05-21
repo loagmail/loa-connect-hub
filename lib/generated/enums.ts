@@ -38,6 +38,15 @@ export const TeamsSyncStatus = {
 export type TeamsSyncStatus = (typeof TeamsSyncStatus)[keyof typeof TeamsSyncStatus]
 
 
+export const AttendeeStatus = {
+  INVITED: 'INVITED',
+  ACCEPTED: 'ACCEPTED',
+  DECLINED: 'DECLINED'
+} as const
+
+export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus]
+
+
 export const MeetingStatus = {
   CONFIRMED: 'CONFIRMED',
   CANCELLED: 'CANCELLED'

@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
-export type * from './models/FacultySchedule'
 export type * from './models/Appointment'
+export type * from './models/AppointmentAttendee'
 export type * from './models/InternalMeeting'
 export type * from './models/InternalMeetingParticipant'
 export type * from './models/FacultyAvailabilityRule'

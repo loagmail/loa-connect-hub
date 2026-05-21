@@ -33,7 +33,13 @@ export async function POST(request: Request) {
     const body = await request.json()
     const appointment = await requestAppointment({
       studentId: (session.user as any).id,
-      scheduleId: body.scheduleId,
+      facultyId: body.facultyId,
+      date: body.date,
+      startTime: body.startTime,
+      endTime: body.endTime,
+      title: body.title,
+      description: body.description,
+      attendeeIds: body.attendeeIds,
     })
     return NextResponse.json({ appointment }, { status: 201 })
   } catch (error) {

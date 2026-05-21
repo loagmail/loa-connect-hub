@@ -9,6 +9,11 @@ interface AppointmentCardProps {
   appointment: {
     id: string
     status: string
+    date: string
+    startTime: string
+    endTime: string
+    title?: string | null
+    description?: string | null
     teamsLink: string | null
     teamsSyncStatus?: string
     teamsSyncRetries?: number
@@ -16,7 +21,7 @@ interface AppointmentCardProps {
     requestedAt: string
     student?: { name: string; email: string }
     faculty?: { name: string; email: string }
-    schedule?: { date: string; startTime: string; endTime: string }
+    attendees?: Array<{ id: string; userId: string; status: string; user?: { name: string; email: string } }>
   }
   role: "STUDENT" | "FACULTY"
 }
@@ -174,14 +179,43 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
             </div>
           )}
 
-          {appointment.schedule && (
-            <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-lg p-2.5 max-w-max">
-              <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="font-medium text-slate-700">{appointment.schedule.date}</span>
+          {appointment.date && (
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              <span className="font-medium text-slate-700">{appointment.date}</span>
               <span className="text-slate-300">\u2022</span>
-              <span className="text-slate-600 font-medium">{appointment.schedule.startTime} &ndash; {appointment.schedule.endTime}</span>
+              <span className="text-slate-600 font-medium">{appointment.startTime} &ndash; {appointment.endTime}</span>
+            </div>
+          )}
+
+          {/* Title */}
+          {appointment.title && (
+            <p className="text-sm font-bold text-slate-800 leading-snug">{appointment.title}</p>
+          )}
+
+          {/* Description (truncated) */}
+          {appointment.description && (
+            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{appointment.description}</p>
+          )}
+
+          {/* Attendee badges */}
+          {appointment.attendees && appointment.attendees.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">With:</span>
+              {appointment.attendees.map((att) => (
+                <span
+                  key={att.id}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                    att.status === "ACCEPTED"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : att.status === "DECLINED"
+                      ? "bg-red-50 text-red-700 border-red-200"
+                      : "bg-amber-50 text-amber-700 border-amber-200"
+                  }`}
+                  title={`${att.user?.name || "Unknown"} (${att.status})`}
+                >
+                  {att.user?.name || "Unknown"}
+                </span>
+              ))}
             </div>
           )}
 

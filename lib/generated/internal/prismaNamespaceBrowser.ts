@@ -52,8 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
-  FacultySchedule: 'FacultySchedule',
   Appointment: 'Appointment',
+  AppointmentAttendee: 'AppointmentAttendee',
   InternalMeeting: 'InternalMeeting',
   InternalMeetingParticipant: 'InternalMeetingParticipant',
   FacultyAvailabilityRule: 'FacultyAvailabilityRule',
@@ -87,23 +87,15 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-export const FacultyScheduleScalarFieldEnum = {
-  id: 'id',
-  facultyId: 'facultyId',
-  date: 'date',
-  startTime: 'startTime',
-  endTime: 'endTime',
-  isAvailable: 'isAvailable'
-} as const
-
-export type FacultyScheduleScalarFieldEnum = (typeof FacultyScheduleScalarFieldEnum)[keyof typeof FacultyScheduleScalarFieldEnum]
-
-
 export const AppointmentScalarFieldEnum = {
   id: 'id',
   studentId: 'studentId',
   facultyId: 'facultyId',
-  scheduleId: 'scheduleId',
+  date: 'date',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  title: 'title',
+  description: 'description',
   status: 'status',
   teamsLink: 'teamsLink',
   teamsSyncStatus: 'teamsSyncStatus',
@@ -115,6 +107,16 @@ export const AppointmentScalarFieldEnum = {
 } as const
 
 export type AppointmentScalarFieldEnum = (typeof AppointmentScalarFieldEnum)[keyof typeof AppointmentScalarFieldEnum]
+
+
+export const AppointmentAttendeeScalarFieldEnum = {
+  id: 'id',
+  appointmentId: 'appointmentId',
+  userId: 'userId',
+  status: 'status'
+} as const
+
+export type AppointmentAttendeeScalarFieldEnum = (typeof AppointmentAttendeeScalarFieldEnum)[keyof typeof AppointmentAttendeeScalarFieldEnum]
 
 
 export const InternalMeetingScalarFieldEnum = {
@@ -150,7 +152,9 @@ export const FacultyAvailabilityRuleScalarFieldEnum = {
   dayOfWeek: 'dayOfWeek',
   isBlocked: 'isBlocked',
   startTime: 'startTime',
-  endTime: 'endTime'
+  endTime: 'endTime',
+  startDate: 'startDate',
+  endDate: 'endDate'
 } as const
 
 export type FacultyAvailabilityRuleScalarFieldEnum = (typeof FacultyAvailabilityRuleScalarFieldEnum)[keyof typeof FacultyAvailabilityRuleScalarFieldEnum]

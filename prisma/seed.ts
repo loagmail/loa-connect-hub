@@ -12,9 +12,9 @@ async function main() {
   const passwordHash = await hash("password123", 12)
 
   // Clear existing data for clean re-seed
-  await prisma.facultyAvailabilityRule.deleteMany()
+  await prisma.appointmentAttendee.deleteMany()
   await prisma.appointment.deleteMany()
-  await prisma.facultySchedule.deleteMany()
+  await prisma.facultyAvailabilityRule.deleteMany()
   await prisma.internalMeetingParticipant.deleteMany()
   await prisma.internalMeeting.deleteMany()
   await prisma.session.deleteMany()
@@ -49,30 +49,6 @@ async function main() {
     data: { name: "Carol Nguyen", email: "carol@econsult.com", passwordHash, role: "STUDENT" },
   })
 
-  const today = new Date()
-  const day = (offset: number) => {
-    const d = new Date(today)
-    d.setDate(d.getDate() + offset)
-    return d.toISOString().split("T")[0]
-  }
-
-  const schedules = [
-    // Dr. Sarah Chen — 3 slots
-    { facultyId: faculty1.id, date: day(1), startTime: "09:00", endTime: "10:00" },
-    { facultyId: faculty1.id, date: day(1), startTime: "10:00", endTime: "11:00" },
-    { facultyId: faculty1.id, date: day(3), startTime: "14:00", endTime: "15:00" },
-    // Prof. Marcus Johnson — 2 slots
-    { facultyId: faculty2.id, date: day(2), startTime: "09:00", endTime: "10:00" },
-    { facultyId: faculty2.id, date: day(4), startTime: "11:00", endTime: "12:00" },
-    // Dr. Elena Rodriguez — 2 slots
-    { facultyId: faculty3.id, date: day(1), startTime: "13:00", endTime: "14:00" },
-    { facultyId: faculty3.id, date: day(2), startTime: "15:00", endTime: "16:00" },
-  ]
-
-  for (const s of schedules) {
-    await prisma.facultySchedule.create({ data: s })
-  }
-
   // Default availability rules for faculty: Mon-Fri 08:00-18:00, Sat-Sun blocked
   const allFaculty = [faculty1, faculty2, faculty3]
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -87,6 +63,7 @@ async function main() {
           isBlocked: isWeekend,
           startTime: isWeekend ? null : "08:00",
           endTime: isWeekend ? null : "18:00",
+          startDate: "2026-01-01",
         },
       })
     }
@@ -95,9 +72,9 @@ async function main() {
   console.log({
     admin: { name: admin.name, role: admin.role },
     faculty: [
-      { name: faculty1.name, schedules: 3 },
-      { name: faculty2.name, schedules: 2 },
-      { name: faculty3.name, schedules: 2 },
+      { name: faculty1.name },
+      { name: faculty2.name },
+      { name: faculty3.name },
     ],
     students: [
       { name: student1.name },
@@ -105,10 +82,13 @@ async function main() {
       { name: student3.name },
     ],
     totalUsers: 7,
-    totalSlots: schedules.length,
     availabilityRules: `${allFaculty.length} faculty × 7 days = ${allFaculty.length * 7} rules`,
   })
 }
+
+main()
+  .then(() => prisma.$disconnect())
+  .catch((e) => { console.error(e); prisma.$disconnect(); process.exit(1) })
 
 main()
   .then(() => prisma.$disconnect())

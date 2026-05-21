@@ -22,10 +22,14 @@ export async function POST(request: NextRequest) {
   const facultyId = (session.user as any).id
   const body = await request.json()
 
-  const { dayOfWeek, isBlocked, startTime, endTime } = body
+  const { dayOfWeek, isBlocked, startTime, endTime, startDate, endDate } = body
 
   if (typeof dayOfWeek !== "number" || dayOfWeek < 0 || dayOfWeek > 6) {
     return NextResponse.json({ error: "Invalid dayOfWeek (0-6)" }, { status: 400 })
+  }
+
+  if (typeof startDate !== "string" || !startDate) {
+    return NextResponse.json({ error: "startDate is required (YYYY-MM-DD)" }, { status: 400 })
   }
 
   const rule = await upsertAvailabilityRule({
@@ -34,6 +38,8 @@ export async function POST(request: NextRequest) {
     isBlocked: !!isBlocked,
     startTime: startTime ?? null,
     endTime: endTime ?? null,
+    startDate,
+    endDate: endDate ?? null,
   })
 
   return NextResponse.json({ rule })

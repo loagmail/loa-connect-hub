@@ -35,10 +35,10 @@ model User {
   role         Role     @default(STUDENT)
   createdAt    DateTime @default(now())
 
-  facultySchedules FacultySchedule[]
   availabilityRules FacultyAvailabilityRule[]
   studentAppointments Appointment[] @relation("StudentAppointments")
   facultyAppointments Appointment[] @relation("FacultyAppointments")
+  appointmentAttendees AppointmentAttendee[]
 
   organizedMeetings   InternalMeeting[]               @relation("OrganizedMeetings")
   meetingParticipants InternalMeetingParticipant[]
@@ -47,23 +47,21 @@ model User {
   sessions  Session[]
 }
 
-model FacultySchedule {
-  id          String   @id @default(cuid())
-  facultyId   String
-  date        String   // YYYY-MM-DD
-  startTime   String   // HH:mm
-  endTime     String   // HH:mm
-  isAvailable Boolean  @default(true)
-
-  faculty     User          @relation(fields: [facultyId], references: [id])
-  appointments Appointment[]
+enum AttendeeStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
 }
 
 model Appointment {
   id         String            @id @default(cuid())
   studentId  String
   facultyId  String
-  scheduleId String
+  date       String            // YYYY-MM-DD
+  startTime  String            // HH:mm
+  endTime    String            // HH:mm
+  title      String?
+  description String?
   status     AppointmentStatus @default(PENDING)
   teamsLink  String?
   teamsSyncStatus  TeamsSyncStatus @default(UNWRITTEN)
@@ -73,9 +71,21 @@ model Appointment {
   requestedAt DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
-  student  User             @relation("StudentAppointments", fields: [studentId], references: [id])
-  faculty  User             @relation("FacultyAppointments", fields: [facultyId], references: [id])
-  schedule FacultySchedule  @relation(fields: [scheduleId], references: [id])
+  student   User                  @relation("StudentAppointments", fields: [studentId], references: [id])
+  faculty   User                  @relation("FacultyAppointments", fields: [facultyId], references: [id])
+  attendees AppointmentAttendee[]
+}
+
+model AppointmentAttendee {
+  id            String         @id @default(cuid())
+  appointmentId String
+  userId        String
+  status        AttendeeStatus @default(INVITED)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@unique([appointmentId, userId])
 }
 
 enum MeetingStatus {
@@ -125,9 +135,11 @@ model FacultyAvailabilityRule {
   isBlocked Boolean @default(false)
   startTime String? // "15:00" — null means full day available
   endTime   String? // "19:00"
+  startDate String  // "2026-01-15" — when this rule becomes active
+  endDate   String? // "2026-06-30" — optional, rule is disabled after this date
 
   faculty User @relation(fields: [facultyId], references: [id], onDelete: Cascade)
-  @@unique([facultyId, dayOfWeek])
+  @@unique([facultyId, dayOfWeek, startDate])
 }
 
 // NextAuth models

@@ -14,27 +14,15 @@ export interface CreateUserInput {
   role: "STUDENT" | "FACULTY" | "ADMIN"
 }
 
-export interface ScheduleData {
-  id: string
-  facultyId: string
-  date: string
-  startTime: string
-  endTime: string
-  isAvailable: boolean
-}
-
-export interface CreateScheduleInput {
-  facultyId: string
-  date: string
-  startTime: string
-  endTime: string
-}
-
 export interface AppointmentData {
   id: string
   studentId: string
   facultyId: string
-  scheduleId: string
+  date: string
+  startTime: string
+  endTime: string
+  title: string | null
+  description: string | null
   status: "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED"
   teamsLink: string | null
   teamsSyncStatus: "UNWRITTEN" | "WRITTEN" | "FAILED"
@@ -48,7 +36,11 @@ export interface AppointmentData {
 export interface CreateAppointmentInput {
   studentId: string
   facultyId: string
-  scheduleId: string
+  date: string
+  startTime: string
+  endTime: string
+  title?: string | null
+  description?: string | null
 }
 
 export interface IUserRepository {
@@ -58,13 +50,11 @@ export interface IUserRepository {
   listByRole(role: string): Promise<UserData[]>
 }
 
-export interface IScheduleRepository {
-  create(input: CreateScheduleInput): Promise<ScheduleData>
-  listAvailable(): Promise<ScheduleData[]>
-  listByFaculty(facultyId: string): Promise<ScheduleData[]>
-  findById(id: string): Promise<ScheduleData | null>
-  update(id: string, data: Partial<ScheduleData>): Promise<ScheduleData>
-  delete(id: string): Promise<void>
+export interface AppointmentAttendeeData {
+  id: string
+  appointmentId: string
+  userId: string
+  status: "INVITED" | "ACCEPTED" | "DECLINED"
 }
 
 export interface IAppointmentRepository {
@@ -75,6 +65,9 @@ export interface IAppointmentRepository {
   listPendingSync(): Promise<AppointmentData[]>
   findById(id: string): Promise<AppointmentData | null>
   update(id: string, data: Partial<AppointmentData>): Promise<AppointmentData>
+  addAttendee(appointmentId: string, userId: string): Promise<AppointmentAttendeeData>
+  listAttendees(appointmentId: string): Promise<AppointmentAttendeeData[]>
+  updateAttendeeStatus(appointmentId: string, userId: string, status: "INVITED" | "ACCEPTED" | "DECLINED"): Promise<AppointmentAttendeeData>
 }
 
 export interface AvailabilityRuleData {
@@ -84,6 +77,8 @@ export interface AvailabilityRuleData {
   isBlocked: boolean
   startTime: string | null
   endTime: string | null
+  startDate: string
+  endDate: string | null
 }
 
 export interface UpsertAvailabilityRuleInput {
@@ -92,11 +87,13 @@ export interface UpsertAvailabilityRuleInput {
   isBlocked: boolean
   startTime?: string | null
   endTime?: string | null
+  startDate: string
+  endDate?: string | null
 }
 
 export interface IAvailabilityRuleRepository {
   listByFaculty(facultyId: string): Promise<AvailabilityRuleData[]>
-  findByFacultyAndDay(facultyId: string, dayOfWeek: number): Promise<AvailabilityRuleData | null>
+  findByFacultyAndDay(facultyId: string, dayOfWeek: number, startDate?: string): Promise<AvailabilityRuleData | null>
   upsert(input: UpsertAvailabilityRuleInput): Promise<AvailabilityRuleData>
   delete(id: string): Promise<void>
 }

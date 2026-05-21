@@ -13,6 +13,13 @@ interface Rule {
   isBlocked: boolean
   startTime: string | null
   endTime: string | null
+  startDate: string
+  endDate: string | null
+}
+
+function todayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
 export default function AvailabilityPage() {
@@ -20,6 +27,27 @@ export default function AvailabilityPage() {
   const [rules, setRules] = useState<Rule[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<number | null>(null)
+  const [startDate, setStartDate] = useState(todayStr())
+  const [endDate, setEndDate] = useState("")
+
+  // Determine active rules for the selected date range
+  const activeRules = rules.filter((r) => {
+    if (r.startDate > startDate) return false
+    if (r.endDate && r.endDate < startDate) return false
+    return true
+  })
+
+  const getRule = (day: number): Rule =>
+    activeRules.find((r) => r.dayOfWeek === day) || {
+      id: "",
+      facultyId: "",
+      dayOfWeek: day,
+      isBlocked: day >= 5,
+      startTime: day < 5 ? "08:00" : null,
+      endTime: day < 5 ? "18:00" : null,
+      startDate: startDate,
+      endDate: endDate || null,
+    }
 
   useEffect(() => {
     if (status === "unauthenticated") redirect("/login")
@@ -36,16 +64,6 @@ export default function AvailabilityPage() {
     }
   }, [status, session])
 
-  const getRule = (day: number): Rule =>
-    rules.find((r) => r.dayOfWeek === day) || {
-      id: "",
-      facultyId: "",
-      dayOfWeek: day,
-      isBlocked: day >= 5, // weekends blocked by default
-      startTime: day < 5 ? "08:00" : null,
-      endTime: day < 5 ? "18:00" : null,
-    }
-
   const toggleBlocked = async (day: number) => {
     const current = getRule(day)
     const newBlocked = !current.isBlocked
@@ -59,13 +77,17 @@ export default function AvailabilityPage() {
         isBlocked: newBlocked,
         startTime: newBlocked ? null : current.startTime || "08:00",
         endTime: newBlocked ? null : current.endTime || "18:00",
+        startDate,
+        endDate: endDate || null,
       }),
     })
 
     if (res.ok) {
       const data = await res.json()
       setRules((prev) => {
-        const filtered = prev.filter((r) => r.dayOfWeek !== day)
+        const filtered = prev.filter(
+          (r) => !(r.dayOfWeek === day && r.startDate === startDate)
+        )
         return [...filtered, data.rule].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
       })
     }
@@ -76,7 +98,9 @@ export default function AvailabilityPage() {
     const current = getRule(day)
     const updated = { ...current, [field]: value }
     setRules((prev) => {
-      const filtered = prev.filter((r) => r.dayOfWeek !== day)
+      const filtered = prev.filter(
+        (r) => !(r.dayOfWeek === day && r.startDate === startDate)
+      )
       return [...filtered, updated as Rule].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
     })
 
@@ -88,13 +112,17 @@ export default function AvailabilityPage() {
         isBlocked: updated.isBlocked,
         startTime: updated.startTime,
         endTime: updated.endTime,
+        startDate,
+        endDate: endDate || null,
       }),
     })
 
     if (res.ok) {
       const data = await res.json()
       setRules((prev) => {
-        const filtered = prev.filter((r) => r.dayOfWeek !== day)
+        const filtered = prev.filter(
+          (r) => !(r.dayOfWeek === day && r.startDate === startDate)
+        )
         return [...filtered, data.rule].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
       })
     }
@@ -117,6 +145,48 @@ export default function AvailabilityPage() {
         <h1 className="text-2xl font-bold text-slate-900 font-display">Availability Settings</h1>
         <p className="text-sm text-slate-500 mt-1">
           Configure when students can book consultations with you. Weekend blocking is enabled by default.
+        </p>
+      </div>
+
+      {/* Date Range Picker */}
+      <div className="card p-5 bg-white">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              Effective From <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="input"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              Effective Until <span className="text-slate-400">(optional)</span>
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="input"
+              min={startDate || undefined}
+            />
+            {endDate && (
+              <button
+                onClick={() => setEndDate("")}
+                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold mt-1"
+              >
+                Clear end date (no expiry)
+              </button>
+            )}
+          </div>
+        </div>
+        <p className="text-[11px] text-slate-400 mt-3">
+          Rules below apply from <strong>{startDate}</strong>
+          {endDate ? <> until <strong>{endDate}</strong></> : <> with no end date</>}.
+          After the end date, these rules are disabled and no bookings will be accepted.
         </p>
       </div>
 
@@ -182,7 +252,8 @@ export default function AvailabilityPage() {
       <div className="card p-5 bg-slate-50 border-slate-200">
         <p className="text-xs text-slate-500 font-medium">
           <strong>Note:</strong> These rules only apply to students booking consultations. 
-          Faculty-to-faculty meetings bypass these restrictions.
+          Faculty-to-faculty meetings bypass these restrictions. Rules with an end date
+          will automatically become inactive after that date.
         </p>
       </div>
     </div>

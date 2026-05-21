@@ -3,6 +3,7 @@ export type AppointmentStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED
 export type TeamsSyncStatus = "UNWRITTEN" | "WRITTEN" | "FAILED"
 export type MeetingStatus = "CONFIRMED" | "CANCELLED"
 export type ParticipantStatus = "PENDING" | "ACCEPTED" | "DECLINED"
+export type AttendeeStatus = "INVITED" | "ACCEPTED" | "DECLINED"
 
 export interface User {
   id: string
@@ -12,21 +13,15 @@ export interface User {
   createdAt: Date
 }
 
-export interface FacultySchedule {
-  id: string
-  facultyId: string
-  date: string
-  startTime: string
-  endTime: string
-  isAvailable: boolean
-  faculty?: User
-}
-
 export interface Appointment {
   id: string
   studentId: string
   facultyId: string
-  scheduleId: string
+  date: string
+  startTime: string
+  endTime: string
+  title: string | null
+  description: string | null
   status: AppointmentStatus
   teamsLink: string | null
   teamsSyncStatus: TeamsSyncStatus
@@ -37,7 +32,15 @@ export interface Appointment {
   updatedAt: Date
   student?: User
   faculty?: User
-  schedule?: FacultySchedule
+  attendees?: AppointmentAttendee[]
+}
+
+export interface AppointmentAttendee {
+  id: string
+  appointmentId: string
+  userId: string
+  status: AttendeeStatus
+  user?: User
 }
 
 export interface InternalMeeting {
@@ -71,6 +74,8 @@ export interface AvailabilityRule {
   isBlocked: boolean
   startTime: string | null
   endTime: string | null
+  startDate: string
+  endDate: string | null
 }
 
 export interface UpsertAvailabilityRuleInput {
@@ -79,4 +84,6 @@ export interface UpsertAvailabilityRuleInput {
   isBlocked: boolean
   startTime?: string | null
   endTime?: string | null
+  startDate: string
+  endDate?: string | null
 }

@@ -2,134 +2,197 @@
 
 import { useState, useEffect } from "react"
 
-interface Schedule {
+interface SlotInfo {
   id: string
+  facultyId: string
+  facultyName: string
+  facultyEmail: string
   date: string
   startTime: string
   endTime: string
-  isAvailable: boolean
-  faculty?: { name: string }
 }
 
-export function BookingForm() {
-  const [schedules, setSchedules] = useState<Schedule[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedSchedule, setSelectedSchedule] = useState<string>("")
-  const [booking, setBooking] = useState(false)
-  const [message, setMessage] = useState("")
+interface FacultyUser {
+  id: string
+  name: string
+  email: string
+}
+
+interface BookingFormProps {
+  slot: SlotInfo
+  onClose: () => void
+  onSuccess: () => void
+}
+
+export default function BookingForm({ slot, onClose, onSuccess }: BookingFormProps) {
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [facultyList, setFacultyList] = useState<FacultyUser[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    fetchSchedules()
-  }, [])
+    fetch("/api/auth/users")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.users) {
+          // Exclude the primary faculty from the list
+          setFacultyList(data.users.filter((u: any) => u.id !== slot.facultyId))
+        }
+      })
+      .catch(() => {})
+  }, [slot.facultyId])
 
-  const fetchSchedules = async () => {
-    try {
-      const res = await fetch("/api/schedules")
-      const data = await res.json()
-      setSchedules(data.schedules || [])
-    } catch {
-      setMessage("Failed to load schedules")
-    } finally {
-      setLoading(false)
-    }
+  const toggleAttendee = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
   }
 
-  const handleBook = async () => {
-    if (!selectedSchedule) {
-      setMessage("Please select a time slot")
-      return
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title.trim()) return
 
-    setBooking(true)
-    setMessage("")
+    setSubmitting(true)
+    setError("")
 
     try {
       const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduleId: selectedSchedule }),
+        body: JSON.stringify({
+          facultyId: slot.facultyId,
+          date: slot.date,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          attendeeIds: selectedIds,
+        }),
       })
 
-      const data = await res.json()
-
       if (res.ok) {
-        setMessage("Appointment requested!")
-        fetchSchedules()
-        setSelectedSchedule("")
-        setTimeout(() => setMessage(""), 3000)
+        onSuccess()
       } else {
-        setMessage(data.error || "Failed to book appointment")
+        const data = await res.json()
+        setError(data.error || "Failed to book")
       }
     } catch {
-      setMessage("An error occurred")
+      setError("An error occurred")
     } finally {
-      setBooking(false)
+      setSubmitting(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-3.5 w-24 bg-slate-100 rounded animate-pulse" />
-        <div className="h-10 w-full bg-slate-50 border border-slate-100 rounded-lg animate-pulse" />
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-5">
-      <div>
-        <label htmlFor="schedule" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-          Select a Consultation Time Slot
-        </label>
-        <div className="relative">
-          <select
-            id="schedule"
-            value={selectedSchedule}
-            onChange={(e) => setSelectedSchedule(e.target.value)}
-            className="input appearance-none bg-white text-slate-800 text-sm pr-10 py-2.5"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236366f1' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-              backgroundPosition: "right 0.75rem center",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "1.25rem",
-            }}
-          >
-            <option value="" className="text-slate-400">-- Choose a slot --</option>
-            {schedules
-              .filter((s) => s.isAvailable)
-              .map((schedule) => (
-                <option key={schedule.id} value={schedule.id} className="text-slate-800">
-                  {schedule.faculty?.name} — {schedule.date} ({schedule.startTime} - {schedule.endTime})
-                </option>
-              ))}
-          </select>
-        </div>
-      </div>
-
-      <button
-        onClick={handleBook}
-        disabled={booking || !selectedSchedule}
-        className="btn-primary w-full text-xs font-semibold py-2.5"
-      >
-        {booking ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <h3 className="text-lg font-bold text-slate-900">Book Appointment</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Booking...
-          </span>
-        ) : "Book Appointment"}
-      </button>
+          </button>
+        </div>
 
-      {message && (
-        <p className={`text-xs text-center font-semibold animate-slide-down ${
-          message.includes("successfully") ? "text-emerald-600" : "text-rose-600"
-        }`}>
-          {message}
-        </p>
-      )}
+        <form onSubmit={handleSubmit} className="p-5 space-y-5">
+          {/* Slot info (read-only) */}
+          <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-sm">
+            <div className="flex items-center gap-2 text-indigo-700 font-semibold mb-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {slot.date} &middot; {slot.startTime} &ndash; {slot.endTime}
+            </div>
+            <p className="text-indigo-600 text-xs">
+              with <span className="font-semibold">{slot.facultyName}</span>
+            </p>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="input-label">Meeting Title <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="input"
+              placeholder="e.g. Thesis Consultation"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="input-label">Description / Agenda (optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="input min-h-[80px]"
+              placeholder="Topics to discuss, questions, materials to review..."
+            />
+          </div>
+
+          {/* Additional Faculty Attendees */}
+          <div>
+            <label className="input-label">Invite Additional Faculty (optional)</label>
+            <p className="text-[10px] text-slate-400 mb-2">Only faculty members can be invited. Students cannot invite other students.</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {facultyList.length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No other faculty available</p>
+              ) : (
+                facultyList.map((f) => (
+                  <label
+                    key={f.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selectedIds.includes(f.id)
+                        ? "border-indigo-300 bg-indigo-50/50"
+                        : "border-slate-200 hover:border-slate-300 bg-white"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(f.id)}
+                      onChange={() => toggleAttendee(f.id)}
+                      className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">{f.name}</p>
+                      <p className="text-xs text-slate-400">{f.email}</p>
+                    </div>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={submitting || !title.trim()}
+              className="btn-primary text-sm font-semibold px-6 py-2.5 disabled:opacity-50"
+            >
+              {submitting ? "Booking..." : "Confirm Booking"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-sm font-medium text-slate-500 hover:text-slate-700 px-4 py-2.5"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

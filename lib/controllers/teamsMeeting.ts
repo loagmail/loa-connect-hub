@@ -16,8 +16,8 @@ export async function createTeamsMeetingForAppointment(
 
   const joinUrl = await createOnlineMeeting(accessToken, {
     subject: `E-Consultation: ${appointment.student?.name || "Student"} & ${appointment.faculty?.name || "Faculty"}`,
-    startDateTime: `${appointment.schedule?.date}T${appointment.schedule?.startTime}:00`,
-    endDateTime: `${appointment.schedule?.date}T${appointment.schedule?.endTime}:00`,
+    startDateTime: `${appointment.date}T${appointment.startTime}:00`,
+    endDateTime: `${appointment.date}T${appointment.endTime}:00`,
   })
 
   await appointmentRepository.update(appointmentId, { teamsLink: joinUrl })

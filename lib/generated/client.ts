@@ -47,15 +47,15 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
- * Model FacultySchedule
- * 
- */
-export type FacultySchedule = Prisma.FacultyScheduleModel
-/**
  * Model Appointment
  * 
  */
 export type Appointment = Prisma.AppointmentModel
+/**
+ * Model AppointmentAttendee
+ * 
+ */
+export type AppointmentAttendee = Prisma.AppointmentAttendeeModel
 /**
  * Model InternalMeeting
  * 

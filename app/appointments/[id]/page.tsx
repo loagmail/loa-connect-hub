@@ -8,6 +8,9 @@ import { StatusBadge } from "@/components/StatusBadge"
 interface AppointmentDetail {
   id: string
   status: string
+  date: string
+  startTime: string
+  endTime: string
   teamsLink: string | null
   teamsSyncStatus: string
   teamsSyncRetries: number
@@ -17,7 +20,6 @@ interface AppointmentDetail {
   updatedAt: string
   student: { id: string; name: string; email: string }
   faculty: { id: string; name: string; email: string }
-  schedule: { date: string; startTime: string; endTime: string }
 }
 
 function getInitial(name: string) {
@@ -149,8 +151,8 @@ export default function AppointmentDetailPage() {
           </div>
           <div>
             <p className="text-xs text-indigo-600 font-semibold uppercase tracking-wider">Scheduled</p>
-            <p className="text-sm font-bold text-indigo-900">{appointment.schedule.date}</p>
-            <p className="text-sm font-medium text-indigo-700">{appointment.schedule.startTime} &ndash; {appointment.schedule.endTime}</p>
+            <p className="text-sm font-bold text-indigo-900">{appointment.date}</p>
+            <p className="text-sm font-medium text-indigo-700">{appointment.startTime} &ndash; {appointment.endTime}</p>
           </div>
         </div>
 

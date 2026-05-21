@@ -30,8 +30,8 @@ export async function checkConflicts(
         userId,
         userName: apt.student?.name || apt.faculty?.name || "Unknown",
         date,
-        startTime: apt.schedule?.startTime || startTime,
-        endTime: apt.schedule?.endTime || endTime,
+        startTime: apt.startTime || startTime,
+        endTime: apt.endTime || endTime,
         title: `Appointment with ${apt.student?.name || apt.faculty?.name || "Unknown"}`,
       })
     }
