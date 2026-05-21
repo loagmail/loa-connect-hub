@@ -9,7 +9,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState<"STUDENT" | "FACULTY">("STUDENT")
+  const [role, setRole] = useState<"STUDENT" | "FACULTY" | "DEAN" | "ADMIN">("STUDENT")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -115,7 +115,7 @@ export default function RegisterPage() {
             <select
               id="role"
               value={role}
-              onChange={(e) => setRole(e.target.value as "STUDENT" | "FACULTY")}
+              onChange={(e) => setRole(e.target.value as "STUDENT" | "FACULTY" | "DEAN" | "ADMIN")}
               className="input appearance-none bg-white text-slate-800 text-sm pr-10 py-2.5"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236366f1' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
@@ -126,6 +126,8 @@ export default function RegisterPage() {
             >
               <option value="STUDENT">Student</option>
               <option value="FACULTY">Faculty Consultant</option>
+              <option value="DEAN">Dean</option>
+              <option value="ADMIN">Administrator</option>
             </select>
           </div>
         </div>

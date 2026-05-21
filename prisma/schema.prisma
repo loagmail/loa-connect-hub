@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   STUDENT
   FACULTY
+  DEAN
   ADMIN
 }
 
@@ -33,7 +34,13 @@ model User {
   email        String   @unique
   passwordHash String?
   role         Role     @default(STUDENT)
+  departmentId String?
+  hasLoggedInBefore Boolean @default(false)
+  lastLoginAt       DateTime?
   createdAt    DateTime @default(now())
+
+  department    Department? @relation(fields: [departmentId], references: [id])
+  deanDepartment Department? @relation("DeanDepartment")
 
   availabilityRules FacultyAvailabilityRule[]
   studentAppointments Appointment[] @relation("StudentAppointments")
@@ -47,6 +54,16 @@ model User {
   sessions  Session[]
 }
 
+model Department {
+  id     String @id @default(cuid())
+  name   String
+  code   String @unique
+  deanId String? @unique
+
+  dean User?  @relation("DeanDepartment", fields: [deanId], references: [id])
+  users User[]
+}
+
 enum AttendeeStatus {
   INVITED
   ACCEPTED
@@ -54,22 +71,24 @@ enum AttendeeStatus {
 }
 
 model Appointment {
-  id         String            @id @default(cuid())
-  studentId  String
-  facultyId  String
-  date       String            // YYYY-MM-DD
-  startTime  String            // HH:mm
-  endTime    String            // HH:mm
-  title      String?
-  description String?
-  status     AppointmentStatus @default(PENDING)
-  teamsLink  String?
+  id              String            @id @default(cuid())
+  studentId       String
+  facultyId       String
+  date            String            // YYYY-MM-DD
+  startTime       String            // HH:mm
+  endTime         String            // HH:mm
+  title           String?
+  description     String?
+  status          AppointmentStatus @default(PENDING)
+  actionTaken     String?
+  additionalRemarks String?
+  teamsLink       String?
   teamsSyncStatus  TeamsSyncStatus @default(UNWRITTEN)
   teamsSyncRetries Int             @default(0)
   teamsSyncError   String?
   teamsSyncLastAttempt DateTime?
-  requestedAt DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  requestedAt     DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   student   User                  @relation("StudentAppointments", fields: [studentId], references: [id])
   faculty   User                  @relation("FacultyAppointments", fields: [facultyId], references: [id])
@@ -86,6 +105,15 @@ model AppointmentAttendee {
   user        User        @relation(fields: [userId], references: [id])
 
   @@unique([appointmentId, userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime // now + 15 min
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
 }
 
 enum MeetingStatus {

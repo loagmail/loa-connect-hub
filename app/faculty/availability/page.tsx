@@ -51,7 +51,7 @@ export default function AvailabilityPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") redirect("/login")
-    if (status === "authenticated" && (session?.user as any)?.role !== "FACULTY") redirect("/login")
+    if (status === "authenticated" && (session?.user as any)?.role !== "FACULTY" && (session?.user as any)?.role !== "DEAN") redirect("/login")
 
     if (status === "authenticated") {
       fetch("/api/availability-rules")

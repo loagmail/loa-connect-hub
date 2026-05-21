@@ -4,22 +4,24 @@ import { listAvailabilityRules, upsertAvailabilityRule } from "@/lib/controllers
 
 export async function GET() {
   const session = await auth()
-  if (!session?.user || (session.user as any).role !== "FACULTY") {
+  const role = (session?.user as any)?.role
+  if (!role || (role !== "FACULTY" && role !== "DEAN")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const facultyId = (session.user as any).id
+  const facultyId = (session!.user as any).id
   const rules = await listAvailabilityRules(facultyId)
   return NextResponse.json({ rules })
 }
 
 export async function POST(request: NextRequest) {
   const session = await auth()
-  if (!session?.user || (session.user as any).role !== "FACULTY") {
+  const role = (session?.user as any)?.role
+  if (!role || (role !== "FACULTY" && role !== "DEAN")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const facultyId = (session.user as any).id
+  const facultyId = (session!.user as any).id
   const body = await request.json()
 
   const { dayOfWeek, isBlocked, startTime, endTime, startDate, endDate } = body

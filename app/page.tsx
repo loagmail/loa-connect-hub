@@ -7,6 +7,7 @@ export default async function Home() {
     const role = (session.user as any).role
     if (role === "STUDENT") redirect("/student")
     if (role === "FACULTY") redirect("/faculty")
+    if (role === "DEAN") redirect("/dean")
     if (role === "ADMIN") redirect("/admin")
   }
   redirect("/login")

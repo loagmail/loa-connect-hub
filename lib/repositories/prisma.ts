@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma"
 import type {
   IUserRepository,
+  IDepartmentRepository,
   IAppointmentRepository,
   IAvailabilityRuleRepository,
   IMeetingRepository,
   UserData,
   CreateUserInput,
+  DepartmentData,
   AppointmentData,
   CreateAppointmentInput,
   AppointmentAttendeeData,
@@ -28,12 +30,45 @@ export const userRepository: IUserRepository = {
     return user as UserData
   },
   async create(input) {
-    const user = await prisma.user.create({ data: input })
+    const user = await prisma.user.create({ data: input as any })
     return user as UserData
   },
   async listByRole(role) {
     const users = await prisma.user.findMany({ where: { role: role as any } })
     return users as UserData[]
+  },
+  async listByDepartment(departmentId) {
+    const users = await prisma.user.findMany({ where: { departmentId } })
+    return users as UserData[]
+  },
+  async update(id, data) {
+    const user = await prisma.user.update({ where: { id }, data: data as any })
+    return user as UserData
+  },
+}
+
+export const departmentRepository: IDepartmentRepository = {
+  async listAll() {
+    const depts = await prisma.department.findMany()
+    return depts as DepartmentData[]
+  },
+  async findById(id) {
+    const dept = await prisma.department.findUnique({ where: { id } })
+    if (!dept) return null
+    return dept as DepartmentData
+  },
+  async findByDeanId(deanId) {
+    const dept = await prisma.department.findFirst({ where: { deanId } })
+    if (!dept) return null
+    return dept as DepartmentData
+  },
+  async create(data) {
+    const dept = await prisma.department.create({ data: data as any })
+    return dept as DepartmentData
+  },
+  async update(id, data) {
+    const dept = await prisma.department.update({ where: { id }, data: data as any })
+    return dept as DepartmentData
   },
 }
 

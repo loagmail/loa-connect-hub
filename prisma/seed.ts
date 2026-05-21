@@ -17,16 +17,28 @@ async function main() {
   await prisma.facultyAvailabilityRule.deleteMany()
   await prisma.internalMeetingParticipant.deleteMany()
   await prisma.internalMeeting.deleteMany()
+  await prisma.passwordResetToken.deleteMany()
   await prisma.session.deleteMany()
   await prisma.account.deleteMany()
+  await prisma.department.deleteMany()
   await prisma.user.deleteMany()
 
   const admin = await prisma.user.create({
     data: { name: "Dr. Admin", email: "admin@econsult.com", passwordHash, role: "ADMIN" },
   })
 
+  const dean = await prisma.user.create({
+    data: { name: "Dr. Dean Rivera", email: "dean@econsult.com", passwordHash, role: "DEAN" },
+  })
+
+  const department = await prisma.department.create({
+    data: { name: "College of Computer Studies", code: "CCS", deanId: dean.id },
+  })
+
+  await prisma.user.update({ where: { id: dean.id }, data: { departmentId: department.id } })
+
   const faculty1 = await prisma.user.create({
-    data: { name: "Dr. Sarah Chen", email: "faculty1@econsult.com", passwordHash, role: "FACULTY" },
+    data: { name: "Dr. Sarah Chen", email: "faculty1@econsult.com", passwordHash, role: "FACULTY", departmentId: department.id },
   })
 
   const faculty2 = await prisma.user.create({
@@ -71,6 +83,7 @@ async function main() {
 
   console.log({
     admin: { name: admin.name, role: admin.role },
+    dean: { name: dean.name, role: dean.role, department: department.name },
     faculty: [
       { name: faculty1.name },
       { name: faculty2.name },
@@ -81,14 +94,11 @@ async function main() {
       { name: student2.name },
       { name: student3.name },
     ],
-    totalUsers: 7,
+    totalUsers: 8,
+    departments: [{ name: department.name, code: department.code }],
     availabilityRules: `${allFaculty.length} faculty × 7 days = ${allFaculty.length * 7} rules`,
   })
 }
-
-main()
-  .then(() => prisma.$disconnect())
-  .catch((e) => { console.error(e); prisma.$disconnect(); process.exit(1) })
 
 main()
   .then(() => prisma.$disconnect())

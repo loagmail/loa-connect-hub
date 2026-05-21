@@ -3,7 +3,10 @@ export interface UserData {
   name: string
   email: string
   passwordHash: string | null
-  role: "STUDENT" | "FACULTY" | "ADMIN"
+  role: "STUDENT" | "FACULTY" | "DEAN" | "ADMIN"
+  departmentId: string | null
+  hasLoggedInBefore: boolean
+  lastLoginAt: Date | null
   createdAt: Date
 }
 
@@ -11,7 +14,53 @@ export interface CreateUserInput {
   name: string
   email: string
   passwordHash?: string | null
-  role: "STUDENT" | "FACULTY" | "ADMIN"
+  role: "STUDENT" | "FACULTY" | "DEAN" | "ADMIN"
+  departmentId?: string | null
+}
+
+export interface AppointmentData {
+  id: string
+  studentId: string
+  facultyId: string
+  date: string
+  startTime: string
+  endTime: string
+  title: string | null
+  description: string | null
+  actionTaken: string | null
+  additionalRemarks: string | null
+  status: "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED"
+  teamsLink: string | null
+  teamsSyncStatus: "UNWRITTEN" | "WRITTEN" | "FAILED"
+  teamsSyncRetries: number
+  teamsSyncError: string | null
+  teamsSyncLastAttempt: Date | null
+  requestedAt: Date
+  updatedAt: Date
+}
+
+export interface DepartmentData {
+  id: string
+  name: string
+  code: string
+  deanId: string | null
+}
+
+export interface IUserRepository {
+  findByEmail(email: string): Promise<UserData | null>
+  findById(id: string): Promise<UserData | null>
+  create(input: CreateUserInput): Promise<UserData>
+  listByRole(role: string): Promise<UserData[]>
+  listByDepartment(departmentId: string): Promise<UserData[]>
+  update(id: string, data: Partial<UserData>): Promise<UserData>
+}
+
+export interface IDepartmentRepository {
+  listAll(): Promise<DepartmentData[]>
+  findById(id: string): Promise<DepartmentData | null>
+  findByDeanId(deanId: string): Promise<DepartmentData | null>
+  create(data: { name: string; code: string; deanId?: string | null }): Promise<DepartmentData>
+  update(id: string, data: Partial<DepartmentData>): Promise<DepartmentData>
 }
 
 export interface AppointmentData {

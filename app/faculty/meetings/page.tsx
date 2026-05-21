@@ -21,7 +21,8 @@ const participantStatusColors: Record<string, string> = {
 export default async function MeetingsPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  if ((session.user as any).role !== "FACULTY") redirect("/login")
+  const role = (session.user as any).role
+  if (role !== "FACULTY" && role !== "DEAN") redirect("/login")
 
   const userId = (session.user as any).id
   const meetings = await getMeetingsForUser(userId) as any[]

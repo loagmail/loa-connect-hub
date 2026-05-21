@@ -52,8 +52,10 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Department: 'Department',
   Appointment: 'Appointment',
   AppointmentAttendee: 'AppointmentAttendee',
+  PasswordResetToken: 'PasswordResetToken',
   InternalMeeting: 'InternalMeeting',
   InternalMeetingParticipant: 'InternalMeetingParticipant',
   FacultyAvailabilityRule: 'FacultyAvailabilityRule',
@@ -81,10 +83,23 @@ export const UserScalarFieldEnum = {
   email: 'email',
   passwordHash: 'passwordHash',
   role: 'role',
+  departmentId: 'departmentId',
+  hasLoggedInBefore: 'hasLoggedInBefore',
+  lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const DepartmentScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  code: 'code',
+  deanId: 'deanId'
+} as const
+
+export type DepartmentScalarFieldEnum = (typeof DepartmentScalarFieldEnum)[keyof typeof DepartmentScalarFieldEnum]
 
 
 export const AppointmentScalarFieldEnum = {
@@ -97,6 +112,8 @@ export const AppointmentScalarFieldEnum = {
   title: 'title',
   description: 'description',
   status: 'status',
+  actionTaken: 'actionTaken',
+  additionalRemarks: 'additionalRemarks',
   teamsLink: 'teamsLink',
   teamsSyncStatus: 'teamsSyncStatus',
   teamsSyncRetries: 'teamsSyncRetries',
@@ -117,6 +134,18 @@ export const AppointmentAttendeeScalarFieldEnum = {
 } as const
 
 export type AppointmentAttendeeScalarFieldEnum = (typeof AppointmentAttendeeScalarFieldEnum)[keyof typeof AppointmentAttendeeScalarFieldEnum]
+
+
+export const PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
 
 
 export const InternalMeetingScalarFieldEnum = {

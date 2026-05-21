@@ -47,6 +47,11 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model Department
+ * 
+ */
+export type Department = Prisma.DepartmentModel
+/**
  * Model Appointment
  * 
  */
@@ -56,6 +61,11 @@ export type Appointment = Prisma.AppointmentModel
  * 
  */
 export type AppointmentAttendee = Prisma.AppointmentAttendeeModel
+/**
+ * Model PasswordResetToken
+ * 
+ */
+export type PasswordResetToken = Prisma.PasswordResetTokenModel
 /**
  * Model InternalMeeting
  * 

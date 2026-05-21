@@ -57,7 +57,6 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
-        // For OAuth users (e.g. AzureAD), the user from adapter includes DB fields
         ;(token as any).role = (user as any).role || "STUDENT"
       }
       if (account) {
@@ -73,6 +72,11 @@ export const authOptions: NextAuthOptions = {
         ;(session as any).accessToken = (token as any).accessToken
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      if (new URL(url).origin === baseUrl) return url
+      return baseUrl
     },
   },
 }

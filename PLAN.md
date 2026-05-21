@@ -8,16 +8,33 @@
 | **2. Faculty Dashboard Tabs** | ✅ **Done** |
 | **3. Faculty Cancel Flow** | ✅ **Done** |
 | **4. Student Cancellation** | ✅ **Done** |
-| 5. Faculty-to-Faculty Meetings | ✅ **Done** |
-| 6. Sync Tracking Fields | ✅ **Done** |
-| 7. Teams Sync Orchestration | ✅ **Done** |
-| 8. Conflict Detection w/ Teams | ✅ **Done** |
+| **5. Faculty-to-Faculty Meetings** | ✅ **Done** |
+| **6. Sync Tracking Fields** | ✅ **Done** |
+| **7. Teams Sync Orchestration** | ✅ **Done** |
+| **8. Conflict Detection w/ Teams** | ✅ **Done** |
+| **9. Enhanced Booking (Title, Desc, Attendees)** | ✅ **Done** |
+| — | — |
+| **Architecture: FacultySchedule removed** | ✅ **Done** |
+| **Architecture: Date range on availability rules** | ✅ **Done** |
+| — | — |
+| **10. Department & Dean Role** | ❌ **Remaining** |
+| **11. ETL — Bulk User Import (CSV)** | ❌ **Remaining** |
+| **12. Email-based Auth & Password Setup** | ❌ **Remaining** |
+| **13. Consultation Completion (Action Taken)** | ❌ **Remaining** |
+| **14. Attendee Permissions** | ❌ **Remaining** |
+| **15. Reports & Export** | ❌ **Remaining** |
 
 ## Overview
 
-Transform the MVP booking system into a complete academic consultation platform with app-level availability rules, faculty-to-faculty meetings, and optional MS Teams calendar integration.
-
-**Core Principle:** Faculty controls their availability at the app level. Students can only book within those bounds. MS Teams integration is optional and feature-flagged.
+Transform the MVP booking system into a complete academic consultation platform with:
+- App-level availability rules with date range support
+- Faculty-to-faculty internal meetings
+- Optional MS Teams calendar sync via Graph API
+- Department management with Dean oversight
+- Bulk user import (ETL) via CSV
+- Email-based password setup and reset
+- Consultation completion tracking (action taken, remarks)
+- Reports and CSV export
 
 ---
 
@@ -25,7 +42,7 @@ Transform the MVP booking system into a complete academic consultation platform 
 
 Faculty configures app-level rules per day-of-week. Students are blocked from booking outside those rules.
 
-### 1A. New Prisma Model
+### 1A. Prisma Model
 
 ```prisma
 model FacultyAvailabilityRule {
@@ -35,511 +52,418 @@ model FacultyAvailabilityRule {
   isBlocked Boolean @default(false)
   startTime String? // "15:00" — null means full day available
   endTime   String? // "19:00"
+  startDate String  // "2026-01-15" — when this rule becomes active
+  endDate   String? // "2026-06-30" — optional, rule is disabled after this date
 
   faculty User @relation(fields: [facultyId], references: [id], onDelete: Cascade)
-  @@unique([facultyId, dayOfWeek])
+  @@unique([facultyId, dayOfWeek, startDate])
 }
 ```
 
-### 1B. New Repository Interface + Implementation
+### 1B. Architecture Notes
 
-- `IAvailabilityRuleRepository` — CRUD + listByFaculty + getByFacultyAndDay
-- Prisma implementation
-- Factory registration
+- **Rule date range**: Rules have `startDate` (required) and `endDate` (optional). If `endDate` is set and in the past, the rule is automatically disabled — no manual action needed.
+- **`findActiveRule(facultyId, date)`**: Finds the active rule for a date by matching `dayOfWeek`, filtering by `startDate <= date <= endDate` (or no endDate), and returning the one with the latest `startDate`.
+- **Booking calendar**: Derives available time blocks from rules on-the-fly (generates 1-hour slots within the rule's time window).
+- **Seed defaults**: 21 rules per faculty (7 days × 3 faculty), Mon–Fri 08:00–18:00, Sat–Sun blocked, all starting `"2026-01-01"`.
 
-### 1C. New Controller
-
-- `listAvailabilityRules(facultyId)`
-- `upsertAvailabilityRule(input)` — create or update a rule per dayOfWeek
-- `getEffectiveHours(facultyId, dayOfWeek)` — returns available window or "blocked"
-
-### 1D. New API Routes
-
-- `GET /api/availability-rules` — list rules for current faculty
-- `POST /api/availability-rules` — upsert a rule (faculty only)
-
-### 1E. UI: Faculty Availability Settings Page
-
-**`/faculty/availability`** — New page with:
-- Grid of 7 cards (one per day, Mon–Sun)
-- Each card: toggle "Block entire day" + optional time picker (start/end)
-- Visual summary of current rules
-- Sidebar link (visible only for faculty)
-
-### 1F. Update Student Booking Flow
-
-In `listAvailableSchedules()`:
-- After fetching schedules, filter against each faculty's availability rules
-- Remove: slots on blocked days
-- Remove: slots outside allowed time windows
-- This is server-side, students can't bypass it
-
-**Scope:** Availability rules only apply to **students booking via the app**. Faculty-to-faculty meetings (Phase 5) use a separate `InternalMeeting` model and are not filtered by these rules — faculty book directly with each other.
-
-### 1H. Seed Defaults
-
-When a faculty account is created (or on first login), seed sensible defaults:
-- Monday–Friday: `isBlocked=false`, `startTime="08:00"`, `endTime="18:00"`
-- Saturday–Sunday: `isBlocked=true`
-- Faculty can customize these on the `/faculty/availability` page at any time
-
-### 1G. Calendar-Based Booking UI (Student)
-
-Replace the flat card grid with an interactive calendar view for browsing and booking availability.
-
-**Design approach:** A monthly/weekly calendar grid where available slots are highlighted. The student navigates by day/week, not by scrolling through an endless list.
-
-**Component: BookingCalendar**
-- Monthly grid view showing days with available slots (highlighted)
-- Click a highlighted day → expands to show time slots for that day grouped by faculty
-- Each time slot shows: faculty name, time range, "Book" button
-- Empty days and blocked days are visually dimmed or hidden
-- Tabs to filter by faculty (or show all)
-
-**Student flow:**
-```
-┌──────────────────────────────────────────┐
-│  [◀]  May 2026  [▶]                      │
-│  Mon  Tue  Wed  Thu  Fri  Sat  Sun       │
-│        ┌────┐ ┌────┐                     │
-│        │  5 │ │  6 │                     │
-│        │ 3  │ │ 5  │  ← number of slots  │
-│        │slts│ │slts│                     │
-│        └────┘ └────┘                     │
-│  ┌────┐ ┌────┐ ┌────┐                   │
-│  │ 12 │ │ 13 │ │ 14 │                   │
-│  │ 2  │ │ 0  │ │ 4  │                   │
-│  │slts│ │    │ │slts│                   │
-│  └────┘ └────┘ └────┘                   │
-└──────────────────────────────────────────┘
-
-  Clicking May 6 (3 slots):
-  ┌────────────────────────────────┐
-  │ Faculty         Time           │
-  │ Dr. Smith       09:00-10:00  ▶ │
-  │ Dr. Smith       10:00-11:00  ▶ │
-  │ Prof. Jones     14:00-15:00  ▶ │
-  └────────────────────────────────┘
-```
-
-**Where to place it:**
-- Replace the "Available Consultation Slots" section on the student dashboard (`/student`)
-- Or create a dedicated `/student/book` page with the calendar as the primary view
-- Keep the dashboard for metrics + upcoming appointments only
-
-**Filter by faculty:**
-- Dropdown or sidebar to filter the calendar by a specific faculty member
-- Helps students focus on their preferred faculty's availability
-
-### New/Modified Files
+### 1C. Files
 
 | File | Action |
 |------|--------|
-| `prisma/schema.prisma` | + `FacultyAvailabilityRule` model |
-| `lib/models/index.ts` | + `AvailabilityRule` type |
-| `lib/repositories/interfaces.ts` | + `IAvailabilityRuleRepository` |
-| `lib/repositories/prisma.ts` | + `PrismaAvailabilityRuleRepository` |
-| `lib/repositories/factory.ts` | + register factory |
-| `lib/controllers/availabilityRules.ts` | New file |
-| `app/api/availability-rules/route.ts` | New file |
-| `app/faculty/availability/page.tsx` | New page |
-| `components/Sidebar.tsx` | + link for faculty |
-| `lib/controllers/schedules.ts` | Updated to filter by rules |
-| `app/student/page.tsx` | Replace slot grid with calendar (or create `/student/book`) |
-| `components/BookingCalendar.tsx` | New — interactive monthly calendar for booking |
+| `prisma/schema.prisma` | `FacultyAvailabilityRule` model |
+| `lib/models/index.ts` | `AvailabilityRule` type |
+| `lib/repositories/interfaces.ts` | `IAvailabilityRuleRepository` |
+| `lib/repositories/prisma.ts` | Prisma implementation |
+| `lib/repositories/factory.ts` | Factory export |
+| `lib/controllers/availabilityRules.ts` | Controller with `findActiveRule()`, `getEffectiveHours()`, `isSlotAllowed()` |
+| `app/api/availability-rules/route.ts` | GET list, POST upsert |
+| `app/faculty/availability/page.tsx` | UI with date range picker + day cards |
+| `components/BookingCalendar.tsx` | Rules-based calendar with month grid |
 
 ---
 
 ## Phase 2: Faculty Dashboard Tabs ✅ *(Implemented)*
 
-Faculty sees PENDING / APPROVED / ALL as separate views instead of one flat list.
+Faculty sees PENDING / APPROVED / ALL as separate views with count badges.
 
-### 2A. New Component: Tab Navigation
-
-- Tab bar: **Pending** | **Approved** | **All**
-- Each tab filters existing appointments by status
-- Client-side filtering with URL search params for shareability
-
-### 2B. Update Faculty Dashboard Page
-
-- Add tab navigation above Appointment Cards section
-- Keep metrics and schedule timeline as-is
-
-### 2C. Appointment Card Updates
-
-- Update `AppointmentCard` for faculty view to show relevant actions per status
-- Cancel button only for APPROVED appointments
-
-### Modified Files
+### Files
 
 | File | Action |
 |------|--------|
-| `components/AppointmentCard.tsx` | Updated with cancel, status-tab-aware |
-| `app/faculty/page.tsx` | Add tab navigation + filtering |
+| `components/AppointmentCard.tsx` | Status-aware actions |
+| `components/FacultyAppointmentTabs.tsx` | Tab bar with badges |
+| `app/faculty/page.tsx` | Tabbed dashboard |
 
 ---
 
 ## Phase 3: Faculty Cancel Flow ✅ *(Implemented)*
 
-Faculty can cancel an approved appointment → restores slot availability + removes Teams event.
-
-### 3A. New Controller Function
-
-```ts
-export async function cancelAppointment(id: string, facultyId: string) {
-  // Verify ownership + APPROVED status
-  // Restore schedule availability
-  // Delete Teams meeting event (if teamsEventId exists)
-  // Set status to CANCELLED
-}
-```
-
-### 3B. New Status: `CANCELLED`
-
-- Add to `AppointmentStatus` enum in Prisma schema
-- Add to types in `lib/models/index.ts`
-- Add to `AppointmentData` interface in repositories
-- Update all UI badge components to handle it
-
-### 3C. Update API Route
-
-- `POST /api/appointments/[id]/cancel` — new action route
-- Protected: faculty only, ownership check
-
-### 3D. Update `AppointmentCard`
-
-- If role=FACULTY and status=APPROVED: show "Cancel Meeting" button
-- If role=STUDENT and status=CANCELLED: show "Cancelled" badge
-
-### Modified Files
-
-| File | Action |
-|------|--------|
-| `prisma/schema.prisma` | + `CANCELLED` in `AppointmentStatus` |
-| `lib/models/index.ts` | + `CANCELLED` type |
-| `lib/repositories/interfaces.ts` | + `CANCELLED` in type |
-| `lib/controllers/appointments.ts` | + `cancelAppointment()` |
-| `app/api/appointments/[id]/[action]/route.ts` | + cancel handler |
-| `components/AppointmentCard.tsx` | + cancel button + cancelled badge |
-| `components/StatusBadge.tsx` | + cancelled variant |
+Faculty cancels APPROVED appointments → status set to CANCELLED.
 
 ---
 
 ## Phase 4: Student Cancellation ✅ *(Implemented)*
 
-### 4A. Flow
-
-```
-Student books → PENDING → Student cancels → CANCELLED (slot restored)
-                          └─ Faculty still needs to approve
-Student books → PENDING → Faculty approves → APPROVED → only faculty can cancel
-```
-
-- Student can cancel their own **PENDING** requests at any time (before faculty reviews)
-- **APPROVED** appointments: only faculty can cancel (Phase 3). Student cancel on APPROVED is rejected.
-- When cancelled → schedule slot is restored, other students can book it
-
-### 4B. Controller
-
-- `studentCancelAppointment(id, studentId)` — ownership check, status=PENDING guard, restores slot, sets CANCELLED
-
-### 4C. API Route
-
-- `POST /api/appointments/[id]/student-cancel` — separate route file (not part of `[action]` route)
-- Route resolution: literal `student-cancel` takes priority over `[action]` dynamic segment
-
-### 4D. UI
-
-- AppointmentCard for role=STUDENT + status=PENDING: shows "Cancel Request" button
-- No confirmation dialog (kept simple, matches Phase 3 style)
-
-### Modified Files
-
-| File | Action |
-|------|--------|
-| `lib/controllers/appointments.ts` | + `studentCancelAppointment()` |
-| `app/api/appointments/[id]/student-cancel/route.ts` | New — dedicated student cancel route |
-| `components/AppointmentCard.tsx` | + cancel button for student view |
+Student cancels their own PENDING requests. Separate dedicated route `/api/appointments/[id]/student-cancel`.
 
 ---
 
 ## Phase 5: Faculty-to-Faculty Internal Meetings ✅ *(Implemented)*
 
-### 5A. New Prisma Models & Enums
+Full CRUD for `InternalMeeting` with participant management, conflict detection (appointments + meetings + Teams calendar).
 
-```prisma
-enum MeetingStatus { CONFIRMED, CANCELLED }
-enum ParticipantStatus { PENDING, ACCEPTED, DECLINED }
-
-model InternalMeeting {
-  id          String        @id @default(cuid())
-  title       String
-  description String?
-  date        String
-  startTime   String
-  endTime     String
-  organizerId String
-  teamsEventId String?
-  teamsLink   String?
-  status      MeetingStatus @default(CONFIRMED)
-  createdAt   DateTime      @default(now())
-
-  organizer    User                          @relation("OrganizedMeetings")
-  participants InternalMeetingParticipant[]
-}
-
-model InternalMeetingParticipant {
-  id        String            @id @default(cuid())
-  meetingId String
-  userId    String
-  status    ParticipantStatus @default(PENDING)
-
-  meeting InternalMeeting @relation(onDelete: Cascade)
-  user    User
-  @@unique([meetingId, userId])
-}
-```
-
-### 5B. Repository
-
-- `IMeetingRepository` interface with: create, findById (with includes), listByOrganizer, listByParticipant, update, addParticipant, updateParticipantStatus, getParticipants
-- Conflict queries: `listConflictingAppointments(facultyId, date, startTime, endTime)` — joins through FacultySchedule for date/time overlap
-- `listConflictingMeetings(facultyId, date, startTime, endTime)` — checks CONFIRMED internal meetings
-
-### 5C. Conflict Detection Service
-
-- `checkConflicts(facultyIds, date, startTime, endTime)` — checks both appointments and meetings for all given faculty IDs
-- Returns advisory list of conflicts (does not block booking)
-
-### 5D. Controller
-
-- `createMeeting()` — creates meeting + adds participants (organizer auto-ACCEPTED)
-- `getMeetingsForUser()` — merges organized + invited, deduplicated
-- `getMeetingById()` — single meeting with all includes
-- `respondToMeeting()` — accept/decline by participant
-- `cancelMeeting()` — organizer only, sets CANCELLED
-- `getConflicts()` — wraps conflict detection service
-
-### 5E. API Routes
-
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/meetings` | GET | List meetings for current user |
-| `/api/meetings` | POST | Create new meeting |
-| `/api/meetings/[id]` | GET | Meeting detail |
-| `/api/meetings/[id]` | PATCH | Cancel meeting (organizer only) |
-| `/api/meetings/[id]/respond` | POST | Accept/decline invitation |
-| `/api/meetings/conflicts` | POST | Check conflicts for a set of faculty |
-| `/api/auth/users` | GET | List all faculty users (for participant picker) |
-
-### 5F. UI Pages
-
-- **`/faculty/meetings`** — List view with metrics (confirmed/total), meeting cards with status badges, participant avatars with color-coded status
-- **`/faculty/meetings/new`** — Form with: title, description, date, time range, faculty multi-select checkboxes, **real-time conflict checking** (debounced 500ms)
-- **`/faculty/meetings/[id]`** — Detail view with: meeting info, description panel, Teams link, respond buttons (Accept/Decline for invitees with PENDING status), Cancel Meeting button (organizer only), participant list with status badges
-- Sidebar updated with "Meetings" link for FACULTY role (before Availability Rules)
-
-### 5G. Implementation Notes
-
-- Conflict checking is **advisory** — users can proceed despite conflicts
-- Organizer is automatically added as ACCEPTED participant
-- Non-organizer invitees see Accept/Decline only when their status is PENDING
-- No Teams sync yet — `teamsEventId`/`teamsLink` fields are structural for Phase 7
-
-### New/Modified Files
+### Files
 
 | File | Action |
 |------|--------|
-| `prisma/schema.prisma` | + `InternalMeeting`, `InternalMeetingParticipant`, enums, User relations |
-| `lib/models/index.ts` | + `MeetingStatus`, `ParticipantStatus`, `InternalMeeting`, `InternalMeetingParticipant` types |
-| `lib/repositories/interfaces.ts` | + `IMeetingRepository` + data types |
-| `lib/repositories/prisma.ts` | + `meetingRepository` implementation |
-| `lib/repositories/factory.ts` | Export `meetingRepository` |
-| `lib/services/conflictDetection.ts` | New — conflict detection |
-| `lib/controllers/meetings.ts` | New — meeting CRUD + respond + conflicts |
-| `app/api/meetings/route.ts` | New |
-| `app/api/meetings/[id]/route.ts` | New |
-| `app/api/meetings/[id]/respond/route.ts` | New |
-| `app/api/meetings/conflicts/route.ts` | New |
-| `app/api/auth/users/route.ts` | New — faculty list for participant picker |
-| `app/faculty/meetings/page.tsx` | New — meetings list |
-| `app/faculty/meetings/new/page.tsx` | New — create meeting form |
-| `app/faculty/meetings/[id]/page.tsx` | New — meeting detail |
-| `components/Sidebar.tsx` | + Meetings link for faculty |
+| `prisma/schema.prisma` | `InternalMeeting`, `InternalMeetingParticipant`, enums |
+| `lib/services/conflictDetection.ts` | Conflict detection service |
+| `lib/controllers/meetings.ts` | CRUD + respond + conflicts |
+| `app/api/meetings/*` | Full REST API |
+| `app/faculty/meetings/*` | List, new (with live conflict checker), detail pages |
 
 ---
 
 ## Phase 6: Sync Tracking Fields ✅ *(Implemented)*
 
-### 6A. Schema Changes — Appointment Model
-
-```prisma
-enum TeamsSyncStatus { UNWRITTEN, WRITTEN, FAILED }
-
-model Appointment {
-  // ... existing fields
-  teamsSyncStatus  TeamsSyncStatus @default(UNWRITTEN)
-  teamsSyncRetries Int             @default(0)
-  teamsSyncError   String?
-  teamsSyncLastAttempt DateTime?
-}
-```
-
-### 6B. approveAppointment() Decoupled
-
-`approveAppointment()`:
-- Sets `status = APPROVED`, `teamsSyncStatus = UNWRITTEN`
-- **No Teams API call** — removed from route handler
-- Orchestration layer (Phase 7) picks up UNWRITTEN records
-
-### 6C. cancelAppointment() — Best-effort Teams Cleanup
-
-`cancelAppointment()`:
-- If `teamsSyncStatus = WRITTEN` → attempts Teams deletion (TODO for Phase 7)
-- Status set to CANCELLED regardless of Teams outcome (never blocks)
-
-### 6D. UI: Sync Status on AppointmentCard
-
-- Green badge "Synced" ✅ — WRITTEN
-- Amber badge "Pending Sync" ⏳ — UNWRITTEN (pulsing icon)
-- Red badge "Sync Failed" ❌ — FAILED (with error tooltip)
-
-### 6E. Retry Sync Button (Faculty)
-
-- When `teamsSyncStatus = FAILED` → "Retry Sync" button visible
-- Resets `teamsSyncRetries = 0`, `teamsSyncStatus = UNWRITTEN`, clears error
-- Orchestrator picks it up on next cycle
-
-### 6F. Booking Ticket Page (`/appointments/[id]`)
-
-Client-side page accessible by both student and faculty:
-- **Header:** Status badge + "Booking Ticket" title
-- **People section:** Faculty and Student info side by side
-- **Schedule section:** Date + time in indigo card
-- **Teams Sync section** (if APPROVED):
-  - ✅ WRITTEN — green card with "Join Teams Meeting" link
-  - ⏳ UNWRITTEN — amber card "Pending, link available shortly"
-  - ❌ FAILED — red card with error details + retry button
-- **Timestamps:** Requested, updated, last sync attempt
-- **Actions panel:** Context-sensitive buttons (student cancel, faculty approve/reject/complete/cancel/retry sync)
-- "View Details" link added to AppointmentCard
-
-### Modified Files
-
-| File | Action |
-|------|--------|
-| `prisma/schema.prisma` | + `TeamsSyncStatus` enum, + sync fields on Appointment |
-| `lib/models/index.ts` | + `TeamsSyncStatus` type, updated Appointment interface |
-| `lib/repositories/interfaces.ts` | + sync fields in `AppointmentData` |
-| `lib/controllers/appointments.ts` | Update approve: sets UNWRITTEN. Update cancel: best-effort Teams cleanup. + `retryTeamsSync()` |
-| `app/api/appointments/[id]/[action]/route.ts` | Removed inline Teams API call from approve case |
-| `app/api/appointments/[id]/retry-sync/route.ts` | New — retry sync endpoint |
-| `components/AppointmentCard.tsx` | + sync status badge, retry button, View Details link |
-| `app/appointments/[id]/page.tsx` | New — booking ticket detail page |
+- `TeamsSyncStatus` enum: `UNWRITTEN`, `WRITTEN`, `FAILED`
+- Sync tracking fields on `Appointment`
+- `approveAppointment()` sets `UNWRITTEN` — no inline Teams API call
+- Sync status badges on `AppointmentCard` (green/amber/red)
+- Retry sync button for failed appointments
+- Booking ticket detail page at `/appointments/[id]`
 
 ---
 
 ## Phase 7: Teams Sync Orchestration ✅ *(Implemented)*
 
-### 7A. Orchestration Service
-
-`lib/services/teamsSync.ts` — `syncPendingAppointments()`:
-
-```
-1. Fetch all appointments WHERE status = APPROVED AND teamsSyncStatus = UNWRITTEN
-2. For each appointment:
-   a. Find faculty's Microsoft access token (from Account table, provider = "azure-ad")
-   b. If no token → skip (next cycle will retry)
-   c. Call createOnlineMeeting() with:
-      - subject: "Consultation: [student] & [faculty]"
-      - startDateTime, endDateTime from schedule
-   d. On success → save teamsLink, set teamsSyncStatus = WRITTEN
-   e. On failure:
-      - Increment teamsSyncRetries
-      - Save error message
-      - If retries >= 5 → set FAILED
-      - If retries < 5 → leave UNWRITTEN (next cycle retries)
-3. Return SyncResult { processed, succeeded, failed, skipped, errors[] }
-```
-
-### 7B. API Endpoints
-
-| Route | Method | Description |
-|-------|--------|-------------|
-| `POST /api/admin/sync-teams` | Admin-only | Triggers sync immediately, returns SyncResult |
-| `GET /api/admin/sync-teams/status` | Admin-only | Returns pendingCount, failedCount, writtenCount, lastSync, failedAppointments |
-
-### 7C. Admin Dashboard — Sync Panel
-
-New `TeamsSyncPanel` component showing:
-- **4 metric cards:** Total Approved, Pending Sync (amber), Written to Teams (green), Sync Failed (red)
-- **Sync Now button** — triggers POST /api/admin/sync-teams
-- **Last sync timestamp**
-- **Sync result summary** (processed/succeeded/failed/skipped)
-- **Failed appointments table** — faculty, date/time, retries/5, error message
-- Auto-refreshes status after sync
-
-### 7D. Retry Policy
-
-| Retry # | Action | teamsSyncStatus |
-|---------|--------|-----------------|
-| 0 | First attempt | UNWRITTEN |
-| 1–4 | Failed, will retry | UNWRITTEN |
-| 5 | Failed, max retries reached | FAILED |
-
-### New/Modified Files
-
-| File | Action |
-|------|--------|
-| `lib/services/teamsSync.ts` | New — orchestration service |
-| `lib/repositories/interfaces.ts` | + `listPendingSync()` on IAppointmentRepository |
-| `lib/repositories/prisma.ts` | + `listPendingSync()` implementation |
-| `app/api/admin/sync-teams/route.ts` | New — trigger endpoint |
-| `app/api/admin/sync-teams/status/route.ts` | New — status endpoint |
-| `components/TeamsSyncPanel.tsx` | New — admin sync panel |
-| `app/admin/page.tsx` | + TeamsSyncPanel imported and rendered |
+- `syncPendingAppointments()` service with 5-retry policy
+- `POST /api/admin/sync-teams` — admin trigger
+- `GET /api/admin/sync-teams/status` — status endpoint
+- `TeamsSyncPanel` component on admin dashboard
+- This app writes to DB only — external cron service calls the trigger endpoint
 
 ---
 
 ## Phase 8: Conflict Detection with Teams ✅ *(Implemented)*
 
-### 8A. Teams Calendar View
+- `getCalendarView()` in Graph API service (requires `Calendars.Read` permission)
+- Teams calendar events shown as `type: "teams"` conflicts
+- All conflict sources are advisory (warns, does not block)
 
-Added to `lib/services/graph.ts`:
-```ts
-export async function getCalendarView(
-  accessToken: string,
-  startDateTime: string,
-  endDateTime: string
-): Promise<CalendarEvent[]>
+---
+
+## Phase 9: Enhanced Booking ✅ *(Implemented)*
+
+### Changes
+
+- `Appointment` gains `title` (String?) and `description` (String?)
+- `AppointmentAttendee` model with `AttendeeStatus` enum (`INVITED`, `ACCEPTED`, `DECLINED`)
+- `requestAppointment()` accepts `title`, `description`, `attendeeIds`
+- Additional attendees validated as FACULTY role only
+- `BookingForm` modal: title (required), description (optional), faculty multi-select
+- `AppointmentCard` shows title, description (truncated), attendee badges
+
+---
+
+## Architecture Changes
+
+### FacultySchedule Removed
+
+The `FacultySchedule` model (manual slot creation) has been removed entirely. Faculty no longer manually create individual date/time slots.
+
+**What changed:**
+- `FacultySchedule` model deleted from schema
+- `scheduleId` removed from `Appointment` — now has `date`, `startTime`, `endTime` directly
+- All `scheduleRepository.*()` calls removed from controllers
+- `AvailabilityForm` and `ScheduleCard` components deleted
+- Student dashboard `BookingCalendar` now derives slots from availability rules
+- Faculty dashboard "My Created Slots" table and "Create Availability Window" form removed
+- Faculty dashboard now shows a link to `/faculty/availability` instead
+- Seed script no longer creates schedule records
+
+**Booking flow:**
+1. Faculty sets availability rules (day-of-week + time window + date range)
+2. Student picks a faculty, sees a calendar with available days highlighted
+3. Clicking a day generates 1-hour time blocks from the active rule
+4. Student books a block → `Appointment` created with `date`, `startTime`, `endTime`
+
+### Date Range on Availability Rules
+
+`FacultyAvailabilityRule` now has `startDate` (required) and `endDate` (optional).
+
+**Behavior:**
+- Rule is active when `startDate <= currentDate <= endDate` (or no endDate)
+- Rules with past `endDate` are automatically treated as blocked
+- Unique constraint changed to `@@unique([facultyId, dayOfWeek, startDate])`
+- Faculty availability UI shows "Effective From" / "Effective Until" date pickers
+- `findActiveRule()` in controller handles date-range filtering
+
+---
+
+## Phase 10: Department & Dean Role ❌
+
+### 10A. Schema
+
+```prisma
+model Department {
+  id     String @id @default(cuid())
+  name   String // "College of Computer Studies"
+  code   String @unique // "CCS"
+  deanId String?
+  dean   User?  @relation("DeanDepartment")
+  users  User[]
+}
 ```
-- Calls `GET /me/calendarView` with the delegated access token
-- Requires `Calendars.Read` permission on the app registration
-- Returns events with subject, start, end
-- Best-effort: returns empty array on failure (non-blocking)
 
-### 8B. Enhanced Conflict Detection
+Add `DEAN` to `Role` enum. Add `departmentId` to `User`.
 
-In `checkConflicts()`:
-- Check app schedules (existing appointments + internal meetings) — unchanged
-- If `FEATURE_CREATE_TEAMS_MEETING=true` AND faculty has Microsoft token (from Account table):
-  - Call `getCalendarView()` with the token
-  - Add Teams events as conflicts with `type: "teams"`
-- All conflict sources are advisory — user can proceed despite any conflicts
+### 10B. Dean Role Behavior
 
-### 8C. UI Update
+Dean is **Faculty+** — has all faculty capabilities plus additional dean-scoped features.
 
-New meeting form now shows Teams calendar conflicts with label:
-- "Faculty X has a Teams calendar event: 'Meeting Title' at 14:00–15:00"
-- Separately identified from app-level appointments and internal meetings
+**Dean can do everything a Faculty can:**
+- Own appointment management (approve/reject/complete/cancel)
+- Availability rules configuration
+- Faculty meetings (internal)
+- Faculty dashboard with calendar timeline
 
-### New/Modified Files
+**Plus Dean-specific scope:**
+- Can only see **their own department's** faculty in department views
+- Can upload faculty AND students via CSV (see Phase 11)
+- Can invite faculty from **other departments** to meetings (cross-department)
+- Has `/dean/*` route group for department-specific pages
+- Dean dashboard shows: department faculty list, department appointment metrics, upload, reports
+
+**Route resolution:**
+- `/faculty/*` — shared by Faculty and Dean (same components)
+- `/dean/*` — Dean-only department pages (additional scope)
+- `/admin/*` — Admin only
+
+### 10C. Route Protection
+
+Update `proxy.ts` for `DEAN` role:
+- `/dean/*` — Dean and Admin only
+- `/admin/*` — Admin only (Denied for Dean)
+- `/faculty/*` — Faculty only (Dean has separate dashboard)
+
+### 10D. Files
 
 | File | Action |
 |------|--------|
-| `lib/services/graph.ts` | + `getCalendarView()` function |
-| `lib/services/conflictDetection.ts` | + Teams calendar check using delegated token |
-| `app/faculty/meetings/new/page.tsx` | + `"teams"` conflict type in UI render |
+| `prisma/schema.prisma` | + `DEAN` in Role, + `Department` model, + `departmentId` on User |
+| `lib/models/index.ts` | + `Department` type |
+| `lib/repositories/interfaces.ts` | + Department repository methods |
+| `lib/repositories/prisma.ts` | + Department Prisma repo |
+| `lib/repositories/factory.ts` | + Department repo export |
+| `proxy.ts` | + DEAN route rules |
+| `app/dean/page.tsx` | New — Dean dashboard |
+| `app/dean/faculty/page.tsx` | New — Department faculty list |
+| `app/dean/appointments/page.tsx` | New — Department appointments |
+| `app/dean/upload/page.tsx` | New — CSV upload page |
+| `app/dean/reports/page.tsx` | New — Reports |
+| `components/Sidebar.tsx` | + Dean sidebar links |
+| `prisma/seed.ts` | + Sample departments + deans |
+
+---
+
+## Phase 11: ETL — Bulk User Import (CSV) ❌
+
+### 11A. CSV Format
+
+```
+Name | Microsoft Email | Department | Dean (true/false)
+```
+
+- **Email domain** must be `@itmlyceumalabang.onmicrosoft.com` — validated server-side
+- **Department** nullable → if null, user is a guest (STUDENT role)
+- **Dean** defaults to `false`:
+  - `false` + department provided → FACULTY
+  - `true` + department provided → DEAN
+  - If null → treated as `false`
+
+### 11B. Upload Rules
+
+| Uploader | Can upload | Dest role |
+|---|---|---|
+| **Dean** | Faculty + Students | FACULTY (with dept), STUDENT (no dept) |
+| **Faculty** | Students only | STUDENT |
+
+### 11C. Upload Flow
+
+1. Dean/faculty uploads CSV file via `POST /api/admin/import-users` or `/api/faculty/import-students`
+2. Server-side parsing (no client-side processing)
+3. For each row:
+   - Validate email domain (`@itmlyceumalabang.onmicrosoft.com`)
+   - Check for duplicates
+   - Create user with `passwordHash: null`, `hasLoggedInBefore: false`
+   - Generate `PasswordResetToken` (15-min expiry, see Phase 12)
+   - Queue email send
+4. Return results table: ✅ created, ⏭ skipped, ❌ errors
+
+### 11D. Files
+
+| File | Action |
+|------|--------|
+| `app/api/admin/import-users/route.ts` | New — Dean CSV upload |
+| `app/api/faculty/import-students/route.ts` | New — Faculty CSV upload |
+| `lib/services/csvParser.ts` | New — CSV parsing + validation |
+| `lib/services/userImport.ts` | New — Import orchestration |
+| `app/dean/upload/page.tsx` | New — Upload UI |
+| `app/faculty/upload/page.tsx` | New — Upload UI (students only) |
+
+---
+
+## Phase 12: Email-based Auth & Password Setup ❌
+
+### 12A. Email Service
+
+- **Local dev**: Nodemailer + Gmail SMTP (App Password from sender's Gmail)
+- **Vercel** (future): Resend HTTP API (works on Vercel, free tier: 100 emails/day)
+
+### 12B. PasswordResetToken Model
+
+```prisma
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime // now + 15 min
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+```
+
+### 12C. Flow: First-Time Password Setup
+
+1. User created via ETL → `passwordHash: null`, `hasLoggedInBefore: false`
+2. System generates crypto-random token, stores `PasswordResetToken` with 15-min expiry
+3. Email sent: "Set your password: https://app/setup-password?token=<token>"
+4. User clicks link → `/setup-password?token=xxx`
+   - Validate: token exists, not expired, not used
+   - Show password creation form
+   - On submit: `passwordHash = hash(password)`, `hasLoggedInBefore = true`, `token.usedAt = now()`
+5. User can now log in normally
+
+### 12D. Flow: Password Reset
+
+1. User goes to `/register` and enters email
+2. If email found + `hasLoggedInBefore = true`:
+   - "This email is already registered. Would you like to change your password?"
+   - Yes → generate token, send reset email
+3. Same `/setup-password` page handles both setup and reset
+
+### 12E. Registration Page Changes
+
+`/register` becomes email-first:
+1. User enters email only
+2. System checks DB:
+   - **Not found** → "This email is not in the system. Please contact your dean."
+   - **Found + `hasLoggedInBefore = false`** → "First-time setup!" → sends setup-password email
+   - **Found + `hasLoggedInBefore = true`** → "Already registered. Send password reset?" → sends reset email
+3. No more name/password fields on registration — those come from ETL + setup flow
+
+### 12F. Logging In
+
+- User logs in with email + password (standard Credentials provider)
+- On successful login: update `lastLoginAt` timestamp
+- If user has `passwordHash: null` (never set up) → login fails with "Please set up your password first"
+
+### 12G. Files
+
+| File | Action |
+|------|--------|
+| `prisma/schema.prisma` | + `PasswordResetToken`, + `hasLoggedInBefore`, `lastLoginAt` on User |
+| `lib/email.ts` | New — Email sending service (Nodemailer) |
+| `lib/services/passwordReset.ts` | New — Token generation, validation, password set |
+| `app/api/auth/send-setup-email/route.ts` | New — Trigger setup/reset email |
+| `app/api/auth/reset-password/route.ts` | New — Validate token + set password |
+| `app/setup-password/page.tsx` | New — Password setup/reset page (token in URL) |
+| `app/(auth)/register/page.tsx` | Rewrite — email-first flow |
+| `app/(auth)/login/page.tsx` | Update — handle `passwordHash: null` case |
+
+---
+
+## Phase 13: Consultation Completion (Action Taken) ❌
+
+### 13A. Schema
+
+Add to `Appointment`:
+```prisma
+actionTaken       String?  // required when completing
+additionalRemarks String?
+```
+
+### 13B. Flow
+
+1. Faculty clicks **"Mark Complete"** on an approved appointment
+2. Instead of immediate status change → modal opens:
+   - **Action Taken** (required) — free text field
+   - **Additional Remarks** (optional) — textarea
+3. On submit → `status = COMPLETED`, `actionTaken` and `additionalRemarks` saved
+
+### 13C. UI
+
+- `AppointmentCard`: Show action taken and remarks on completed appointments
+- Booking ticket page: Show completion details
+- Reports: Action Taken distribution analysis
+
+---
+
+## Phase 14: Attendee Permissions ❌
+
+Enhance the `AppointmentAttendee` system with role-based invitation rules:
+
+| Inviter | Can add | Status |
+|---|---|---|
+| Faculty / Dean | Anyone (Faculty, Dean, Student) | `INVITED` |
+| Student (invited by Faculty) | Fellow Students only | `INVITED` (requires faculty approval) |
+| Student (is the creator) | Anyone | `INVITED` (pending faculty approval) |
+
+"Approval" means the primary faculty can accept/reject pending attendees.
+
+### Files
+
+| File | Action |
+|------|--------|
+| `lib/controllers/appointments.ts` | + attendee approval/rejection endpoints |
+| `app/api/appointments/[id]/attendees/route.ts` | New — Attendee management |
+| `components/AppointmentCard.tsx` | + pending attendee badges |
+| `app/appointments/[id]/page.tsx` | + Attendee management UI |
+
+---
+
+## Phase 15: Reports & Export ❌
+
+### 15A. Reports
+
+| Report | What it shows | Access |
+|---|---|---|
+| **Faculty Consultation Load** | # consultations per faculty by date range, completion rate | Dean, Admin |
+| **Department Summary** | Total consultations, status breakdown, per-department | Dean, Admin |
+| **Action Taken Distribution** | Frequency table of actions taken (free-text aggregation) | Dean, Admin |
+| **Export to CSV** | Raw appointments table filtered by date range, department, status | Dean, Admin |
+
+### 15B. Design
+
+- Simple table-based reports with date range filter
+- Download as CSV (no charts initially — can add later)
+- Dean sees only their department's data
+- Admin sees all departments
+
+### Files
+
+| File | Action |
+|------|--------|
+| `lib/controllers/reports.ts` | New — Report queries |
+| `app/api/reports/faculty-load/route.ts` | New |
+| `app/api/reports/department-summary/route.ts` | New |
+| `app/api/reports/export-csv/route.ts` | New |
+| `app/dean/reports/page.tsx` | Reports UI |
+| `app/admin/reports/page.tsx` | Reports UI (all departments) |
+
+---
 
 ## Feature Flagging
 
@@ -549,76 +473,32 @@ New meeting form now shows Teams calendar conflicts with label:
 |------|---------|-------|
 | `FEATURE_CREATE_TEAMS_MEETING` | Master toggle for all Teams sync features | 6+ |
 | `NEXT_PUBLIC_FEATURE_TEAMS` | Shows/hides Microsoft SSO button on login | Any |
-| `TEAMS_AUTO_SYNC_ENABLED` | Enables cron-based auto-sync (vs manual only) | 7 |
-
-### Current State
-
-```
-FEATURE_CREATE_TEAMS_MEETING=true   (structural flag for Phase 7 orchestration)
-NEXT_PUBLIC_FEATURE_TEAMS=true      (keep to show SSO option)
-```
-
-### Degradation Behavior
-
-When Teams is disabled or MS token is unavailable:
-- **Phase 6:** Sync status stays UNWRITTEN. Faculty sees "Pending Sync" badge. No impact on booking flow.
-- **Phase 7:** Orchestrator skips appointments where faculty has no Microsoft token.
-- **Phase 8:** Conflict detection falls back to app-only mode.
-- **Approval:** Always works — writes to database only (inline Teams API call removed in Phase 6).
-- **Cancel:** Always works — updates status, Teams cleanup is best-effort.
-
----
-
-## Schema Summary
-
-### New Tables
-
-| Table | Purpose | Phase |
-|-------|---------|-------|
-| `FacultyAvailabilityRule` | Per-day availability rules | 1 |
-| `InternalMeeting` | Faculty-to-faculty meetings | 5 |
-| `InternalMeetingParticipant` | Meeting participants | 5 |
-
-### Modified Tables
-
-| Table | Change | Phase |
-|-------|--------|-------|
-| `Appointment` | Add `teamsSyncStatus`, `teamsSyncRetries`, `teamsSyncError`, `teamsSyncLastAttempt` | 6 |
-| `AppointmentStatus` | Add `CANCELLED` value | 3 |
-
-### New Enums
-
-| Enum | Values | Phase |
-|------|--------|-------|
-| `TeamsSyncStatus` | `UNWRITTEN`, `WRITTEN`, `FAILED` | 6 |
-| `MeetingStatus` | `CONFIRMED`, `CANCELLED` | 5 |
-| `ParticipantStatus` | `PENDING`, `ACCEPTED`, `DECLINED` | 5 |
 
 ---
 
 ## Implementation Order
 
 ```
-Phase 1 ──> Phase 2 ──> Phase 3 ──> Phase 4 ──> Phase 5 ──> Phase 6 ──> Phase 7 ──> Phase 8
- (Rules)    (Tabs)      (Cancel)    (Student     (Meetings)   (Sync       (Sync        (Conflict)
-                                      Cancel)                  Tracking)   Orchestr.)    w/ Teams)
+Phase 10 ──> Phase 12 ──> Phase 11 ──> Phase 13 ──> Phase 15 ──> Phase 14
+ (Depts)    (Email Auth)  (ETL)       (Action)     (Reports)    (Permissions)
 ```
 
-All 8 phases complete. ✅
+### Dependency Map
 
-- **Phases 1–6:** App-only. No Microsoft dependency. Core booking flow improvements.
-- **Phase 5:** Internal meetings. Conflict detection is app-only initially.
-- **Phase 6:** Adds sync tracking fields. Approval is decoupled from Teams API calls.
-- **Phase 7:** Orchestration service + API endpoint. This app only writes to the database — it does not run cron or background sync. A separate external service can call `POST /api/admin/sync-teams` on a schedule.
-- **Phase 8:** Teams calendar conflict detection (requires sync + tokens to work).
+- **Phase 10 (Departments)** — Foundation. Required by Phases 11, 14, 15.
+- **Phase 12 (Email Auth)** — Required by Phase 11 (new users need setup emails).
+- **Phase 11 (ETL)** — Builds on 10 + 12. Users created via CSV need departments and email setup.
+- **Phase 13 (Action Taken)** — Independent. Can be done in parallel with 14.
+- **Phase 15 (Reports)** — Builds on 10 (department filtering) and 13 (action taken data).
+- **Phase 14 (Permissions)** — Builds on 10 (role/department checks).
+
+---
 
 ## Remaining (External / Manual)
 
-These are not code tasks — they require action outside this application.
-
 ### 1. MS Teams Admin Consent
 
-`OnlineMeetings.ReadWrite` (delegated) requires tenant admin consent for the Entra ID app registration. Until granted, Microsoft sign-in fails with "Need admin approval" page.
+`OnlineMeetings.ReadWrite` (delegated) requires tenant admin consent for the Entra ID app registration.
 
 **Direct consent URL:**
 ```
@@ -627,127 +507,14 @@ https://login.microsoftonline.com/38fc09ac-2ea6-4353-9730-4c9371ff4843/v2.0/admi
 
 ### 2. Teams Sync Cron Job (Separate Service)
 
-This app only writes to the database. A separate external service or cron job should periodically call:
-
+This app writes to the database. A separate external service calls:
 ```
 POST /api/admin/sync-teams
 ```
 
-It reads `UNWRITTEN` appointments and writes Teams meeting links back to the DB. The service must be authenticated as an admin user (session cookie or API token).
+### 3. Email Service Setup
 
-For local testing, the admin can click **"Sync Now"** on the admin dashboard at `/admin`.
-
-### 3. Seed Defaults
-
-Already done — the seed script creates default availability rules for all faculty accounts (Mon–Fri 08:00–18:00, Sat–Sun blocked). Run with:
-
-```
-npx tsx prisma/seed.ts
-```
-
----
-
-## Phase 9: Enhanced Booking with Meeting Details & Multi-Faculty Attendees (In Progress)
-
-### Problem
-
-Currently, booking an appointment is a single-click action with no context — no title, no description, no agenda. The resulting Teams meeting (if synced) would be empty. Also, consultations often involve multiple faculty members (e.g., a panel), but the current model only supports one student and one faculty.
-
-### Design
-
-#### Booking Flow
-
-```
-Student browses available slots (calendar view)
-  → clicks a time slot for primary faculty
-  → modal/form opens with fields:
-      • Title / Subject (required) — e.g. "Thesis Defense Consultation"
-      • Description / Agenda (optional) — e.g. "Discuss Chapter 3 revisions"
-      • Additional Faculty Attendees (optional multi-select)
-        — only FACULTY-role users shown, no students
-  → submits
-```
-
-#### What gets created
-
-- **Appointment** record with new fields: `title`, `description`
-- **AppointmentAttendee** records for each additional faculty attendee (status=INVITED)
-- The primary faculty's time slot is consumed (existing behavior)
-- Additional attendees do NOT consume separate slots — they are invited to the same meeting
-
-#### Two-Level Validation
-
-| Level | When | What it checks | Behavior |
-|-------|------|----------------|----------|
-| **1. App-level (immediate)** | On submit | Primary faculty's availability rules (don't disturb hours/days). Also check that selected attendees are FACULTY role. | Instant rejection — student can't submit |
-| **2. Teams-level (async)** | Via cron | Faculty's Teams calendar for conflicts at the chosen time | Advisory — cron writes back a conflict flag, displayed on the booking ticket later |
-
-#### AppointmentAttendee Model
-
-```
-model AppointmentAttendee {
-  id            String            @id @default(cuid())
-  appointmentId String
-  userId        String
-  status        AttendeeStatus    @default(INVITED)
-
-  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id])
-
-  @@unique([appointmentId, userId])
-}
-
-enum AttendeeStatus {
-  INVITED
-  ACCEPTED
-  DECLINED
-}
-```
-
-#### Appointment Model Changes
-
-Add fields to existing `Appointment` model:
-
-```prisma
-model Appointment {
-  // ... existing fields
-  title       String?
-  description String?
-  attendees   AppointmentAttendee[]
-}
-```
-
-#### Validation Rules
-
-1. **Primary faculty** — availability rules checked immediately (existing Phase 1 logic)
-2. **Additional attendees** — only FACULTY role allowed; student cannot invite fellow students (checked on submit)
-3. **Teams calendar conflicts** — not checked on submit; handled asynchronously by the sync orchestrator (Phase 7)
-
-#### Student Booking Form
-
-- Pre-filled with the selected slot's faculty name, date, time
-- Title input (required)
-- Description textarea (optional)
-- Faculty multi-select dropdown (fetched from `/api/auth/users`)
-- On submit → `POST /api/appointments` with extended payload
-
-#### Faculty View of Additional Attendees
-
-- Faculty dashboard shows all attendees on the appointment card
-- `AppointmentAttendee` status badges (INVITED / ACCEPTED / DECLINED)
-- Attendee faculty can accept/decline via the booking ticket page
-
-### New/Modified Files
-
-| File | Action |
-|------|--------|
-| `prisma/schema.prisma` | + `title`, `description` on Appointment. + `AppointmentAttendee` model + `AttendeeStatus` enum |
-| `lib/models/index.ts` | + `AttendeeStatus` type, update `Appointment`, + `AppointmentAttendee` types |
-| `lib/repositories/interfaces.ts` | + attendee fields in `CreateAppointmentInput`, + `IAppointmentAttendeeRepository` |
-| `lib/repositories/prisma.ts` | + attendee repository methods |
-| `lib/repositories/factory.ts` | + export attendee repo |
-| `lib/controllers/appointments.ts` | Update `requestAppointment()` to accept title/description/attendeeIds |
-| `app/api/appointments/route.ts` | Update POST handler to pass new fields |
-| `components/BookingCalendar.tsx` | Update slot click to open form instead of direct booking |
-| `components/BookingForm.tsx` | New — modal/form for title, description, faculty attendees |
-| `app/student/page.tsx` | Wire up new booking flow |
+For Phase 12, one of:
+- **Gmail SMTP** (local dev): Enable 2FA, generate App Password
+- **Resend** (Vercel): Sign up at resend.com, get API key
+- **Microsoft Graph API**: Requires `Mail.Send` permission on Azure AD app

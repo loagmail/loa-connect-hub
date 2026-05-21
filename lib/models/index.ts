@@ -1,4 +1,4 @@
-export type Role = "STUDENT" | "FACULTY" | "ADMIN"
+export type Role = "STUDENT" | "FACULTY" | "DEAN" | "ADMIN"
 export type AppointmentStatus = "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED"
 export type TeamsSyncStatus = "UNWRITTEN" | "WRITTEN" | "FAILED"
 export type MeetingStatus = "CONFIRMED" | "CANCELLED"
@@ -10,7 +10,17 @@ export interface User {
   name: string
   email: string
   role: Role
+  departmentId: string | null
+  hasLoggedInBefore: boolean
+  lastLoginAt: Date | null
   createdAt: Date
+}
+
+export interface Department {
+  id: string
+  name: string
+  code: string
+  deanId: string | null
 }
 
 export interface Appointment {
@@ -22,6 +32,8 @@ export interface Appointment {
   endTime: string
   title: string | null
   description: string | null
+  actionTaken: string | null
+  additionalRemarks: string | null
   status: AppointmentStatus
   teamsLink: string | null
   teamsSyncStatus: TeamsSyncStatus

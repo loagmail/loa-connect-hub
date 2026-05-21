@@ -476,10 +476,6 @@ export type FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput 
   deleteMany?: Prisma.FacultyAvailabilityRuleScalarWhereInput | Prisma.FacultyAvailabilityRuleScalarWhereInput[]
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type FacultyAvailabilityRuleCreateWithoutFacultyInput = {
   id?: string
   dayOfWeek: number

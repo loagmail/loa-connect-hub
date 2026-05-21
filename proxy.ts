@@ -11,16 +11,16 @@ export default withAuth(
       return NextResponse.redirect(new URL("/login", req.url))
     }
 
-    if (pathname.startsWith("/faculty") && role !== "FACULTY") {
+    if (pathname.startsWith("/faculty") && role !== "FACULTY" && role !== "DEAN") {
+      return NextResponse.redirect(new URL("/login", req.url))
+    }
+
+    if (pathname.startsWith("/dean") && role !== "DEAN") {
       return NextResponse.redirect(new URL("/login", req.url))
     }
 
     if (pathname.startsWith("/admin") && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/login", req.url))
-    }
-
-    if (pathname.startsWith("/api/schedules") && req.method !== "GET" && role !== "FACULTY" && role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
     return NextResponse.next()

@@ -11,7 +11,8 @@ export default async function FacultyDashboard(props: {
 }) {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  if ((session.user as any).role !== "FACULTY") redirect("/login")
+  const role = (session.user as any).role
+  if (role !== "FACULTY" && role !== "DEAN") redirect("/login")
 
   const searchParams = await props.searchParams
   const activeTab = searchParams?.tab || "all"

@@ -16,6 +16,7 @@ function LoginForm() {
 
   const testAccounts = [
     { label: "Admin", email: "admin@econsult.com" },
+    { label: "Dean", email: "dean@econsult.com" },
     { label: "Faculty 1", email: "faculty1@econsult.com" },
     { label: "Faculty 2", email: "faculty2@econsult.com" },
     { label: "Student", email: "student@econsult.com" },

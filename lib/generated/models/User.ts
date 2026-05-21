@@ -30,6 +30,9 @@ export type UserMinAggregateOutputType = {
   email: string | null
   passwordHash: string | null
   role: $Enums.Role | null
+  departmentId: string | null
+  hasLoggedInBefore: boolean | null
+  lastLoginAt: Date | null
   createdAt: Date | null
 }
 
@@ -39,6 +42,9 @@ export type UserMaxAggregateOutputType = {
   email: string | null
   passwordHash: string | null
   role: $Enums.Role | null
+  departmentId: string | null
+  hasLoggedInBefore: boolean | null
+  lastLoginAt: Date | null
   createdAt: Date | null
 }
 
@@ -48,6 +54,9 @@ export type UserCountAggregateOutputType = {
   email: number
   passwordHash: number
   role: number
+  departmentId: number
+  hasLoggedInBefore: number
+  lastLoginAt: number
   createdAt: number
   _all: number
 }
@@ -59,6 +68,9 @@ export type UserMinAggregateInputType = {
   email?: true
   passwordHash?: true
   role?: true
+  departmentId?: true
+  hasLoggedInBefore?: true
+  lastLoginAt?: true
   createdAt?: true
 }
 
@@ -68,6 +80,9 @@ export type UserMaxAggregateInputType = {
   email?: true
   passwordHash?: true
   role?: true
+  departmentId?: true
+  hasLoggedInBefore?: true
+  lastLoginAt?: true
   createdAt?: true
 }
 
@@ -77,6 +92,9 @@ export type UserCountAggregateInputType = {
   email?: true
   passwordHash?: true
   role?: true
+  departmentId?: true
+  hasLoggedInBefore?: true
+  lastLoginAt?: true
   createdAt?: true
   _all?: true
 }
@@ -159,6 +177,9 @@ export type UserGroupByOutputType = {
   email: string
   passwordHash: string | null
   role: $Enums.Role
+  departmentId: string | null
+  hasLoggedInBefore: boolean
+  lastLoginAt: Date | null
   createdAt: Date
   _count: UserCountAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
@@ -189,7 +210,12 @@ export type UserWhereInput = {
   email?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  departmentId?: Prisma.StringNullableFilter<"User"> | string | null
+  hasLoggedInBefore?: Prisma.BoolFilter<"User"> | boolean
+  lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  department?: Prisma.XOR<Prisma.DepartmentNullableScalarRelationFilter, Prisma.DepartmentWhereInput> | null
+  deanDepartment?: Prisma.XOR<Prisma.DepartmentNullableScalarRelationFilter, Prisma.DepartmentWhereInput> | null
   availabilityRules?: Prisma.FacultyAvailabilityRuleListRelationFilter
   studentAppointments?: Prisma.AppointmentListRelationFilter
   facultyAppointments?: Prisma.AppointmentListRelationFilter
@@ -206,7 +232,12 @@ export type UserOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
+  departmentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  hasLoggedInBefore?: Prisma.SortOrder
+  lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  department?: Prisma.DepartmentOrderByWithRelationInput
+  deanDepartment?: Prisma.DepartmentOrderByWithRelationInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleOrderByRelationAggregateInput
   studentAppointments?: Prisma.AppointmentOrderByRelationAggregateInput
   facultyAppointments?: Prisma.AppointmentOrderByRelationAggregateInput
@@ -226,7 +257,12 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  departmentId?: Prisma.StringNullableFilter<"User"> | string | null
+  hasLoggedInBefore?: Prisma.BoolFilter<"User"> | boolean
+  lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  department?: Prisma.XOR<Prisma.DepartmentNullableScalarRelationFilter, Prisma.DepartmentWhereInput> | null
+  deanDepartment?: Prisma.XOR<Prisma.DepartmentNullableScalarRelationFilter, Prisma.DepartmentWhereInput> | null
   availabilityRules?: Prisma.FacultyAvailabilityRuleListRelationFilter
   studentAppointments?: Prisma.AppointmentListRelationFilter
   facultyAppointments?: Prisma.AppointmentListRelationFilter
@@ -243,6 +279,9 @@ export type UserOrderByWithAggregationInput = {
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
+  departmentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  hasLoggedInBefore?: Prisma.SortOrder
+  lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -258,6 +297,9 @@ export type UserScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   passwordHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
+  departmentId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  hasLoggedInBefore?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
 
@@ -267,7 +309,11 @@ export type UserCreateInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
@@ -284,7 +330,11 @@ export type UserUncheckedCreateInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
@@ -301,7 +351,11 @@ export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
@@ -318,7 +372,11 @@ export type UserUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
@@ -335,6 +393,9 @@ export type UserCreateManyInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -344,6 +405,8 @@ export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -353,6 +416,9 @@ export type UserUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -362,6 +428,9 @@ export type UserCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  departmentId?: Prisma.SortOrder
+  hasLoggedInBefore?: Prisma.SortOrder
+  lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -371,6 +440,9 @@ export type UserMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  departmentId?: Prisma.SortOrder
+  hasLoggedInBefore?: Prisma.SortOrder
+  lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -380,7 +452,25 @@ export type UserMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  departmentId?: Prisma.SortOrder
+  hasLoggedInBefore?: Prisma.SortOrder
+  lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
+export type UserListRelationFilter = {
+  every?: Prisma.UserWhereInput
+  some?: Prisma.UserWhereInput
+  none?: Prisma.UserWhereInput
+}
+
+export type UserOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -400,8 +490,74 @@ export type EnumRoleFieldUpdateOperationsInput = {
   set?: $Enums.Role
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserCreateNestedOneWithoutDeanDepartmentInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDeanDepartmentInput, Prisma.UserUncheckedCreateWithoutDeanDepartmentInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDeanDepartmentInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedManyWithoutDepartmentInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDepartmentInput, Prisma.UserUncheckedCreateWithoutDepartmentInput> | Prisma.UserCreateWithoutDepartmentInput[] | Prisma.UserUncheckedCreateWithoutDepartmentInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDepartmentInput | Prisma.UserCreateOrConnectWithoutDepartmentInput[]
+  createMany?: Prisma.UserCreateManyDepartmentInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutDepartmentInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDepartmentInput, Prisma.UserUncheckedCreateWithoutDepartmentInput> | Prisma.UserCreateWithoutDepartmentInput[] | Prisma.UserUncheckedCreateWithoutDepartmentInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDepartmentInput | Prisma.UserCreateOrConnectWithoutDepartmentInput[]
+  createMany?: Prisma.UserCreateManyDepartmentInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUpdateOneWithoutDeanDepartmentNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDeanDepartmentInput, Prisma.UserUncheckedCreateWithoutDeanDepartmentInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDeanDepartmentInput
+  upsert?: Prisma.UserUpsertWithoutDeanDepartmentInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDeanDepartmentInput, Prisma.UserUpdateWithoutDeanDepartmentInput>, Prisma.UserUncheckedUpdateWithoutDeanDepartmentInput>
+}
+
+export type UserUpdateManyWithoutDepartmentNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDepartmentInput, Prisma.UserUncheckedCreateWithoutDepartmentInput> | Prisma.UserCreateWithoutDepartmentInput[] | Prisma.UserUncheckedCreateWithoutDepartmentInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDepartmentInput | Prisma.UserCreateOrConnectWithoutDepartmentInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutDepartmentInput | Prisma.UserUpsertWithWhereUniqueWithoutDepartmentInput[]
+  createMany?: Prisma.UserCreateManyDepartmentInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutDepartmentInput | Prisma.UserUpdateWithWhereUniqueWithoutDepartmentInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutDepartmentInput | Prisma.UserUpdateManyWithWhereWithoutDepartmentInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutDepartmentNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDepartmentInput, Prisma.UserUncheckedCreateWithoutDepartmentInput> | Prisma.UserCreateWithoutDepartmentInput[] | Prisma.UserUncheckedCreateWithoutDepartmentInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDepartmentInput | Prisma.UserCreateOrConnectWithoutDepartmentInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutDepartmentInput | Prisma.UserUpsertWithWhereUniqueWithoutDepartmentInput[]
+  createMany?: Prisma.UserCreateManyDepartmentInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutDepartmentInput | Prisma.UserUpdateWithWhereUniqueWithoutDepartmentInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutDepartmentInput | Prisma.UserUpdateManyWithWhereWithoutDepartmentInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
 export type UserCreateNestedOneWithoutStudentAppointmentsInput = {
@@ -516,13 +672,193 @@ export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSessionsInput, Prisma.UserUpdateWithoutSessionsInput>, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
+export type UserCreateWithoutDeanDepartmentInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
+  studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
+  facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
+  appointmentAttendees?: Prisma.AppointmentAttendeeCreateNestedManyWithoutUserInput
+  organizedMeetings?: Prisma.InternalMeetingCreateNestedManyWithoutOrganizerInput
+  meetingParticipants?: Prisma.InternalMeetingParticipantCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutDeanDepartmentInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
+  studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
+  facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
+  appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedCreateNestedManyWithoutUserInput
+  organizedMeetings?: Prisma.InternalMeetingUncheckedCreateNestedManyWithoutOrganizerInput
+  meetingParticipants?: Prisma.InternalMeetingParticipantUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutDeanDepartmentInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDeanDepartmentInput, Prisma.UserUncheckedCreateWithoutDeanDepartmentInput>
+}
+
+export type UserCreateWithoutDepartmentInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
+  availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
+  studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
+  facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
+  appointmentAttendees?: Prisma.AppointmentAttendeeCreateNestedManyWithoutUserInput
+  organizedMeetings?: Prisma.InternalMeetingCreateNestedManyWithoutOrganizerInput
+  meetingParticipants?: Prisma.InternalMeetingParticipantCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutDepartmentInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
+  availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
+  studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
+  facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
+  appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedCreateNestedManyWithoutUserInput
+  organizedMeetings?: Prisma.InternalMeetingUncheckedCreateNestedManyWithoutOrganizerInput
+  meetingParticipants?: Prisma.InternalMeetingParticipantUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutDepartmentInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDepartmentInput, Prisma.UserUncheckedCreateWithoutDepartmentInput>
+}
+
+export type UserCreateManyDepartmentInputEnvelope = {
+  data: Prisma.UserCreateManyDepartmentInput | Prisma.UserCreateManyDepartmentInput[]
+}
+
+export type UserUpsertWithoutDeanDepartmentInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDeanDepartmentInput, Prisma.UserUncheckedUpdateWithoutDeanDepartmentInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDeanDepartmentInput, Prisma.UserUncheckedCreateWithoutDeanDepartmentInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDeanDepartmentInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDeanDepartmentInput, Prisma.UserUncheckedUpdateWithoutDeanDepartmentInput>
+}
+
+export type UserUpdateWithoutDeanDepartmentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
+  studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
+  facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
+  appointmentAttendees?: Prisma.AppointmentAttendeeUpdateManyWithoutUserNestedInput
+  organizedMeetings?: Prisma.InternalMeetingUpdateManyWithoutOrganizerNestedInput
+  meetingParticipants?: Prisma.InternalMeetingParticipantUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDeanDepartmentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
+  studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
+  facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
+  appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedUpdateManyWithoutUserNestedInput
+  organizedMeetings?: Prisma.InternalMeetingUncheckedUpdateManyWithoutOrganizerNestedInput
+  meetingParticipants?: Prisma.InternalMeetingParticipantUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUpsertWithWhereUniqueWithoutDepartmentInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDepartmentInput, Prisma.UserUncheckedUpdateWithoutDepartmentInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDepartmentInput, Prisma.UserUncheckedCreateWithoutDepartmentInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutDepartmentInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDepartmentInput, Prisma.UserUncheckedUpdateWithoutDepartmentInput>
+}
+
+export type UserUpdateManyWithWhereWithoutDepartmentInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutDepartmentInput>
+}
+
+export type UserScalarWhereInput = {
+  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  OR?: Prisma.UserScalarWhereInput[]
+  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  id?: Prisma.StringFilter<"User"> | string
+  name?: Prisma.StringFilter<"User"> | string
+  email?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
+  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  departmentId?: Prisma.StringNullableFilter<"User"> | string | null
+  hasLoggedInBefore?: Prisma.BoolFilter<"User"> | boolean
+  lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+}
+
 export type UserCreateWithoutStudentAppointmentsInput = {
   id?: string
   name: string
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
   facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
   appointmentAttendees?: Prisma.AppointmentAttendeeCreateNestedManyWithoutUserInput
@@ -538,7 +874,11 @@ export type UserUncheckedCreateWithoutStudentAppointmentsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
   facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedCreateNestedManyWithoutUserInput
@@ -559,7 +899,11 @@ export type UserCreateWithoutFacultyAppointmentsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
   appointmentAttendees?: Prisma.AppointmentAttendeeCreateNestedManyWithoutUserInput
@@ -575,7 +919,11 @@ export type UserUncheckedCreateWithoutFacultyAppointmentsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedCreateNestedManyWithoutUserInput
@@ -607,7 +955,11 @@ export type UserUpdateWithoutStudentAppointmentsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
   facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUpdateManyWithoutUserNestedInput
@@ -623,7 +975,11 @@ export type UserUncheckedUpdateWithoutStudentAppointmentsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
   facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedUpdateManyWithoutUserNestedInput
@@ -650,7 +1006,11 @@ export type UserUpdateWithoutFacultyAppointmentsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUpdateManyWithoutUserNestedInput
@@ -666,7 +1026,11 @@ export type UserUncheckedUpdateWithoutFacultyAppointmentsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedUpdateManyWithoutUserNestedInput
@@ -682,7 +1046,11 @@ export type UserCreateWithoutAppointmentAttendeesInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
@@ -698,7 +1066,11 @@ export type UserUncheckedCreateWithoutAppointmentAttendeesInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
@@ -730,7 +1102,11 @@ export type UserUpdateWithoutAppointmentAttendeesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
@@ -746,7 +1122,11 @@ export type UserUncheckedUpdateWithoutAppointmentAttendeesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
@@ -762,7 +1142,11 @@ export type UserCreateWithoutOrganizedMeetingsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
@@ -778,7 +1162,11 @@ export type UserUncheckedCreateWithoutOrganizedMeetingsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
@@ -810,7 +1198,11 @@ export type UserUpdateWithoutOrganizedMeetingsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
@@ -826,7 +1218,11 @@ export type UserUncheckedUpdateWithoutOrganizedMeetingsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
@@ -842,7 +1238,11 @@ export type UserCreateWithoutMeetingParticipantsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
@@ -858,7 +1258,11 @@ export type UserUncheckedCreateWithoutMeetingParticipantsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
@@ -890,7 +1294,11 @@ export type UserUpdateWithoutMeetingParticipantsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
@@ -906,7 +1314,11 @@ export type UserUncheckedUpdateWithoutMeetingParticipantsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
@@ -922,7 +1334,11 @@ export type UserCreateWithoutAvailabilityRulesInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
   appointmentAttendees?: Prisma.AppointmentAttendeeCreateNestedManyWithoutUserInput
@@ -938,7 +1354,11 @@ export type UserUncheckedCreateWithoutAvailabilityRulesInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedCreateNestedManyWithoutUserInput
@@ -970,7 +1390,11 @@ export type UserUpdateWithoutAvailabilityRulesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUpdateManyWithoutUserNestedInput
@@ -986,7 +1410,11 @@ export type UserUncheckedUpdateWithoutAvailabilityRulesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
   appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedUpdateManyWithoutUserNestedInput
@@ -1002,7 +1430,11 @@ export type UserCreateWithoutAccountsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
@@ -1018,7 +1450,11 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
@@ -1050,7 +1486,11 @@ export type UserUpdateWithoutAccountsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
@@ -1066,7 +1506,11 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
@@ -1082,7 +1526,11 @@ export type UserCreateWithoutSessionsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  department?: Prisma.DepartmentCreateNestedOneWithoutUsersInput
+  deanDepartment?: Prisma.DepartmentCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentCreateNestedManyWithoutFacultyInput
@@ -1098,7 +1546,11 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   email: string
   passwordHash?: string | null
   role?: $Enums.Role
+  departmentId?: string | null
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
   createdAt?: Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedCreateNestedOneWithoutDeanInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedCreateNestedManyWithoutFacultyInput
   studentAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutStudentInput
   facultyAppointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutFacultyInput
@@ -1130,7 +1582,11 @@ export type UserUpdateWithoutSessionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  department?: Prisma.DepartmentUpdateOneWithoutUsersNestedInput
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
@@ -1146,7 +1602,11 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
   availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
   studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
   facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
@@ -1154,6 +1614,68 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   organizedMeetings?: Prisma.InternalMeetingUncheckedUpdateManyWithoutOrganizerNestedInput
   meetingParticipants?: Prisma.InternalMeetingParticipantUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateManyDepartmentInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash?: string | null
+  role?: $Enums.Role
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+}
+
+export type UserUpdateWithoutDepartmentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUpdateOneWithoutDeanNestedInput
+  availabilityRules?: Prisma.FacultyAvailabilityRuleUpdateManyWithoutFacultyNestedInput
+  studentAppointments?: Prisma.AppointmentUpdateManyWithoutStudentNestedInput
+  facultyAppointments?: Prisma.AppointmentUpdateManyWithoutFacultyNestedInput
+  appointmentAttendees?: Prisma.AppointmentAttendeeUpdateManyWithoutUserNestedInput
+  organizedMeetings?: Prisma.InternalMeetingUpdateManyWithoutOrganizerNestedInput
+  meetingParticipants?: Prisma.InternalMeetingParticipantUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDepartmentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deanDepartment?: Prisma.DepartmentUncheckedUpdateOneWithoutDeanNestedInput
+  availabilityRules?: Prisma.FacultyAvailabilityRuleUncheckedUpdateManyWithoutFacultyNestedInput
+  studentAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutStudentNestedInput
+  facultyAppointments?: Prisma.AppointmentUncheckedUpdateManyWithoutFacultyNestedInput
+  appointmentAttendees?: Prisma.AppointmentAttendeeUncheckedUpdateManyWithoutUserNestedInput
+  organizedMeetings?: Prisma.InternalMeetingUncheckedUpdateManyWithoutOrganizerNestedInput
+  meetingParticipants?: Prisma.InternalMeetingParticipantUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutDepartmentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  hasLoggedInBefore?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -1256,7 +1778,12 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   email?: boolean
   passwordHash?: boolean
   role?: boolean
+  departmentId?: boolean
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: boolean
   createdAt?: boolean
+  department?: boolean | Prisma.User$departmentArgs<ExtArgs>
+  deanDepartment?: boolean | Prisma.User$deanDepartmentArgs<ExtArgs>
   availabilityRules?: boolean | Prisma.User$availabilityRulesArgs<ExtArgs>
   studentAppointments?: boolean | Prisma.User$studentAppointmentsArgs<ExtArgs>
   facultyAppointments?: boolean | Prisma.User$facultyAppointmentsArgs<ExtArgs>
@@ -1274,7 +1801,11 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   passwordHash?: boolean
   role?: boolean
+  departmentId?: boolean
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: boolean
   createdAt?: boolean
+  department?: boolean | Prisma.User$departmentArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1283,7 +1814,11 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   passwordHash?: boolean
   role?: boolean
+  departmentId?: boolean
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: boolean
   createdAt?: boolean
+  department?: boolean | Prisma.User$departmentArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -1292,11 +1827,16 @@ export type UserSelectScalar = {
   email?: boolean
   passwordHash?: boolean
   role?: boolean
+  departmentId?: boolean
+  hasLoggedInBefore?: boolean
+  lastLoginAt?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "role" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "role" | "departmentId" | "hasLoggedInBefore" | "lastLoginAt" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  department?: boolean | Prisma.User$departmentArgs<ExtArgs>
+  deanDepartment?: boolean | Prisma.User$deanDepartmentArgs<ExtArgs>
   availabilityRules?: boolean | Prisma.User$availabilityRulesArgs<ExtArgs>
   studentAppointments?: boolean | Prisma.User$studentAppointmentsArgs<ExtArgs>
   facultyAppointments?: boolean | Prisma.User$facultyAppointmentsArgs<ExtArgs>
@@ -1307,12 +1847,18 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  department?: boolean | Prisma.User$departmentArgs<ExtArgs>
+}
+export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  department?: boolean | Prisma.User$departmentArgs<ExtArgs>
+}
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
+    department: Prisma.$DepartmentPayload<ExtArgs> | null
+    deanDepartment: Prisma.$DepartmentPayload<ExtArgs> | null
     availabilityRules: Prisma.$FacultyAvailabilityRulePayload<ExtArgs>[]
     studentAppointments: Prisma.$AppointmentPayload<ExtArgs>[]
     facultyAppointments: Prisma.$AppointmentPayload<ExtArgs>[]
@@ -1328,6 +1874,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     email: string
     passwordHash: string | null
     role: $Enums.Role
+    departmentId: string | null
+    hasLoggedInBefore: boolean
+    lastLoginAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["user"]>
   composites: {}
@@ -1723,6 +2272,8 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  department<T extends Prisma.User$departmentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$departmentArgs<ExtArgs>>): Prisma.Prisma__DepartmentClient<runtime.Types.Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  deanDepartment<T extends Prisma.User$deanDepartmentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$deanDepartmentArgs<ExtArgs>>): Prisma.Prisma__DepartmentClient<runtime.Types.Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   availabilityRules<T extends Prisma.User$availabilityRulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$availabilityRulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FacultyAvailabilityRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   studentAppointments<T extends Prisma.User$studentAppointmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$studentAppointmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppointmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   facultyAppointments<T extends Prisma.User$facultyAppointmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$facultyAppointmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppointmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1765,6 +2316,9 @@ export interface UserFieldRefs {
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
+  readonly departmentId: Prisma.FieldRef<"User", 'String'>
+  readonly hasLoggedInBefore: Prisma.FieldRef<"User", 'Boolean'>
+  readonly lastLoginAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
 }
     
@@ -2018,6 +2572,10 @@ export type UserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * The data used to create many Users.
    */
   data: Prisma.UserCreateManyInput | Prisma.UserCreateManyInput[]
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2088,6 +2646,10 @@ export type UserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Users to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2154,6 +2716,44 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Users to delete.
    */
   limit?: number
+}
+
+/**
+ * User.department
+ */
+export type User$departmentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Department
+   */
+  select?: Prisma.DepartmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Department
+   */
+  omit?: Prisma.DepartmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DepartmentInclude<ExtArgs> | null
+  where?: Prisma.DepartmentWhereInput
+}
+
+/**
+ * User.deanDepartment
+ */
+export type User$deanDepartmentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Department
+   */
+  select?: Prisma.DepartmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Department
+   */
+  omit?: Prisma.DepartmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DepartmentInclude<ExtArgs> | null
+  where?: Prisma.DepartmentWhereInput
 }
 
 /**
