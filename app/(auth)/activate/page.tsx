@@ -85,6 +85,11 @@ export default function ActivatePage() {
             </>
           )}
         </p>
+        <p className="text-center">
+          <Link href="/login" className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors">
+            &larr; Back to login
+          </Link>
+        </p>
       </div>
     )
   }
@@ -154,6 +159,11 @@ export default function ActivatePage() {
         Already activated?{" "}
         <Link href="/login" className="text-gold-600 hover:text-gold-700 font-semibold transition-colors">
           Sign in
+        </Link>
+      </p>
+      <p className="text-center -mt-3">
+        <Link href="/forgot-password" className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors">
+          Forgot password?
         </Link>
       </p>
     </div>

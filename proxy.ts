@@ -36,6 +36,10 @@ export default withAuth(
         if (pathname.startsWith("/login") || pathname.startsWith("/activate") || pathname.startsWith("/change-password") || pathname.startsWith("/setup-password") || pathname.startsWith("/api/auth")) {
           return true
         }
+        // Allow public static files
+        if (pathname === "/logo-blk.png" || pathname === "/favicon.ico") {
+          return true
+        }
         return !!token
       },
     },
