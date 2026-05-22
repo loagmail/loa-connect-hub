@@ -200,3 +200,21 @@ export interface IMeetingRepository {
   listConflictingAppointments(facultyId: string, date: string, startTime: string, endTime: string): Promise<AppointmentData[]>
   listConflictingMeetings(facultyId: string, date: string, startTime: string, endTime: string): Promise<MeetingData[]>
 }
+
+// --- Password Reset Tokens ---
+
+export interface PasswordResetTokenData {
+  id: string
+  email: string
+  token: string
+  expiresAt: Date
+  usedAt: Date | null
+  createdAt: Date
+}
+
+export interface IPasswordResetTokenRepository {
+  create(email: string, token: string, expiresAt: Date): Promise<void>
+  findByToken(token: string): Promise<PasswordResetTokenData | null>
+  markUsed(id: string): Promise<void>
+  findByEmail(email: string): Promise<PasswordResetTokenData | null>
+}

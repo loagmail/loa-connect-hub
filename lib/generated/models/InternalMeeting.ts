@@ -34,7 +34,7 @@ export type InternalMeetingMinAggregateOutputType = {
   organizerId: string | null
   teamsEventId: string | null
   teamsLink: string | null
-  status: $Enums.MeetingStatus | null
+  status: string | null
   createdAt: Date | null
 }
 
@@ -48,7 +48,7 @@ export type InternalMeetingMaxAggregateOutputType = {
   organizerId: string | null
   teamsEventId: string | null
   teamsLink: string | null
-  status: $Enums.MeetingStatus | null
+  status: string | null
   createdAt: Date | null
 }
 
@@ -193,7 +193,7 @@ export type InternalMeetingGroupByOutputType = {
   organizerId: string
   teamsEventId: string | null
   teamsLink: string | null
-  status: $Enums.MeetingStatus
+  status: string
   createdAt: Date
   _count: InternalMeetingCountAggregateOutputType | null
   _min: InternalMeetingMinAggregateOutputType | null
@@ -228,7 +228,7 @@ export type InternalMeetingWhereInput = {
   organizerId?: Prisma.StringFilter<"InternalMeeting"> | string
   teamsEventId?: Prisma.StringNullableFilter<"InternalMeeting"> | string | null
   teamsLink?: Prisma.StringNullableFilter<"InternalMeeting"> | string | null
-  status?: Prisma.EnumMeetingStatusFilter<"InternalMeeting"> | $Enums.MeetingStatus
+  status?: Prisma.StringFilter<"InternalMeeting"> | string
   createdAt?: Prisma.DateTimeFilter<"InternalMeeting"> | Date | string
   organizer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   participants?: Prisma.InternalMeetingParticipantListRelationFilter
@@ -263,7 +263,7 @@ export type InternalMeetingWhereUniqueInput = Prisma.AtLeast<{
   organizerId?: Prisma.StringFilter<"InternalMeeting"> | string
   teamsEventId?: Prisma.StringNullableFilter<"InternalMeeting"> | string | null
   teamsLink?: Prisma.StringNullableFilter<"InternalMeeting"> | string | null
-  status?: Prisma.EnumMeetingStatusFilter<"InternalMeeting"> | $Enums.MeetingStatus
+  status?: Prisma.StringFilter<"InternalMeeting"> | string
   createdAt?: Prisma.DateTimeFilter<"InternalMeeting"> | Date | string
   organizer?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   participants?: Prisma.InternalMeetingParticipantListRelationFilter
@@ -299,7 +299,7 @@ export type InternalMeetingScalarWhereWithAggregatesInput = {
   organizerId?: Prisma.StringWithAggregatesFilter<"InternalMeeting"> | string
   teamsEventId?: Prisma.StringNullableWithAggregatesFilter<"InternalMeeting"> | string | null
   teamsLink?: Prisma.StringNullableWithAggregatesFilter<"InternalMeeting"> | string | null
-  status?: Prisma.EnumMeetingStatusWithAggregatesFilter<"InternalMeeting"> | $Enums.MeetingStatus
+  status?: Prisma.StringWithAggregatesFilter<"InternalMeeting"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InternalMeeting"> | Date | string
 }
 
@@ -312,7 +312,7 @@ export type InternalMeetingCreateInput = {
   endTime: string
   teamsEventId?: string | null
   teamsLink?: string | null
-  status?: $Enums.MeetingStatus
+  status?: string
   createdAt?: Date | string
   organizer: Prisma.UserCreateNestedOneWithoutOrganizedMeetingsInput
   participants?: Prisma.InternalMeetingParticipantCreateNestedManyWithoutMeetingInput
@@ -328,7 +328,7 @@ export type InternalMeetingUncheckedCreateInput = {
   organizerId: string
   teamsEventId?: string | null
   teamsLink?: string | null
-  status?: $Enums.MeetingStatus
+  status?: string
   createdAt?: Date | string
   participants?: Prisma.InternalMeetingParticipantUncheckedCreateNestedManyWithoutMeetingInput
 }
@@ -342,7 +342,7 @@ export type InternalMeetingUpdateInput = {
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organizer?: Prisma.UserUpdateOneRequiredWithoutOrganizedMeetingsNestedInput
   participants?: Prisma.InternalMeetingParticipantUpdateManyWithoutMeetingNestedInput
@@ -358,7 +358,7 @@ export type InternalMeetingUncheckedUpdateInput = {
   organizerId?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participants?: Prisma.InternalMeetingParticipantUncheckedUpdateManyWithoutMeetingNestedInput
 }
@@ -373,7 +373,7 @@ export type InternalMeetingCreateManyInput = {
   organizerId: string
   teamsEventId?: string | null
   teamsLink?: string | null
-  status?: $Enums.MeetingStatus
+  status?: string
   createdAt?: Date | string
 }
 
@@ -386,7 +386,7 @@ export type InternalMeetingUpdateManyMutationInput = {
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -400,7 +400,7 @@ export type InternalMeetingUncheckedUpdateManyInput = {
   organizerId?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -503,10 +503,6 @@ export type InternalMeetingUncheckedUpdateManyWithoutOrganizerNestedInput = {
   deleteMany?: Prisma.InternalMeetingScalarWhereInput | Prisma.InternalMeetingScalarWhereInput[]
 }
 
-export type EnumMeetingStatusFieldUpdateOperationsInput = {
-  set?: $Enums.MeetingStatus
-}
-
 export type InternalMeetingCreateNestedOneWithoutParticipantsInput = {
   create?: Prisma.XOR<Prisma.InternalMeetingCreateWithoutParticipantsInput, Prisma.InternalMeetingUncheckedCreateWithoutParticipantsInput>
   connectOrCreate?: Prisma.InternalMeetingCreateOrConnectWithoutParticipantsInput
@@ -530,7 +526,7 @@ export type InternalMeetingCreateWithoutOrganizerInput = {
   endTime: string
   teamsEventId?: string | null
   teamsLink?: string | null
-  status?: $Enums.MeetingStatus
+  status?: string
   createdAt?: Date | string
   participants?: Prisma.InternalMeetingParticipantCreateNestedManyWithoutMeetingInput
 }
@@ -544,7 +540,7 @@ export type InternalMeetingUncheckedCreateWithoutOrganizerInput = {
   endTime: string
   teamsEventId?: string | null
   teamsLink?: string | null
-  status?: $Enums.MeetingStatus
+  status?: string
   createdAt?: Date | string
   participants?: Prisma.InternalMeetingParticipantUncheckedCreateNestedManyWithoutMeetingInput
 }
@@ -587,7 +583,7 @@ export type InternalMeetingScalarWhereInput = {
   organizerId?: Prisma.StringFilter<"InternalMeeting"> | string
   teamsEventId?: Prisma.StringNullableFilter<"InternalMeeting"> | string | null
   teamsLink?: Prisma.StringNullableFilter<"InternalMeeting"> | string | null
-  status?: Prisma.EnumMeetingStatusFilter<"InternalMeeting"> | $Enums.MeetingStatus
+  status?: Prisma.StringFilter<"InternalMeeting"> | string
   createdAt?: Prisma.DateTimeFilter<"InternalMeeting"> | Date | string
 }
 
@@ -600,7 +596,7 @@ export type InternalMeetingCreateWithoutParticipantsInput = {
   endTime: string
   teamsEventId?: string | null
   teamsLink?: string | null
-  status?: $Enums.MeetingStatus
+  status?: string
   createdAt?: Date | string
   organizer: Prisma.UserCreateNestedOneWithoutOrganizedMeetingsInput
 }
@@ -615,7 +611,7 @@ export type InternalMeetingUncheckedCreateWithoutParticipantsInput = {
   organizerId: string
   teamsEventId?: string | null
   teamsLink?: string | null
-  status?: $Enums.MeetingStatus
+  status?: string
   createdAt?: Date | string
 }
 
@@ -644,7 +640,7 @@ export type InternalMeetingUpdateWithoutParticipantsInput = {
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organizer?: Prisma.UserUpdateOneRequiredWithoutOrganizedMeetingsNestedInput
 }
@@ -659,7 +655,7 @@ export type InternalMeetingUncheckedUpdateWithoutParticipantsInput = {
   organizerId?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -672,7 +668,7 @@ export type InternalMeetingCreateManyOrganizerInput = {
   endTime: string
   teamsEventId?: string | null
   teamsLink?: string | null
-  status?: $Enums.MeetingStatus
+  status?: string
   createdAt?: Date | string
 }
 
@@ -685,7 +681,7 @@ export type InternalMeetingUpdateWithoutOrganizerInput = {
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participants?: Prisma.InternalMeetingParticipantUpdateManyWithoutMeetingNestedInput
 }
@@ -699,7 +695,7 @@ export type InternalMeetingUncheckedUpdateWithoutOrganizerInput = {
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   participants?: Prisma.InternalMeetingParticipantUncheckedUpdateManyWithoutMeetingNestedInput
 }
@@ -713,7 +709,7 @@ export type InternalMeetingUncheckedUpdateManyWithoutOrganizerInput = {
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
   teamsEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   teamsLink?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.EnumMeetingStatusFieldUpdateOperationsInput | $Enums.MeetingStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -838,7 +834,7 @@ export type $InternalMeetingPayload<ExtArgs extends runtime.Types.Extensions.Int
     organizerId: string
     teamsEventId: string | null
     teamsLink: string | null
-    status: $Enums.MeetingStatus
+    status: string
     createdAt: Date
   }, ExtArgs["result"]["internalMeeting"]>
   composites: {}
@@ -1274,7 +1270,7 @@ export interface InternalMeetingFieldRefs {
   readonly organizerId: Prisma.FieldRef<"InternalMeeting", 'String'>
   readonly teamsEventId: Prisma.FieldRef<"InternalMeeting", 'String'>
   readonly teamsLink: Prisma.FieldRef<"InternalMeeting", 'String'>
-  readonly status: Prisma.FieldRef<"InternalMeeting", 'MeetingStatus'>
+  readonly status: Prisma.FieldRef<"InternalMeeting", 'String'>
   readonly createdAt: Prisma.FieldRef<"InternalMeeting", 'DateTime'>
 }
     

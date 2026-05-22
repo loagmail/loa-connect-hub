@@ -5,6 +5,7 @@ import type {
   IAppointmentRepository,
   IAvailabilityRuleRepository,
   IMeetingRepository,
+  IPasswordResetTokenRepository,
   UserData,
   CreateUserInput,
   DepartmentData,
@@ -34,7 +35,7 @@ export const userRepository: IUserRepository = {
     return user as UserData
   },
   async listByRole(role) {
-    const users = await prisma.user.findMany({ where: { role: role as any } })
+    const users = await prisma.user.findMany({ where: { role } })
     return users as UserData[]
   },
   async listByDepartment(departmentId) {
@@ -76,7 +77,7 @@ const appointmentIncludes = {
   student: true,
   faculty: true,
   attendees: { include: { user: true } },
-} as const
+}
 
 export const appointmentRepository: IAppointmentRepository = {
   async create(input) {
@@ -165,7 +166,7 @@ export const availabilityRuleRepository: IAvailabilityRuleRepository = {
     return rules as AvailabilityRuleData[]
   },
   async findByFacultyAndDay(facultyId, dayOfWeek, startDate) {
-    if (!startDate) return null // require startDate for the new unique constraint
+    if (!startDate) return null
     const rule = await prisma.facultyAvailabilityRule.findUnique({
       where: { facultyId_dayOfWeek_startDate: { facultyId, dayOfWeek, startDate } },
     })
@@ -207,7 +208,6 @@ export const meetingRepository: IMeetingRepository = {
     return meetings as any
   },
   async listByParticipant(userId) {
-    // Find meetings where user is a participant
     const participations = await prisma.internalMeetingParticipant.findMany({
       where: { userId },
       include: { meeting: { include: { organizer: true, participants: { include: { user: true } } } } },
@@ -270,5 +270,30 @@ export const meetingRepository: IMeetingRepository = {
       include: { organizer: true, participants: { include: { user: true } } },
     })
     return meetings as any
+  },
+}
+
+export const passwordResetTokenRepository: IPasswordResetTokenRepository = {
+  async create(email, token, expiresAt) {
+    await prisma.passwordResetToken.create({
+      data: { email, token, expiresAt },
+    })
+  },
+  async findByToken(token) {
+    const record = await prisma.passwordResetToken.findUnique({ where: { token } })
+    return record as any
+  },
+  async markUsed(id) {
+    await prisma.passwordResetToken.update({
+      where: { id },
+      data: { usedAt: new Date() },
+    })
+  },
+  async findByEmail(email) {
+    const record = await prisma.passwordResetToken.findFirst({
+      where: { email },
+      orderBy: { createdAt: "desc" },
+    })
+    return record as any
   },
 }

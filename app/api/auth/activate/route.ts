@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { userRepository, passwordResetTokenRepository } from "@/lib/repositories/factory"
 import { randomBytes } from "crypto"
 import { sendActivationEmail } from "@/lib/services/email"
 
@@ -11,9 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-    })
+    const user = await userRepository.findByEmail(email.toLowerCase())
 
     if (!user) {
       return NextResponse.json({ error: "No account found with this email", code: "NOT_FOUND" }, { status: 404 })
@@ -26,9 +24,7 @@ export async function POST(req: NextRequest) {
     const token = randomBytes(32).toString("hex")
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
 
-    await prisma.passwordResetToken.create({
-      data: { email: user.email, token, expiresAt },
-    })
+    await passwordResetTokenRepository.create(user.email, token, expiresAt)
 
     const activationUrl = `${process.env.NEXTAUTH_URL}/change-password?token=${token}`
 

@@ -1447,13 +1447,6 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
 
 
 /**
- * Reference to a field of type 'Role'
- */
-export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>
-    
-
-
-/**
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -1468,44 +1461,9 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
 
 
 /**
- * Reference to a field of type 'AppointmentStatus'
- */
-export type EnumAppointmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AppointmentStatus'>
-    
-
-
-/**
- * Reference to a field of type 'TeamsSyncStatus'
- */
-export type EnumTeamsSyncStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TeamsSyncStatus'>
-    
-
-
-/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'AttendeeStatus'
- */
-export type EnumAttendeeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendeeStatus'>
-    
-
-
-/**
- * Reference to a field of type 'MeetingStatus'
- */
-export type EnumMeetingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MeetingStatus'>
-    
-
-
-/**
- * Reference to a field of type 'ParticipantStatus'
- */
-export type EnumParticipantStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ParticipantStatus'>
     
 
 

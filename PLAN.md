@@ -596,3 +596,54 @@ For Phase 12, one of:
 - **Gmail SMTP** (local dev): Enable 2FA, generate App Password
 - **Resend** (Vercel): Sign up at resend.com, get API key
 - **Microsoft Graph API**: Requires `Mail.Send` permission on Azure AD app
+
+### 4. Supabase PostgreSQL — Production Database
+
+#### Creating the Project
+1. Go to https://supabase.com → **New project**
+2. Enter organization, project name (`e-consultation`), **Database password**
+3. Select region closest to users (e.g., Singapore `ap-southeast-1`)
+4. Click **Create new project** (wait ~2 min)
+
+#### Getting Connection String
+1. In project dashboard → **Project Settings** → **Database**
+2. Under **Connection string** → **URI** → copy the string
+3. It looks like: `postgresql://postgres.xxxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres`
+4. Replace `[YOUR-PASSWORD]` with the database password set during creation
+5. **Important**: Use port `6543` (Supavisor pooler) — NOT the direct port `5432`
+
+#### .env Changes
+```env
+# Before (SQLite)
+DATABASE_URL=file:./dev.db
+DB_PROVIDER=sqlite
+
+# After (Supabase PostgreSQL)
+DATABASE_URL=postgresql://postgres.xxxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DB_PROVIDER=postgresql
+```
+
+#### Migration Steps
+```bash
+# 1. Push Prisma schema to Supabase
+npx prisma db push
+
+# 2. Clear cached Prisma client & Next.js build
+Remove-Item -Recurse -Force .next, lib/generated -ErrorAction SilentlyContinue
+
+# 3. Regenerate Prisma client
+npx prisma generate
+
+# 4. Seed (creates tables + test data)
+npx tsx prisma/seed.ts
+
+# 5. Build
+npm run build
+```
+
+#### Notes
+- `npx prisma db push` creates tables from schema (no migrations folder needed for dev)
+- For production, use `npx prisma migrate dev` to generate migration files
+- Supabase free tier: 500 MB database, 2 GB RAM — plenty for this app
+- Row-Level Security (RLS) can be enabled later if needed, but with Prisma we manage auth at app level
+- The `@prisma/adapter-better-sqlite3` adapter is only for SQLite — Prisma auto-detects PostgreSQL

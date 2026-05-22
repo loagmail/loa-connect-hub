@@ -1,12 +1,23 @@
-import {
-  userRepository,
-  departmentRepository,
-  appointmentRepository,
-  availabilityRuleRepository,
-  meetingRepository,
-} from "./prisma"
+import type {
+  IUserRepository,
+  IDepartmentRepository,
+  IAppointmentRepository,
+  IAvailabilityRuleRepository,
+  IMeetingRepository,
+  IPasswordResetTokenRepository,
+} from "./interfaces"
 
-export { userRepository, departmentRepository, appointmentRepository, availabilityRuleRepository, meetingRepository }
+import { userRepository as sqliteUserRepo, departmentRepository as sqliteDeptRepo, appointmentRepository as sqliteApptRepo, availabilityRuleRepository as sqliteAvailRepo, meetingRepository as sqliteMeetingRepo, passwordResetTokenRepository as sqliteTokenRepo } from "./prisma"
+import { userRepository as supabaseUserRepo, departmentRepository as supabaseDeptRepo, appointmentRepository as supabaseApptRepo, availabilityRuleRepository as supabaseAvailRepo, meetingRepository as supabaseMeetingRepo, passwordResetTokenRepository as supabaseTokenRepo } from "./supabase"
+
+const useSupabase = process.env.DB_PROVIDER === "supabase"
+
+export const userRepository: IUserRepository = useSupabase ? supabaseUserRepo : sqliteUserRepo
+export const departmentRepository: IDepartmentRepository = useSupabase ? supabaseDeptRepo : sqliteDeptRepo
+export const appointmentRepository: IAppointmentRepository = useSupabase ? supabaseApptRepo : sqliteApptRepo
+export const availabilityRuleRepository: IAvailabilityRuleRepository = useSupabase ? supabaseAvailRepo : sqliteAvailRepo
+export const meetingRepository: IMeetingRepository = useSupabase ? supabaseMeetingRepo : sqliteMeetingRepo
+export const passwordResetTokenRepository: IPasswordResetTokenRepository = useSupabase ? supabaseTokenRepo : sqliteTokenRepo
 
 export function getProviderName(): string {
   return process.env.DB_PROVIDER || "sqlite"

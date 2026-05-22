@@ -7,33 +7,12 @@ datasource db {
   provider = "sqlite"
 }
 
-enum Role {
-  STUDENT
-  FACULTY
-  DEAN
-  ADMIN
-}
-
-enum AppointmentStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  COMPLETED
-  CANCELLED
-}
-
-enum TeamsSyncStatus {
-  UNWRITTEN
-  WRITTEN
-  FAILED
-}
-
 model User {
   id           String   @id @default(cuid())
   name         String
   email        String   @unique
   passwordHash String?
-  role         Role     @default(STUDENT)
+  role         String   @default("STUDENT")
   departmentId String?
   course       String?
   isDisabled   Boolean  @default(false)
@@ -41,19 +20,16 @@ model User {
   lastLoginAt       DateTime?
   createdAt    DateTime @default(now())
 
-  department    Department? @relation(fields: [departmentId], references: [id])
-  deanDepartment Department? @relation("DeanDepartment")
-
-  availabilityRules FacultyAvailabilityRule[]
-  studentAppointments Appointment[] @relation("StudentAppointments")
-  facultyAppointments Appointment[] @relation("FacultyAppointments")
+  department          Department?               @relation(fields: [departmentId], references: [id])
+  deanDepartment      Department?               @relation("DeanDepartment")
+  availabilityRules   FacultyAvailabilityRule[]
+  studentAppointments Appointment[]             @relation("StudentAppointments")
+  facultyAppointments Appointment[]             @relation("FacultyAppointments")
   appointmentAttendees AppointmentAttendee[]
-
-  organizedMeetings   InternalMeeting[]               @relation("OrganizedMeetings")
+  organizedMeetings   InternalMeeting[]         @relation("OrganizedMeetings")
   meetingParticipants InternalMeetingParticipant[]
-
-  accounts  Account[]
-  sessions  Session[]
+  accounts            Account[]
+  sessions            Session[]
 }
 
 model Department {
@@ -62,36 +38,30 @@ model Department {
   code   String @unique
   deanId String? @unique
 
-  dean User?  @relation("DeanDepartment", fields: [deanId], references: [id])
+  dean  User? @relation("DeanDepartment", fields: [deanId], references: [id])
   users User[]
 }
 
-enum AttendeeStatus {
-  INVITED
-  ACCEPTED
-  DECLINED
-}
-
 model Appointment {
-  id              String            @id @default(cuid())
+  id              String   @id @default(cuid())
   studentId       String
   facultyId       String
-  sessionGroupId  String?           // groups staggered/multi-faculty blocks into one consultation
-  date            String            // YYYY-MM-DD
-  startTime       String            // HH:mm
-  endTime         String            // HH:mm
+  sessionGroupId  String?
+  date            String
+  startTime       String
+  endTime         String
   title           String?
   description     String?
-  status          AppointmentStatus @default(PENDING)
+  status          String   @default("PENDING")
   actionTaken     String?
   additionalRemarks String?
   teamsLink       String?
-  teamsSyncStatus  TeamsSyncStatus @default(UNWRITTEN)
-  teamsSyncRetries Int             @default(0)
+  teamsSyncStatus  String  @default("UNWRITTEN")
+  teamsSyncRetries Int     @default(0)
   teamsSyncError   String?
   teamsSyncLastAttempt DateTime?
-  requestedAt     DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  requestedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   student   User                  @relation("StudentAppointments", fields: [studentId], references: [id])
   faculty   User                  @relation("FacultyAppointments", fields: [facultyId], references: [id])
@@ -99,14 +69,14 @@ model Appointment {
 }
 
 model AppointmentAttendee {
-  id            String         @id @default(cuid())
+  id            String @id @default(cuid())
   appointmentId String
   userId        String
-  status        AttendeeStatus @default(INVITED)
-  isMandatory   Boolean        @default(true)
+  status        String @default("INVITED")
+  isMandatory   Boolean @default(true)
 
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id])
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([appointmentId, userId])
 }
@@ -115,24 +85,13 @@ model PasswordResetToken {
   id        String   @id @default(cuid())
   email     String
   token     String   @unique
-  expiresAt DateTime // now + 15 min
+  expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime @default(now())
 }
 
-enum MeetingStatus {
-  CONFIRMED
-  CANCELLED
-}
-
-enum ParticipantStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-}
-
 model InternalMeeting {
-  id          String        @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String?
   date        String
@@ -141,18 +100,18 @@ model InternalMeeting {
   organizerId String
   teamsEventId String?
   teamsLink   String?
-  status      MeetingStatus @default(CONFIRMED)
-  createdAt   DateTime      @default(now())
+  status      String   @default("CONFIRMED")
+  createdAt   DateTime @default(now())
 
   organizer    User                          @relation("OrganizedMeetings", fields: [organizerId], references: [id])
   participants InternalMeetingParticipant[]
 }
 
 model InternalMeetingParticipant {
-  id        String            @id @default(cuid())
+  id        String @id @default(cuid())
   meetingId String
   userId    String
-  status    ParticipantStatus @default(PENDING)
+  status    String @default("PENDING")
 
   meeting InternalMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -161,14 +120,14 @@ model InternalMeetingParticipant {
 }
 
 model FacultyAvailabilityRule {
-  id        String  @id @default(cuid())
+  id        String @id @default(cuid())
   facultyId String
-  dayOfWeek Int     // 0=Monday, 6=Sunday
+  dayOfWeek Int
   isBlocked Boolean @default(false)
-  startTime String? // "15:00" — null means full day available
-  endTime   String? // "19:00"
-  startDate String  // "2026-01-15" — when this rule becomes active
-  endDate   String? // "2026-06-30" — optional, rule is disabled after this date
+  startTime String?
+  endTime   String?
+  startDate String
+  endDate   String?
 
   faculty User @relation(fields: [facultyId], references: [id], onDelete: Cascade)
   @@unique([facultyId, dayOfWeek, startDate])
@@ -181,13 +140,13 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @default("")
-  access_token      String? @default("")
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
-  token_type        String? @default("")
-  scope             String? @default("")
-  id_token          String? @default("")
-  session_state     String? @default("")
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -199,7 +158,8 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

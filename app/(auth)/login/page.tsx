@@ -82,7 +82,7 @@ function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="input text-slate-800"
-            placeholder="john.doe@university.edu"
+            placeholder="john.doe@itmlyceumalabang.onmicrosoft.com"
           />
         </div>
 

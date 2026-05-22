@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { userRepository, passwordResetTokenRepository } from "@/lib/repositories/factory"
 import { hash } from "bcryptjs"
 
 export async function POST(req: NextRequest) {
@@ -14,9 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 })
     }
 
-    const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { token },
-    })
+    const resetToken = await passwordResetTokenRepository.findByToken(token)
 
     if (!resetToken) {
       return NextResponse.json({ error: "Invalid token" }, { status: 400 })
@@ -32,16 +30,13 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await hash(password, 12)
 
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { email: resetToken.email },
-        data: { passwordHash, hasLoggedInBefore: true },
-      }),
-      prisma.passwordResetToken.update({
-        where: { id: resetToken.id },
-        data: { usedAt: new Date() },
-      }),
-    ])
+    const user = await userRepository.findByEmail(resetToken.email)
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    await userRepository.update(user.id, { passwordHash, hasLoggedInBefore: true })
+    await passwordResetTokenRepository.markUsed(resetToken.id)
 
     return NextResponse.json({ success: true, email: resetToken.email })
   } catch (error) {

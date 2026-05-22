@@ -28,14 +28,14 @@ export type InternalMeetingParticipantMinAggregateOutputType = {
   id: string | null
   meetingId: string | null
   userId: string | null
-  status: $Enums.ParticipantStatus | null
+  status: string | null
 }
 
 export type InternalMeetingParticipantMaxAggregateOutputType = {
   id: string | null
   meetingId: string | null
   userId: string | null
-  status: $Enums.ParticipantStatus | null
+  status: string | null
 }
 
 export type InternalMeetingParticipantCountAggregateOutputType = {
@@ -145,7 +145,7 @@ export type InternalMeetingParticipantGroupByOutputType = {
   id: string
   meetingId: string
   userId: string
-  status: $Enums.ParticipantStatus
+  status: string
   _count: InternalMeetingParticipantCountAggregateOutputType | null
   _min: InternalMeetingParticipantMinAggregateOutputType | null
   _max: InternalMeetingParticipantMaxAggregateOutputType | null
@@ -173,7 +173,7 @@ export type InternalMeetingParticipantWhereInput = {
   id?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
   meetingId?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
   userId?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
-  status?: Prisma.EnumParticipantStatusFilter<"InternalMeetingParticipant"> | $Enums.ParticipantStatus
+  status?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
   meeting?: Prisma.XOR<Prisma.InternalMeetingScalarRelationFilter, Prisma.InternalMeetingWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -195,7 +195,7 @@ export type InternalMeetingParticipantWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.InternalMeetingParticipantWhereInput | Prisma.InternalMeetingParticipantWhereInput[]
   meetingId?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
   userId?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
-  status?: Prisma.EnumParticipantStatusFilter<"InternalMeetingParticipant"> | $Enums.ParticipantStatus
+  status?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
   meeting?: Prisma.XOR<Prisma.InternalMeetingScalarRelationFilter, Prisma.InternalMeetingWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "meetingId_userId">
@@ -217,12 +217,12 @@ export type InternalMeetingParticipantScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"InternalMeetingParticipant"> | string
   meetingId?: Prisma.StringWithAggregatesFilter<"InternalMeetingParticipant"> | string
   userId?: Prisma.StringWithAggregatesFilter<"InternalMeetingParticipant"> | string
-  status?: Prisma.EnumParticipantStatusWithAggregatesFilter<"InternalMeetingParticipant"> | $Enums.ParticipantStatus
+  status?: Prisma.StringWithAggregatesFilter<"InternalMeetingParticipant"> | string
 }
 
 export type InternalMeetingParticipantCreateInput = {
   id?: string
-  status?: $Enums.ParticipantStatus
+  status?: string
   meeting: Prisma.InternalMeetingCreateNestedOneWithoutParticipantsInput
   user: Prisma.UserCreateNestedOneWithoutMeetingParticipantsInput
 }
@@ -231,12 +231,12 @@ export type InternalMeetingParticipantUncheckedCreateInput = {
   id?: string
   meetingId: string
   userId: string
-  status?: $Enums.ParticipantStatus
+  status?: string
 }
 
 export type InternalMeetingParticipantUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   meeting?: Prisma.InternalMeetingUpdateOneRequiredWithoutParticipantsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutMeetingParticipantsNestedInput
 }
@@ -245,26 +245,26 @@ export type InternalMeetingParticipantUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   meetingId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InternalMeetingParticipantCreateManyInput = {
   id?: string
   meetingId: string
   userId: string
-  status?: $Enums.ParticipantStatus
+  status?: string
 }
 
 export type InternalMeetingParticipantUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InternalMeetingParticipantUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   meetingId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InternalMeetingParticipantListRelationFilter = {
@@ -387,20 +387,16 @@ export type InternalMeetingParticipantUncheckedUpdateManyWithoutMeetingNestedInp
   deleteMany?: Prisma.InternalMeetingParticipantScalarWhereInput | Prisma.InternalMeetingParticipantScalarWhereInput[]
 }
 
-export type EnumParticipantStatusFieldUpdateOperationsInput = {
-  set?: $Enums.ParticipantStatus
-}
-
 export type InternalMeetingParticipantCreateWithoutUserInput = {
   id?: string
-  status?: $Enums.ParticipantStatus
+  status?: string
   meeting: Prisma.InternalMeetingCreateNestedOneWithoutParticipantsInput
 }
 
 export type InternalMeetingParticipantUncheckedCreateWithoutUserInput = {
   id?: string
   meetingId: string
-  status?: $Enums.ParticipantStatus
+  status?: string
 }
 
 export type InternalMeetingParticipantCreateOrConnectWithoutUserInput = {
@@ -435,19 +431,19 @@ export type InternalMeetingParticipantScalarWhereInput = {
   id?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
   meetingId?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
   userId?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
-  status?: Prisma.EnumParticipantStatusFilter<"InternalMeetingParticipant"> | $Enums.ParticipantStatus
+  status?: Prisma.StringFilter<"InternalMeetingParticipant"> | string
 }
 
 export type InternalMeetingParticipantCreateWithoutMeetingInput = {
   id?: string
-  status?: $Enums.ParticipantStatus
+  status?: string
   user: Prisma.UserCreateNestedOneWithoutMeetingParticipantsInput
 }
 
 export type InternalMeetingParticipantUncheckedCreateWithoutMeetingInput = {
   id?: string
   userId: string
-  status?: $Enums.ParticipantStatus
+  status?: string
 }
 
 export type InternalMeetingParticipantCreateOrConnectWithoutMeetingInput = {
@@ -478,49 +474,49 @@ export type InternalMeetingParticipantUpdateManyWithWhereWithoutMeetingInput = {
 export type InternalMeetingParticipantCreateManyUserInput = {
   id?: string
   meetingId: string
-  status?: $Enums.ParticipantStatus
+  status?: string
 }
 
 export type InternalMeetingParticipantUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   meeting?: Prisma.InternalMeetingUpdateOneRequiredWithoutParticipantsNestedInput
 }
 
 export type InternalMeetingParticipantUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   meetingId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InternalMeetingParticipantUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   meetingId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InternalMeetingParticipantCreateManyMeetingInput = {
   id?: string
   userId: string
-  status?: $Enums.ParticipantStatus
+  status?: string
 }
 
 export type InternalMeetingParticipantUpdateWithoutMeetingInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   user?: Prisma.UserUpdateOneRequiredWithoutMeetingParticipantsNestedInput
 }
 
 export type InternalMeetingParticipantUncheckedUpdateWithoutMeetingInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type InternalMeetingParticipantUncheckedUpdateManyWithoutMeetingInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.EnumParticipantStatusFieldUpdateOperationsInput | $Enums.ParticipantStatus
+  status?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -583,7 +579,7 @@ export type $InternalMeetingParticipantPayload<ExtArgs extends runtime.Types.Ext
     id: string
     meetingId: string
     userId: string
-    status: $Enums.ParticipantStatus
+    status: string
   }, ExtArgs["result"]["internalMeetingParticipant"]>
   composites: {}
 }
@@ -1012,7 +1008,7 @@ export interface InternalMeetingParticipantFieldRefs {
   readonly id: Prisma.FieldRef<"InternalMeetingParticipant", 'String'>
   readonly meetingId: Prisma.FieldRef<"InternalMeetingParticipant", 'String'>
   readonly userId: Prisma.FieldRef<"InternalMeetingParticipant", 'String'>
-  readonly status: Prisma.FieldRef<"InternalMeetingParticipant", 'ParticipantStatus'>
+  readonly status: Prisma.FieldRef<"InternalMeetingParticipant", 'String'>
 }
     
 

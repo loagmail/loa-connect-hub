@@ -3,8 +3,6 @@ import { redirect } from "next/navigation"
 import { CalendarView } from "@/components/CalendarView"
 import { userRepository } from "@/lib/repositories/factory"
 import { getAllAppointments } from "@/lib/controllers/appointments"
-import { fetchUsersFromGraph } from "@/lib/services/graph"
-import TeamsSyncPanel from "@/components/TeamsSyncPanel"
 
 async function getUsers() {
   const users = await userRepository.listByRole("STUDENT")
@@ -24,10 +22,9 @@ export default async function AdminDashboard() {
   if (!session?.user) redirect("/login")
   if ((session.user as any).role !== "ADMIN") redirect("/login")
 
-  const [users, appointments, graphUsers] = await Promise.all([
+  const [users, appointments] = await Promise.all([
     getUsers(),
     getAppointments(),
-    fetchUsersFromGraph().catch(() => [] as any[]),
   ])
   const pendingCount = appointments.filter((a: any) => a.status === "PENDING").length
   const approvedCount = appointments.filter((a: any) => a.status === "APPROVED").length
@@ -53,9 +50,6 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Teams Sync Panel */}
-      <TeamsSyncPanel />
-
       {/* Global Calendar */}
       <section className="space-y-4">
         <h2 className="text-lg font-bold text-slate-900">Schedule Overview ({appointments.length})</h2>
@@ -75,36 +69,6 @@ export default async function AdminDashboard() {
           emptySubtext="Appointments will pop up here once students request availability windows."
         />
       </section>
-
-      {/* Entra ID Graph Directory */}
-      {graphUsers.length > 0 && (
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900">Microsoft Entra ID Users ({graphUsers.length})</h2>
-            <a href="/admin/graph-users" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View all →</a>
-          </div>
-          <div className="card overflow-x-auto bg-white">
-            <table className="min-w-full divide-y divide-slate-100">
-              <thead>
-                <tr className="bg-slate-50">
-                  <th className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Display Name</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">User Principal Name</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {graphUsers.map((gu: any) => (
-                  <tr key={gu.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-800">{gu.displayName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">{gu.mail || "\u2014"}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400 font-mono tracking-tighter">{gu.userPrincipalName}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
 
       {/* Internal User Accounts */}
       <section className="space-y-4">
