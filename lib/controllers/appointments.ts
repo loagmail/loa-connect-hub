@@ -1,9 +1,22 @@
 import { appointmentRepository, userRepository } from "@/lib/repositories/factory"
+import { MIN_TIMESLOT_DURATION_MINUTES, MAX_TIMESLOT_DURATION_MINUTES } from "@/lib/constants"
 
 export interface TimeSlot {
   date: string
   startTime: string
   endTime: string
+}
+
+function getMinutesDifference(startTime: string, endTime: string): number {
+  const [sh, sm] = startTime.split(":").map(Number)
+  const [eh, em] = endTime.split(":").map(Number)
+  return eh * 60 + em - (sh * 60 + sm)
+}
+
+function isValid30MinuteTime(time: string): boolean {
+  if (!time) return false
+  const [, mins] = time.split(":").map(Number)
+  return mins === 0 || mins === 30
 }
 
 export async function requestAppointment(input: {
@@ -26,6 +39,23 @@ export async function requestAppointment(input: {
   
   if (!timeSlots || timeSlots.length === 0) {
     throw new Error("At least one timeslot (date, startTime, endTime) is required")
+  }
+
+  // Validate timeslot durations and time boundaries
+  for (const slot of timeSlots) {
+    if (!isValid30MinuteTime(slot.startTime)) {
+      throw new Error(`Start time ${slot.startTime} must be on a 30-minute boundary (HH:00 or HH:30)`)
+    }
+    if (!isValid30MinuteTime(slot.endTime)) {
+      throw new Error(`End time ${slot.endTime} must be on a 30-minute boundary (HH:00 or HH:30)`)
+    }
+    const durationMinutes = getMinutesDifference(slot.startTime, slot.endTime)
+    if (durationMinutes < MIN_TIMESLOT_DURATION_MINUTES) {
+      throw new Error(`Timeslot duration must be at least ${MIN_TIMESLOT_DURATION_MINUTES} minutes`)
+    }
+    if (durationMinutes > MAX_TIMESLOT_DURATION_MINUTES) {
+      throw new Error(`Timeslot duration cannot exceed ${MAX_TIMESLOT_DURATION_MINUTES} minutes (8 hours)`)
+    }
   }
 
   // Check for overlapping timeslots within the same appointment

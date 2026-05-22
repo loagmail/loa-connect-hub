@@ -6,6 +6,21 @@ import BookingForm from "./BookingForm"
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
+/** Validate that time is at a 30-minute boundary (HH:00 or HH:30) */
+function isValid30MinuteTime(time: string): boolean {
+  if (!time) return false
+  const [, mins] = time.split(":").map(Number)
+  return mins === 0 || mins === 30
+}
+
+/** Round time to nearest 30-minute boundary */
+function roundTo30Minutes(time: string): string {
+  if (!time) return ""
+  const [hours, mins] = time.split(":").map(Number)
+  if (mins <= 15) return `${String(hours).padStart(2, "0")}:00`
+  return `${String(hours).padStart(2, "0")}:30`
+}
+
 interface FacultyRule {
   id: string
   dayOfWeek: number
@@ -46,17 +61,31 @@ function fmtDate(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
 }
 
-/** Generate 1-hour block suggestions from a time window */
+/** Generate 30-minute to 8-hour slot suggestions from a time window */
 function generateSlots(startTime: string, endTime: string): { start: string; end: string }[] {
   const slots: { start: string; end: string }[] = []
   const [sh, sm] = startTime.split(":").map(Number)
   const [eh, em] = endTime.split(":").map(Number)
-  let h = sh
-  while (h + 1 < eh || (h + 1 === eh && em > 0)) {
-    const s = `${String(h).padStart(2, "0")}:${String(sm).padStart(2, "0")}`
-    h++
-    const e = h < eh ? `${String(h).padStart(2, "0")}:00` : endTime
-    slots.push({ start: s, end: e })
+  
+  // Convert to minutes for easier calculation
+  let currentMinutes = sh * 60 + sm
+  const endMinutes = eh * 60 + em
+  const maxSlotDuration = 8 * 60 // 8 hours
+  
+  // Generate 30-minute increment slots
+  while (currentMinutes < endMinutes) {
+    const slotDuration = Math.min(maxSlotDuration, endMinutes - currentMinutes)
+    if (slotDuration >= 30) { // Only add if duration is at least 30 minutes
+      const startHours = Math.floor(currentMinutes / 60)
+      const startMins = currentMinutes % 60
+      const endHours = Math.floor((currentMinutes + slotDuration) / 60)
+      const endMins = (currentMinutes + slotDuration) % 60
+      
+      const s = `${String(startHours).padStart(2, "0")}:${String(startMins).padStart(2, "0")}`
+      const e = `${String(endHours).padStart(2, "0")}:${String(endMins).padStart(2, "0")}`
+      slots.push({ start: s, end: e })
+    }
+    currentMinutes += 30 // Move to next 30-minute increment
   }
   return slots
 }

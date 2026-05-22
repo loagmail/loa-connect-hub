@@ -5,6 +5,21 @@ import { useState, useMemo } from "react"
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
+/** Validate that time is at a 30-minute boundary (HH:00 or HH:30) */
+function isValid30MinuteTime(time: string): boolean {
+  if (!time) return false
+  const [, mins] = time.split(":").map(Number)
+  return mins === 0 || mins === 30
+}
+
+/** Round time to nearest 30-minute boundary */
+function roundTo30Minutes(time: string): string {
+  if (!time) return ""
+  const [hours, mins] = time.split(":").map(Number)
+  if (mins <= 15) return `${String(hours).padStart(2, "0")}:00`
+  return `${String(hours).padStart(2, "0")}:30`
+}
+
 interface FacultyRule {
   id: string
   dayOfWeek: number
@@ -46,14 +61,28 @@ function fmtDate(year: number, month: number, day: number): string {
 
 function generateSlots(startTime: string, endTime: string): { start: string; end: string }[] {
   const slots: { start: string; end: string }[] = []
-  const [sh] = startTime.split(":").map(Number)
+  const [sh, sm] = startTime.split(":").map(Number)
   const [eh, em] = endTime.split(":").map(Number)
-  let h = sh
-  while (h + 1 < eh || (h + 1 === eh && em > 0)) {
-    const s = `${String(h).padStart(2, "0")}:00`
-    h++
-    const e = h < eh ? `${String(h).padStart(2, "0")}:00` : endTime
-    slots.push({ start: s, end: e })
+  
+  // Convert to minutes for easier calculation
+  let currentMinutes = sh * 60 + sm
+  const endMinutes = eh * 60 + em
+  const maxSlotDuration = 8 * 60 // 8 hours
+  
+  // Generate 30-minute increment slots
+  while (currentMinutes < endMinutes) {
+    const slotDuration = Math.min(maxSlotDuration, endMinutes - currentMinutes)
+    if (slotDuration >= 30) { // Only add if duration is at least 30 minutes
+      const startHours = Math.floor(currentMinutes / 60)
+      const startMins = currentMinutes % 60
+      const endHours = Math.floor((currentMinutes + slotDuration) / 60)
+      const endMins = (currentMinutes + slotDuration) % 60
+      
+      const s = `${String(startHours).padStart(2, "0")}:${String(startMins).padStart(2, "0")}`
+      const e = `${String(endHours).padStart(2, "0")}:${String(endMins).padStart(2, "0")}`
+      slots.push({ start: s, end: e })
+    }
+    currentMinutes += 30 // Move to next 30-minute increment
   }
   return slots
 }
@@ -462,75 +491,114 @@ export default function StudentBooking({ facultyWithRules }: Props) {
             </div>
           </div>
 
-          {/* Available Slots or Manual Time */}
+          {/* Available Slots & Manual Time Entry */}
           {selectedDay && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h4 className="text-sm font-bold text-slate-700">
                 {fmtDate(currentYear, currentMonth, selectedDay)}
               </h4>
-              {availableSlots.length > 0 ? (
-                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                  {availableSlots.map((slot, i) => {
-                    const isSelected = selectedSlots.some(
-                      (s) => s.date === fmtDate(currentYear, currentMonth, selectedDay!) && s.start === slot.start && s.end === slot.end
-                    )
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => { handleAddSlot(slot); setManualTime(null) }}
-                        className={`card p-3 bg-white border flex items-center justify-between transition-colors ${
-                          isSelected
-                            ? "border-gold-300 bg-gold-50/50"
-                            : "border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-                          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {slot.start} – {slot.end}
-                        </div>
-                        {isSelected && (
-                          <svg className="w-4 h-4 text-gold-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
-                    <p className="font-semibold">Conflicting Schedules</p>
-                    <p className="opacity-75 mt-0.5">No common availability for all selected faculty on this date. You can still book by entering a custom time — invited faculty will review and accept/decline.</p>
+
+              {availableSlots.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 mb-2">Quick available blocks:</p>
+                  <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                    {availableSlots.map((slot, i) => {
+                      const isSelected = selectedSlots.some(
+                        (s) => s.date === fmtDate(currentYear, currentMonth, selectedDay!) && s.start === slot.start && s.end === slot.end
+                      )
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => { handleAddSlot(slot); setManualTime(null) }}
+                          className={`card p-3 bg-white border flex items-center justify-between transition-colors ${
+                            isSelected
+                              ? "border-gold-300 bg-gold-50/50"
+                              : "border-slate-200 hover:border-slate-300"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+                            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {slot.start} – {slot.end}
+                          </div>
+                          {isSelected && (
+                            <svg className="w-4 h-4 text-gold-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      )
+                    })}
                   </div>
+                </div>
+              )}
+
+              <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                {availableSlots.length === 0 ? (
+                  <div className="text-xs text-red-700">
+                    <p className="font-semibold">No common availability</p>
+                    <p className="opacity-75">Add a custom block and invited faculty will review it.</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">You can also add additional custom blocks for this day.</p>
+                )}
+                <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <input
                       type="time"
                       value={manualTime?.start || ""}
-                      onChange={(e) => setManualTime((prev) => ({ start: e.target.value, end: prev?.end || "" }))}
+                      onChange={(e) => {
+                        const rounded = roundTo30Minutes(e.target.value)
+                        setManualTime((prev) => ({ start: rounded, end: prev?.end || "" }))
+                      }}
                       className="input text-xs w-auto"
                     />
                     <span className="text-slate-400">to</span>
                     <input
                       type="time"
                       value={manualTime?.end || ""}
-                      onChange={(e) => setManualTime((prev) => ({ start: prev?.start || "", end: e.target.value }))}
+                      onChange={(e) => {
+                        const rounded = roundTo30Minutes(e.target.value)
+                        setManualTime((prev) => ({ start: prev?.start || "", end: rounded }))
+                      }}
                       className="input text-xs w-auto"
                     />
                     <button
                       onClick={() => {
-                        if (manualTime?.start && manualTime?.end) {
+                        if (manualTime?.start && manualTime?.end && isValid30MinuteTime(manualTime.start) && isValid30MinuteTime(manualTime.end)) {
                           handleAddSlot({ start: manualTime.start, end: manualTime.end })
                           setManualTime(null)
                         }
                       }}
-                      disabled={!manualTime?.start || !manualTime?.end}
+                      disabled={!manualTime?.start || !manualTime?.end || !isValid30MinuteTime(manualTime.start || "") || !isValid30MinuteTime(manualTime.end || "")}
                       className="btn-primary text-xs py-1.5 px-4 disabled:opacity-50"
                     >
-                      Add This Time
+                      Add Block
                     </button>
+                  </div>
+                  <p className="text-[10px] text-slate-500">Times must be in 30-minute intervals (HH:00 or HH:30). Min 30 min, max 8 hours per block.</p>
+                </div>
+              </div>
+
+              {selectedSlots.filter((s) => s.date === fmtDate(currentYear, currentMonth, selectedDay)).length > 0 && (
+                <div className="p-3 rounded-lg bg-gold-50 border border-gold-200">
+                  <p className="text-xs font-semibold text-gold-700 mb-2">Selected blocks for this day:</p>
+                  <div className="space-y-1">
+                    {selectedSlots
+                      .filter((s) => s.date === fmtDate(currentYear, currentMonth, selectedDay))
+                      .map((slot, idx) => (
+                        <div key={`${slot.date}-${slot.start}-${slot.end}-${idx}`} className="flex items-center justify-between text-sm bg-white p-2 rounded border border-gold-200">
+                          <span className="text-slate-700 font-medium">{slot.start} – {slot.end}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSlot(selectedSlots.indexOf(slot))}
+                            className="text-red-600 hover:text-red-800 text-xs font-semibold"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}
