@@ -1,5 +1,6 @@
 "use client"
 
+import SubmitButton from "@/components/SubmitButton"
 import { Suspense } from "react"
 import { signIn, useSession } from "next-auth/react"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -28,6 +29,7 @@ function LoginForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
     await signIn("credentials", { email, password, callbackUrl: "/" })
   }
@@ -86,21 +88,9 @@ function LoginForm() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2.5 rounded-lg bg-gold-600 hover:bg-gold-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm"
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Signing in...
-            </span>
-          ) : "Sign In"}
-        </button>
+        <SubmitButton type="submit" loading={loading} variant="primary" className="w-full py-2.5">
+          {loading ? "Signing in..." : "Sign In"}
+        </SubmitButton>
       </form>
 
       <div className="text-center space-y-3">

@@ -1,6 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import Skeleton from "@/components/Skeleton"
+import SubmitButton from "@/components/SubmitButton"
 
 interface User {
   id: string
@@ -31,16 +33,24 @@ export default function AdminUsersPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const toggleStatus = async (userId: string, currentStatus: boolean) => {
-    const res = await fetch("/api/admin/users", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, isDisabled: !currentStatus }),
-    })
-    if (res.ok) {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, isDisabled: !currentStatus } : u))
-      )
+  const pendingRef = useRef(false)
+
+  const handleToggle = async (userId: string, currentStatus: boolean) => {
+    if (pendingRef.current) return
+    pendingRef.current = true
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, isDisabled: !currentStatus }),
+      })
+      if (res.ok) {
+        setUsers((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, isDisabled: !currentStatus } : u))
+        )
+      }
+    } finally {
+      pendingRef.current = false
     }
   }
 
@@ -105,7 +115,16 @@ export default function AdminUsersPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-400 text-center py-8">Loading...</p>
+        <div className="space-y-4">
+          <div className="card p-4 space-y-3">
+            <Skeleton variant="text" className="w-1/4 h-6" />
+            <Skeleton variant="text" className="w-1/2" />
+            <Skeleton variant="text" className="w-full" />
+            <Skeleton variant="text" className="w-3/4" />
+          </div>
+          <Skeleton variant="card" />
+          <Skeleton variant="card" />
+        </div>
       ) : filtered.length === 0 ? (
         <p className="text-sm text-slate-400 text-center py-8">No users found.</p>
       ) : (
@@ -153,16 +172,13 @@ export default function AdminUsersPage() {
                     {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : "—"}
                   </td>
                   <td className="py-3 pr-4">
-                    <button
-                      onClick={() => toggleStatus(u.id, u.isDisabled)}
-                      className={`text-xs font-semibold px-3 py-1 rounded-lg transition-colors ${
-                        u.isDisabled
-                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                          : "bg-red-100 text-red-700 hover:bg-red-200"
-                      }`}
+                    <SubmitButton
+                      onClick={() => handleToggle(u.id, u.isDisabled)}
+                      variant={u.isDisabled ? "primary" : "danger"}
+                      className="text-xs font-semibold px-3 py-1 rounded-lg"
                     >
                       {u.isDisabled ? "Enable" : "Disable"}
-                    </button>
+                    </SubmitButton>
                   </td>
                 </tr>
               ))}

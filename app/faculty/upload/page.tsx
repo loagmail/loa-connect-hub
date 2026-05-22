@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import SubmitButton from "@/components/SubmitButton"
 
 interface ImportRow {
   name: string
@@ -24,6 +25,7 @@ export default function FacultyUploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setError("")
     setResult(null)
 
@@ -90,9 +92,9 @@ export default function FacultyUploadPage() {
           />
         </div>
         {error && <p className="text-xs font-medium text-red-600">{error}</p>}
-        <button type="submit" disabled={loading} className="btn-primary text-xs font-semibold py-2.5">
-          {loading ? "Uploading..." : "Upload & Import"}
-        </button>
+        <SubmitButton type="submit" loading={loading} variant="primary">
+          Upload & Import
+        </SubmitButton>
       </form>
 
       {result && (

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import SubmitButton from "@/components/SubmitButton"
 
 interface SlotInfo {
   id: string
@@ -52,6 +53,7 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitting) return
     if (!title.trim()) return
 
     setSubmitting(true)
@@ -185,13 +187,9 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
           )}
 
           <div className="flex items-center gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={submitting || !title.trim()}
-              className="btn-primary text-sm font-semibold px-6 py-2.5 disabled:opacity-50"
-            >
-              {submitting ? "Booking..." : sessionGroupId ? "Add Block" : "Confirm Booking"}
-            </button>
+            <SubmitButton type="submit" loading={submitting} variant="primary" className="w-full">
+              {submitting ? "Booking..." : sessionGroupId ? "Add Block" : "Book Consultation"}
+            </SubmitButton>
             <button
               type="button"
               onClick={onClose}

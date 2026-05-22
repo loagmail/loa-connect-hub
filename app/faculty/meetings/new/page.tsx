@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import SubmitButton from "@/components/SubmitButton"
+import Skeleton from "@/components/Skeleton"
 
 interface FacultyUser {
   id: string
@@ -74,6 +76,7 @@ export default function NewMeetingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitting) return
     setSubmitting(true)
     setError("")
 
@@ -176,7 +179,11 @@ export default function NewMeetingPage() {
           <label className="input-label">Invite Faculty</label>
           <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
             {facultyList.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">Loading faculty...</p>
+              <div className="space-y-2">
+                <Skeleton variant="text" className="w-full" />
+                <Skeleton variant="text" className="w-5/6" />
+                <Skeleton variant="text" className="w-4/6" />
+              </div>
             ) : (
               facultyList.map((f) => (
                 <label
@@ -236,13 +243,14 @@ export default function NewMeetingPage() {
 
         {/* Submit */}
         <div className="flex items-center gap-3 pt-2">
-          <button
+          <SubmitButton
             type="submit"
-            disabled={submitting || !title || !date || !startTime || !endTime}
-            className="btn-primary text-sm font-semibold px-6 py-2.5 disabled:opacity-50"
+            loading={submitting}
+            disabled={!title || !date || !startTime || !endTime}
+            variant="primary"
           >
-            {submitting ? "Creating..." : "Create Meeting"}
-          </button>
+            Create Meeting
+          </SubmitButton>
           <button
             type="button"
             onClick={() => router.push("/faculty/meetings")}

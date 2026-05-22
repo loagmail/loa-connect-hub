@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import SubmitButton from "@/components/SubmitButton"
+import Skeleton from "@/components/Skeleton"
 
 interface Participant {
   id: string
@@ -68,7 +70,11 @@ export default function MeetingDetailPage() {
       .finally(() => setLoading(false))
   }, [meetingId])
 
+  const pendingRef = useRef(false)
+
   const handleRespond = async (status: "ACCEPTED" | "DECLINED") => {
+    if (pendingRef.current) return
+    pendingRef.current = true
     try {
       const res = await fetch(`/api/meetings/${meetingId}/respond`, {
         method: "POST",
@@ -89,11 +95,15 @@ export default function MeetingDetailPage() {
       }
     } catch {
       // ignore
+    } finally {
+      pendingRef.current = false
     }
   }
 
   const handleCancel = async () => {
     if (!confirm("Cancel this meeting?")) return
+    if (pendingRef.current) return
+    pendingRef.current = true
     try {
       const res = await fetch(`/api/meetings/${meetingId}`, { method: "PATCH" })
       const data = await res.json()
@@ -102,10 +112,19 @@ export default function MeetingDetailPage() {
       }
     } catch {
       // ignore
+    } finally {
+      pendingRef.current = false
     }
   }
 
-  if (loading) return <div className="p-6 md:p-8"><p className="text-slate-400">Loading...</p></div>
+  if (loading) return (
+    <div className="p-6 md:p-8 max-w-3xl space-y-4">
+      <Skeleton variant="card" className="h-48" />
+      <Skeleton variant="text" className="w-1/3" />
+      <Skeleton variant="text" className="w-1/2" />
+      <Skeleton variant="card" className="h-32" />
+    </div>
+  )
   if (error || !meeting) return <div className="p-6 md:p-8"><p className="text-red-600">{error || "Meeting not found"}</p></div>
 
   const isOrganizer = meeting.organizerId === userId
@@ -178,18 +197,12 @@ export default function MeetingDetailPage() {
         <div className="mt-6 flex items-center gap-3">
           {!isOrganizer && meeting.status === "CONFIRMED" && myParticipation?.status === "PENDING" && (
             <>
-              <button
-                onClick={() => handleRespond("ACCEPTED")}
-                className="btn-primary text-sm font-semibold px-5 py-2"
-              >
+              <SubmitButton onClick={() => handleRespond("ACCEPTED")} variant="primary">
                 Accept
-              </button>
-              <button
-                onClick={() => handleRespond("DECLINED")}
-                className="px-5 py-2 rounded-lg text-sm font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
-              >
+              </SubmitButton>
+              <SubmitButton onClick={() => handleRespond("DECLINED")} variant="danger">
                 Decline
-              </button>
+              </SubmitButton>
             </>
           )}
           {myParticipation?.status === "ACCEPTED" && (
@@ -206,12 +219,9 @@ export default function MeetingDetailPage() {
             </span>
           )}
           {isOrganizer && meeting.status === "CONFIRMED" && (
-            <button
-              onClick={handleCancel}
-              className="px-5 py-2 rounded-lg text-sm font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
-            >
+            <SubmitButton onClick={handleCancel} variant="danger">
               Cancel Meeting
-            </button>
+            </SubmitButton>
           )}
         </div>
       </div>

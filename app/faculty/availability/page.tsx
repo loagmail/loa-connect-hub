@@ -1,7 +1,7 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { redirect } from "next/navigation"
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -64,7 +64,11 @@ export default function AvailabilityPage() {
     }
   }, [status, session])
 
+  const pendingRef = useRef(false)
+
   const toggleBlocked = async (day: number) => {
+    if (pendingRef.current) return
+    pendingRef.current = true
     const current = getRule(day)
     const newBlocked = !current.isBlocked
     setSaving(day)
@@ -92,6 +96,7 @@ export default function AvailabilityPage() {
       })
     }
     setSaving(null)
+    pendingRef.current = false
   }
 
   const updateTime = async (day: number, field: "startTime" | "endTime", value: string) => {

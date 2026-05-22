@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { AppointmentCard } from "@/components/AppointmentCard"
 import { listFacultyAppointments } from "@/lib/controllers/appointments"
 import { userRepository, departmentRepository } from "@/lib/repositories/factory"
 
@@ -20,7 +21,12 @@ export default async function DeanDashboard() {
 
   let totalAppointments = 0
   let pendingAppointments = 0
+  let upcomingAppointments = 0
+  const allUpcoming: any[] = []
+  const allRequests: any[] = []
   const facultyAppointmentCounts: { name: string; total: number; pending: number }[] = []
+
+  const today = new Date().toISOString().slice(0, 10)
 
   for (const faculty of facultyMembers) {
     const appointments = await listFacultyAppointments(faculty.id)
@@ -32,7 +38,21 @@ export default async function DeanDashboard() {
       total: appointments.length,
       pending,
     })
+
+    for (const a of appointments) {
+      if (a.date >= today && (a.status === "APPROVED" || a.status === "PENDING")) {
+        allUpcoming.push({ ...a, facultyName: faculty.name })
+      }
+      if (a.status === "PENDING") {
+        allRequests.push({ ...a, facultyName: faculty.name })
+      }
+    }
   }
+
+  upcomingAppointments = allUpcoming.length
+
+  allUpcoming.sort((a, b) => a.date.localeCompare(b.date))
+  allRequests.sort((a, b) => a.date.localeCompare(b.date))
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -55,14 +75,70 @@ export default async function DeanDashboard() {
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Faculty Members</p>
         </div>
         <div className="card p-5 bg-white">
-          <p className="text-3xl font-bold text-slate-900">{totalAppointments}</p>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Total Appointments</p>
+          <p className="text-3xl font-bold text-slate-900">{upcomingAppointments}</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Upcoming Schedules</p>
         </div>
         <div className="card p-5 bg-white">
           <p className="text-3xl font-bold text-slate-900">{pendingAppointments}</p>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Pending Across Faculty</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Pending Requests</p>
         </div>
       </div>
+
+      {/* Upcoming Consultation Schedules */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-bold text-slate-900">Upcoming Consultation Schedules</h2>
+        {allUpcoming.length === 0 ? (
+          <div className="card p-12 text-center bg-white">
+            <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-slate-700 font-semibold text-sm">No upcoming schedules</p>
+            <p className="text-slate-400 text-xs mt-1">No upcoming appointments across your department.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {allUpcoming.slice(0, 10).map((appointment: any) => (
+              <AppointmentCard key={appointment.id} appointment={appointment} role="FACULTY" />
+            ))}
+            {allUpcoming.length > 10 && (
+              <p className="text-xs text-slate-500 text-center pt-2">
+                Showing 10 of {allUpcoming.length} upcoming schedules
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Consultation Requests */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900">Consultation Requests</h2>
+          {allRequests.length > 0 && (
+            <span className="text-xs font-semibold bg-amber-500/20 text-amber-600 px-2.5 py-0.5 rounded-full">
+              {allRequests.length} pending
+            </span>
+          )}
+        </div>
+        {allRequests.length === 0 ? (
+          <div className="card p-12 text-center bg-white">
+            <p className="text-slate-700 font-semibold text-sm">No pending requests</p>
+            <p className="text-slate-400 text-xs mt-1">No pending consultation requests across your department.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {allRequests.slice(0, 10).map((appointment: any) => (
+              <AppointmentCard key={appointment.id} appointment={appointment} role="FACULTY" />
+            ))}
+            {allRequests.length > 10 && (
+              <p className="text-xs text-slate-500 text-center pt-2">
+                Showing 10 of {allRequests.length} pending requests
+              </p>
+            )}
+          </div>
+        )}
+      </section>
 
       {/* Faculty Overview */}
       <section className="space-y-4">

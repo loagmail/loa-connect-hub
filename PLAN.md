@@ -25,6 +25,12 @@
 | **13. Consultation Completion (Action Taken)** | ✅ **Done** |
 | **14. Attendee Permissions** | ❌ **Remaining** |
 | **15. Reports & Export** | ❌ **Remaining** |
+| — | — |
+| **Architecture: Factory only imports Supabase repos** | ✅ **Done** |
+| **Architecture: Lazy Prisma client via Proxy** | ✅ **Done** |
+| **UI: Skeleton loading for data-fetching pages** | ✅ **Done** |
+| **UI: Double-click prevention on all buttons** | ✅ **Done** |
+| **UI: Login auto-redirect for authenticated users** | ✅ **Done** |
 
 ## Overview
 

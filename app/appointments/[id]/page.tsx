@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { StatusBadge } from "@/components/StatusBadge"
+import SubmitButton from "@/components/SubmitButton"
+import Skeleton from "@/components/Skeleton"
 
 interface AppointmentDetail {
   id: string
@@ -64,7 +66,11 @@ export default function AppointmentDetailPage() {
 
   const effectiveStatus = localStatus || appointment?.status || ""
 
+  const pendingRef = useRef(false)
+
   const handleAction = async (action: string, endpoint?: string) => {
+    if (pendingRef.current) return
+    pendingRef.current = true
     setActionLoading(action)
     try {
       const url = endpoint || `/api/appointments/${appointmentId}/${action}`
@@ -88,10 +94,18 @@ export default function AppointmentDetailPage() {
       setError("An error occurred")
     } finally {
       setActionLoading("")
+      pendingRef.current = false
     }
   }
 
-  if (loading) return <div className="p-6 md:p-8 max-w-3xl mx-auto"><p className="text-slate-400">Loading...</p></div>
+  if (loading) return (
+    <div className="p-6 md:p-8 max-w-3xl mx-auto space-y-4">
+      <Skeleton variant="card" className="h-48" />
+      <Skeleton variant="text" className="w-1/3" />
+      <Skeleton variant="text" className="w-1/2" />
+      <Skeleton variant="card" className="h-32" />
+    </div>
+  )
   if (error || !appointment) return <div className="p-6 md:p-8 max-w-3xl mx-auto"><p className="text-red-600">{error || "Not found"}</p></div>
 
   const isStudent = role === "STUDENT" && appointment.student?.id === userId
@@ -232,60 +246,60 @@ export default function AppointmentDetailPage() {
         <div className="flex flex-wrap gap-3">
           {/* Student: cancel PENDING */}
           {isStudent && effectiveStatus === "PENDING" && (
-            <button
+            <SubmitButton
               onClick={() => handleAction("student-cancel", `/api/appointments/${appointmentId}/student-cancel`)}
-              disabled={actionLoading !== ""}
-              className="btn-danger text-sm font-semibold px-5 py-2.5"
+              loading={actionLoading === "student-cancel"}
+              variant="danger"
             >
-              {actionLoading === "student-cancel" ? "Cancelling..." : "Cancel Request"}
-            </button>
+              Cancel Request
+            </SubmitButton>
           )}
 
           {/* Faculty: approve/reject PENDING */}
           {isFaculty && effectiveStatus === "PENDING" && (
             <>
-              <button
+              <SubmitButton
                 onClick={() => handleAction("approve")}
-                disabled={actionLoading !== ""}
-                className="btn-success text-sm font-semibold px-5 py-2.5"
+                loading={actionLoading === "approve"}
+                variant="success"
               >
-                {actionLoading === "approve" ? "Approving..." : "Approve"}
-              </button>
-              <button
+                Approve
+              </SubmitButton>
+              <SubmitButton
                 onClick={() => handleAction("reject")}
-                disabled={actionLoading !== ""}
-                className="btn-danger text-sm font-semibold px-5 py-2.5"
+                loading={actionLoading === "reject"}
+                variant="danger"
               >
-                {actionLoading === "reject" ? "Rejecting..." : "Reject"}
-              </button>
+                Reject
+              </SubmitButton>
             </>
           )}
 
           {/* Faculty: complete/cancel APPROVED */}
           {isFaculty && effectiveStatus === "APPROVED" && (
             <>
-              <button
+              <SubmitButton
                 onClick={() => handleAction("complete")}
-                disabled={actionLoading !== ""}
-                className="btn-primary text-sm font-semibold px-5 py-2.5"
+                loading={actionLoading === "complete"}
+                variant="primary"
               >
-                {actionLoading === "complete" ? "Completing..." : "Mark Complete"}
-              </button>
-              <button
+                Mark Complete
+              </SubmitButton>
+              <SubmitButton
                 onClick={() => handleAction("cancel")}
-                disabled={actionLoading !== ""}
-                className="btn-danger text-sm font-semibold px-5 py-2.5"
+                loading={actionLoading === "cancel"}
+                variant="danger"
               >
-                {actionLoading === "cancel" ? "Cancelling..." : "Cancel Meeting"}
-              </button>
+                Cancel Meeting
+              </SubmitButton>
               {appointment.teamsSyncStatus === "FAILED" && (
-                <button
+                <SubmitButton
                   onClick={() => handleAction("retry-sync", `/api/appointments/${appointmentId}/retry-sync`)}
-                  disabled={actionLoading !== ""}
-                  className="text-sm font-semibold px-5 py-2.5 rounded-lg text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+                  loading={actionLoading === "retry-sync"}
+                  variant="primary"
                 >
-                  {actionLoading === "retry-sync" ? "Retrying..." : "Retry Sync"}
-                </button>
+                  Retry Sync
+                </SubmitButton>
               )}
             </>
           )}

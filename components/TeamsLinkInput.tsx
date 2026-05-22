@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import SubmitButton from "@/components/SubmitButton"
 
 interface TeamsLinkInputProps {
   appointmentId: string
@@ -13,6 +14,7 @@ export function TeamsLinkInput({ appointmentId }: TeamsLinkInputProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     if (!teamsLink.trim()) return
 
     setLoading(true)
@@ -58,13 +60,9 @@ export function TeamsLinkInput({ appointmentId }: TeamsLinkInputProps) {
             </svg>
           </div>
         </div>
-        <button
-          type="submit"
-          disabled={loading || !teamsLink.trim()}
-          className="btn-primary text-xs whitespace-nowrap px-3.5"
-        >
-          {loading ? "Adding..." : "Add"}
-        </button>
+        <SubmitButton type="submit" loading={loading} variant="primary" className="text-xs py-1.5">
+          {loading ? "Adding..." : "Add Link"}
+        </SubmitButton>
       </form>
       {message && (
         <p className={`text-[11px] font-semibold animate-slide-down ${

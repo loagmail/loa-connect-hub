@@ -18,17 +18,80 @@ const participantStatusColors: Record<string, string> = {
   DECLINED: "bg-red-500/20 text-red-400",
 }
 
-export default async function MeetingsPage() {
+function getWeekRange(date: Date): { start: Date; end: Date } {
+  const day = date.getDay()
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1)
+  const start = new Date(date)
+  start.setDate(diff)
+  start.setHours(0, 0, 0, 0)
+  const end = new Date(start)
+  end.setDate(end.getDate() + 6)
+  end.setHours(23, 59, 59, 999)
+  return { start, end }
+}
+
+function getMonthRange(date: Date): { start: Date; end: Date } {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1)
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999)
+  return { start, end }
+}
+
+const filterLabels: Record<string, string> = {
+  all: "All Meetings",
+  this_week: "This Week",
+  this_month: "This Month",
+  created_by_me: "Created by Me",
+  declined: "Declined",
+}
+
+export default async function MeetingsPage(props: {
+  searchParams?: Promise<{ filter?: string; sort?: string }>
+}) {
   const session = await auth()
   if (!session?.user) redirect("/login")
   const role = (session.user as any).role
   if (role !== "FACULTY" && role !== "DEAN") redirect("/login")
 
+  const searchParams = await props.searchParams
+  const activeFilter = searchParams?.filter || "all"
+  const activeSort = searchParams?.sort === "desc" ? "desc" : "asc"
+
   const userId = (session.user as any).id
   const meetings = await getMeetingsForUser(userId) as any[]
 
-  const confirmedMeetings = meetings.filter((m: any) => m.status === "CONFIRMED")
-  const cancelledMeetings = meetings.filter((m: any) => m.status === "CANCELLED")
+  const today = new Date()
+  const weekRange = getWeekRange(today)
+  const monthRange = getMonthRange(today)
+
+  const filtered = meetings.filter((m: any) => {
+    if (activeFilter === "all") return true
+    if (activeFilter === "this_week") {
+      const d = new Date(m.date)
+      return d >= weekRange.start && d <= weekRange.end
+    }
+    if (activeFilter === "this_month") {
+      const d = new Date(m.date)
+      return d >= monthRange.start && d <= monthRange.end
+    }
+    if (activeFilter === "created_by_me") {
+      return m.organizerId === userId
+    }
+    if (activeFilter === "declined") {
+      return m.participants?.some((p: any) => p.userId === userId && p.status === "DECLINED")
+    }
+    return true
+  })
+
+  const sorted = [...filtered].sort((a: any, b: any) => {
+    const dateCmp = a.date.localeCompare(b.date)
+    if (dateCmp !== 0) return activeSort === "asc" ? dateCmp : -dateCmp
+    return activeSort === "asc"
+      ? (a.startTime || "").localeCompare(b.startTime || "")
+      : (b.startTime || "").localeCompare(a.startTime || "")
+  })
+
+  const confirmedMeetings = sorted.filter((m: any) => m.status === "CONFIRMED")
+  const cancelledMeetings = sorted.filter((m: any) => m.status === "CANCELLED")
 
   return (
     <div className="p-6 md:p-8 max-w-5xl">
@@ -53,22 +116,54 @@ export default async function MeetingsPage() {
           <p className="text-3xl font-bold text-emerald-600 mt-1">{confirmedMeetings.length}</p>
         </div>
         <div className="card p-5 bg-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Meetings</p>
-          <p className="text-3xl font-bold text-slate-700 mt-1">{meetings.length}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total</p>
+          <p className="text-3xl font-bold text-slate-700 mt-1">{sorted.length}</p>
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex flex-wrap gap-1.5">
+          {Object.entries(filterLabels).map(([key, label]) => (
+            <Link
+              key={key}
+              href={`/faculty/meetings?filter=${key}&sort=${activeSort}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
+                activeFilter === key
+                  ? "bg-gold-500 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+        <Link
+          href={`/faculty/meetings?filter=${activeFilter}&sort=${activeSort === "asc" ? "desc" : "asc"}`}
+          className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            {activeSort === "asc" ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+            )}
+          </svg>
+          {activeSort === "asc" ? "Oldest First" : "Newest First"}
+        </Link>
+      </div>
+
       {/* Meetings list */}
-      {meetings.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="card p-10 bg-white text-center">
-          <p className="text-slate-400 font-medium">No meetings yet</p>
+          <p className="text-slate-400 font-medium">No meetings found</p>
           <Link href="/faculty/meetings/new" className="text-sm text-gold-600 hover:text-gold-700 font-semibold mt-2 inline-block">
             Schedule your first meeting
           </Link>
         </div>
       ) : (
         <div className="space-y-3">
-          {meetings.map((meeting: any) => {
+          {sorted.map((meeting: any) => {
             const isOrganizer = meeting.organizerId === userId
             const participantCount = meeting.participants?.length || 0
             const acceptedCount = meeting.participants?.filter((p: any) => p.status === "ACCEPTED").length || 0

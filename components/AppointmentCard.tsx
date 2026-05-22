@@ -4,6 +4,7 @@ import { useState } from "react"
 import { StatusBadge } from "./StatusBadge"
 import { TeamsLinkInput } from "./TeamsLinkInput"
 import Link from "next/link"
+import SubmitButton from "@/components/SubmitButton"
 
 interface AppointmentCardProps {
   appointment: {
@@ -70,6 +71,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
   const effectiveStatus = localStatus || appointment.status
 
   const handleAction = async (action: string) => {
+    if (loading) return
     setLoading(action)
     setMessage("")
 
@@ -241,7 +243,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
 
         {role === "STUDENT" && effectiveStatus === "PENDING" && (
           <div className="shrink-0 self-end md:self-center">
-            <button
+            <SubmitButton
               onClick={async () => {
                 setLoading("cancel")
                 setMessage("")
@@ -261,70 +263,59 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                   setLoading("")
                 }
               }}
-              disabled={loading !== ""}
-              className="btn-danger text-xs font-semibold px-4 py-2"
+              loading={loading === "cancel"}
+              variant="danger"
+              className="text-xs font-semibold px-4 py-2"
             >
               {loading === "cancel" ? "Cancelling..." : "Cancel Request"}
-            </button>
+            </SubmitButton>
           </div>
         )}
 
         {role === "FACULTY" && effectiveStatus === "PENDING" && (
           <div className="flex md:flex-col lg:flex-row gap-2 shrink-0 self-end md:self-center">
-            <button
+            <SubmitButton
               onClick={() => handleAction("approve")}
-              disabled={loading !== ""}
-              className="btn-success text-xs font-semibold px-4 py-2"
+              loading={loading === "approve"}
+              variant="success"
+              className="text-xs font-semibold px-4 py-2"
             >
-              {loading === "approve" ? (
-                <span className="flex items-center gap-1.5">
-                  <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Processing
-                </span>
-              ) : "Approve"}
-            </button>
-            <button
+              {loading === "approve" ? "Processing" : "Approve"}
+            </SubmitButton>
+            <SubmitButton
               onClick={() => handleAction("reject")}
-              disabled={loading !== ""}
-              className="btn-danger text-xs font-semibold px-4 py-2"
+              loading={loading === "reject"}
+              variant="danger"
+              className="text-xs font-semibold px-4 py-2"
             >
               {loading === "reject" ? "Rejecting..." : "Reject"}
-            </button>
+            </SubmitButton>
           </div>
         )}
 
         {role === "FACULTY" && effectiveStatus === "APPROVED" && (
           <div className="flex flex-col gap-3 shrink-0 self-stretch md:self-center md:max-w-xs w-full">
             <div className="flex gap-2">
-              <button
+              <SubmitButton
                 onClick={() => handleAction("complete")}
-                disabled={loading !== ""}
-                className="btn-primary text-xs font-semibold py-2 flex-1"
+                loading={loading === "complete"}
+                variant="primary"
+                className="text-xs font-semibold py-2 flex-1"
               >
-                {loading === "complete" ? (
-                  <span className="flex items-center gap-1.5">
-                    <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Completing
-                  </span>
-                ) : "Mark Complete"}
-              </button>
-              <button
+                {loading === "complete" ? "Completing" : "Mark Complete"}
+              </SubmitButton>
+              <SubmitButton
                 onClick={() => handleAction("cancel")}
-                disabled={loading !== ""}
-                className="btn-danger text-xs font-semibold py-2"
+                loading={loading === "cancel"}
+                variant="danger"
+                className="text-xs font-semibold py-2"
               >
                 {loading === "cancel" ? "Cancelling..." : "Cancel"}
-              </button>
+              </SubmitButton>
             </div>
             {/* Retry sync for failed syncs */}
             {localSyncStatus === "FAILED" && (
-              <button
+              <SubmitButton
                 onClick={async () => {
                   setLoading("retry-sync")
                   try {
@@ -343,11 +334,12 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                     setLoading("")
                   }
                 }}
-                disabled={loading !== ""}
+                loading={loading === "retry-sync"}
+                variant="primary"
                 className="text-xs font-semibold px-3 py-1.5 rounded-lg text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
               >
                 {loading === "retry-sync" ? "Retrying..." : "Retry Sync"}
-              </button>
+              </SubmitButton>
             )}
             <div className="w-full">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Microsoft Teams Link</p>
