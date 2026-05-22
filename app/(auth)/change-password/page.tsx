@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, FormEvent, use } from "react"
+import { useState, FormEvent, use, useEffect } from "react"
 import { signIn } from "next-auth/react"
+import Link from "next/link"
 
 interface ChangePasswordProps {
   searchParams: Promise<{ token?: string }>
@@ -15,6 +16,20 @@ export default function ChangePasswordPage({ searchParams }: ChangePasswordProps
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [validating, setValidating] = useState(true)
+
+  useEffect(() => {
+    if (!token) {
+      setValidating(false)
+      return
+    }
+    fetch(`/api/auth/change-password/validate?token=${encodeURIComponent(token)}`)
+      .then((res) => {
+        if (!res.ok) return res.json().then((d) => { throw new Error(d.error) })
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setValidating(false))
+  }, [token])
 
   if (!token) {
     return (
@@ -22,6 +37,37 @@ export default function ChangePasswordPage({ searchParams }: ChangePasswordProps
         <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium text-center">
           Invalid or missing activation token.
         </div>
+        <p className="text-center">
+          <Link href="/login" className="text-gold-600 hover:text-gold-700 font-semibold text-xs transition-colors">
+            &larr; Back to login
+          </Link>
+        </p>
+      </div>
+    )
+  }
+
+  if (validating) {
+    return (
+      <div className="w-full max-w-sm flex items-center justify-center py-12">
+        <svg className="animate-spin w-6 h-6 text-gold-600" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="w-full max-w-sm space-y-6">
+        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium text-center">
+          {error}
+        </div>
+        <p className="text-center">
+          <Link href="/forgot-password" className="text-gold-600 hover:text-gold-700 font-semibold text-xs transition-colors">
+            Request a new reset link
+          </Link>
+        </p>
       </div>
     )
   }

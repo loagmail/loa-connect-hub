@@ -33,7 +33,7 @@ export default withAuth(
     callbacks: {
       authorized({ req, token }) {
         const { pathname } = req.nextUrl
-        if (pathname.startsWith("/login") || pathname.startsWith("/activate") || pathname.startsWith("/change-password") || pathname.startsWith("/setup-password") || pathname.startsWith("/api/auth")) {
+        if (pathname.startsWith("/login") || pathname.startsWith("/activate") || pathname.startsWith("/forgot-password") || pathname.startsWith("/change-password") || pathname.startsWith("/setup-password") || pathname.startsWith("/api/auth")) {
           return true
         }
         // Allow public static files

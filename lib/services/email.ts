@@ -37,3 +37,27 @@ export async function sendActivationEmail(email: string, name: string, activatio
     `,
   })
 }
+
+export async function sendForgotPasswordEmail(email: string, name: string, resetUrl: string) {
+  if (!isEmailEnabled()) {
+    console.log("[DEV] Forgot password email (EMAIL_FEATURE_FLAG=false):")
+    console.log(`  To: ${email}`)
+    console.log(`  Name: ${name}`)
+    console.log(`  URL: ${resetUrl}`)
+    return
+  }
+
+  if (!process.env.GMAIL_USER) throw new Error("GMAIL_USER env var not set")
+
+  await transporter.sendMail({
+    from: `"e-Consultation" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: "Reset Your e-Consultation Password",
+    html: `
+      <p>Hello ${name},</p>
+      <p>Click the link below to reset your password:</p>
+      <p><a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Reset Password</a></p>
+      <p style="color:#6b7280;font-size:12px;margin-top:16px;">This link expires in 15 minutes. If you did not request this, please ignore this email.</p>
+    `,
+  })
+}
