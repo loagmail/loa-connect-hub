@@ -31,7 +31,8 @@ function LoginForm() {
     e.preventDefault()
     if (loading) return
     setLoading(true)
-    await signIn("credentials", { email, password, callbackUrl: "/" })
+    const callbackUrl = searchParams.get("callbackUrl") || "/"
+    await signIn("credentials", { email, password, callbackUrl })
   }
 
   return (

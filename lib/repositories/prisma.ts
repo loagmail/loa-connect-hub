@@ -44,6 +44,10 @@ export const userRepository: IUserRepository = {
     const users = await prisma.user.findMany({ where: { departmentId } })
     return users as UserData[]
   },
+  async listByIds(ids) {
+    const users = await prisma.user.findMany({ where: { id: { in: ids } } })
+    return users as UserData[]
+  },
   async listAll() {
     const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } })
     return users as UserData[]

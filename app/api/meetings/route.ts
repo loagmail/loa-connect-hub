@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { createMeeting, getMeetingsForUser } from "@/lib/controllers/meetings"
 import { userRepository } from "@/lib/repositories/factory"
+import { generateInviteToken } from "@/lib/services/invite-token"
+import { sendMeetingInviteEmail } from "@/lib/services/email"
 
 export async function GET() {
   const session = await auth()
@@ -33,6 +35,29 @@ export async function POST(request: Request) {
       organizerId: userId,
       participantIds: body.participantIds || [],
     })
+
+    // Send email invites to participants (excluding organizer)
+    const origin = new URL(request.url).origin
+    const organizer = (session.user as any)
+    const participantIds = (body.participantIds || []).filter((id: string) => id !== userId)
+
+    if (participantIds.length > 0 && meeting) {
+      const participants = await userRepository.listByIds(participantIds)
+      for (const p of participants) {
+        const token = generateInviteToken(meeting.id, p.id)
+        const inviteUrl = `${origin}/invites/${token}`
+        await sendMeetingInviteEmail(
+          p.email,
+          p.name,
+          meeting.title,
+          organizer.name,
+          meeting.date,
+          meeting.startTime,
+          meeting.endTime,
+          inviteUrl
+        )
+      }
+    }
 
     return NextResponse.json({ meeting }, { status: 201 })
   } catch (error) {

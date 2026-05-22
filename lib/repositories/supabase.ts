@@ -13,6 +13,7 @@ import type {
   AppointmentData,
   CreateAppointmentInput,
   AppointmentAttendeeData,
+  AppointmentTimeSlotData,
   AvailabilityRuleData,
   UpsertAvailabilityRuleInput,
   MeetingData,
@@ -50,6 +51,11 @@ export const userRepository: IUserRepository = {
   },
   async listByDepartment(departmentId) {
     const { data, error } = await supabase.from("users").select("*").eq("departmentId", departmentId)
+    if (error) throw error
+    return data as UserData[]
+  },
+  async listByIds(ids) {
+    const { data, error } = await supabase.from("users").select("*").in("id", ids)
     if (error) throw error
     return data as UserData[]
   },
@@ -187,6 +193,54 @@ export const appointmentRepository: IAppointmentRepository = {
       .eq("userId", userId)
       .select("*, user:users(*)")
       .single()
+    if (error) throw error
+    return data as any
+  },
+  async addTimeSlot(appointmentId, date, startTime, endTime) {
+    const { data, error } = await supabase
+      .from("appointment_time_slots")
+      .insert({ appointmentId, date, startTime, endTime })
+      .select("*")
+      .single()
+    if (error) throw error
+    return data as AppointmentTimeSlotData
+  },
+  async removeTimeSlot(slotId) {
+    const { error } = await supabase
+      .from("appointment_time_slots")
+      .delete()
+      .eq("id", slotId)
+    if (error) throw error
+  },
+  async listTimeSlots(appointmentId) {
+    const { data, error } = await supabase
+      .from("appointment_time_slots")
+      .select("*")
+      .eq("appointmentId", appointmentId)
+      .order("date", { ascending: true })
+      .order("startTime", { ascending: true })
+    if (error) throw error
+    return data as AppointmentTimeSlotData[]
+  },
+  async listStudentConflictingSlots(studentId, date, startTime, endTime) {
+    const { data, error } = await supabase
+      .from("appointment_time_slots")
+      .select("*, appointment:appointments(*)")
+      .eq("date", date)
+      .lt("startTime", endTime)
+      .gt("endTime", startTime)
+      .eq("appointment.studentId", studentId)
+      .in("appointment.status", ["PENDING", "APPROVED"])
+    if (error) throw error
+    return data as any
+  },
+  async listConflictingSlots(facultyIds, date, startTime, endTime) {
+    const { data, error } = await supabase
+      .from("appointment_time_slots")
+      .select("*, appointment:appointments(*)")
+      .eq("date", date)
+      .lt("startTime", endTime)
+      .gt("endTime", startTime)
     if (error) throw error
     return data as any
   },
@@ -337,16 +391,27 @@ export const meetingRepository: IMeetingRepository = {
     return data as any
   },
   async listConflictingAppointments(facultyId, date, startTime, endTime) {
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*, student:users!appointments_studentId_fkey(*), faculty:users!appointments_facultyId_fkey(*)")
-      .or(`facultyId.eq.${facultyId},studentId.eq.${facultyId}`)
-      .in("status", ["PENDING", "APPROVED"])
+    // Check against appointment_time_slots table for more accurate conflict detection
+    const { data: slots, error: slotsError } = await supabase
+      .from("appointment_time_slots")
+      .select("*, appointment:appointments(*, student:users!appointments_studentId_fkey(*), faculty:users!appointments_facultyId_fkey(*))")
       .eq("date", date)
       .lt("startTime", endTime)
       .gt("endTime", startTime)
-    if (error) throw error
-    return data as any
+    
+    if (slotsError) throw slotsError
+    
+    // Filter to only appointments where facultyId is involved
+    const conflictingAppointments = slots
+      ?.filter((slot: any) => {
+        const apt = slot.appointment
+        return apt && apt.status !== "REJECTED" && apt.status !== "CANCELLED" &&
+               (apt.facultyId === facultyId || apt.studentId === facultyId)
+      })
+      .map((slot: any) => slot.appointment)
+      .filter((apt: any, idx: number, arr: any[]) => arr.findIndex(a => a.id === apt.id) === idx) // dedupe
+    
+    return conflictingAppointments || []
   },
   async listConflictingMeetings(facultyId, date, startTime, endTime) {
     const timeFilter = `and(date.eq.${date},status.eq.CONFIRMED,startTime.lt.${endTime},endTime.gt.${startTime})`

@@ -21,6 +21,8 @@
 | **11. ETL — Bulk User Import (CSV)** | ✅ **Done** |
 | **16. Staggered & Multi-Faculty Booking** | ✅ **Done** |
 | — | — |
+| **17. Multi-Slot Appointments (Supabase)** | ✅ **Done** |
+| — | — |
 | **12. Email-based Auth & Password Setup** | ✅ **Done** |
 | **13. Consultation Completion (Action Taken)** | ✅ **Done** |
 | **14. Attendee Permissions** | ❌ **Remaining** |
@@ -544,8 +546,8 @@ For multi-faculty mode, the system calculates overlapping time windows:
 ## Implementation Order (Completed)
 
 ```
-Phase 10 ──> Phase 11 ──> Phase 16 ──> Phase 12 ──> Phase 13 ──> Phase 15 ──> Phase 14
- (Depts)     (ETL)       (Staggered)  (Email)    (Action)    (Reports)   (Perms)
+Phase 10 ──> Phase 11 ──> Phase 16 ──> Phase 12 ──> Phase 13 ──> Phase 17 ──> Phase 15 ──> Phase 14
+ (Depts)     (ETL)       (Staggered)  (Email)    (Action)    (Supabase)  (Reports)   (Perms)
 ```
 
 ### Remaining Order
@@ -562,8 +564,92 @@ Phase 15 ──> Phase 14
 - **Phase 12 (Email Auth)** — Required by Phase 11 (new users need setup emails).
 - **Phase 16 (Staggered)** — Independent (data model change only).
 - **Phase 13 (Action Taken)** — Independent.
+- **Phase 17 (Multi-Slot Supabase)** — Extends Phase 16 with Supabase-backed timeslots; independent of Prisma-based architecture.
 - **Phase 15 (Reports)** — Builds on 10 (department filtering) and 13 (action taken data).
 - **Phase 14 (Permissions)** — Builds on 10 (role/department checks).
+
+---
+
+## Phase 17: Multi-Slot Appointments via Supabase ✅ *(Implemented)*
+
+### 17A. Overview
+
+Extended appointment system to support multiple timeslots per consultation stored in Supabase PostgreSQL. Allows a single consultation appointment to include multiple non-contiguous timeslots in the same or different days, tied to Supabase rather than Prisma.
+
+### 17B. Schema
+
+**New Supabase table: `appointment_time_slots`**
+```sql
+CREATE TABLE appointment_time_slots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  appointmentId UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+  date VARCHAR NOT NULL,
+  startTime VARCHAR NOT NULL,
+  endTime VARCHAR NOT NULL,
+  createdAt TIMESTAMP DEFAULT now(),
+  UNIQUE(appointmentId, date, startTime, endTime)
+);
+
+CREATE INDEX idx_appointment_time_slots_appointment_id 
+ON appointment_time_slots(appointmentId);
+```
+
+### 17C. Repository Methods
+
+Added to `IAppointmentRepository`:
+- `addTimeSlot(appointmentId, slot)` — Insert a single timeslot
+- `listTimeSlots(appointmentId)` — Fetch all timeslots for an appointment
+- `listStudentConflictingSlots(studentId, date, startTime, endTime)` — Find overlapping timeslots for a student
+
+### 17D. Controller Changes
+
+Updated `requestAppointment()` to:
+- Accept `timeSlots: TimeSlot[]` parameter (array of {date, startTime, endTime})
+- Validate internal overlaps (timeslots within same appointment cannot overlap)
+- Check for student conflicts against existing appointments
+- Persist each timeslot to `appointment_time_slots` table after appointment creation
+
+### 17E. API Changes
+
+**GET `/api/appointments/[id]/timeslots`** — Returns all timeslots for an appointment
+```json
+{ "timeSlots": [{ "date": "2026-05-22", "startTime": "10:00", "endTime": "11:00" }] }
+```
+
+**GET `/api/appointments?q=search`** — Updated to support search by title or student/faculty name
+
+**POST `/api/appointments/batch`** — Accepts `timeSlots` array instead of single date/time
+
+### 17F. UI Changes
+
+**`components/StudentBooking.tsx`**:
+- Multi-slot selection state (`selectedSlots` array)
+- Add/remove slot buttons
+- Calendar shows available days based on selected faculty
+- Displays selected timeslots before booking
+- Supports staggered (same day, non-overlapping) slots
+- Manual time picker for conflicts
+
+**`app/faculty/meetings/new/page.tsx`**:
+- Toggle between "Enter Manually" vs "From Appointment"
+- Appointment search by title/name
+- Timeslot selection UI for chosen appointment
+- Auto-populate date/time from selected slot
+- Disabled fields when in appointment mode
+
+### 17G. Files Modified
+
+| File | Changes |
+|------|---------|
+| `supabase-schema.sql` | + `appointment_time_slots` table + index |
+| `lib/repositories/interfaces.ts` | + TimeSlot type, + timeslot methods |
+| `lib/repositories/supabase.ts` | + `addTimeSlot()`, `listTimeSlots()`, `listStudentConflictingSlots()` |
+| `lib/controllers/appointments.ts` | + `timeSlots` parameter, conflict checking |
+| `app/api/appointments/route.ts` | + search query support |
+| `app/api/appointments/batch/route.ts` | + forward `timeSlots` |
+| `app/api/appointments/[id]/timeslots/route.ts` | New — GET timeslots |
+| `components/StudentBooking.tsx` | Multi-slot UI (add/remove, selection state) |
+| `app/faculty/meetings/new/page.tsx` | + Appointment source mode + slot selection |
 
 ---
 

@@ -1,14 +1,16 @@
 "use client"
 
 import SubmitButton from "@/components/SubmitButton"
-import { useState, FormEvent, useEffect } from "react"
+import { useState, FormEvent, useEffect, use } from "react"
 import Link from "next/link"
 
 const REQUIRED_DOMAIN = "@itmlyceumalabang.onmicrosoft.com"
 const EXEMPT_EMAILS = ["nin.alamo@outlook.com"]
 const RESEND_COOLDOWN = 60 // seconds
 
-export default function ActivatePage() {
+export default function ActivatePage(props: { searchParams?: Promise<{ callbackUrl?: string }> }) {
+  const searchParams = props.searchParams ? use(props.searchParams) : undefined
+  const callbackUrl = searchParams?.callbackUrl || ""
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -37,7 +39,7 @@ export default function ActivatePage() {
       const res = await fetch("/api/auth/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, callbackUrl }),
       })
 
       const data = await res.json()

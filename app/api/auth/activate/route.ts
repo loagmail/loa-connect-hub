@@ -6,7 +6,7 @@ import { logAuditEvent } from "@/lib/services/audit"
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json()
+    const { email, callbackUrl } = await req.json()
 
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
 
     await passwordResetTokenRepository.create(user.email, token, expiresAt)
 
-    const activationUrl = `${process.env.NEXTAUTH_URL}/change-password?token=${token}`
+    const cb = callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""
+    const activationUrl = `${process.env.NEXTAUTH_URL}/change-password?token=${token}${cb}`
 
     await sendActivationEmail(user.email, user.name, activationUrl)
     await logAuditEvent({ userId: user.id, email: user.email, action: "ACTIVATE_USER", details: "Activation email sent" })

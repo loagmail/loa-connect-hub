@@ -6,12 +6,13 @@ import { signIn } from "next-auth/react"
 import Link from "next/link"
 
 interface ChangePasswordProps {
-  searchParams: Promise<{ token?: string }>
+  searchParams: Promise<{ token?: string; callbackUrl?: string }>
 }
 
 export default function ChangePasswordPage({ searchParams }: ChangePasswordProps) {
   const params = use(searchParams)
   const token = params.token
+  const callbackUrl = params.callbackUrl || "/"
 
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -107,7 +108,7 @@ export default function ChangePasswordPage({ searchParams }: ChangePasswordProps
       await signIn("credentials", {
         email: data.email,
         password,
-        callbackUrl: "/",
+        callbackUrl,
       })
     } catch {
       setError("Network error. Please try again.")

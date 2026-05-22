@@ -9,11 +9,15 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { facultyIds, date, startTime, endTime, title, description, attendeeOptions } = body
+  const { facultyIds, date, startTime, endTime, timeSlots, title, description, attendeeOptions } = body
   const studentId = (session.user as any).id
 
   if (!Array.isArray(facultyIds) || facultyIds.length === 0) {
     return NextResponse.json({ error: "facultyIds must be a non-empty array" }, { status: 400 })
+  }
+
+  if (!Array.isArray(timeSlots) && (!date || !startTime || !endTime)) {
+    return NextResponse.json({ error: "A time slot or timeSlots array is required" }, { status: 400 })
   }
 
   const sessionGroupId = crypto.randomUUID()
@@ -40,6 +44,7 @@ export async function POST(request: NextRequest) {
         date,
         startTime,
         endTime,
+        timeSlots,
         title,
         description,
         attendeeOptions: otherFacultyOptions,

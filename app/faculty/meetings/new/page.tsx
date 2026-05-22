@@ -20,6 +20,20 @@ interface Conflict {
   endTime: string
 }
 
+interface TimeSlot {
+  date: string
+  startTime: string
+  endTime: string
+}
+
+interface Appointment {
+  id: string
+  title: string
+  date: string
+  startTime: string
+  endTime: string
+}
+
 export default function NewMeetingPage() {
   const router = useRouter()
   const [facultyList, setFacultyList] = useState<FacultyUser[]>([])
@@ -33,6 +47,16 @@ export default function NewMeetingPage() {
   const [checking, setChecking] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  
+  // Appointment slot selection mode
+  const [timeSourceMode, setTimeSourceMode] = useState<"manual" | "appointment">("manual")
+  const [appointmentQuery, setAppointmentQuery] = useState("")
+  const [appointmentOptions, setAppointmentOptions] = useState<Appointment[]>([])
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null)
+  const [appointmentTimeSlots, setAppointmentTimeSlots] = useState<TimeSlot[]>([])
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null)
+  const [loadingAppointments, setLoadingAppointments] = useState(false)
+  const [loadingTimeSlots, setLoadingTimeSlots] = useState(false)
 
   useEffect(() => {
     fetch("/api/auth/users")
@@ -42,6 +66,60 @@ export default function NewMeetingPage() {
       })
       .catch(() => {})
   }, [])
+
+  // Search for appointments when query changes (if in appointment mode)
+  useEffect(() => {
+    if (timeSourceMode !== "appointment" || !appointmentQuery.trim()) {
+      setAppointmentOptions([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      setLoadingAppointments(true)
+      try {
+        const res = await fetch(`/api/appointments?q=${encodeURIComponent(appointmentQuery)}`)
+        const data = await res.json()
+        setAppointmentOptions(data.appointments || [])
+      } catch {
+        setAppointmentOptions([])
+      } finally {
+        setLoadingAppointments(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [appointmentQuery, timeSourceMode])
+
+  // Fetch timeslots when appointment is selected
+  useEffect(() => {
+    if (!selectedAppointmentId) {
+      setAppointmentTimeSlots([])
+      setSelectedSlotIndex(null)
+      return
+    }
+    const fetchTimeSlots = async () => {
+      setLoadingTimeSlots(true)
+      try {
+        const res = await fetch(`/api/appointments/${selectedAppointmentId}/timeslots`)
+        const data = await res.json()
+        setAppointmentTimeSlots(data.timeSlots || [])
+        setSelectedSlotIndex(null)
+      } catch {
+        setAppointmentTimeSlots([])
+      } finally {
+        setLoadingTimeSlots(false)
+      }
+    }
+    fetchTimeSlots()
+  }, [selectedAppointmentId])
+
+  // Update date/time when slot is selected
+  useEffect(() => {
+    if (selectedSlotIndex !== null && appointmentTimeSlots[selectedSlotIndex]) {
+      const slot = appointmentTimeSlots[selectedSlotIndex]
+      setDate(slot.date)
+      setStartTime(slot.startTime)
+      setEndTime(slot.endTime)
+    }
+  }, [selectedSlotIndex, appointmentTimeSlots])
 
   // Check conflicts when date/time/participants change
   useEffect(() => {
@@ -138,41 +216,160 @@ export default function NewMeetingPage() {
           />
         </div>
 
-        {/* Date */}
+        {/* Time Source Selection */}
         <div>
-          <label className="input-label">Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="input"
-            required
-          />
+          <label className="input-label">When is this meeting?</label>
+          <div className="flex gap-3 mt-2">
+            <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
+              timeSourceMode === "manual"
+                ? "border-gold-300 bg-gold-50/50"
+                : "border-slate-200 hover:border-slate-300 bg-white"
+            }`}>
+              <input
+                type="radio"
+                name="timeSource"
+                value="manual"
+                checked={timeSourceMode === "manual"}
+                onChange={() => {
+                  setTimeSourceMode("manual")
+                  setSelectedAppointmentId(null)
+                  setSelectedSlotIndex(null)
+                  setAppointmentQuery("")
+                }}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">Enter Manually</span>
+            </label>
+            <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
+              timeSourceMode === "appointment"
+                ? "border-gold-300 bg-gold-50/50"
+                : "border-slate-200 hover:border-slate-300 bg-white"
+            }`}>
+              <input
+                type="radio"
+                name="timeSource"
+                value="appointment"
+                checked={timeSourceMode === "appointment"}
+                onChange={() => setTimeSourceMode("appointment")}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">From Appointment</span>
+            </label>
+          </div>
         </div>
 
+        {/* Appointment Slot Selection */}
+        {timeSourceMode === "appointment" && (
+          <div className="space-y-3 p-4 rounded-lg border border-gold-200 bg-gold-50/30">
+            <div>
+              <label className="input-label">Search Consultation Appointments</label>
+              <input
+                type="text"
+                value={appointmentQuery}
+                onChange={(e) => setAppointmentQuery(e.target.value)}
+                placeholder="Search by title or student name..."
+                className="input text-sm mt-1"
+              />
+              {loadingAppointments && <p className="text-xs text-slate-400 mt-1">Searching...</p>}
+            </div>
+
+            {appointmentOptions.length > 0 && (
+              <div>
+                <label className="input-label">Select Appointment</label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {appointmentOptions.map((appt) => (
+                    <button
+                      key={appt.id}
+                      type="button"
+                      onClick={() => setSelectedAppointmentId(appt.id)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        selectedAppointmentId === appt.id
+                          ? "border-gold-300 bg-white"
+                          : "border-slate-200 hover:border-slate-300 bg-white"
+                      }`}
+                    >
+                      <p className="font-medium text-sm text-slate-800">{appt.title}</p>
+                      <p className="text-xs text-slate-500 mt-1">{appt.date} · {appt.startTime}–{appt.endTime}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedAppointmentId && appointmentTimeSlots.length > 0 && (
+              <div>
+                <label className="input-label">Select Time Slot</label>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {appointmentTimeSlots.map((slot, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedSlotIndex(idx)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        selectedSlotIndex === idx
+                          ? "border-gold-300 bg-gold-50/50"
+                          : "border-slate-200 hover:border-slate-300 bg-white"
+                      }`}
+                    >
+                      <p className="font-medium text-sm text-slate-800">{slot.date} · {slot.startTime}–{slot.endTime}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {loadingTimeSlots && <p className="text-xs text-slate-400">Loading time slots...</p>}
+
+            {selectedSlotIndex !== null && (
+              <div className="p-2 rounded bg-white border border-emerald-200">
+                <p className="text-xs text-emerald-700 font-medium">✓ Time slot selected</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Date (Manual mode or from appointment) */}
+        {(timeSourceMode === "manual" || selectedSlotIndex !== null) && (
+          <div>
+            <label className="input-label">Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="input"
+              required
+              disabled={timeSourceMode === "appointment"}
+            />
+          </div>
+        )}
+
         {/* Time */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="input-label">Start Time</label>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="input"
-              required
-            />
+        {(timeSourceMode === "manual" || selectedSlotIndex !== null) && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="input-label">Start Time</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="input"
+                disabled={timeSourceMode === "appointment"}
+                required
+              />
+            </div>
+            <div>
+              <label className="input-label">End Time</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="input"
+                disabled={timeSourceMode === "appointment"}
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label className="input-label">End Time</label>
-            <input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="input"
-              required
-            />
-          </div>
-        </div>
+        )}
 
         {/* Participants */}
         <div>

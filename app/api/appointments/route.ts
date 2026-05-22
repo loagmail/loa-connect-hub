@@ -2,18 +2,32 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { requestAppointment, listStudentAppointments, listFacultyAppointments } from "@/lib/controllers/appointments"
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
+    const { searchParams } = new URL(request.url)
+    const q = searchParams.get("q")?.toLowerCase().trim() || ""
+    
     const role = (session.user as any).role
     const userId = (session.user as any).id
-    const appointments = role === "FACULTY"
+    let appointments = role === "FACULTY"
       ? await listFacultyAppointments(userId)
       : await listStudentAppointments(userId)
+    
+    // Filter by search query if provided
+    if (q) {
+      appointments = appointments.filter((appt: any) => {
+        const title = appt.title?.toLowerCase() || ""
+        const studentName = appt.studentName?.toLowerCase() || ""
+        const facultyName = appt.facultyName?.toLowerCase() || ""
+        return title.includes(q) || studentName.includes(q) || facultyName.includes(q)
+      })
+    }
+    
     return NextResponse.json({ appointments })
   } catch (error) {
     return NextResponse.json(
@@ -38,6 +52,7 @@ export async function POST(request: Request) {
       date: body.date,
       startTime: body.startTime,
       endTime: body.endTime,
+      timeSlots: body.timeSlots,
       title: body.title,
       description: body.description,
       attendeeIds: body.attendeeIds,

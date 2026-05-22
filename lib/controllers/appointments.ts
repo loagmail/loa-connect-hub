@@ -1,28 +1,60 @@
 import { appointmentRepository, userRepository } from "@/lib/repositories/factory"
 
+export interface TimeSlot {
+  date: string
+  startTime: string
+  endTime: string
+}
+
 export async function requestAppointment(input: {
   studentId: string
   facultyId: string
   sessionGroupId?: string
-  date: string
-  startTime: string
-  endTime: string
+  date?: string
+  startTime?: string
+  endTime?: string
+  timeSlots?: TimeSlot[]
   title?: string
   description?: string
   attendeeIds?: string[]
   attendeeOptions?: { userId: string; isMandatory: boolean }[]
 }) {
-  // Check for conflicting appointments
-  const existingAppts = await appointmentRepository.listByStudent(input.studentId)
-  const conflicting = existingAppts.find(
-    (a) =>
-      a.status !== "REJECTED" &&
-      a.status !== "CANCELLED" &&
-      a.date === input.date &&
-      a.startTime < input.endTime &&
-      a.endTime > input.startTime
-  )
-  if (conflicting) throw new Error("You already have an appointment that overlaps with this time")
+  // Determine the timeslots to use
+  const timeSlots = input.timeSlots || (input.date && input.startTime && input.endTime 
+    ? [{ date: input.date, startTime: input.startTime, endTime: input.endTime }]
+    : [])
+  
+  if (!timeSlots || timeSlots.length === 0) {
+    throw new Error("At least one timeslot (date, startTime, endTime) is required")
+  }
+
+  // Check for overlapping timeslots within the same appointment
+  for (let i = 0; i < timeSlots.length; i++) {
+    for (let j = i + 1; j < timeSlots.length; j++) {
+      const slot1 = timeSlots[i]
+      const slot2 = timeSlots[j]
+      if (
+        slot1.date === slot2.date &&
+        slot1.startTime < slot2.endTime &&
+        slot1.endTime > slot2.startTime
+      ) {
+        throw new Error("Timeslots cannot overlap within the same appointment")
+      }
+    }
+  }
+
+  // Check for conflicting appointments with any of the timeslots
+  for (const slot of timeSlots) {
+    const conflictingSlots = await appointmentRepository.listStudentConflictingSlots(
+      input.studentId,
+      slot.date,
+      slot.startTime,
+      slot.endTime
+    )
+    if (conflictingSlots.length > 0) {
+      throw new Error("You already have an appointment that overlaps with this time")
+    }
+  }
 
   // Validate additional attendees are FACULTY or DEAN role
   const attendeeIds = input.attendeeIds || input.attendeeOptions?.map(a => a.userId) || []
@@ -35,16 +67,23 @@ export async function requestAppointment(input: {
     }
   }
 
+  // Use first timeslot for main appointment record (backward compat for Teams sync)
+  const firstSlot = timeSlots[0]
   const appointment = await appointmentRepository.create({
     studentId: input.studentId,
     facultyId: input.facultyId,
     sessionGroupId: input.sessionGroupId ?? null,
-    date: input.date,
-    startTime: input.startTime,
-    endTime: input.endTime,
+    date: firstSlot.date,
+    startTime: firstSlot.startTime,
+    endTime: firstSlot.endTime,
     title: input.title ?? null,
     description: input.description ?? null,
   })
+
+  // Add all timeslots
+  for (const slot of timeSlots) {
+    await appointmentRepository.addTimeSlot(appointment.id, slot.date, slot.startTime, slot.endTime)
+  }
 
   // Add additional faculty attendees
   if (input.attendeeOptions && input.attendeeOptions.length > 0) {

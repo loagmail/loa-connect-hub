@@ -56,6 +56,7 @@ export interface IUserRepository {
   create(input: CreateUserInput): Promise<UserData>
   listByRole(role: string): Promise<UserData[]>
   listByDepartment(departmentId: string): Promise<UserData[]>
+  listByIds(ids: string[]): Promise<UserData[]>
   listAll(): Promise<UserData[]>
   update(id: string, data: Partial<UserData>): Promise<UserData>
 }
@@ -114,6 +115,15 @@ export interface AppointmentAttendeeData {
   isMandatory: boolean
 }
 
+export interface AppointmentTimeSlotData {
+  id: string
+  appointmentId: string
+  date: string
+  startTime: string
+  endTime: string
+  createdAt: Date
+}
+
 export interface IAppointmentRepository {
   create(input: CreateAppointmentInput): Promise<AppointmentData>
   listByStudent(studentId: string): Promise<AppointmentData[]>
@@ -125,6 +135,11 @@ export interface IAppointmentRepository {
   addAttendee(appointmentId: string, userId: string, isMandatory?: boolean): Promise<AppointmentAttendeeData>
   listAttendees(appointmentId: string): Promise<AppointmentAttendeeData[]>
   updateAttendeeStatus(appointmentId: string, userId: string, status: "INVITED" | "ACCEPTED" | "DECLINED"): Promise<AppointmentAttendeeData>
+  addTimeSlot(appointmentId: string, date: string, startTime: string, endTime: string): Promise<AppointmentTimeSlotData>
+  removeTimeSlot(slotId: string): Promise<void>
+  listTimeSlots(appointmentId: string): Promise<AppointmentTimeSlotData[]>
+  listStudentConflictingSlots(studentId: string, date: string, startTime: string, endTime: string): Promise<AppointmentTimeSlotData[]>
+  listConflictingSlots(facultyIds: string[], date: string, startTime: string, endTime: string): Promise<AppointmentTimeSlotData[]>
 }
 
 export interface AvailabilityRuleData {

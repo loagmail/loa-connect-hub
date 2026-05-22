@@ -71,7 +71,7 @@ export default function StudentBooking({ facultyWithRules }: Props) {
 
   // Date & slot selection
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
-  const [selectedSlot, setSelectedSlot] = useState<{ start: string; end: string } | null>(null)
+  const [selectedSlots, setSelectedSlots] = useState<{ date: string; start: string; end: string }[]>([])
   const [manualTime, setManualTime] = useState<{ start: string; end: string } | null>(null)
 
   // Booking form
@@ -158,13 +158,13 @@ export default function StudentBooking({ facultyWithRules }: Props) {
   const prevMonth = () => {
     if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1) }
     else { setCurrentMonth((m) => m - 1) }
-    setSelectedDay(null); setSelectedSlot(null); setManualTime(null); setResult(null); setConflicts([])
+    setSelectedDay(null); setSelectedSlots([]); setManualTime(null); setResult(null); setConflicts([])
   }
 
   const nextMonth = () => {
     if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear((y) => y + 1) }
     else { setCurrentMonth((m) => m + 1) }
-    setSelectedDay(null); setSelectedSlot(null); setManualTime(null); setResult(null); setConflicts([])
+    setSelectedDay(null); setSelectedSlots([]); setManualTime(null); setResult(null); setConflicts([])
   }
 
   const toggleFaculty = (id: string) => {
@@ -176,7 +176,7 @@ export default function StudentBooking({ facultyWithRules }: Props) {
       }
       return [...prev, id]
     })
-    setSelectedDay(null); setSelectedSlot(null); setManualTime(null); setResult(null); setConflicts([])
+    setSelectedDay(null); setSelectedSlots([]); setManualTime(null); setResult(null); setConflicts([])
   }
 
   const toggleMandatory = (userId: string) => {
@@ -201,17 +201,31 @@ export default function StudentBooking({ facultyWithRules }: Props) {
   const handleDayClick = (day: number) => {
     ensureAttendeeOptions()
     setSelectedDay(day)
-    setSelectedSlot(null)
     setResult(null)
     setConflicts([])
   }
 
+  const handleAddSlot = (slot: { start: string; end: string }) => {
+    if (!selectedDay) return
+    const dateStr = fmtDate(currentYear, currentMonth, selectedDay)
+    const newSlot = { date: dateStr, start: slot.start, end: slot.end }
+    setSelectedSlots((prev) => {
+      const exists = prev.some((s) => s.date === newSlot.date && s.start === newSlot.start && s.end === newSlot.end)
+      if (exists) return prev
+      return [...prev, newSlot]
+    })
+    setResult(null)
+  }
+
+  const handleRemoveSlot = (index: number) => {
+    setSelectedSlots((prev) => prev.filter((_, i) => i !== index))
+  }
+
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedSlot || selectedFaculty.length === 0 || !selectedDay) return
+    if (selectedSlots.length === 0 || selectedFaculty.length === 0) return
 
     setSubmitting(true)
-    const dateStr = fmtDate(currentYear, currentMonth, selectedDay)
     const facultyIds = selectedFaculty.map((f) => f.id)
 
     try {
@@ -220,9 +234,11 @@ export default function StudentBooking({ facultyWithRules }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           facultyIds,
-          date: dateStr,
-          startTime: selectedSlot.start,
-          endTime: selectedSlot.end,
+          timeSlots: selectedSlots.map((s) => ({
+            date: s.date,
+            startTime: s.start,
+            endTime: s.end,
+          })),
           title: title.trim(),
           description: description.trim() || undefined,
           attendeeOptions: attendeeOptions.filter((o) => o.userId !== facultyIds[0]),
@@ -237,7 +253,7 @@ export default function StudentBooking({ facultyWithRules }: Props) {
           sessionGroupId: data.sessionGroupId,
         })
         setSelectedDay(null)
-        setSelectedSlot(null)
+        setSelectedSlots([])
         setTitle("")
         setDescription("")
       } else {
@@ -454,29 +470,34 @@ export default function StudentBooking({ facultyWithRules }: Props) {
               </h4>
               {availableSlots.length > 0 ? (
                 <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                  {availableSlots.map((slot, i) => (
-                    <button
-                      key={i}
-                      onClick={() => { setSelectedSlot(slot); setManualTime(null) }}
-                      className={`card p-3 bg-white border flex items-center justify-between transition-colors ${
-                        selectedSlot?.start === slot.start
-                          ? "border-gold-300 bg-gold-50/50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {slot.start} – {slot.end}
-                      </div>
-                      {selectedSlot?.start === slot.start && (
-                        <svg className="w-4 h-4 text-gold-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
+                  {availableSlots.map((slot, i) => {
+                    const isSelected = selectedSlots.some(
+                      (s) => s.date === fmtDate(currentYear, currentMonth, selectedDay!) && s.start === slot.start && s.end === slot.end
+                    )
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { handleAddSlot(slot); setManualTime(null) }}
+                        className={`card p-3 bg-white border flex items-center justify-between transition-colors ${
+                          isSelected
+                            ? "border-gold-300 bg-gold-50/50"
+                            : "border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+                          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {slot.start} – {slot.end}
+                        </div>
+                        {isSelected && (
+                          <svg className="w-4 h-4 text-gold-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -501,13 +522,14 @@ export default function StudentBooking({ facultyWithRules }: Props) {
                     <button
                       onClick={() => {
                         if (manualTime?.start && manualTime?.end) {
-                          setSelectedSlot({ start: manualTime.start, end: manualTime.end })
+                          handleAddSlot({ start: manualTime.start, end: manualTime.end })
+                          setManualTime(null)
                         }
                       }}
                       disabled={!manualTime?.start || !manualTime?.end}
                       className="btn-primary text-xs py-1.5 px-4 disabled:opacity-50"
                     >
-                      Use This Time
+                      Add This Time
                     </button>
                   </div>
                 </div>
@@ -518,17 +540,30 @@ export default function StudentBooking({ facultyWithRules }: Props) {
       )}
 
       {/* 3. Booking Form */}
-      {selectedSlot && selectedFaculty.length > 0 && (
+      {selectedSlots.length > 0 && selectedFaculty.length > 0 && (
         <form onSubmit={handleBook} className="card p-5 bg-white space-y-4">
           <h3 className="text-sm font-bold text-slate-700">3. Confirm Booking</h3>
 
-          <div className="p-3 rounded-lg bg-gold-50 border border-gold-100 text-sm space-y-1">
-            <p className="text-gold-700 font-semibold">
-              {fmtDate(currentYear, currentMonth, selectedDay!)} &middot; {selectedSlot.start} – {selectedSlot.end}
-            </p>
-            <p className="text-gold-600 text-xs">
-              With {selectedFaculty.map((f) => `${f.name}${f.department ? ` (${f.department})` : ""}`).join(", ")}
-            </p>
+          <div className="p-3 rounded-lg bg-gold-50 border border-gold-100 text-sm space-y-3">
+            <div>
+              <p className="text-gold-700 font-semibold">Selected Time Slots</p>
+              <ul className="mt-2 space-y-2">
+                {selectedSlots.map((slot, index) => (
+                  <li key={`${slot.date}-${slot.start}-${slot.end}-${index}`} className="flex items-center justify-between rounded-lg bg-white border border-slate-200 px-3 py-2 text-sm">
+                    <span>{slot.date} · {slot.start} – {slot.end}</span>
+                    <button type="button" onClick={() => handleRemoveSlot(index)} className="text-xs text-red-600 hover:text-red-700">
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-gold-700 font-semibold">Participants</p>
+              <p className="text-gold-600 text-xs mt-1">
+                With {selectedFaculty.map((f) => `${f.name}${f.department ? ` (${f.department})` : ""}`).join(", ")}
+              </p>
+            </div>
           </div>
 
           {conflicts.length > 0 && (

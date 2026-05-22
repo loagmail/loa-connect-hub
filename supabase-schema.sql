@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS "AuditLog" CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
 DROP TABLE IF EXISTS internal_meeting_participants CASCADE;
 DROP TABLE IF EXISTS internal_meetings CASCADE;
+DROP TABLE IF EXISTS appointment_time_slots CASCADE;
 DROP TABLE IF EXISTS appointment_attendees CASCADE;
 DROP TABLE IF EXISTS appointments CASCADE;
 DROP TABLE IF EXISTS faculty_availability_rules CASCADE;
@@ -73,6 +74,16 @@ CREATE TABLE IF NOT EXISTS appointment_attendees (
   status TEXT NOT NULL DEFAULT 'INVITED' CHECK (status IN ('INVITED','ACCEPTED','DECLINED')),
   "isMandatory" BOOLEAN NOT NULL DEFAULT TRUE,
   CONSTRAINT uq_appointment_user UNIQUE ("appointmentId", "userId")
+);
+
+CREATE TABLE IF NOT EXISTS appointment_time_slots (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "appointmentId" TEXT NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  "startTime" TEXT NOT NULL,
+  "endTime" TEXT NOT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_timeslot_unique UNIQUE ("appointmentId", date, "startTime")
 );
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -166,6 +177,7 @@ CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
 CREATE INDEX IF NOT EXISTS idx_availability_faculty ON faculty_availability_rules("facultyId");
 CREATE INDEX IF NOT EXISTS idx_internal_meetings_organizer ON internal_meetings("organizerId");
 CREATE INDEX IF NOT EXISTS idx_meeting_participants_user ON internal_meeting_participants("userId");
+CREATE INDEX IF NOT EXISTS idx_timeslot_appointment ON appointment_time_slots("appointmentId");
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_department ON users("departmentId");
