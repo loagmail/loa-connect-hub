@@ -261,15 +261,15 @@ export default function BookingCalendar({ facultyWithRules }: Props) {
                 disabled={!hasSlots || isPast}
                 className={`
                   p-2 min-h-[56px] border border-slate-50 relative transition-colors text-left
-                  ${isSelected ? "bg-indigo-50 border-indigo-200 z-10" : ""}
-                  ${hasSlots && !isPast ? "hover:bg-indigo-50/50 cursor-pointer" : ""}
+                  ${isSelected ? "bg-gold-50 border-gold-200 z-10" : ""}
+                  ${hasSlots && !isPast ? "hover:bg-gold-50/50 cursor-pointer" : ""}
                   ${!hasSlots || isPast ? "opacity-40" : ""}
                 `}
               >
                 <span
                   className={`
                     text-xs font-semibold
-                    ${isToday ? "bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center" : "text-slate-700"}
+                    ${isToday ? "bg-gold-600 text-white w-5 h-5 rounded-full flex items-center justify-center" : "text-slate-700"}
                   `}
                 >
                   {day}

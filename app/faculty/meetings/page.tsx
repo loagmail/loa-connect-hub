@@ -62,7 +62,7 @@ export default async function MeetingsPage() {
       {meetings.length === 0 ? (
         <div className="card p-10 bg-white text-center">
           <p className="text-slate-400 font-medium">No meetings yet</p>
-          <Link href="/faculty/meetings/new" className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold mt-2 inline-block">
+          <Link href="/faculty/meetings/new" className="text-sm text-gold-600 hover:text-gold-700 font-semibold mt-2 inline-block">
             Schedule your first meeting
           </Link>
         </div>
@@ -86,7 +86,7 @@ export default async function MeetingsPage() {
                       {meeting.status}
                     </span>
                     {isOrganizer && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gold-500/20 text-gold-400">
                         Organizer
                       </span>
                     )}

@@ -131,7 +131,7 @@ export default function AvailabilityPage() {
   if (status === "loading" || loading) {
     return (
       <div className="max-w-4xl mx-auto py-12 flex items-center justify-center">
-        <svg className="animate-spin w-6 h-6 text-indigo-600" viewBox="0 0 24 24" fill="none">
+        <svg className="animate-spin w-6 h-6 text-gold-600" viewBox="0 0 24 24" fill="none">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
@@ -176,7 +176,7 @@ export default function AvailabilityPage() {
             {endDate && (
               <button
                 onClick={() => setEndDate("")}
-                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold mt-1"
+                className="text-[10px] text-gold-600 hover:text-gold-800 font-semibold mt-1"
               >
                 Clear end date (no expiry)
               </button>
@@ -210,12 +210,12 @@ export default function AvailabilityPage() {
                     onChange={() => toggleBlocked(dayIndex)}
                     disabled={isSaving}
                   />
-                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600" />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold-600" />
                 </label>
               </div>
 
               {isSaving && (
-                <div className="text-[10px] text-indigo-600 font-semibold">Saving...</div>
+                <div className="text-[10px] text-gold-600 font-semibold">Saving...</div>
               )}
 
               {!rule.isBlocked && (

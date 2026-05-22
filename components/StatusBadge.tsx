@@ -18,10 +18,10 @@ const statusStyles: Record<string, { bg: string; text: string; dot: string; bord
     border: "border-rose-200/60" 
   },
   COMPLETED: { 
-    bg: "bg-indigo-50/60", 
-    text: "text-indigo-800", 
-    dot: "bg-indigo-500", 
-    border: "border-indigo-200/60" 
+    bg: "bg-gold-50/60", 
+    text: "text-gold-800", 
+    dot: "bg-gold-500", 
+    border: "border-gold-200/60" 
   },
   CANCELLED: { 
     bg: "bg-slate-50/60", 

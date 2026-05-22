@@ -68,12 +68,12 @@ export default function DeanUploadPage() {
         <button
           onClick={() => { setImportType("users"); setResult(null); setError("") }}
           className={`card p-5 bg-white space-y-3 text-left border-2 transition-colors ${
-            importType === "users" ? "border-indigo-300 bg-indigo-50/30" : "border-transparent hover:border-slate-200"
+            importType === "users" ? "border-gold-300 bg-gold-50/30" : "border-transparent hover:border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-700">Faculty / Staff</h2>
-            {importType === "users" && <span className="text-[9px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">SELECTED</span>}
+            {importType === "users" && <span className="text-[9px] font-bold text-gold-600 bg-gold-100 px-2 py-0.5 rounded-full">SELECTED</span>}
           </div>
           <div className="bg-slate-50 rounded-lg p-3 text-[10px] font-mono text-slate-600 leading-relaxed">
             name, microsoft email, department, dean
@@ -81,7 +81,7 @@ export default function DeanUploadPage() {
           <a
             href="/api/import/users"
             download="import_users_template.csv"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+            className="text-xs font-semibold text-gold-600 hover:text-gold-800 flex items-center gap-1"
             onClick={(e) => e.stopPropagation()}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -94,12 +94,12 @@ export default function DeanUploadPage() {
         <button
           onClick={() => { setImportType("students"); setResult(null); setError("") }}
           className={`card p-5 bg-white space-y-3 text-left border-2 transition-colors ${
-            importType === "students" ? "border-indigo-300 bg-indigo-50/30" : "border-transparent hover:border-slate-200"
+            importType === "students" ? "border-gold-300 bg-gold-50/30" : "border-transparent hover:border-slate-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-700">Students</h2>
-            {importType === "students" && <span className="text-[9px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">SELECTED</span>}
+            {importType === "students" && <span className="text-[9px] font-bold text-gold-600 bg-gold-100 px-2 py-0.5 rounded-full">SELECTED</span>}
           </div>
           <div className="bg-slate-50 rounded-lg p-3 text-[10px] font-mono text-slate-600 leading-relaxed">
             name, microsoft email, course
@@ -107,7 +107,7 @@ export default function DeanUploadPage() {
           <a
             href="/api/import/students"
             download="import_students_template.csv"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+            className="text-xs font-semibold text-gold-600 hover:text-gold-800 flex items-center gap-1"
             onClick={(e) => e.stopPropagation()}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -121,7 +121,7 @@ export default function DeanUploadPage() {
       {/* Upload Form */}
       <form onSubmit={handleSubmit} className="card p-6 bg-white space-y-4">
         <p className="text-xs font-semibold text-slate-500">
-          Importing as: <span className="text-indigo-600">{importType === "users" ? "Faculty / Staff" : "Students"}</span>
+          Importing as: <span className="text-gold-600">{importType === "users" ? "Faculty / Staff" : "Students"}</span>
         </p>
         <div>
           <label className="block text-xs font-semibold text-slate-500 mb-1.5">CSV File</label>
@@ -129,7 +129,7 @@ export default function DeanUploadPage() {
             ref={fileRef}
             type="file"
             accept=".csv"
-            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gold-50 file:text-gold-700 hover:file:bg-gold-100"
           />
         </div>
         {error && <p className="text-xs font-medium text-red-600">{error}</p>}

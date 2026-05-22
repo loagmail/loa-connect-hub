@@ -183,7 +183,7 @@ export default function NewMeetingPage() {
                   key={f.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                     selectedIds.includes(f.id)
-                      ? "border-indigo-300 bg-indigo-50/50"
+                      ? "border-gold-300 bg-gold-50/50"
                       : "border-slate-200 hover:border-slate-300 bg-white"
                   }`}
                 >
@@ -191,7 +191,7 @@ export default function NewMeetingPage() {
                     type="checkbox"
                     checked={selectedIds.includes(f.id)}
                     onChange={() => toggleParticipant(f.id)}
-                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="w-4 h-4 rounded border-slate-300 text-gold-600 focus:ring-gold-500"
                   />
                   <div>
                     <p className="text-sm font-medium text-slate-800">{f.name}</p>

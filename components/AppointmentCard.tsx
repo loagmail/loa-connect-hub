@@ -57,7 +57,7 @@ const avatarGradients: Record<string, string> = {
 
 function getAvatarClass(name: string) {
   const char = name?.charAt(0)?.toUpperCase() || "A"
-  return avatarGradients[char] || "from-indigo-500 to-indigo-600 text-white"
+  return avatarGradients[char] || "from-gold-500 to-gold-600 text-white"
 }
 
 export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
@@ -146,7 +146,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                 href={localTeamsLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-indigo-700 bg-indigo-50/50 border border-indigo-100 hover:bg-indigo-100 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -221,7 +221,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                   <span
                     className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${
                       att.isMandatory !== false
-                        ? "bg-indigo-100 text-indigo-700"
+                        ? "bg-gold-100 text-gold-700"
                         : "bg-gray-100 text-gray-500"
                     }`}
                   >
@@ -368,7 +368,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
       <div className="mt-4 pt-3 border-t border-slate-100">
         <Link
           href={`/appointments/${appointment.id}`}
-          className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1"
+          className="text-xs font-semibold text-gold-600 hover:text-gold-700 inline-flex items-center gap-1"
         >
           View Details
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

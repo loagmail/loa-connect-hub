@@ -133,7 +133,7 @@ export default async function AdminDashboard() {
                       apt.status === "PENDING" ? "bg-amber-50 text-amber-700 border-amber-200/50" :
                       apt.status === "APPROVED" ? "bg-emerald-50 text-emerald-700 border-emerald-200/50" :
                       apt.status === "REJECTED" ? "bg-rose-50 text-rose-700 border-rose-200/50" :
-                      "bg-indigo-50 text-indigo-700 border-indigo-200/50"
+                      "bg-gold-50 text-gold-700 border-gold-200/50"
                     }`}>
                       {apt.status}
                     </span>

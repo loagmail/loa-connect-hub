@@ -79,7 +79,7 @@ export default function ActivatePage() {
             <>Resend available in <span className="font-semibold text-slate-600">{cooldown}s</span></>
           ) : (
             <>Didn&apos;t receive it?{" "}
-              <button onClick={() => { setCooldown(RESEND_COOLDOWN); handleSubmit({ preventDefault: () => {} } as FormEvent) }} className="text-indigo-600 hover:text-indigo-700 font-semibold">
+              <button onClick={() => { setCooldown(RESEND_COOLDOWN); handleSubmit({ preventDefault: () => {} } as FormEvent) }} className="text-gold-600 hover:text-gold-700 font-semibold">
                 Resend link
               </button>
             </>
@@ -92,7 +92,7 @@ export default function ActivatePage() {
   return (
     <div className="w-full max-w-sm space-y-6">
       <div className="text-center mb-6">
-        <div className="mx-auto w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center mb-3 shadow-lg shadow-indigo-100">
+        <div className="mx-auto w-12 h-12 rounded-2xl bg-gold-600 flex items-center justify-center mb-3 shadow-lg shadow-gold-100">
           <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1119 9z" />
           </svg>
@@ -152,7 +152,7 @@ export default function ActivatePage() {
 
       <p className="mt-6 text-center text-xs text-slate-500 font-medium">
         Already activated?{" "}
-        <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
+        <Link href="/login" className="text-gold-600 hover:text-gold-700 font-semibold transition-colors">
           Sign in
         </Link>
       </p>

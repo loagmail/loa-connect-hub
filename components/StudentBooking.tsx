@@ -331,7 +331,7 @@ export default function StudentBooking({ facultyWithRules }: Props) {
                     key={f.id}
                     className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                       isSelected
-                        ? "border-indigo-300 bg-indigo-50/50"
+                        ? "border-gold-300 bg-gold-50/50"
                         : "border-slate-200 hover:border-slate-300 bg-white"
                     }`}
                   >
@@ -339,7 +339,7 @@ export default function StudentBooking({ facultyWithRules }: Props) {
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleFaculty(f.id)}
-                      className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      className="w-4 h-4 rounded border-slate-300 text-gold-600 focus:ring-gold-500"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-800">{f.name}</p>
@@ -350,7 +350,7 @@ export default function StudentBooking({ facultyWithRules }: Props) {
                         onClick={() => toggleMandatory(f.id)}
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
                           opt.isMandatory
-                            ? "bg-indigo-100 text-indigo-700"
+                            ? "bg-gold-100 text-gold-700"
                             : "bg-slate-100 text-slate-500"
                         }`}
                       >
@@ -416,11 +416,11 @@ export default function StudentBooking({ facultyWithRules }: Props) {
                     onClick={() => { if (!isPast) handleDayClick(day) }}
                     disabled={isPast}
                     className={`p-2 min-h-[56px] border border-slate-50 relative transition-colors text-left
-                      ${isSelected ? "bg-indigo-50 border-indigo-200 z-10" : ""}
-                      ${!isPast ? "hover:bg-indigo-50/50 cursor-pointer" : ""}
+                      ${isSelected ? "bg-gold-50 border-gold-200 z-10" : ""}
+                      ${!isPast ? "hover:bg-gold-50/50 cursor-pointer" : ""}
                       ${isPast ? "opacity-40" : ""}`}
                   >
-                    <span className={`text-xs font-semibold ${isToday ? "bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center" : "text-slate-700"}`}>
+                    <span className={`text-xs font-semibold ${isToday ? "bg-gold-600 text-white w-5 h-5 rounded-full flex items-center justify-center" : "text-slate-700"}`}>
                       {day}
                     </span>
                     {!isPast && (
@@ -460,7 +460,7 @@ export default function StudentBooking({ facultyWithRules }: Props) {
                       onClick={() => { setSelectedSlot(slot); setManualTime(null) }}
                       className={`card p-3 bg-white border flex items-center justify-between transition-colors ${
                         selectedSlot?.start === slot.start
-                          ? "border-indigo-300 bg-indigo-50/50"
+                          ? "border-gold-300 bg-gold-50/50"
                           : "border-slate-200 hover:border-slate-300"
                       }`}
                     >
@@ -471,7 +471,7 @@ export default function StudentBooking({ facultyWithRules }: Props) {
                         {slot.start} – {slot.end}
                       </div>
                       {selectedSlot?.start === slot.start && (
-                        <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-4 h-4 text-gold-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       )}
@@ -522,11 +522,11 @@ export default function StudentBooking({ facultyWithRules }: Props) {
         <form onSubmit={handleBook} className="card p-5 bg-white space-y-4">
           <h3 className="text-sm font-bold text-slate-700">3. Confirm Booking</h3>
 
-          <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-sm space-y-1">
-            <p className="text-indigo-700 font-semibold">
+          <div className="p-3 rounded-lg bg-gold-50 border border-gold-100 text-sm space-y-1">
+            <p className="text-gold-700 font-semibold">
               {fmtDate(currentYear, currentMonth, selectedDay!)} &middot; {selectedSlot.start} – {selectedSlot.end}
             </p>
-            <p className="text-indigo-600 text-xs">
+            <p className="text-gold-600 text-xs">
               With {selectedFaculty.map((f) => `${f.name}${f.department ? ` (${f.department})` : ""}`).join(", ")}
             </p>
           </div>

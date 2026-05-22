@@ -95,7 +95,7 @@ export default async function DeanDashboard() {
                     <td className="py-3 pr-4">
                       <Link
                         href="/faculty/availability"
-                        className="text-indigo-600 hover:text-indigo-800 text-xs font-semibold"
+                        className="text-gold-600 hover:text-gold-800 text-xs font-semibold"
                       >
                         View Details
                       </Link>
