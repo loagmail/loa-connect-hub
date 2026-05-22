@@ -218,7 +218,7 @@ export const meetingRepository: IMeetingRepository = {
       where: { userId },
       include: { meeting: { include: { organizer: true, participants: { include: { user: true } } } } },
     })
-    return participations.map((p) => p.meeting) as any
+    return participations.map((p: any) => p.meeting) as any
   },
   async update(id, data) {
     const meeting = await prisma.internalMeeting.update({
