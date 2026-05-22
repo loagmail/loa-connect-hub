@@ -18,7 +18,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [roleFilter, setRoleFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("activated")
+  const [statusFilter, setStatusFilter] = useState("all")
   const [search, setSearch] = useState("")
 
   useEffect(() => {

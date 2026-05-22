@@ -19,10 +19,6 @@ export default withAuth(
       return NextResponse.redirect(new URL("/login", req.url))
     }
 
-    if (pathname.startsWith("/admin/users") && role !== "ADMIN" && role !== "DEAN") {
-      return NextResponse.redirect(new URL("/login", req.url))
-    }
-
     if (pathname.startsWith("/admin") && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/login", req.url))
     }
