@@ -21,40 +21,63 @@ interface Props {
   basePath?: string
 }
 
-export function FacultyAppointmentTabs({ counts, basePath = "/faculty" }: Props) {
+export function FacultyAppointmentTabs({
+  counts,
+  basePath = "/faculty",
+}: Props) {
   const searchParams = useSearchParams()
   const activeTab = searchParams.get("tab") || "all"
 
+  const totalCount =
+    counts.pending +
+    counts.approved +
+    counts.completed +
+    counts.cancelled
+
   return (
-    <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto">
+    <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200">
       {TABS.map((tab) => {
         const isActive = activeTab === tab.key
-        const count = tab.countKey ? counts[tab.countKey] : null
-        const href = tab.key === "all" ? basePath : `${basePath}?tab=${tab.key}`
+
+        const count =
+          tab.countKey === null
+            ? totalCount
+            : counts[tab.countKey]
+
+        const href =
+          tab.key === "all"
+            ? basePath
+            : `${basePath}?tab=${tab.key}`
 
         return (
           <Link
             key={tab.key}
             href={href}
             className={`
-              px-4 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors
-              ${isActive
-                ? "border-gold-600 text-gold-700"
-                : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              flex items-center gap-1
+              whitespace-nowrap border-b-2 px-4 py-2.5
+              text-xs font-semibold transition-colors
+              ${
+                isActive
+                  ? "border-gold-600 text-gold-700"
+                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
               }
             `}
           >
-            {tab.label}
-            {count !== null && (
-              <span
-                className={`
-                  ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold
-                  ${isActive ? "bg-gold-100 text-gold-700" : "bg-slate-100 text-slate-500"}
-                `}
-              >
-                {count}
-              </span>
-            )}
+            <span>{tab.label}</span>
+
+            <span
+              className={`
+                rounded-full px-1.5 py-0.5 text-[10px] font-bold
+                ${
+                  isActive
+                    ? "bg-gold-100 text-gold-700"
+                    : "bg-slate-100 text-slate-500"
+                }
+              `}
+            >
+              {count}
+            </span>
           </Link>
         )
       })}

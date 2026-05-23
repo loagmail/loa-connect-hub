@@ -166,6 +166,8 @@ export interface MeetingData {
   teamsLink: string | null
   status: MeetingStatusData
   createdAt: Date
+  organizer?: UserData | null
+  participants?: MeetingParticipantData[]
 }
 
 export interface CreateMeetingInput {
@@ -182,6 +184,7 @@ export interface MeetingParticipantData {
   meetingId: string
   userId: string
   status: ParticipantStatusData
+  user?: UserData | null
 }
 
 export interface IMeetingRepository {

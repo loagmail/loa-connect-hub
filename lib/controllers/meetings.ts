@@ -1,35 +1,68 @@
-import { meetingRepository } from "@/lib/repositories/factory"
+import { appointmentRepository, meetingRepository, userRepository } from "@/lib/repositories/factory"
 import { checkConflicts } from "@/lib/services/conflictDetection"
 
 export async function createMeeting(data: {
   title: string
   description?: string
-  date: string
-  startTime: string
-  endTime: string
+  date?: string
+  startTime?: string
+  endTime?: string
+  timeSlots?: { date: string; startTime: string; endTime: string }[]
   organizerId: string
   participantIds: string[]
 }) {
-  const meeting = await meetingRepository.create({
-    title: data.title,
-    description: data.description ?? null,
+  const allUsers = await userRepository.listByIds([data.organizerId, ...data.participantIds])
+  const organizer = allUsers.find((u) => u.id === data.organizerId)
+  if (!organizer) throw new Error("Organizer not found")
+
+  const invitedUsers = allUsers.filter((u) => u.id !== data.organizerId)
+  const studentParticipant = invitedUsers.find((u) => u.role === "STUDENT") ?? (organizer.role === "STUDENT" ? organizer : undefined)
+  const facultyParticipant = invitedUsers.find((u) => u.role !== "STUDENT") ?? (organizer.role !== "STUDENT" ? organizer : undefined)
+
+  const studentId = studentParticipant?.id ?? organizer.id
+  const facultyId = facultyParticipant?.id ?? organizer.id
+  const meetingType = invitedUsers.some((u) => u.role === "STUDENT" || organizer.role === "STUDENT") ? "CONSULTATION" : "INTERNAL"
+
+  const firstSlot = (data.timeSlots?.[0] || {
     date: data.date,
     startTime: data.startTime,
     endTime: data.endTime,
-    organizerId: data.organizerId,
+  }) as { date: string | undefined; startTime: string | undefined; endTime: string | undefined }
+
+  if (!firstSlot.date || !firstSlot.startTime || !firstSlot.endTime) {
+    throw new Error("At least one timeslot (date, startTime, endTime) is required")
+  }
+
+  const appointment = await appointmentRepository.create({
+    studentId,
+    facultyId,
+    createdByEmail: organizer.email,
+    meetingType,
+    date: firstSlot.date!,
+    startTime: firstSlot.startTime!,
+    endTime: firstSlot.endTime!,
+    title: data.title,
+    description: data.description ?? null,
   })
 
-  // Add all participants (including organizer as ACCEPTED)
-  await meetingRepository.addParticipant(meeting.id, data.organizerId)
-  await meetingRepository.updateParticipantStatus(meeting.id, data.organizerId, "ACCEPTED")
+  const slots = data.timeSlots?.length
+    ? data.timeSlots
+    : [{ date: firstSlot.date, startTime: firstSlot.startTime, endTime: firstSlot.endTime }]
+
+  for (const slot of slots) {
+    await appointmentRepository.addTimeSlot(appointment.id, slot.date, slot.startTime, slot.endTime)
+  }
+
+  await meetingRepository.addParticipant(appointment.id, data.organizerId)
+  await meetingRepository.updateParticipantStatus(appointment.id, data.organizerId, "ACCEPTED")
 
   for (const pid of data.participantIds) {
     if (pid !== data.organizerId) {
-      await meetingRepository.addParticipant(meeting.id, pid)
+      await meetingRepository.addParticipant(appointment.id, pid)
     }
   }
 
-  return meetingRepository.findById(meeting.id)
+  return meetingRepository.findById(appointment.id)
 }
 
 export async function getMeetingsForUser(userId: string) {

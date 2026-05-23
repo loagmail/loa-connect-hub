@@ -8,6 +8,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const users = await userRepository.listByRole("FACULTY")
+  const users = await userRepository.listAll()
   return NextResponse.json({ users })
 }

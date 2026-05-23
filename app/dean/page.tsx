@@ -204,8 +204,8 @@ export default async function DeanDashboard() {
           href="/faculty/meetings"
           className="card p-5 bg-white hover:shadow-md transition-shadow"
         >
-          <p className="font-semibold text-slate-900">Faculty Meetings</p>
-          <p className="text-xs text-slate-500 mt-1">Schedule and manage faculty-to-faculty meetings</p>
+          <p className="font-semibold text-slate-900">Faculty Consultations</p>
+          <p className="text-xs text-slate-500 mt-1">Schedule and manage faculty-to-faculty consultations</p>
         </Link>
       </section>
     </div>

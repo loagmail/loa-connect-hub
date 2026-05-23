@@ -22,14 +22,14 @@ export function meetingInviteHtml(data: MeetingInviteData): string {
     <tr><td style="background:#ffffff;border-radius:12px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
 
       <!-- Header -->
-      <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">Meeting Invitation</p>
+      <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">Consultation Invitation</p>
       <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#0f172a;">${escapeHtml(data.title)}</h1>
 
       <!-- Event card -->
       <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:24px;">
         <tr><td style="padding:20px;">
 
-          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;">Internal Meeting</p>
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;">Consultation</p>
 
           <!-- Date/time -->
           <table cellpadding="0" cellspacing="0" style="margin-top:16px;color:#475569;font-size:14px;">

@@ -42,7 +42,7 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
         if (data.users) {
           setFacultyList(
             data.users
-              .filter((u: any) => u.id !== slot.facultyId && !u.isDisabled)
+              .filter((u: any) => u.role === "FACULTY" && u.id !== slot.facultyId && !u.isDisabled)
           )
         }
       })
@@ -153,8 +153,8 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
 
           {/* Additional Faculty Attendees */}
           <div>
-            <label className="input-label">Invite Additional Faculty (optional)</label>
-            <p className="text-[10px] text-slate-400 mb-2">Only faculty members can be invited. Students cannot invite other students.</p>
+            <label className="input-label">Invite Additional Faculty / Dean (optional)</label>
+            <p className="text-[10px] text-slate-400 mb-2">Only faculty and dean accounts can be invited. Students cannot invite other students.</p>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {facultyList.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">No other faculty available</p>

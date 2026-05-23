@@ -162,7 +162,7 @@ export async function sendMeetingInviteWithICS(
   })
 
   if (!isEmailEnabled()) {
-    console.log("[DEV] Meeting invite email (EMAIL_FEATURE_FLAG=false):")
+    console.log("[DEV] Consultation invite email (EMAIL_FEATURE_FLAG=false):")
     console.log(`  To: ${to.email} (${to.name})`)
     console.log(`  .ics: ${icalString ? "attached" : "none"}`)
     return
@@ -173,7 +173,7 @@ export async function sendMeetingInviteWithICS(
   const mail: any = {
     from: `"e-Consultation" <${process.env.GMAIL_USER}>`,
     to: to.email,
-    subject: `Meeting Invitation — ${data.title}`,
+    subject: `Consultation Invitation — ${data.title}`,
     html,
   }
 

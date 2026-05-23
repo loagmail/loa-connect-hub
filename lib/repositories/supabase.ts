@@ -256,6 +256,32 @@ const meetingSelect = `
   participants:internal_meeting_participants(*, user:users(*))
 `
 
+function mapAppointmentToMeetingData(appointment: any) {
+  const participants = (appointment.attendees || []).map((att: any) => ({
+    id: att.id,
+    meetingId: appointment.id,
+    userId: att.userId,
+    status: (att.status === "ACCEPTED" ? "ACCEPTED" : att.status === "DECLINED" ? "DECLINED" : "PENDING") as any,
+    user: att.user,
+  }))
+
+  return {
+    id: appointment.id,
+    title: appointment.title,
+    description: appointment.description,
+    date: appointment.date,
+    startTime: appointment.startTime,
+    endTime: appointment.endTime,
+    organizerId: appointment.facultyId || appointment.studentId,
+    teamsEventId: null,
+    teamsLink: appointment.teamsLink,
+    status: (appointment.status === "CANCELLED" ? "CANCELLED" : "CONFIRMED") as any,
+    createdAt: new Date(appointment.requestedAt),
+    organizer: appointment.faculty || appointment.student || null,
+    participants,
+  }
+}
+
 export const meetingRepository: IMeetingRepository = {
   async create(input) {
     const { data, error } = await supabase.from("internal_meetings").insert(input).select(meetingSelect).single()
@@ -264,70 +290,104 @@ export const meetingRepository: IMeetingRepository = {
   },
   async findById(id) {
     const { data, error } = await supabase
-      .from("internal_meetings")
-      .select(meetingSelect)
+      .from("appointments")
+      .select(appointmentSelect)
       .eq("id", id)
       .single()
     if (error) {
       if (error.code === "PGRST116") return null
       throw error
     }
-    return data as any
+    return mapAppointmentToMeetingData(data)
   },
   async listByOrganizer(organizerId) {
-    const { data, error } = await supabase
-      .from("internal_meetings")
-      .select(meetingSelect)
-      .eq("organizerId", organizerId)
-      .order("createdAt", { ascending: false })
-    if (error) throw error
-    return data as any
+    const [studentResult, facultyResult] = await Promise.all([
+      supabase
+        .from("appointments")
+        .select(appointmentSelect)
+        .eq("studentId", organizerId)
+        .order("requestedAt", { ascending: false }),
+      supabase
+        .from("appointments")
+        .select(appointmentSelect)
+        .eq("facultyId", organizerId)
+        .order("requestedAt", { ascending: false }),
+    ])
+    if (studentResult.error) throw studentResult.error
+    if (facultyResult.error) throw facultyResult.error
+    const merged = [...(studentResult.data || []), ...(facultyResult.data || [])]
+    const seen = new Set<string>()
+    return merged
+      .filter((appointment: any) => {
+        if (seen.has(appointment.id)) return false
+        seen.add(appointment.id)
+        return true
+      })
+      .map(mapAppointmentToMeetingData)
   },
   async listByParticipant(userId) {
-    const { data: participations, error } = await supabase
-      .from("internal_meeting_participants")
-      .select(`meeting:internal_meetings!inner(${meetingSelect})`)
+    const { data, error } = await supabase
+      .from("appointment_attendees")
+      .select(`appointment:appointments!inner(*, student:users!appointments_studentId_fkey(*), faculty:users!appointments_facultyId_fkey(*), attendees:appointment_attendees(*, user:users(*)))`)
       .eq("userId", userId)
     if (error) throw error
-    return participations.map((p: any) => p.meeting) as any
+    return data.map((record: any) => mapAppointmentToMeetingData(record.appointment))
   },
   async update(id, data) {
     const { data: updated, error } = await supabase
-      .from("internal_meetings")
+      .from("appointments")
       .update(data)
       .eq("id", id)
-      .select(meetingSelect)
+      .select(appointmentSelect)
       .single()
     if (error) throw error
-    return updated as any
+    return mapAppointmentToMeetingData(updated)
   },
   async addParticipant(meetingId, userId) {
     const { data, error } = await supabase
-      .from("internal_meeting_participants")
-      .insert({ meetingId, userId })
-      .select("*")
+      .from("appointment_attendees")
+      .insert({ appointmentId: meetingId, userId })
+      .select("*, user:users(*)")
       .single()
     if (error) throw error
-    return data as MeetingParticipantData
+    return {
+      id: data.id,
+      meetingId: data.appointmentId,
+      userId: data.userId,
+      status: data.status,
+      user: data.user,
+    } as MeetingParticipantData
   },
   async updateParticipantStatus(meetingId, userId, status) {
     const { data, error } = await supabase
-      .from("internal_meeting_participants")
+      .from("appointment_attendees")
       .update({ status })
-      .eq("meetingId", meetingId)
+      .eq("appointmentId", meetingId)
       .eq("userId", userId)
-      .select("*")
+      .select("*, user:users(*)")
       .single()
     if (error) throw error
-    return data as MeetingParticipantData
+    return {
+      id: data.id,
+      meetingId: data.appointmentId,
+      userId: data.userId,
+      status: data.status,
+      user: data.user,
+    } as MeetingParticipantData
   },
   async getParticipants(meetingId) {
     const { data, error } = await supabase
-      .from("internal_meeting_participants")
+      .from("appointment_attendees")
       .select("*, user:users(*)")
-      .eq("meetingId", meetingId)
+      .eq("appointmentId", meetingId)
     if (error) throw error
-    return data as any
+    return data.map((att: any) => ({
+      id: att.id,
+      meetingId: att.appointmentId,
+      userId: att.userId,
+      status: att.status,
+      user: att.user,
+    })) as any
   },
   async listConflictingAppointments(facultyId, date, startTime, endTime) {
     const { data: slots, error: slotsError } = await supabase
@@ -348,35 +408,12 @@ export const meetingRepository: IMeetingRepository = {
     return conflictingAppointments || []
   },
   async listConflictingMeetings(facultyId, date, startTime, endTime) {
-    const [organized, participating] = await Promise.all([
-      supabase
-        .from("internal_meetings")
-        .select(meetingSelect)
-        .eq("organizerId", facultyId)
-        .eq("date", date)
-        .eq("status", "CONFIRMED")
-        .lt("startTime", endTime)
-        .gt("endTime", startTime),
-      supabase
-        .from("internal_meeting_participants")
-        .select(`meeting:internal_meetings!inner(${meetingSelect})`)
-        .eq("userId", facultyId)
-        .filter("meeting.date", "eq", date)
-        .filter("meeting.status", "eq", "CONFIRMED")
-        .filter("meeting.startTime", "lt", endTime)
-        .filter("meeting.endTime", "gt", startTime),
-    ])
-    const { data: orgData, error: orgErr } = organized
-    if (orgErr) throw orgErr
-    const { data: partData, error: partErr } = participating
-    if (partErr) throw partErr
-    const merged = [...(orgData || []), ...(partData || []).map((p: any) => p.meeting)]
-    const seen = new Set<string>()
-    return merged.filter((m: any) => {
-      if (seen.has(m.id)) return false
-      seen.add(m.id)
-      return true
-    }) as any
+    const slots = await appointmentRepository.listConflictingSlots([facultyId], date, startTime, endTime)
+    const appointments = (slots || [])
+      .map((slot: any) => slot.appointment)
+      .filter((apt: any) => apt && (apt.facultyId === facultyId || apt.studentId === facultyId))
+      .filter((apt: any, idx: number, arr: any[]) => arr.findIndex(a => a.id === apt.id) === idx)
+    return appointments.map(mapAppointmentToMeetingData)
   },
 }
 

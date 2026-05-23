@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       date: body.date,
       startTime: body.startTime,
       endTime: body.endTime,
+      timeSlots: body.timeSlots,
       organizerId: userId,
       participantIds: body.participantIds || [],
     })
@@ -56,9 +57,9 @@ export async function POST(request: Request) {
       // Build .ics once (same event shared to all)
       const icalString = generateICal({
         uid: `meet-${meeting.id}@e-consultation`,
-        summary: `Internal: ${meeting.title}`,
+        summary: `Consultation: ${meeting.title}`,
         description: [
-          "Internal Meeting",
+          "Consultation",
           `— ${meeting.title}`,
           `Organized by: ${organizerName}`,
           `Participants: ${participantNames.join(", ")}`,

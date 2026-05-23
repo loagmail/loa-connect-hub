@@ -32,6 +32,11 @@ interface Meeting {
   participants: Participant[]
 }
 
+interface ResendState {
+  count: number
+  nextAvailableAt: number | null
+}
+
 const statusColors: Record<string, string> = {
   CONFIRMED: "bg-emerald-500/20 text-emerald-600",
   CANCELLED: "bg-slate-500/20 text-slate-500",
@@ -54,9 +59,120 @@ export default function MeetingDetailPage() {
   const [meeting, setMeeting] = useState<Meeting | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [resendState, setResendState] = useState<ResendState>({ count: 0, nextAvailableAt: null })
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendMessage, setResendMessage] = useState("")
+  const [resendError, setResendError] = useState("")
+  const [resendTimer, setResendTimer] = useState(0)
 
   const meetingId = params.id as string
   const userId = (session?.user as any)?.id
+
+  const storageKey = `meeting-resend-${meetingId}`
+
+  useEffect(() => {
+    if (!meetingId) return
+    try {
+      const raw = window.localStorage.getItem(storageKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      if (
+        typeof parsed?.count === "number" &&
+        (parsed?.nextAvailableAt === null || typeof parsed?.nextAvailableAt === "number")
+      ) {
+        setResendState(parsed)
+      }
+    } catch {
+      // ignore malformed local storage
+    }
+  }, [meetingId, storageKey])
+
+  useEffect(() => {
+    if (!resendState.nextAvailableAt) {
+      setResendTimer(0)
+      return
+    }
+
+    const tick = () => {
+      const remainingMs = resendState.nextAvailableAt! - Date.now()
+      if (remainingMs <= 0) {
+        setResendTimer(0)
+        if (resendState.count >= 3) {
+          setResendState((prev) => (prev ? { ...prev, nextAvailableAt: null } : prev))
+        } else {
+          setResendState((prev) => (prev ? { ...prev, nextAvailableAt: null } : prev))
+        }
+        return
+      }
+
+      setResendTimer(Math.ceil(remainingMs / 1000))
+    }
+
+    tick()
+    const interval = window.setInterval(tick, 1000)
+    return () => window.clearInterval(interval)
+  }, [resendState.count, resendState.nextAvailableAt])
+
+  const getResendDelay = (attempt: number) => {
+    if (attempt === 1) return 60_000
+    if (attempt === 2) return 5 * 60_000
+    if (attempt === 3) return 15 * 60_000
+    return 0
+  }
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`
+    }
+    return `${remainingSeconds}s`
+  }
+
+  const getResendButtonLabel = () => {
+    if (resendState.nextAvailableAt && resendTimer > 0) {
+      return `Resend available in ${formatTime(resendTimer)}`
+    }
+
+    if (resendState.count >= 3) {
+      return "Resend disabled"
+    }
+
+    return "Resend Invitations"
+  }
+
+  const handleResend = async () => {
+    if (resendLoading) return
+    if (resendState.nextAvailableAt && Date.now() < resendState.nextAvailableAt) return
+    if (resendState.count >= 3) return
+
+    setResendLoading(true)
+    setResendError("")
+    setResendMessage("")
+
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}/resend`, {
+        method: "POST",
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setResendError(data.error || "Failed to resend invites")
+        return
+      }
+
+      const nextCount = resendState.count + 1
+      const nextAvailableAt = nextCount <= 3 ? Date.now() + getResendDelay(nextCount) : null
+      const nextState = { count: nextCount, nextAvailableAt }
+      setResendState(nextState)
+      window.localStorage.setItem(storageKey, JSON.stringify(nextState))
+      setResendMessage(data.message || "Invites resent successfully.")
+    } catch {
+      setResendError("Failed to resend invites")
+    } finally {
+      setResendLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!meetingId) return
@@ -129,6 +245,9 @@ export default function MeetingDetailPage() {
 
   const isOrganizer = meeting.organizerId === userId
   const myParticipation = meeting.participants?.find((p) => p.userId === userId)
+  const otherParticipantCount = meeting.participants?.filter((p) => p.userId !== userId).length || 0
+  const isResendThrottled = resendState.nextAvailableAt ? Date.now() < resendState.nextAvailableAt : false
+  const isResendDisabled = resendState.count >= 3 || isResendThrottled
 
   return (
     <div className="p-6 md:p-8 max-w-3xl">
@@ -140,7 +259,7 @@ export default function MeetingDetailPage() {
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Meetings
+        Back to Consultations
       </button>
 
       {/* Header */}
@@ -220,10 +339,30 @@ export default function MeetingDetailPage() {
           )}
           {isOrganizer && meeting.status === "CONFIRMED" && (
             <SubmitButton onClick={handleCancel} variant="danger">
-              Cancel Meeting
+              Cancel Consultation
+            </SubmitButton>
+          )}
+          {isOrganizer && meeting.status === "CONFIRMED" && otherParticipantCount > 0 && (
+            <SubmitButton
+              onClick={handleResend}
+              loading={resendLoading}
+              disabled={isResendDisabled}
+              variant="secondary"
+            >
+              {getResendButtonLabel()}
             </SubmitButton>
           )}
         </div>
+        {resendMessage && (
+          <div className="mt-4 rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">
+            {resendMessage}
+          </div>
+        )}
+        {resendError && (
+          <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+            {resendError}
+          </div>
+        )}
       </div>
 
       {/* Participants */}
