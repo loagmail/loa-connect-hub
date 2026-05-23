@@ -138,7 +138,7 @@ export interface IAppointmentRepository {
   addTimeSlot(appointmentId: string, date: string, startTime: string, endTime: string): Promise<AppointmentTimeSlotData>
   removeTimeSlot(slotId: string): Promise<void>
   listTimeSlots(appointmentId: string): Promise<AppointmentTimeSlotData[]>
-  listStudentConflictingSlots(studentId: string, date: string, startTime: string, endTime: string): Promise<AppointmentTimeSlotData[]>
+  listStudentConflictingSlots(studentId: string, date: string, startTime: string, endTime: string, excludeSessionGroupId?: string): Promise<AppointmentTimeSlotData[]>
   listConflictingSlots(facultyIds: string[], date: string, startTime: string, endTime: string): Promise<AppointmentTimeSlotData[]>
 }
 

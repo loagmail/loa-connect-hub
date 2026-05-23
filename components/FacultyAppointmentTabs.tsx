@@ -18,9 +18,10 @@ interface Props {
     completed: number
     cancelled: number
   }
+  basePath?: string
 }
 
-export function FacultyAppointmentTabs({ counts }: Props) {
+export function FacultyAppointmentTabs({ counts, basePath = "/faculty" }: Props) {
   const searchParams = useSearchParams()
   const activeTab = searchParams.get("tab") || "all"
 
@@ -29,7 +30,7 @@ export function FacultyAppointmentTabs({ counts }: Props) {
       {TABS.map((tab) => {
         const isActive = activeTab === tab.key
         const count = tab.countKey ? counts[tab.countKey] : null
-        const href = tab.key === "all" ? "/faculty" : `/faculty?tab=${tab.key}`
+        const href = tab.key === "all" ? basePath : `${basePath}?tab=${tab.key}`
 
         return (
           <Link

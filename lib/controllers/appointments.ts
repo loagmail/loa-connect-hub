@@ -74,12 +74,14 @@ export async function requestAppointment(input: {
   }
 
   // Check for conflicting appointments with any of the timeslots
+  // Exclude appointments in the same sessionGroupId (multi-faculty / staggered blocks)
   for (const slot of timeSlots) {
     const conflictingSlots = await appointmentRepository.listStudentConflictingSlots(
       input.studentId,
       slot.date,
       slot.startTime,
-      slot.endTime
+      slot.endTime,
+      input.sessionGroupId
     )
     if (conflictingSlots.length > 0) {
       throw new Error("You already have an appointment that overlaps with this time")

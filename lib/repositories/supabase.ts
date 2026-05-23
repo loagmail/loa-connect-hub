@@ -222,8 +222,8 @@ export const appointmentRepository: IAppointmentRepository = {
     if (error) throw error
     return data as AppointmentTimeSlotData[]
   },
-  async listStudentConflictingSlots(studentId, date, startTime, endTime) {
-    const { data, error } = await supabase
+  async listStudentConflictingSlots(studentId, date, startTime, endTime, excludeSessionGroupId) {
+    let query = supabase
       .from("appointment_time_slots")
       .select("*, appointment:appointments(*)")
       .eq("date", date)
@@ -231,6 +231,10 @@ export const appointmentRepository: IAppointmentRepository = {
       .gt("endTime", startTime)
       .eq("appointment.studentId", studentId)
       .in("appointment.status", ["PENDING", "APPROVED"])
+    if (excludeSessionGroupId) {
+      query = query.neq("appointment.sessionGroupId", excludeSessionGroupId)
+    }
+    const { data, error } = await query
     if (error) throw error
     return data as any
   },
