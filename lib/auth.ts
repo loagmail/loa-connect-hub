@@ -39,6 +39,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          tokenVersion: user.tokenVersion,
         }
       },
     }),
@@ -46,8 +47,10 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // Sign-in: store user details + current tokenVersion
         token.id = user.id
         ;(token as any).role = (user as any).role || "STUDENT"
+        ;(token as any).tokenVersion = (user as any).tokenVersion ?? 0
       }
       return token
     },
@@ -55,6 +58,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         ;(session.user as any).role = (token as any).role
         ;(session.user as any).id = (token as any).id
+        ;(session.user as any).tokenVersion = (token as any).tokenVersion
       }
       return session
     },
@@ -66,6 +70,58 @@ export const authOptions: NextAuthOptions = {
   },
 }
 
-export function auth() {
-  return getServerSession(authOptions)
+export async function auth() {
+  const session = await getServerSession(authOptions)
+
+  // Validate the session is still active — handles users disabled mid-session
+  // and database resets (tokenVersion mismatch). Replaces the unreliable DB
+  // lookup inside the jwt callback (which caused redirect loops).
+  //
+  // IMPORTANT: on DB error we return the session as-is, not null. Returning
+  // null on a transient Supabase hiccup causes a redirect-to-login loop
+  // because the login page's useSession() still sees a valid JWT cookie and
+  // redirects right back.
+  const userId = (session?.user as any)?.id
+  if (!userId) return session
+
+  try {
+    const dbUser = await userRepository.findById(userId)
+
+    // User doesn't exist in DB (deleted, DB reset, etc.)
+    if (!dbUser) {
+      console.warn(`[auth] Session user ${userId} not found in DB — returning null`)
+      return null
+    }
+
+    // User was disabled mid-session
+    if (dbUser.isDisabled) {
+      console.warn(`[auth] Session user ${userId} is disabled — returning null`)
+      return null
+    }
+
+    // Token version mismatch (token revoked by admin / DB reset).
+    // For old JWTs that lack tokenVersion, treat as version 0 and
+    // compare against the DB so a reset (which resets to 0 for all
+    // users) or a disable (which increments) is still caught.
+    const jwtVersion = (session?.user as any)?.tokenVersion ?? 0
+    if (dbUser.tokenVersion !== jwtVersion) {
+      console.warn(`[auth] Session user ${userId} tokenVersion mismatch (JWT: ${jwtVersion}, DB: ${dbUser.tokenVersion}) — returning null`)
+      return null
+    }
+  } catch (err) {
+    // DB transient error — leave session intact to avoid redirect loop
+    console.error(`[auth] DB error during session validation for ${userId}:`, err)
+  }
+
+  return session
+}
+
+/**
+ * Lightweight session check for client components that use useSession().
+ * Returns true if the server-side session is still valid (user active,
+ * tokenVersion matches). Call this periodically or after sensitive actions.
+ */
+export async function checkSession(): Promise<boolean> {
+  const session = await auth()
+  return session !== null
 }

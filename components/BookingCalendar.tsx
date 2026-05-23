@@ -35,6 +35,7 @@ interface FacultyWithRules {
   id: string
   name: string
   email: string
+  hasLoggedInBefore: boolean
   rules: FacultyRule[]
 }
 
@@ -226,7 +227,7 @@ export default function BookingCalendar({ facultyWithRules }: Props) {
         >
           <option value="">Select a professor...</option>
           {facultyWithRules.map((f) => (
-            <option key={f.id} value={f.id}>{f.name}</option>
+            <option key={f.id} value={f.id}>{f.name}{!f.hasLoggedInBefore ? " (Inactive)" : ""}</option>
           ))}
         </select>
       </div>

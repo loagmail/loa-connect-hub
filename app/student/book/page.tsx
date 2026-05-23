@@ -10,14 +10,14 @@ export default async function StudentBookPage() {
 
   const facultyUsers = await userRepository.listByRole("FACULTY")
   const deanUsers = await userRepository.listByRole("DEAN")
-  const allFaculty = [...facultyUsers, ...deanUsers]
+  const allFaculty = [...facultyUsers, ...deanUsers].filter((f) => !f.isDisabled)
   const departments = await departmentRepository.listAll()
   const deptMap = new Map(departments.map((d) => [d.id, d.name]))
 
   const facultyWithRules = await Promise.all(
     allFaculty.map(async (f) => {
       const rules = await availabilityRuleRepository.listByFaculty(f.id)
-      return { id: f.id, name: f.name, email: f.email, department: f.departmentId ? deptMap.get(f.departmentId) || null : null, rules }
+      return { id: f.id, name: f.name, email: f.email, hasLoggedInBefore: f.hasLoggedInBefore, department: f.departmentId ? deptMap.get(f.departmentId) || null : null, rules }
     })
   )
 

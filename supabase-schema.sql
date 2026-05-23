@@ -59,6 +59,8 @@ CREATE TABLE users (
 
   "lastLoginAt" TIMESTAMPTZ,
 
+  "tokenVersion" INTEGER NOT NULL DEFAULT 0,
+
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -583,6 +585,18 @@ BEGIN;
 
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS "meetingType" TEXT NOT NULL DEFAULT 'CONSULTATION'
   CHECK ("meetingType" IN ('CONSULTATION', 'INTERNAL'));
+
+COMMIT;
+
+-- -------------------------------------------------------
+-- Migration 3: Add tokenVersion column to users
+--             (used for JWT invalidation — increment when
+--              a user is disabled or on DB reset)
+-- -------------------------------------------------------
+
+BEGIN;
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS "tokenVersion" INTEGER NOT NULL DEFAULT 0;
 
 COMMIT;
 

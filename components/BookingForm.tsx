@@ -17,6 +17,7 @@ interface FacultyUser {
   id: string
   name: string
   email: string
+  hasLoggedInBefore?: boolean
 }
 
 interface BookingFormProps {
@@ -39,7 +40,10 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
       .then((r) => r.json())
       .then((data) => {
         if (data.users) {
-          setFacultyList(data.users.filter((u: any) => u.id !== slot.facultyId))
+          setFacultyList(
+            data.users
+              .filter((u: any) => u.id !== slot.facultyId && !u.isDisabled)
+          )
         }
       })
       .catch(() => {})
@@ -170,8 +174,15 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
                       onChange={() => toggleAttendee(f.id)}
                       className="w-4 h-4 rounded border-slate-300 text-gold-600 focus:ring-gold-500"
                     />
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">{f.name}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-slate-800">{f.name}</p>
+                        {f.hasLoggedInBefore === false && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 leading-none">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-400">{f.email}</p>
                     </div>
                   </label>

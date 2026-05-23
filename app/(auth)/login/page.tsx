@@ -2,30 +2,17 @@
 
 import SubmitButton from "@/components/SubmitButton"
 import { Suspense } from "react"
-import { signIn, useSession } from "next-auth/react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { useState, FormEvent, useEffect } from "react"
+import { signIn } from "next-auth/react"
+import { useSearchParams } from "next/navigation"
+import { useState, FormEvent } from "react"
 import Link from "next/link"
 
 function LoginForm() {
   const searchParams = useSearchParams()
-  const router = useRouter()
-  const { data: session } = useSession()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const error = searchParams.get("error")
-
-  useEffect(() => {
-    if (session?.user) {
-      const role = (session.user as any).role
-      if (role === "STUDENT") router.replace("/student")
-      else if (role === "FACULTY") router.replace("/faculty")
-      else if (role === "DEAN") router.replace("/dean")
-      else if (role === "ADMIN") router.replace("/admin")
-      else router.replace("/")
-    }
-  }, [session, router])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()

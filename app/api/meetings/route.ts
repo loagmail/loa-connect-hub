@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth"
 import { createMeeting, getMeetingsForUser } from "@/lib/controllers/meetings"
 import { userRepository } from "@/lib/repositories/factory"
 import { generateInviteToken } from "@/lib/services/invite-token"
-import { sendMeetingInviteEmail } from "@/lib/services/email"
+import { sendMeetingInviteWithICS } from "@/lib/services/email"
+import { generateICal } from "@/lib/services/ical"
 
 export async function GET() {
   const session = await auth()
@@ -36,25 +37,61 @@ export async function POST(request: Request) {
       participantIds: body.participantIds || [],
     })
 
-    // Send email invites to participants (excluding organizer)
+    // Send email invites with .ics attachment to participants (excluding organizer)
     const origin = new URL(request.url).origin
     const organizer = (session.user as any)
     const participantIds = (body.participantIds || []).filter((id: string) => id !== userId)
 
     if (participantIds.length > 0 && meeting) {
-      const participants = await userRepository.listByIds(participantIds)
+      // Resolve participant names for the .ics description
+      const allParticipants = await userRepository.listByIds([
+        userId,
+        ...participantIds,
+      ])
+      const participantNames = allParticipants
+        .filter((u) => u.id !== userId)
+        .map((u) => u.name)
+      const organizerName = allParticipants.find((u) => u.id === userId)?.name || organizer.name
+
+      // Build .ics once (same event shared to all)
+      const icalString = generateICal({
+        uid: `meet-${meeting.id}@e-consultation`,
+        summary: `Internal: ${meeting.title}`,
+        description: [
+          "Internal Meeting",
+          `— ${meeting.title}`,
+          `Organized by: ${organizerName}`,
+          `Participants: ${participantNames.join(", ")}`,
+          meeting.description || "",
+        ].filter(Boolean).join("\n"),
+        date: meeting.date,
+        startTime: meeting.startTime,
+        endTime: meeting.endTime,
+        location: "Microsoft Teams",
+        organizer: { name: organizerName, email: organizer.email },
+        attendees: allParticipants.map((u) => ({
+          name: u.name,
+          email: u.email,
+        })),
+      })
+
+      const participants = allParticipants.filter((u) => u.id !== userId)
       for (const p of participants) {
         const token = generateInviteToken(meeting.id, p.id)
         const inviteUrl = `${origin}/invites/${token}`
-        await sendMeetingInviteEmail(
-          p.email,
-          p.name,
-          meeting.title,
-          organizer.name,
-          meeting.date,
-          meeting.startTime,
-          meeting.endTime,
-          inviteUrl
+        await sendMeetingInviteWithICS(
+          { email: p.email, name: p.name },
+          {
+            organizerName,
+            title: meeting.title,
+            description: meeting.description,
+            date: meeting.date,
+            startTime: meeting.startTime,
+            endTime: meeting.endTime,
+            participantNames,
+            viewUrl: inviteUrl,
+          },
+          icalString,
         )
       }
     }

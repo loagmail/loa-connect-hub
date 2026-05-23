@@ -9,6 +9,7 @@ export interface UserData {
   isDisabled: boolean
   hasLoggedInBefore: boolean
   lastLoginAt: Date | null
+  tokenVersion: number
   createdAt: Date
 }
 

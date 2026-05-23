@@ -76,6 +76,118 @@ export async function sendMeetingInviteEmail(
   })
 }
 
+export async function sendConsultationInvite(
+  to: { email: string; name: string },
+  data: {
+    studentName: string
+    studentEmail: string
+    facultyName: string
+    facultyEmail: string
+    date: string
+    startTime: string
+    endTime: string
+    title?: string | null
+    description?: string | null
+    viewUrl: string
+  },
+  icalString?: string
+) {
+  const { consultationInviteHtml } = await import("@/lib/email-templates/consultation-invite")
+  const html = consultationInviteHtml({
+    recipientName: to.name,
+    studentName: data.studentName,
+    studentEmail: data.studentEmail,
+    facultyName: data.facultyName,
+    facultyEmail: data.facultyEmail,
+    date: data.date,
+    startTime: data.startTime,
+    endTime: data.endTime,
+    title: data.title,
+    description: data.description,
+    viewUrl: data.viewUrl,
+  })
+
+  if (!isEmailEnabled()) {
+    console.log("[DEV] Consultation invite email (EMAIL_FEATURE_FLAG=false):")
+    console.log(`  To: ${to.email} (${to.name})`)
+    console.log(`  .ics: ${icalString ? "attached" : "none"}`)
+    return
+  }
+
+  if (!process.env.GMAIL_USER) throw new Error("GMAIL_USER env var not set")
+
+  const mail: any = {
+    from: `"e-Consultation" <${process.env.GMAIL_USER}>`,
+    to: to.email,
+    subject: `Consultation Approved — ${data.facultyName}`,
+    html,
+  }
+
+  if (icalString) {
+    mail.attachments = [{
+      filename: "event.ics",
+      content: icalString,
+      contentType: "text/calendar; charset=utf-8",
+    }]
+  }
+
+  await transporter.sendMail(mail)
+}
+
+export async function sendMeetingInviteWithICS(
+  to: { email: string; name: string },
+  data: {
+    organizerName: string
+    title: string
+    description?: string | null
+    date: string
+    startTime: string
+    endTime: string
+    participantNames: string[]
+    viewUrl: string
+  },
+  icalString?: string
+) {
+  const { meetingInviteHtml } = await import("@/lib/email-templates/meeting-invite")
+  const html = meetingInviteHtml({
+    recipientName: to.name,
+    organizerName: data.organizerName,
+    title: data.title,
+    description: data.description,
+    date: data.date,
+    startTime: data.startTime,
+    endTime: data.endTime,
+    participantNames: data.participantNames,
+    viewUrl: data.viewUrl,
+  })
+
+  if (!isEmailEnabled()) {
+    console.log("[DEV] Meeting invite email (EMAIL_FEATURE_FLAG=false):")
+    console.log(`  To: ${to.email} (${to.name})`)
+    console.log(`  .ics: ${icalString ? "attached" : "none"}`)
+    return
+  }
+
+  if (!process.env.GMAIL_USER) throw new Error("GMAIL_USER env var not set")
+
+  const mail: any = {
+    from: `"e-Consultation" <${process.env.GMAIL_USER}>`,
+    to: to.email,
+    subject: `Meeting Invitation — ${data.title}`,
+    html,
+  }
+
+  if (icalString) {
+    mail.attachments = [{
+      filename: "event.ics",
+      content: icalString,
+      contentType: "text/calendar; charset=utf-8",
+    }]
+  }
+
+  await transporter.sendMail(mail)
+}
+
 export async function sendForgotPasswordEmail(email: string, name: string, resetUrl: string) {
   if (!isEmailEnabled()) {
     console.log("[DEV] Forgot password email (EMAIL_FEATURE_FLAG=false):")

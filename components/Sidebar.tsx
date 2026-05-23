@@ -26,6 +26,8 @@ export default function Sidebar() {
   }
 
   const role = (session.user as any)?.role
+  if (!role) return null
+
   const rc = roleColors[role] || roleColors.STUDENT
 
   const navLinks = [

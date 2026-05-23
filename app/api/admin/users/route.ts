@@ -62,7 +62,9 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  const user = await userRepository.update(userId, { isDisabled: !!isDisabled })
+  // Increment tokenVersion so all existing JWT sessions are invalidated
+  const tokenVersion = (target.tokenVersion ?? 0) + 1
+  const user = await userRepository.update(userId, { isDisabled: !!isDisabled, tokenVersion })
   await logAuditEvent({
     userId: currentUserId,
     action: isDisabled ? "DISABLE_USER" : "ENABLE_USER",

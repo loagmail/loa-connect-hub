@@ -182,7 +182,12 @@ export async function acceptAppointment(id: string, facultyId: string) {
   if (appointment.status !== "PENDING") throw new Error("Appointment is not pending")
 
   // Set status + mark for Teams sync (orchestrator picks up UNWRITTEN records)
-  return appointmentRepository.update(id, { status: "APPROVED", teamsSyncStatus: "UNWRITTEN" })
+  const result = await appointmentRepository.update(id, { status: "APPROVED", teamsSyncStatus: "UNWRITTEN" })
+
+  // Fire-and-forget consultation approval email with .ics attachment
+  sendConsultationApprovedEmail(result as any).catch(() => {})
+
+  return result
 }
 
 // Backward-compat alias
@@ -265,4 +270,83 @@ export async function getAppointmentById(id: string) {
   const appointment = await appointmentRepository.findById(id)
   if (!appointment) throw new Error("Appointment not found")
   return appointment
+}
+
+// ─── Email helpers (fire-and-forget) ────────────────────────────
+
+async function sendConsultationApprovedEmail(appointment: any) {
+  const host = process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${process.env.PORT || 3000}`
+  const viewUrl = `${host}/appointments/${appointment.id}`
+
+  const student = appointment.student || { name: "Student", email: "" }
+  const faculty = appointment.faculty || { name: "Faculty", email: "" }
+
+  const { generateICal } = await import("@/lib/services/ical")
+  const { sendConsultationInvite } = await import("@/lib/services/email")
+
+  const icalString = generateICal({
+    uid: `appt-${appointment.id}@e-consultation`,
+    summary: `Consultation with ${faculty.name}`,
+    description: [
+      "Academic Consultation",
+      appointment.title ? `— ${appointment.title}` : "",
+      `Student: ${student.name} (${student.email})`,
+      `Faculty: ${faculty.name} (${faculty.email})`,
+      appointment.description || "",
+    ].filter(Boolean).join("\n"),
+    date: appointment.date,
+    startTime: appointment.startTime,
+    endTime: appointment.endTime,
+    location: "Microsoft Teams",
+    organizer: { name: faculty.name, email: faculty.email },
+    attendees: [
+      { name: student.name, email: student.email },
+      ...(appointment.attendees?.map((a: any) => ({
+        name: a.user?.name || "Attendee",
+        email: a.user?.email || "",
+      })) || []),
+    ],
+  })
+
+  // Send to student
+  await sendConsultationInvite(
+    { email: student.email, name: student.name },
+    {
+      studentName: student.name,
+      studentEmail: student.email,
+      facultyName: faculty.name,
+      facultyEmail: faculty.email,
+      date: appointment.date,
+      startTime: appointment.startTime,
+      endTime: appointment.endTime,
+      title: appointment.title,
+      description: appointment.description,
+      viewUrl,
+    },
+    icalString,
+  )
+
+  // Send to each additional attendee
+  if (appointment.attendees) {
+    for (const att of appointment.attendees) {
+      const user = att.user
+      if (!user || user.email === student.email) continue
+      await sendConsultationInvite(
+        { email: user.email, name: user.name },
+        {
+          studentName: student.name,
+          studentEmail: student.email,
+          facultyName: faculty.name,
+          facultyEmail: faculty.email,
+          date: appointment.date,
+          startTime: appointment.startTime,
+          endTime: appointment.endTime,
+          title: appointment.title,
+          description: appointment.description,
+          viewUrl,
+        },
+        icalString,
+      )
+    }
+  }
 }
