@@ -13,10 +13,10 @@ function getMinutesDifference(startTime: string, endTime: string): number {
   return eh * 60 + em - (sh * 60 + sm)
 }
 
-function isValid30MinuteTime(time: string): boolean {
+function isValidTime(time: string): boolean {
   if (!time) return false
   const [, mins] = time.split(":").map(Number)
-  return mins === 0 || mins === 30
+  return [0, 15, 30, 45].includes(mins)
 }
 
 export async function requestAppointment(input: {
@@ -44,11 +44,11 @@ export async function requestAppointment(input: {
 
   // Validate timeslot durations and time boundaries
   for (const slot of timeSlots) {
-    if (!isValid30MinuteTime(slot.startTime)) {
-      throw new Error(`Start time ${slot.startTime} must be on a 30-minute boundary (HH:00 or HH:30)`)
+    if (!isValidTime(slot.startTime)) {
+      throw new Error(`Start time ${slot.startTime} must be on a 15-minute boundary (HH:00, HH:15, HH:30, or HH:45)`)
     }
-    if (!isValid30MinuteTime(slot.endTime)) {
-      throw new Error(`End time ${slot.endTime} must be on a 30-minute boundary (HH:00 or HH:30)`)
+    if (!isValidTime(slot.endTime)) {
+      throw new Error(`End time ${slot.endTime} must be on a 15-minute boundary (HH:00, HH:15, HH:30, or HH:45)`)
     }
     const durationMinutes = getMinutesDifference(slot.startTime, slot.endTime)
     if (durationMinutes < MIN_TIMESLOT_DURATION_MINUTES) {

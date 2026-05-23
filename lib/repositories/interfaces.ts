@@ -149,35 +149,7 @@ export interface IAppointmentRepository {
   listConflictingSlots(facultyIds: string[], date: string, startTime: string, endTime: string): Promise<AppointmentTimeSlotData[]>
 }
 
-export interface AvailabilityRuleData {
-  id: string
-  facultyId: string
-  dayOfWeek: number
-  isBlocked: boolean
-  startTime: string | null
-  endTime: string | null
-  startDate: string
-  endDate: string | null
-}
-
-export interface UpsertAvailabilityRuleInput {
-  facultyId: string
-  dayOfWeek: number
-  isBlocked: boolean
-  startTime?: string | null
-  endTime?: string | null
-  startDate: string
-  endDate?: string | null
-}
-
-export interface IAvailabilityRuleRepository {
-  listByFaculty(facultyId: string): Promise<AvailabilityRuleData[]>
-  findByFacultyAndDay(facultyId: string, dayOfWeek: number, startDate?: string): Promise<AvailabilityRuleData | null>
-  upsert(input: UpsertAvailabilityRuleInput): Promise<AvailabilityRuleData>
-  delete(id: string): Promise<void>
-}
-
-// --- Internal Meetings ---
+// --- Internal Meetings (legacy, kept for existing code) ---
 
 export type MeetingStatusData = "CONFIRMED" | "CANCELLED"
 export type ParticipantStatusData = "PENDING" | "ACCEPTED" | "DECLINED"
@@ -223,6 +195,34 @@ export interface IMeetingRepository {
   getParticipants(meetingId: string): Promise<MeetingParticipantData[]>
   listConflictingAppointments(facultyId: string, date: string, startTime: string, endTime: string): Promise<AppointmentData[]>
   listConflictingMeetings(facultyId: string, date: string, startTime: string, endTime: string): Promise<MeetingData[]>
+}
+
+export interface AvailabilityRuleData {
+  id: string
+  facultyId: string
+  dayOfWeek: number
+  isBlocked: boolean
+  startTime: string | null
+  endTime: string | null
+  startDate: string
+  endDate: string | null
+}
+
+export interface UpsertAvailabilityRuleInput {
+  facultyId: string
+  dayOfWeek: number
+  isBlocked: boolean
+  startTime?: string | null
+  endTime?: string | null
+  startDate: string
+  endDate?: string | null
+}
+
+export interface IAvailabilityRuleRepository {
+  listByFaculty(facultyId: string): Promise<AvailabilityRuleData[]>
+  findByFacultyAndDay(facultyId: string, dayOfWeek: number, startDate?: string): Promise<AvailabilityRuleData | null>
+  upsert(input: UpsertAvailabilityRuleInput): Promise<AvailabilityRuleData>
+  delete(id: string): Promise<void>
 }
 
 // --- Password Reset Tokens ---

@@ -2,22 +2,19 @@ import { prisma } from "@/lib/prisma"
 import type {
   IUserRepository,
   IDepartmentRepository,
-  IAppointmentRepository,
-  IAvailabilityRuleRepository,
   IMeetingRepository,
+  IAvailabilityRuleRepository,
   IPasswordResetTokenRepository,
   IAuditLogRepository,
   UserData,
   CreateUserInput,
   DepartmentData,
-  AppointmentData,
-  CreateAppointmentInput,
-  AppointmentAttendeeData,
-  AvailabilityRuleData,
-  UpsertAvailabilityRuleInput,
   MeetingData,
   CreateMeetingInput,
-  MeetingParticipantData,
+  MeetingAttendeeData,
+  MeetingTimeSlotData,
+  AvailabilityRuleData,
+  UpsertAvailabilityRuleInput,
   AuditLogData,
 } from "./interfaces"
 
@@ -89,10 +86,10 @@ const appointmentIncludes = {
   attendees: { include: { user: true } },
 }
 
-export const appointmentRepository: IAppointmentRepository = {
+export const meetingsRepository: IMeetingRepository = {
   async create(input) {
     const appointment = await prisma.appointment.create({ data: input })
-    return appointment as AppointmentData
+    return appointment as MeetingData
   },
   async listByStudent(studentId) {
     const appointments = await prisma.appointment.findMany({
@@ -100,7 +97,7 @@ export const appointmentRepository: IAppointmentRepository = {
       orderBy: { requestedAt: "desc" },
       include: appointmentIncludes,
     })
-    return appointments as any
+    return appointments as MeetingData[]
   },
   async listByFaculty(facultyId) {
     const appointments = await prisma.appointment.findMany({
@@ -108,14 +105,14 @@ export const appointmentRepository: IAppointmentRepository = {
       orderBy: { requestedAt: "desc" },
       include: appointmentIncludes,
     })
-    return appointments as any
+    return appointments as MeetingData[]
   },
   async listAll() {
     const appointments = await prisma.appointment.findMany({
       orderBy: { requestedAt: "desc" },
       include: appointmentIncludes,
     })
-    return appointments as any
+    return appointments as MeetingData[]
   },
   async listPendingSync() {
     const appointments = await prisma.appointment.findMany({
@@ -126,7 +123,7 @@ export const appointmentRepository: IAppointmentRepository = {
       include: appointmentIncludes,
       orderBy: { updatedAt: "asc" },
     })
-    return appointments as any
+    return appointments as MeetingData[]
   },
   async findById(id) {
     const appointment = await prisma.appointment.findUnique({
@@ -134,7 +131,7 @@ export const appointmentRepository: IAppointmentRepository = {
       include: appointmentIncludes,
     })
     if (!appointment) return null
-    return appointment as any
+    return appointment as MeetingData
   },
   async update(id, data) {
     const appointment = await prisma.appointment.update({
@@ -142,28 +139,72 @@ export const appointmentRepository: IAppointmentRepository = {
       data: data as any,
       include: appointmentIncludes,
     })
-    return appointment as any
+    return appointment as MeetingData
   },
-  async addAttendee(appointmentId, userId, isMandatory = true) {
+  async addAttendee(meetingId, userId, isMandatory = true) {
     const attendee = await prisma.appointmentAttendee.create({
-      data: { appointmentId, userId, isMandatory },
+      data: { appointmentId: meetingId, userId, isMandatory },
     })
-    return attendee as AppointmentAttendeeData
+    return attendee as MeetingAttendeeData
   },
-  async listAttendees(appointmentId) {
+  async listAttendees(meetingId) {
     const attendees = await prisma.appointmentAttendee.findMany({
-      where: { appointmentId },
+      where: { appointmentId: meetingId },
       include: { user: true },
     })
-    return attendees as any
+    return attendees as MeetingAttendeeData[]
   },
-  async updateAttendeeStatus(appointmentId, userId, status) {
+  async updateAttendeeStatus(meetingId, userId, status) {
     const attendee = await prisma.appointmentAttendee.update({
-      where: { appointmentId_userId: { appointmentId, userId } },
+      where: { appointmentId_userId: { appointmentId: meetingId, userId } },
       data: { status },
       include: { user: true },
     })
-    return attendee as any
+    return attendee as MeetingAttendeeData
+  },
+  async addTimeSlot(meetingId, date, startTime, endTime) {
+    const slot = await prisma.appointmentTimeSlot.create({
+      data: { appointmentId: meetingId, date, startTime, endTime },
+    })
+    return slot as MeetingTimeSlotData
+  },
+  async removeTimeSlot(slotId) {
+    await prisma.appointmentTimeSlot.delete({ where: { id: slotId } })
+  },
+  async listTimeSlots(meetingId) {
+    const slots = await prisma.appointmentTimeSlot.findMany({
+      where: { appointmentId: meetingId },
+      orderBy: { createdAt: "asc" },
+    })
+    return slots as MeetingTimeSlotData[]
+  },
+  async listStudentConflictingSlots(studentId, date, startTime, endTime, excludeSessionGroupId) {
+    const where: any = {
+      appointment: { studentId, status: { in: ["PENDING", "APPROVED"] } },
+      date,
+      startTime: { lt: endTime },
+      endTime: { gt: startTime },
+    }
+    if (excludeSessionGroupId) {
+      where.appointment.sessionGroupId = { not: excludeSessionGroupId }
+    }
+    const slots = await prisma.appointmentTimeSlot.findMany({
+      where,
+      include: { appointment: true },
+    })
+    return slots as any
+  },
+  async listConflictingSlots(facultyIds, date, startTime, endTime) {
+    const slots = await prisma.appointmentTimeSlot.findMany({
+      where: {
+        appointment: { facultyId: { in: facultyIds } },
+        date,
+        startTime: { lt: endTime },
+        endTime: { gt: startTime },
+      } as any,
+      include: { appointment: true },
+    })
+    return slots as any
   },
 }
 
@@ -193,93 +234,6 @@ export const availabilityRuleRepository: IAvailabilityRuleRepository = {
   },
   async delete(id) {
     await prisma.facultyAvailabilityRule.delete({ where: { id } })
-  },
-}
-
-export const meetingRepository: IMeetingRepository = {
-  async create(input) {
-    const meeting = await prisma.internalMeeting.create({ data: input })
-    return meeting as MeetingData
-  },
-  async findById(id) {
-    const meeting = await prisma.internalMeeting.findUnique({
-      where: { id },
-      include: { organizer: true, participants: { include: { user: true } } },
-    })
-    if (!meeting) return null
-    return meeting as any
-  },
-  async listByOrganizer(organizerId) {
-    const meetings = await prisma.internalMeeting.findMany({
-      where: { organizerId },
-      orderBy: { createdAt: "desc" },
-      include: { participants: { include: { user: true } } },
-    })
-    return meetings as any
-  },
-  async listByParticipant(userId) {
-    const participations = await prisma.internalMeetingParticipant.findMany({
-      where: { userId },
-      include: { meeting: { include: { organizer: true, participants: { include: { user: true } } } } },
-    })
-    return participations.map((p: any) => p.meeting) as any
-  },
-  async update(id, data) {
-    const meeting = await prisma.internalMeeting.update({
-      where: { id },
-      data: data as any,
-      include: { organizer: true, participants: { include: { user: true } } },
-    })
-    return meeting as any
-  },
-  async addParticipant(meetingId, userId) {
-    const participant = await prisma.internalMeetingParticipant.create({
-      data: { meetingId, userId },
-    })
-    return participant as MeetingParticipantData
-  },
-  async updateParticipantStatus(meetingId, userId, status) {
-    const participant = await prisma.internalMeetingParticipant.update({
-      where: { meetingId_userId: { meetingId, userId } },
-      data: { status },
-    })
-    return participant as MeetingParticipantData
-  },
-  async getParticipants(meetingId) {
-    const participants = await prisma.internalMeetingParticipant.findMany({
-      where: { meetingId },
-      include: { user: true },
-    })
-    return participants as any
-  },
-  async listConflictingAppointments(facultyId, date, startTime, endTime) {
-    const appointments = await prisma.appointment.findMany({
-      where: {
-        OR: [{ facultyId }, { studentId: facultyId }],
-        status: { in: ["PENDING", "APPROVED"] },
-        date,
-        startTime: { lt: endTime },
-        endTime: { gt: startTime },
-      } as any,
-      include: { student: true, faculty: true },
-    })
-    return appointments as any
-  },
-  async listConflictingMeetings(facultyId, date, startTime, endTime) {
-    const meetings = await prisma.internalMeeting.findMany({
-      where: {
-        OR: [
-          { organizerId: facultyId },
-          { participants: { some: { userId: facultyId } } },
-        ],
-        date,
-        status: "CONFIRMED",
-        startTime: { lt: endTime },
-        endTime: { gt: startTime },
-      } as any,
-      include: { organizer: true, participants: { include: { user: true } } },
-    })
-    return meetings as any
   },
 }
 

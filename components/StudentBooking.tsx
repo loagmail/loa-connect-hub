@@ -5,19 +5,21 @@ import { useState, useMemo } from "react"
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-/** Validate that time is at a 30-minute boundary (HH:00 or HH:30) */
-function isValid30MinuteTime(time: string): boolean {
-  if (!time) return false
-  const [, mins] = time.split(":").map(Number)
-  return mins === 0 || mins === 30
+const MINUTE_OPTIONS = [0, 15, 30, 45]
+
+function timeToMinutes(h: number, m: number): number {
+  return h * 60 + m
 }
 
-/** Round time to nearest 30-minute boundary */
-function roundTo30Minutes(time: string): string {
-  if (!time) return ""
-  const [hours, mins] = time.split(":").map(Number)
-  if (mins <= 15) return `${String(hours).padStart(2, "0")}:00`
-  return `${String(hours).padStart(2, "0")}:30`
+function formatTimeValue(h: number, m: number): string {
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
+}
+
+/** Validate that time is at a 15-minute boundary (HH:00, HH:15, HH:30, HH:45) */
+function isValid15MinuteTime(time: string): boolean {
+  if (!time) return false
+  const [, mins] = time.split(":").map(Number)
+  return MINUTE_OPTIONS.includes(mins)
 }
 
 interface FacultyRule {
@@ -41,6 +43,7 @@ interface FacultyWithRules {
 
 interface Props {
   facultyWithRules: FacultyWithRules[]
+  serverNow?: string
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -88,8 +91,8 @@ function generateSlots(startTime: string, endTime: string): { start: string; end
   return slots
 }
 
-export default function StudentBooking({ facultyWithRules }: Props) {
-  const now = new Date()
+export default function StudentBooking({ facultyWithRules, serverNow }: Props) {
+  const now = useMemo(() => new Date(serverNow || Date.now()), [serverNow])
   const [currentMonth, setCurrentMonth] = useState(now.getMonth())
   const [currentYear, setCurrentYear] = useState(now.getFullYear())
 
@@ -107,6 +110,23 @@ export default function StudentBooking({ facultyWithRules }: Props) {
   // Booking form
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [allow24Hours, setAllow24Hours] = useState(false)
+
+  const todayStr = useMemo(() => fmtDate(now.getFullYear(), now.getMonth(), now.getDate()), [now])
+  const selectedDateStr = selectedDay ? fmtDate(currentYear, currentMonth, selectedDay) : null
+  const isSelectedToday = selectedDateStr === todayStr
+
+  const hourOptions = useMemo(() => {
+    const base = allow24Hours
+      ? Array.from({ length: 24 }, (_, i) => i)
+      : Array.from({ length: 16 }, (_, i) => i + 6)
+
+    if (!isSelectedToday) return base
+
+    // Hide current hour once it has started — only future hours are selectable
+    const currentHour = now.getHours()
+    return base.filter((h) => h > currentHour)
+  }, [allow24Hours, isSelectedToday, now])
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ success: number; errors: string[]; sessionGroupId?: string } | null>(null)
 
@@ -552,40 +572,94 @@ export default function StudentBooking({ facultyWithRules }: Props) {
                   <p className="text-xs text-slate-500">You can also add additional custom blocks for this day.</p>
                 )}
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
                     <input
-                      type="time"
-                      value={manualTime?.start || ""}
-                      onChange={(e) => {
-                        const rounded = roundTo30Minutes(e.target.value)
-                        setManualTime((prev) => ({ start: rounded, end: prev?.end || "" }))
-                      }}
-                      className="input text-xs w-auto"
+                      type="checkbox"
+                      checked={allow24Hours}
+                      onChange={(e) => setAllow24Hours(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded border-slate-300 text-gold-600 focus:ring-gold-500"
                     />
-                    <span className="text-slate-400">to</span>
-                    <input
-                      type="time"
-                      value={manualTime?.end || ""}
+                    Allow 24-hour range (00:00 – 23:00)
+                  </label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Start time */}
+                    <select
+                      value={manualTime?.start ? manualTime.start.split(":")[0] : ""}
                       onChange={(e) => {
-                        const rounded = roundTo30Minutes(e.target.value)
-                        setManualTime((prev) => ({ start: prev?.start || "", end: rounded }))
+                        const h = e.target.value
+                        const m = manualTime?.start?.split(":")[1] || "00"
+                        setManualTime((prev) => ({ start: `${h}:${m}`, end: prev?.end || "" }))
                       }}
-                      className="input text-xs w-auto"
-                    />
+                      className="input text-xs w-auto py-1.5"
+                    >
+                      <option value="" disabled>HH</option>
+                      {hourOptions.map((h) => (
+                        <option key={h} value={String(h).padStart(2, "0")}>{String(h).padStart(2, "0")}</option>
+                      ))}
+                    </select>
+                    <span className="text-slate-400 font-bold">:</span>
+                    <select
+                      value={manualTime?.start?.split(":")[1] || ""}
+                      onChange={(e) => {
+                        const m = e.target.value
+                        const h = manualTime?.start?.split(":")[0] || "00"
+                        setManualTime((prev) => ({ start: `${h}:${m}`, end: prev?.end || "" }))
+                      }}
+                      className="input text-xs w-auto py-1.5"
+                    >
+                      <option value="" disabled>MM</option>
+                      {MINUTE_OPTIONS.map((m) => (
+                        <option key={m} value={String(m).padStart(2, "0")}>{String(m).padStart(2, "0")}</option>
+                      ))}
+                    </select>
+
+                    <span className="text-slate-400 text-sm">to</span>
+
+                    {/* End time */}
+                    <select
+                      value={manualTime?.end ? manualTime.end.split(":")[0] : ""}
+                      onChange={(e) => {
+                        const h = e.target.value
+                        const m = manualTime?.end?.split(":")[1] || "00"
+                        setManualTime((prev) => ({ start: prev?.start || "", end: `${h}:${m}` }))
+                      }}
+                      className="input text-xs w-auto py-1.5"
+                    >
+                      <option value="" disabled>HH</option>
+                      {hourOptions.map((h) => (
+                        <option key={h} value={String(h).padStart(2, "0")}>{String(h).padStart(2, "0")}</option>
+                      ))}
+                    </select>
+                    <span className="text-slate-400 font-bold">:</span>
+                    <select
+                      value={manualTime?.end?.split(":")[1] || ""}
+                      onChange={(e) => {
+                        const m = e.target.value
+                        const h = manualTime?.end?.split(":")[0] || "00"
+                        setManualTime((prev) => ({ start: prev?.start || "", end: `${h}:${m}` }))
+                      }}
+                      className="input text-xs w-auto py-1.5"
+                    >
+                      <option value="" disabled>MM</option>
+                      {MINUTE_OPTIONS.map((m) => (
+                        <option key={m} value={String(m).padStart(2, "0")}>{String(m).padStart(2, "0")}</option>
+                      ))}
+                    </select>
+
                     <button
                       onClick={() => {
-                        if (manualTime?.start && manualTime?.end && isValid30MinuteTime(manualTime.start) && isValid30MinuteTime(manualTime.end)) {
+                        if (manualTime?.start && manualTime?.end && isValid15MinuteTime(manualTime.start) && isValid15MinuteTime(manualTime.end)) {
                           handleAddSlot({ start: manualTime.start, end: manualTime.end })
                           setManualTime(null)
                         }
                       }}
-                      disabled={!manualTime?.start || !manualTime?.end || !isValid30MinuteTime(manualTime.start || "") || !isValid30MinuteTime(manualTime.end || "")}
+                      disabled={!manualTime?.start || !manualTime?.end}
                       className="btn-primary text-xs py-1.5 px-4 disabled:opacity-50"
                     >
                       Add Block
                     </button>
                   </div>
-                  <p className="text-[10px] text-slate-500">Times must be in 30-minute intervals (HH:00 or HH:30). Min 30 min, max 8 hours per block.</p>
+                  <p className="text-[10px] text-slate-500">Minutes are restricted to 15-minute intervals (:00, :15, :30, :45). Min 30 min, max 8 hours per block.</p>
                 </div>
               </div>
 

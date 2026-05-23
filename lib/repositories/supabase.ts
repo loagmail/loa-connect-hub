@@ -4,7 +4,6 @@ import type {
   IDepartmentRepository,
   IAppointmentRepository,
   IAvailabilityRuleRepository,
-  IMeetingRepository,
   IPasswordResetTokenRepository,
   IAuditLogRepository,
   UserData,
@@ -15,10 +14,11 @@ import type {
   AppointmentAttendeeData,
   AppointmentTimeSlotData,
   AvailabilityRuleData,
-  UpsertAvailabilityRuleInput,
+  IMeetingRepository,
   MeetingData,
   CreateMeetingInput,
   MeetingParticipantData,
+  UpsertAvailabilityRuleInput,
   PasswordResetTokenData,
   AuditLogData,
 } from "./interfaces"
@@ -171,7 +171,7 @@ export const appointmentRepository: IAppointmentRepository = {
   async addAttendee(appointmentId, userId, isMandatory = true) {
     const { data, error } = await supabase
       .from("appointment_attendees")
-      .insert({ appointmentId, userId, isMandatory })
+      .insert({ appointmentId: appointmentId, userId, isMandatory })
       .select("*")
       .single()
     if (error) throw error
@@ -199,7 +199,7 @@ export const appointmentRepository: IAppointmentRepository = {
   async addTimeSlot(appointmentId, date, startTime, endTime) {
     const { data, error } = await supabase
       .from("appointment_time_slots")
-      .insert({ appointmentId, date, startTime, endTime })
+      .insert({ appointmentId: appointmentId, date, startTime, endTime })
       .select("*")
       .single()
     if (error) throw error
@@ -247,71 +247,6 @@ export const appointmentRepository: IAppointmentRepository = {
       .gt("endTime", startTime)
     if (error) throw error
     return data as any
-  },
-}
-
-export const availabilityRuleRepository: IAvailabilityRuleRepository = {
-  async listByFaculty(facultyId) {
-    const { data, error } = await supabase
-      .from("faculty_availability_rules")
-      .select("*")
-      .eq("facultyId", facultyId)
-      .order("dayOfWeek", { ascending: true })
-    if (error) throw error
-    return data as AvailabilityRuleData[]
-  },
-  async findByFacultyAndDay(facultyId, dayOfWeek, startDate) {
-    if (!startDate) return null
-    const { data, error } = await supabase
-      .from("faculty_availability_rules")
-      .select("*")
-      .eq("facultyId", facultyId)
-      .eq("dayOfWeek", dayOfWeek)
-      .eq("startDate", startDate)
-      .single()
-    if (error) {
-      if (error.code === "PGRST116") return null
-      throw error
-    }
-    return data as AvailabilityRuleData
-  },
-  async upsert(input) {
-    const { facultyId, dayOfWeek, startDate } = input
-    const existing = await this.findByFacultyAndDay(facultyId, dayOfWeek, startDate)
-    if (existing) {
-      const { data, error } = await supabase
-        .from("faculty_availability_rules")
-        .update({
-          isBlocked: input.isBlocked,
-          startTime: input.startTime ?? null,
-          endTime: input.endTime ?? null,
-          endDate: input.endDate ?? null,
-        })
-        .eq("id", existing.id)
-        .select("*")
-        .single()
-      if (error) throw error
-      return data as AvailabilityRuleData
-    }
-    const { data, error } = await supabase
-      .from("faculty_availability_rules")
-      .insert({
-        facultyId,
-        dayOfWeek,
-        isBlocked: input.isBlocked,
-        startTime: input.startTime ?? null,
-        endTime: input.endTime ?? null,
-        startDate,
-        endDate: input.endDate ?? null,
-      })
-      .select("*")
-      .single()
-    if (error) throw error
-    return data as AvailabilityRuleData
-  },
-  async delete(id) {
-    const { error } = await supabase.from("faculty_availability_rules").delete().eq("id", id)
-    if (error) throw error
   },
 }
 
@@ -395,17 +330,13 @@ export const meetingRepository: IMeetingRepository = {
     return data as any
   },
   async listConflictingAppointments(facultyId, date, startTime, endTime) {
-    // Check against appointment_time_slots table for more accurate conflict detection
     const { data: slots, error: slotsError } = await supabase
       .from("appointment_time_slots")
       .select("*, appointment:appointments(*, student:users!appointments_studentId_fkey(*), faculty:users!appointments_facultyId_fkey(*))")
       .eq("date", date)
       .lt("startTime", endTime)
       .gt("endTime", startTime)
-    
     if (slotsError) throw slotsError
-    
-    // Filter to only appointments where facultyId is involved
     const conflictingAppointments = slots
       ?.filter((slot: any) => {
         const apt = slot.appointment
@@ -413,12 +344,10 @@ export const meetingRepository: IMeetingRepository = {
                (apt.facultyId === facultyId || apt.studentId === facultyId)
       })
       .map((slot: any) => slot.appointment)
-      .filter((apt: any, idx: number, arr: any[]) => arr.findIndex(a => a.id === apt.id) === idx) // dedupe
-    
+      .filter((apt: any, idx: number, arr: any[]) => arr.findIndex(a => a.id === apt.id) === idx)
     return conflictingAppointments || []
   },
   async listConflictingMeetings(facultyId, date, startTime, endTime) {
-    const timeFilter = `and(date.eq.${date},status.eq.CONFIRMED,startTime.lt.${endTime},endTime.gt.${startTime})`
     const [organized, participating] = await Promise.all([
       supabase
         .from("internal_meetings")
@@ -448,6 +377,71 @@ export const meetingRepository: IMeetingRepository = {
       seen.add(m.id)
       return true
     }) as any
+  },
+}
+
+export const availabilityRuleRepository: IAvailabilityRuleRepository = {
+  async listByFaculty(facultyId) {
+    const { data, error } = await supabase
+      .from("faculty_availability_rules")
+      .select("*")
+      .eq("facultyId", facultyId)
+      .order("dayOfWeek", { ascending: true })
+    if (error) throw error
+    return data as AvailabilityRuleData[]
+  },
+  async findByFacultyAndDay(facultyId, dayOfWeek, startDate) {
+    if (!startDate) return null
+    const { data, error } = await supabase
+      .from("faculty_availability_rules")
+      .select("*")
+      .eq("facultyId", facultyId)
+      .eq("dayOfWeek", dayOfWeek)
+      .eq("startDate", startDate)
+      .single()
+    if (error) {
+      if (error.code === "PGRST116") return null
+      throw error
+    }
+    return data as AvailabilityRuleData
+  },
+  async upsert(input) {
+    const { facultyId, dayOfWeek, startDate } = input
+    const existing = await this.findByFacultyAndDay(facultyId, dayOfWeek, startDate)
+    if (existing) {
+      const { data, error } = await supabase
+        .from("faculty_availability_rules")
+        .update({
+          isBlocked: input.isBlocked,
+          startTime: input.startTime ?? null,
+          endTime: input.endTime ?? null,
+          endDate: input.endDate ?? null,
+        })
+        .eq("id", existing.id)
+        .select("*")
+        .single()
+      if (error) throw error
+      return data as AvailabilityRuleData
+    }
+    const { data, error } = await supabase
+      .from("faculty_availability_rules")
+      .insert({
+        facultyId,
+        dayOfWeek,
+        isBlocked: input.isBlocked,
+        startTime: input.startTime ?? null,
+        endTime: input.endTime ?? null,
+        startDate,
+        endDate: input.endDate ?? null,
+      })
+      .select("*")
+      .single()
+    if (error) throw error
+    return data as AvailabilityRuleData
+  },
+  async delete(id) {
+    const { error } = await supabase.from("faculty_availability_rules").delete().eq("id", id)
+    if (error) throw error
   },
 }
 
