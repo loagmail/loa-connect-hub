@@ -240,7 +240,8 @@ export const appointmentRepository: IAppointmentRepository = {
       .lt("startTime", endTime)
       .gt("endTime", startTime)
       .eq("appointment.studentId", studentId)
-      .eq("appointment.status", "APPROVED")
+      .eq("appointment.meetingType", "CONSULTATION")
+      .in("appointment.status", ["PENDING", "APPROVED"])
     if (excludeSessionGroupId) {
       query = query.neq("appointment.sessionGroupId", excludeSessionGroupId)
     }

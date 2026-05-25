@@ -10,11 +10,12 @@ export default async function FacultyBookPage() {
   const role = (session.user as any).role
   if (!["FACULTY", "DEAN"].includes(role)) redirect("/login")
 
-  const currentUserId = (session.user as any).id
+  const currentUser = session.user as any
+  const currentUserId = currentUser.id
 
   const facultyUsers = await userRepository.listByRole("FACULTY")
   const deanUsers = await userRepository.listByRole("DEAN")
-  const allFaculty = [...facultyUsers, ...deanUsers].filter((f) => !f.isDisabled && f.id !== currentUserId)
+  const allFaculty = [...facultyUsers, ...deanUsers].filter((f) => !f.isDisabled)
   const departments = await departmentRepository.listAll()
   const deptMap = new Map(departments.map((d) => [d.id, d.name]))
 
@@ -44,9 +45,9 @@ export default async function FacultyBookPage() {
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Schedule a Meeting</h1>
-        <p className="text-sm text-slate-500 mt-1">Select a primary faculty member and optional attendees.</p>
+        <p className="text-sm text-slate-500 mt-1">Schedule a meeting with optional attendees.</p>
       </div>
-      <StudentBooking facultyWithRules={facultyWithRules as any} userRole={role} students={students} serverNow={new Date().toISOString()} />
+      <StudentBooking facultyWithRules={facultyWithRules as any} userRole={role} students={students} serverNow={new Date().toISOString()} currentUserId={currentUserId} />
     </div>
   )
 }

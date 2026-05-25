@@ -104,8 +104,19 @@ export async function requestAppointment(input: {
       endTime: s.endTime,
     }))
 
-  // Student's own conflict (always blocks for STUDENT creator)
+  // Students cannot invite other students as attendees
   if (creator.role === "STUDENT") {
+    for (const uid of attendeeIds) {
+      if (uid === input.createdByUserId) continue
+      const user = await userRepository.findById(uid)
+      if (user?.role === "STUDENT") {
+        throw new Error("Students cannot invite other students to appointments")
+      }
+    }
+  }
+
+  if (creator.role === "STUDENT") {
+    // Student checks own consultation conflicts (PENDING or APPROVED) → block
     for (const slot of timeSlots) {
       const conflictingSlots = await appointmentRepository.listStudentConflictingSlots(
         input.createdByUserId,
@@ -125,61 +136,59 @@ export async function requestAppointment(input: {
         throw err
       }
     }
-  }
 
-  // For each participant, check faculty/dean conflicts
-  for (const uid of attendeeIds) {
-    const user = uid === input.studentId ? creator : await userRepository.findById(uid)
-
-    // Students cannot invite other students
-    if (creator.role === "STUDENT" && user?.role === "STUDENT") {
-      throw new Error("Students cannot invite other students to appointments")
-    }
-
-    if (user?.role !== "FACULTY" && user?.role !== "DEAN") continue
-
+    // Student checks primary faculty's conflict (APPROVED only) → block
     for (const slot of timeSlots) {
       const conflictingSlots = await appointmentRepository.listConflictingSlots(
-        [uid],
+        [input.facultyId],
         slot.date,
         slot.startTime,
         slot.endTime
       )
-
       const actualConflicts = (conflictingSlots || []).filter((s: any) => {
         const apt = s.appointment
         return apt &&
           apt.sessionGroupId !== input.sessionGroupId &&
           apt.status === "APPROVED"
       })
-
-      if (actualConflicts.length === 0) continue
-
-      const isPrimary = uid === input.facultyId
-      const isCreator = uid === input.createdByUserId
-
-      const entry = {
-        userId: uid,
-        userName: user.name,
-        message: `${user.name} is already booked at this time`,
-        appointments: mapConflicts(actualConflicts),
-      }
-
-      // Deans never get blocked, only warned
-      if (creator.role === "DEAN") {
-        conflicts.push(entry)
-        continue
-      }
-
-      // Creator's own conflict or primary's conflict → block
-      if (isCreator || isPrimary) {
-        const err = new Error(`You have a scheduling conflict with ${user.name}`)
-        ;(err as any).conflicts = [entry]
+      if (actualConflicts.length > 0) {
+        const faculty = await userRepository.findById(input.facultyId)
+        const err = new Error(`${faculty?.name || "Faculty"} is already booked at this time`)
+        ;(err as any).conflicts = [{
+          userId: input.facultyId,
+          userName: faculty?.name || "Faculty",
+          message: `${faculty?.name || "Faculty"} is already booked at this time`,
+          appointments: mapConflicts(actualConflicts),
+        }]
         throw err
       }
-
-      // Attendee conflict → warn only
-      conflicts.push(entry)
+    }
+  } else if (creator.role === "FACULTY" || creator.role === "DEAN") {
+    // Faculty/Dean checks own meeting conflicts (PENDING or APPROVED) → block
+    for (const slot of timeSlots) {
+      const conflictingSlots = await appointmentRepository.listConflictingSlots(
+        [input.createdByUserId],
+        slot.date,
+        slot.startTime,
+        slot.endTime
+      )
+      const actualConflicts = (conflictingSlots || []).filter((s: any) => {
+        const apt = s.appointment
+        return apt &&
+          apt.sessionGroupId !== input.sessionGroupId &&
+          apt.meetingType === "INTERNAL" &&
+          (apt.status === "PENDING" || apt.status === "APPROVED")
+      })
+      if (actualConflicts.length > 0) {
+        const err = new Error("You already have a meeting that overlaps with this time")
+        ;(err as any).conflicts = [{
+          userId: input.createdByUserId,
+          userName: "You",
+          message: "You already have a meeting that overlaps with this time",
+          appointments: mapConflicts(actualConflicts),
+        }]
+        throw err
+      }
     }
   }
 
@@ -199,7 +208,12 @@ export async function requestAppointment(input: {
     }
   }
 
-  // 8. Create Appointment
+  // 8. Faculty/Dean meetings require at least one attendee
+  if (creator.role !== "STUDENT" && (!input.attendeeOptions || input.attendeeOptions.length === 0)) {
+    throw new Error("Meetings must have at least one attendee")
+  }
+
+  // 9. Create Appointment
   const firstSlot = timeSlots[0]
   const createdByEmail = creator.email ?? input.studentId ?? "unknown@system.com"
 
@@ -210,8 +224,8 @@ export async function requestAppointment(input: {
       requiredStudentId = input.createdByUserId; 
   }
 
-  const appointment = await appointmentRepository.create({
-    studentId: requiredStudentId, //this should be creator
+  const createData: any = {
+    studentId: requiredStudentId,
     facultyId: input.facultyId,
     createdByEmail,
     meetingType,
@@ -221,7 +235,12 @@ export async function requestAppointment(input: {
     endTime: firstSlot.endTime,
     title: input.title ?? null,
     description: input.description ?? null,
-  })
+  }
+  if (creator.role !== "STUDENT") {
+    createData.status = "APPROVED"
+  }
+
+  const appointment = await appointmentRepository.create(createData)
 
   for (const slot of timeSlots) {
     await appointmentRepository.addTimeSlot(appointment.id, slot.date, slot.startTime, slot.endTime)

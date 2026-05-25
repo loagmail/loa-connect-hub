@@ -283,7 +283,12 @@ export default function AppointmentDetail() {
                 {appointment.meetingType === "CONSULTATION" ? "Consultation" : "Internal"}
               </span>
             )}
-            <StatusBadge status={effectiveStatus} />
+            { isFaculty || isDean ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border bg-green-50 text-green-700 border-green-200">
+                Auto-accepted
+              </span>
+            ) :  <StatusBadge status={effectiveStatus} /> }
+           
           </div>
         </div>
 
@@ -397,7 +402,7 @@ export default function AppointmentDetail() {
               </div>
             </div>
           )}
-          {(!isStudent && !studentIsOrganizer) && (
+          { appointment.student && (!isStudent && !studentIsOrganizer) && (
             <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getAvatarClass(appointment.student.name)} flex items-center justify-center text-lg font-bold shadow-sm shrink-0`}>
                 {getInitial(appointment.student.name)}

@@ -662,3 +662,11 @@ CREATE INDEX IF NOT EXISTS idx_appointment_files_appointment
 --
 -- This is REQUIRED if embeds still fail.
 -- =========================================================
+
+-- Apply this migration to your database
+BEGIN;
+
+ALTER TABLE appointments
+ALTER COLUMN "studentId" DROP NOT NULL;
+
+COMMIT;

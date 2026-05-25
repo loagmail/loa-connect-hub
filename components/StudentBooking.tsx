@@ -53,6 +53,7 @@ interface Props {
   userRole: "STUDENT" | "FACULTY" | "DEAN"
   students?: SimpleUser[]
   serverNow?: string
+  currentUserId?: string
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -100,14 +101,16 @@ function generateSlots(startTime: string, endTime: string): { start: string; end
   return slots
 }
 
-export default function StudentBooking({ facultyWithRules, userRole, students, serverNow }: Props) {
+export default function StudentBooking({ facultyWithRules, userRole, students, serverNow, currentUserId }: Props) {
 
   const now = useMemo(() => new Date(serverNow || Date.now()), [serverNow])
   const [currentMonth, setCurrentMonth] = useState(now.getMonth())
   const [currentYear, setCurrentYear] = useState(now.getFullYear())
 
   // Faculty selection
-  const [primaryFacultyId, setPrimaryFacultyId] = useState<string | null>(null)
+  const [primaryFacultyId, setPrimaryFacultyId] = useState<string | null>(
+    userRole !== "STUDENT" ? (currentUserId || null) : null
+  )
   const [attendeeIds, setAttendeeIds] = useState<string[]>([])
   const [primarySearch, setPrimarySearch] = useState("")
   const [attendeeSearch, setAttendeeSearch] = useState("")
@@ -364,97 +367,126 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
 
   return (
     <div className="space-y-6">
-      {/* 1a. Select Primary Faculty (Required) */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-700">
-            {userRole === "STUDENT" ? "1. Select Faculty" : "1. Select Primary Faculty"}
-            <span className="text-red-500 ml-1">*</span>
-          </h3>
-          {primaryFacultyId && (
-            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              Required
-            </span>
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <div ref={primaryRef} className="relative flex-1">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                value={primarySearch}
-                onChange={(e) => { setPrimarySearch(e.target.value); setShowPrimaryDropdown(true) }}
-                onFocus={() => { if (primarySearch.trim()) setShowPrimaryDropdown(true) }}
-                placeholder="Search by name or email..."
-                className="input text-xs pl-9 w-full"
-              />
-            </div>
-            {showPrimaryDropdown && primarySearchResults.length > 0 && (
-              <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {primarySearchResults.map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => { selectPrimary(f.id); setPrimarySearch(""); setShowPrimaryDropdown(false) }}
-                    className="w-full text-left px-3 py-2.5 hover:bg-gold-50 border-b border-slate-50 last:border-b-0 transition-colors"
-                  >
-                    <p className="text-sm font-medium text-slate-800">{f.name}</p>
-                    <p className="text-xs text-slate-400">{f.email}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-            {showPrimaryDropdown && primarySearch.trim() && primarySearchResults.length === 0 && (
-              <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-3">
-                <p className="text-xs text-slate-400">No faculty match your search.</p>
-              </div>
+      {/* 1a. Select Primary Faculty (Required) — hidden for Faculty/Dean, they ARE the primary */}
+      {userRole === "STUDENT" ? (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-700">
+              1. Select Faculty
+              <span className="text-red-500 ml-1">*</span>
+            </h3>
+            {primaryFacultyId && (
+              <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Required
+              </span>
             )}
           </div>
-          {allDepartments.length > 0 && (
-            <select
-              value={deptFilter}
-              onChange={(e) => setDeptFilter(e.target.value)}
-              className="input text-xs w-auto py-1.5 min-w-[160px]"
-            >
-              <option value="all">All Departments</option>
-              {allDepartments.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-          )}
-        </div>
 
-        {/* Selected primary chip */}
-        {primaryFacultyId && (() => {
-          const f = facultyWithRules.find((x) => x.id === primaryFacultyId)
-          if (!f) return null
-          return (
-            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-gold-50 border border-gold-200">
-              <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-xs font-bold text-gold-700">
-                {f.name.charAt(0).toUpperCase()}
+          <div className="flex gap-2">
+            <div ref={primaryRef} className="relative flex-1">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={primarySearch}
+                  onChange={(e) => { setPrimarySearch(e.target.value); setShowPrimaryDropdown(true) }}
+                  onFocus={() => { if (primarySearch.trim()) setShowPrimaryDropdown(true) }}
+                  placeholder="Search by name or email..."
+                  className="input text-xs pl-9 w-full"
+                />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-800">{f.name}</p>
-                <p className="text-xs text-slate-400">{f.email}</p>
-              </div>
-              <span className="text-[10px] font-semibold text-gold-700 bg-gold-100 px-2 py-0.5 rounded-full border border-gold-200">
-                Primary
-              </span>
-              <button
-                type="button"
-                onClick={() => { setPrimaryFacultyId(null); setAttendeeIds([]) }}
-                className="text-xs text-red-500 hover:text-red-700 font-bold ml-1"
-              >
-                &times;
-              </button>
+              {showPrimaryDropdown && primarySearchResults.length > 0 && (
+                <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {primarySearchResults.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => { selectPrimary(f.id); setPrimarySearch(""); setShowPrimaryDropdown(false) }}
+                      className="w-full text-left px-3 py-2.5 hover:bg-gold-50 border-b border-slate-50 last:border-b-0 transition-colors"
+                    >
+                      <p className="text-sm font-medium text-slate-800">{f.name}</p>
+                      <p className="text-xs text-slate-400">{f.email}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showPrimaryDropdown && primarySearch.trim() && primarySearchResults.length === 0 && (
+                <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-3">
+                  <p className="text-xs text-slate-400">No faculty match your search.</p>
+                </div>
+              )}
             </div>
-          )
-        })()}
-      </section>
+            {allDepartments.length > 0 && (
+              <select
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+                className="input text-xs w-auto py-1.5 min-w-[160px]"
+              >
+                <option value="all">All Departments</option>
+                {allDepartments.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Selected primary chip */}
+          {primaryFacultyId && (() => {
+            const f = facultyWithRules.find((x) => x.id === primaryFacultyId)
+            if (!f) return null
+            return (
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-gold-50 border border-gold-200">
+                <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-xs font-bold text-gold-700">
+                  {f.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">{f.name}</p>
+                  <p className="text-xs text-slate-400">{f.email}</p>
+                </div>
+                <span className="text-[10px] font-semibold text-gold-700 bg-gold-100 px-2 py-0.5 rounded-full border border-gold-200">
+                  Primary
+                </span>
+                <button
+                  type="button"
+                  onClick={() => { setPrimaryFacultyId(null); setAttendeeIds([]) }}
+                  className="text-xs text-red-500 hover:text-red-700 font-bold ml-1"
+                >
+                  &times;
+                </button>
+              </div>
+            )
+          })()}
+        </section>
+      ) : (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-700">
+              1. Primary Faculty
+              <span className="text-red-500 ml-1">*</span>
+            </h3>
+          </div>
+          {primaryFacultyId && (() => {
+            const f = facultyWithRules.find((x) => x.id === primaryFacultyId)
+            if (!f) return null
+            return (
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-gold-50 border border-gold-200">
+                <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-xs font-bold text-gold-700">
+                  {f.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">{f.name} <span className="text-xs text-slate-400 font-normal">(You)</span></p>
+                  <p className="text-xs text-slate-400">{f.email}</p>
+                </div>
+                <span className="text-[10px] font-semibold text-gold-700 bg-gold-100 px-2 py-0.5 rounded-full border border-gold-200">
+                  Primary
+                </span>
+              </div>
+            )
+          })()}
+        </section>
+      )}
 
       {/* 1b. Select Attendees (Optional) — shown only after primary is selected */}
       {primaryFacultyId && (
@@ -537,14 +569,17 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
             </div>
           )}
 
-          {attendeeIds.length === 0 && (
+          {attendeeIds.length === 0 && userRole === "STUDENT" && (
             <p className="text-xs text-slate-400 italic">No additional attendees selected. Only the primary faculty will be invited.</p>
+          )}
+          {attendeeIds.length === 0 && userRole !== "STUDENT" && (
+            <p className="text-xs text-amber-600 font-semibold italic">At least one attendee is required before selecting a date and time.</p>
           )}
         </section>
       )}
 
-      {/* 3. Date & Time */}
-      {primaryFacultyId && (
+      {/* 3. Date & Time — requires at least one attendee for Faculty/Dean */}
+      {primaryFacultyId && (userRole === "STUDENT" || attendeeIds.length > 0) && (
         <section className="space-y-3">
           <h3 className="text-sm font-bold text-slate-700">3. Pick a Date & Time</h3>
           <div className="flex gap-3 text-[10px] font-semibold">
