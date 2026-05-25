@@ -308,6 +308,12 @@ function mapAppointmentToMeetingData(appointment: any) {
     user: att.user,
   }))
 
+  const organizer = appointment.student?.email === appointment.createdByEmail
+    ? appointment.student
+    : appointment.faculty?.email === appointment.createdByEmail
+      ? appointment.faculty
+      : appointment.student || appointment.faculty || null
+
   return {
     id: appointment.id,
     title: appointment.title,
@@ -315,12 +321,16 @@ function mapAppointmentToMeetingData(appointment: any) {
     date: appointment.date,
     startTime: appointment.startTime,
     endTime: appointment.endTime,
-    organizerId: appointment.facultyId || appointment.studentId,
+    organizerId: organizer?.id || appointment.facultyId || appointment.studentId,
     teamsEventId: null,
     teamsLink: appointment.teamsLink,
-    status: (appointment.status === "CANCELLED" ? "CANCELLED" : "CONFIRMED") as any,
+    status: appointment.status === "CANCELLED"
+      ? "CANCELLED"
+      : appointment.status === "APPROVED"
+        ? "CONFIRMED"
+        : appointment.status as any,
     createdAt: new Date(appointment.requestedAt),
-    organizer: appointment.faculty || appointment.student || null,
+    organizer,
     participants,
   }
 }

@@ -8,7 +8,11 @@ function getInitial(name: string) {
 }
 
 const statusColors: Record<string, string> = {
+  PENDING: "bg-amber-500/20 text-amber-400",
+  APPROVED: "bg-cyan-500/20 text-cyan-400",
   CONFIRMED: "bg-emerald-500/20 text-emerald-400",
+  REJECTED: "bg-red-500/20 text-red-400",
+  COMPLETED: "bg-violet-500/20 text-violet-400",
   CANCELLED: "bg-slate-500/20 text-slate-400",
 }
 

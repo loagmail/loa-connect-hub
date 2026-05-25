@@ -931,7 +931,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                     <input type="url" value={singleLink} onChange={(e) => setSingleLink(e.target.value)} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
                   </div>
                 )}
-                {teamsLinkMode === "per-slot" && selectedSlots && (
+                {selectedSlots.length > 1 && teamsLinkMode === "per-slot" && selectedSlots && (
                   <div className="space-y-3">
                     {selectedSlots.map((slot) => (
                       <div key={slot.date + slot.start + slot.end}>

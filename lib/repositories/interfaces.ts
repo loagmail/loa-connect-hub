@@ -166,7 +166,7 @@ export interface IAppointmentRepository {
 
 // --- Internal Meetings (legacy, kept for existing code) ---
 
-export type MeetingStatusData = "CONFIRMED" | "CANCELLED"
+export type MeetingStatusData = "PENDING" | "APPROVED" | "CONFIRMED" | "REJECTED" | "COMPLETED" | "CANCELLED"
 export type ParticipantStatusData = "PENDING" | "ACCEPTED" | "DECLINED"
 
 export interface MeetingData {

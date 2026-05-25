@@ -361,10 +361,11 @@ export default function AppointmentDetail() {
                 <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "single"} onChange={() => setTeamsLinkMode("single")} className="accent-gold-600" />
                 <span className="text-sm text-slate-700">One single link for all time slots</span>
               </label>
+              {appointment.timeSlots?.length > 1 && (
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "per-slot"} onChange={() => setTeamsLinkMode("per-slot")} className="accent-gold-600" />
                 <span className="text-sm text-slate-700">Assign each with a link</span>
-              </label>
+              </label>)}
             </div>
             <div className="space-y-3">
               {teamsLinkMode === "single" && (
