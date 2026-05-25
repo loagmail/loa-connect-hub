@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
     title,
     description,
     attendeeOptions,
+    teamsLink,
+    slotLinks,
     meetingType
   } = body
 
@@ -96,6 +98,8 @@ export async function POST(request: NextRequest) {
       title,
       description,
       attendeeOptions: allAttendees,
+      teamsLink,
+      slotLinks,
       meetingType,
     })
 

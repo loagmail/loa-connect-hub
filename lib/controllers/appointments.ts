@@ -34,6 +34,8 @@ export async function requestAppointment(input: {
   description?: string
   attendeeIds?: string[]
   attendeeOptions?: { userId: string; isMandatory: boolean }[]
+  teamsLink?: string
+  slotLinks?: Record<string, string>
   meetingType?: "CONSULTATION" | "INTERNAL"
 }) {
 
@@ -236,14 +238,27 @@ export async function requestAppointment(input: {
     title: input.title ?? null,
     description: input.description ?? null,
   }
+  if (input.teamsLink) createData.teamsLink = input.teamsLink
   if (creator.role !== "STUDENT") {
     createData.status = "APPROVED"
   }
 
   const appointment = await appointmentRepository.create(createData)
 
+  // Add time slots and attach any per-slot teams links provided by creator
   for (const slot of timeSlots) {
-    await appointmentRepository.addTimeSlot(appointment.id, slot.date, slot.startTime, slot.endTime)
+    const createdSlot = await appointmentRepository.addTimeSlot(appointment.id, slot.date, slot.startTime, slot.endTime)
+    if (input.slotLinks) {
+      const key = `${slot.date}-${slot.startTime}-${slot.endTime}`
+      const link = input.slotLinks[key]
+      if (link && typeof link === "string") {
+        try {
+          await appointmentRepository.updateTimeSlot(createdSlot.id, { teamsLink: link.trim() })
+        } catch (err) {
+          console.error("Failed to save slot teams link:", err)
+        }
+      }
+    }
   }
 
   if (input.attendeeOptions && input.attendeeOptions.length > 0) {

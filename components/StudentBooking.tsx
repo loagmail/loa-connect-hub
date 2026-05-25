@@ -147,6 +147,11 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
   }, [allow24Hours, isSelectedToday, now])
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ success: number; errors: string[]; sessionGroupId?: string } | null>(null)
+  const [showTeamsLinkForm, setShowTeamsLinkForm] = useState(false)
+  const [teamsLinkMode, setTeamsLinkMode] = useState<"single" | "per-slot">("single")
+  const [singleLink, setSingleLink] = useState("")
+  const [slotLinks, setSlotLinks] = useState<Record<string, string>>({})
+  const [teamsLinkError, setTeamsLinkError] = useState("")
 
   // Conflict warnings
   const [conflicts, setConflicts] = useState<{ userName: string; message: string; appointments?: { appointmentId: string; title: string | null; meetingType: string; date: string; startTime: string; endTime: string }[] }[]>([])
@@ -275,25 +280,45 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
     setSubmitting(true)
 
     try {
-      const req = JSON.stringify({
+      // Build payload
+      const payload: any = {
         facultyIds: [primaryFacultyId],
-        timeSlots: selectedSlots.map((s) => ({
-          date: s.date,
-          startTime: s.start,
-          endTime: s.end,
-        })),
+        timeSlots: selectedSlots.map((s) => ({ date: s.date, startTime: s.start, endTime: s.end })),
         title: title.trim(),
         description: description.trim() || undefined,
         attendeeOptions: attendeeIds.map((id) => ({ userId: id, isMandatory: true })),
-      });
+      }
 
-      console.log("Booking request payload:", req);
+      // If creator is faculty/dean and teams form is shown, validate and attach links
+      if ((userRole === "FACULTY" || userRole === "DEAN") && showTeamsLinkForm) {
+        setTeamsLinkError("")
+        if (teamsLinkMode === "single") {
+          if (!singleLink.trim()) {
+            setTeamsLinkError("Please provide a Teams meeting link")
+            setSubmitting(false)
+            return
+          }
+          payload.teamsLink = singleLink.trim()
+        } else {
+          // per-slot: ensure each selected slot has a link
+          const missing = selectedSlots.find((s) => !slotLinks[`${s.date}-${s.start}-${s.end}`]?.trim())
+          if (missing) {
+            setTeamsLinkError("Please provide a Teams link for each time slot")
+            setSubmitting(false)
+            return
+          }
+          payload.slotLinks = {}
+          for (const s of selectedSlots) {
+            payload.slotLinks[`${s.date}-${s.start}-${s.end}`] = slotLinks[`${s.date}-${s.start}-${s.end}`].trim()
+          }
+        }
+      }
 
-      const res = await fetch("/api/appointments/batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: req,
-      })
+      const req = JSON.stringify(payload)
+
+      console.log("Booking request payload:", payload);
+
+      const res = await fetch("/api/appointments/batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: req })
 
       const data = await res.json()
       if (res.ok) {
@@ -883,10 +908,62 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
             />
           </div>
 
+          {/* Teams link form for Faculty/Dean — shown after initial click */}
+          {(userRole === "FACULTY" || userRole === "DEAN") && showTeamsLinkForm && (
+
+            <div className="mb-4 space-y-3">
+              <div>{selectedSlots.length}</div>
+              <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Microsoft Teams Links</p>
+              <div className="flex flex-wrap gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "single"} onChange={() => setTeamsLinkMode("single")} className="accent-gold-600" />
+                  <span className="text-sm text-slate-700">One single link for all time slots</span>
+                </label>
+                {selectedSlots.length > 1 && (<label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "per-slot"} onChange={() => setTeamsLinkMode("per-slot")} className="accent-gold-600" />
+                  <span className="text-sm text-slate-700">Assign each with a link</span>
+                </label>)}
+              </div>
+              <div className="space-y-3">
+                {teamsLinkMode === "single" && (
+                  <div>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Single meeting link for all time slots</p>
+                    <input type="url" value={singleLink} onChange={(e) => setSingleLink(e.target.value)} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
+                  </div>
+                )}
+                {teamsLinkMode === "per-slot" && selectedSlots && (
+                  <div className="space-y-3">
+                    {selectedSlots.map((slot) => (
+                      <div key={slot.date + slot.start + slot.end}>
+                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{slot.date} {slot.start}–{slot.end}</p>
+                        <input type="url" value={slotLinks[`${slot.date}-${slot.start}-${slot.end}`] || ""} onChange={(e) => setSlotLinks((prev) => ({ ...prev, [`${slot.date}-${slot.start}-${slot.end}`]: e.target.value }))} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {teamsLinkError && <p className="text-xs text-red-600 font-semibold">{teamsLinkError}</p>}
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
-            <button type="submit" disabled={submitting || !title.trim()} className="btn-primary text-sm font-semibold px-6 py-2.5 disabled:opacity-50">
-              {submitting ? "Booking..." : "Book Consultation"}
-            </button>
+            {userRole === "STUDENT" ? (
+              <button type="submit" disabled={submitting || !title.trim()} className="btn-primary text-sm font-semibold px-6 py-2.5 disabled:opacity-50">
+                {submitting ? "Booking..." : "Book Consultation"}
+              </button>
+            ) : (
+              <button type="button" onClick={(e) => {
+                if (!showTeamsLinkForm) {
+                  setShowTeamsLinkForm(true)
+                  return
+                }
+                // If form already shown, submit normally
+                const submitEvent = { preventDefault: () => { } } as unknown as React.FormEvent
+                handleBook(submitEvent)
+              }} disabled={submitting || !title.trim()} className="btn-primary text-sm font-semibold px-6 py-2.5 disabled:opacity-50">
+                {submitting ? "Booking..." : "Create Meeting"}
+              </button>
+            )}
           </div>
         </form>
       )}
@@ -901,7 +978,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
               {c.appointments && c.appointments.map((a, j) => (
                 <a
                   key={j}
-                      href={`/${userRole === "STUDENT" ? "student" : "faculty"}/meetings/${a.appointmentId}`}
+                  href={`/${userRole === "STUDENT" ? "student" : "faculty"}/meetings/${a.appointmentId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 underline hover:opacity-80 ml-2"
