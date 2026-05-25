@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import StatusDropdown from "@/components/StatusDropdown"
 import { getMeetingsForUser } from "@/lib/controllers/meetings"
 
 function getInitial(name: string) {
@@ -10,7 +11,6 @@ function getInitial(name: string) {
 const statusColors: Record<string, string> = {
   PENDING: "bg-amber-500/20 text-amber-400",
   APPROVED: "bg-cyan-500/20 text-cyan-400",
-  CONFIRMED: "bg-emerald-500/20 text-emerald-400",
   REJECTED: "bg-red-500/20 text-red-400",
   COMPLETED: "bg-violet-500/20 text-violet-400",
   CANCELLED: "bg-slate-500/20 text-slate-400",
@@ -45,11 +45,20 @@ const filterLabels: Record<string, string> = {
   this_week: "This Week",
   this_month: "This Month",
   created_by_me: "Created by Me",
-  declined: "Declined",
+  // declined: "Declined",
+}
+
+const statusLabels: Record<string, string> = {
+  all: "All Statuses",
+  PENDING: "Invited",
+  APPROVED: "Accepted",
+  REJECTED: "Rejected",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
 }
 
 export default async function MeetingsPage(props: {
-  searchParams?: Promise<{ filter?: string; sort?: string }>
+  searchParams?: Promise<{ filter?: string; sort?: string; status?: string }>
 }) {
   const session = await auth()
   if (!session?.user) redirect("/login")
@@ -57,7 +66,13 @@ export default async function MeetingsPage(props: {
   if (role !== "FACULTY" && role !== "DEAN") redirect("/login")
 
   const searchParams = await props.searchParams
+  const hasQueryParams = !!searchParams && Object.keys(searchParams).length > 0
+  if (!hasQueryParams) {
+    redirect("/faculty/meetings?filter=this_week&status=all&sort=desc")
+  }
+
   const activeFilter = searchParams?.filter || "all"
+  const activeStatus = statusLabels[searchParams?.status || "all"] ? (searchParams?.status as string) : "all"
   const activeSort = searchParams?.sort === "desc" ? "desc" : "asc"
 
   const userId = (session.user as any).id
@@ -68,33 +83,45 @@ export default async function MeetingsPage(props: {
   const monthRange = getMonthRange(today)
 
   const filtered = meetings.filter((m: any) => {
-    if (activeFilter === "all") return true
     if (activeFilter === "this_week") {
       const d = new Date(m.date)
-      return d >= weekRange.start && d <= weekRange.end
+      if (!(d >= weekRange.start && d <= weekRange.end)) return false
     }
     if (activeFilter === "this_month") {
       const d = new Date(m.date)
-      return d >= monthRange.start && d <= monthRange.end
+      if (!(d >= monthRange.start && d <= monthRange.end)) return false
     }
-    if (activeFilter === "created_by_me") {
-      return m.organizerId === userId
+    if (activeFilter === "created_by_me" && m.organizerId !== userId) {
+      return false
     }
-    if (activeFilter === "declined") {
-      return m.participants?.some((p: any) => p.userId === userId && p.status === "DECLINED")
+    if (activeFilter === "declined" && !m.participants?.some((p: any) => p.userId === userId && p.status === "DECLINED")) {
+      return false
+    }
+    if (activeStatus !== "all" && m.status !== activeStatus) {
+      return false
     }
     return true
   })
 
+  // CORRECTED SORTING LOGIC
   const sorted = [...filtered].sort((a: any, b: any) => {
-    const dateCmp = a.date.localeCompare(b.date)
-    if (dateCmp !== 0) return activeSort === "asc" ? dateCmp : -dateCmp
+    const dateA = new Date(a.date).getTime()
+    const dateB = new Date(b.date).getTime()
+    const dateCmp = dateA - dateB
+
+    if (dateCmp !== 0) {
+      return activeSort === "asc" ? dateCmp : -dateCmp
+    }
+
+    const timeA = a.startTime || ""
+    const timeB = b.startTime || ""
+
     return activeSort === "asc"
-      ? (a.startTime || "").localeCompare(b.startTime || "")
-      : (b.startTime || "").localeCompare(a.startTime || "")
+      ? timeA.localeCompare(timeB)
+      : timeB.localeCompare(timeA)
   })
 
-  const confirmedMeetings = sorted.filter((m: any) => m.status === "CONFIRMED")
+  const acceptedMeetings = sorted.filter((m: any) => m.status === "APPROVED")
   const cancelledMeetings = sorted.filter((m: any) => m.status === "CANCELLED")
 
   return (
@@ -116,8 +143,8 @@ export default async function MeetingsPage(props: {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="card p-5 bg-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Confirmed</p>
-          <p className="text-3xl font-bold text-emerald-600 mt-1">{confirmedMeetings.length}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Accepted</p>
+          <p className="text-3xl font-bold text-emerald-600 mt-1">{acceptedMeetings.length}</p>
         </div>
         <div className="card p-5 bg-white">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total</p>
@@ -126,35 +153,46 @@ export default async function MeetingsPage(props: {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div className="flex flex-wrap gap-1.5">
-          {Object.entries(filterLabels).map(([key, label]) => (
-            <Link
-              key={key}
-              href={`/faculty/meetings?filter=${key}&sort=${activeSort}`}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                activeFilter === key
-                  ? "bg-gold-500 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
+      <div className="card p-4 bg-white mb-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(filterLabels).map(([key, label]) => (
+              <Link
+                key={key}
+                href={`/faculty/meetings?filter=${key}&status=${activeStatus}&sort=${activeSort}`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${
+                  activeFilter === key
+                    ? "border-gold-500 bg-gold-500 text-white"
+                    : "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          <Link
+            href={`/faculty/meetings?filter=${activeFilter}&status=${activeStatus}&sort=${activeSort === "asc" ? "desc" : "asc"}`}
+            className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              {activeSort === "asc" ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+              )}
+            </svg>
+            {activeSort === "asc" ? "Oldest First" : "Newest First"}
+          </Link>
         </div>
-        <Link
-          href={`/faculty/meetings?filter=${activeFilter}&sort=${activeSort === "asc" ? "desc" : "asc"}`}
-          className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            {activeSort === "asc" ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
-            )}
-          </svg>
-          {activeSort === "asc" ? "Oldest First" : "Newest First"}
-        </Link>
+
+        <div className="mt-4">
+          <StatusDropdown
+            activeFilter={activeFilter}
+            activeSort={activeSort}
+            activeStatus={activeStatus}
+          />
+          <p className="text-xs text-slate-400 mt-3">Tip: Click a meeting card to view details.</p>
+        </div>
       </div>
 
       {/* Meetings list */}
@@ -171,6 +209,10 @@ export default async function MeetingsPage(props: {
             const isOrganizer = meeting.organizerId === userId
             const participantCount = meeting.participants?.length || 0
             const acceptedCount = meeting.participants?.filter((p: any) => p.status === "ACCEPTED").length || 0
+            const myParticipant = meeting.participants?.find((p: any) => p.userId === userId)
+            const statusLabel = meeting.status === "APPROVED" && !isOrganizer
+              ? "YOU ACCEPTED"
+              : statusLabels[meeting.status] || meeting.status
 
             return (
               <Link
@@ -182,11 +224,11 @@ export default async function MeetingsPage(props: {
                   <div className="flex items-center gap-3">
                     <h3 className="font-semibold text-slate-800">{meeting.title}</h3>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColors[meeting.status] || "bg-slate-500/20 text-slate-400"}`}>
-                      {meeting.status}
+                      {isOrganizer ? "SCHEDULED" : statusLabel}
                     </span>
                     {isOrganizer && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gold-500/20 text-gold-400">
-                        Organizer
+                        You organized this meeting
                       </span>
                     )}
                   </div>

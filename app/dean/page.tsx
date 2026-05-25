@@ -5,13 +5,27 @@ import { AppointmentCard } from "@/components/AppointmentCard"
 import { listFacultyAppointments } from "@/lib/controllers/appointments"
 import { userRepository, departmentRepository } from "@/lib/repositories/factory"
 
-export default async function DeanDashboard() {
+const statusLabels: Record<string, string> = {
+  all: "All Statuses",
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  CONFIRMED: "Confirmed",
+  REJECTED: "Rejected",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+}
+
+export default async function DeanDashboard(props: {
+  searchParams?: Promise<{ status?: string }>
+}) {
   const session = await auth()
   if (!session?.user) redirect("/login")
   if ((session.user as any).role !== "DEAN") redirect("/login")
 
   const deanId = (session.user as any).id
   const department = await departmentRepository.findByDeanId(deanId)
+  const searchParams = await props.searchParams
+  const activeStatus = statusLabels[searchParams?.status || "all"] ? (searchParams?.status as string) : "all"
 
   const facultyUsers = department
     ? await userRepository.listByDepartment(department.id)
@@ -40,7 +54,7 @@ export default async function DeanDashboard() {
     })
 
     for (const a of appointments) {
-      if (a.date >= today && (a.status === "APPROVED" || a.status === "PENDING")) {
+          if (a.date >= today && (a.status === "APPROVED" || a.status === "PENDING")) {
         allUpcoming.push({ ...a, facultyName: faculty.name })
       }
       if (a.status === "PENDING") {
@@ -53,6 +67,9 @@ export default async function DeanDashboard() {
 
   allUpcoming.sort((a, b) => a.date.localeCompare(b.date))
   allRequests.sort((a, b) => a.date.localeCompare(b.date))
+
+  const filteredUpcoming = activeStatus === "all" ? allUpcoming : allUpcoming.filter((a) => a.status === activeStatus)
+  const filteredRequests = activeStatus === "all" ? allRequests : allRequests.filter((a) => a.status === activeStatus)
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -86,8 +103,26 @@ export default async function DeanDashboard() {
 
       {/* Upcoming Consultation Schedules */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-900">Upcoming Consultation Schedules</h2>
-        {allUpcoming.length === 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Upcoming Consultation Schedules</h2>
+            <p className="text-sm text-slate-500 mt-1">Filter schedules by status.</p>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(statusLabels).map(([key, label]) => (
+              <Link
+                key={key}
+                href={`/dean?status=${key}`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
+                  activeStatus === key ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
+        {filteredUpcoming.length === 0 ? (
           <div className="card p-12 text-center bg-white">
             <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4 text-slate-400">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -99,12 +134,12 @@ export default async function DeanDashboard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {allUpcoming.slice(0, 10).map((appointment: any) => (
+            {filteredUpcoming.slice(0, 10).map((appointment: any) => (
               <AppointmentCard key={appointment.id} appointment={appointment} role="FACULTY" />
             ))}
-            {allUpcoming.length > 10 && (
+            {filteredUpcoming.length > 10 && (
               <p className="text-xs text-slate-500 text-center pt-2">
-                Showing 10 of {allUpcoming.length} upcoming schedules
+                Showing 10 of {filteredUpcoming.length} upcoming schedules
               </p>
             )}
           </div>
@@ -121,19 +156,19 @@ export default async function DeanDashboard() {
             </span>
           )}
         </div>
-        {allRequests.length === 0 ? (
+        {filteredRequests.length === 0 ? (
           <div className="card p-12 text-center bg-white">
             <p className="text-slate-700 font-semibold text-sm">No pending requests</p>
             <p className="text-slate-400 text-xs mt-1">No pending consultation requests across your department.</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {allRequests.slice(0, 10).map((appointment: any) => (
+            {filteredRequests.slice(0, 10).map((appointment: any) => (
               <AppointmentCard key={appointment.id} appointment={appointment} role="FACULTY" />
             ))}
-            {allRequests.length > 10 && (
+            {filteredRequests.length > 10 && (
               <p className="text-xs text-slate-500 text-center pt-2">
-                Showing 10 of {allRequests.length} pending requests
+                Showing 10 of {filteredRequests.length} pending requests
               </p>
             )}
           </div>

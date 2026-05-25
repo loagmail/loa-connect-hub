@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect, useRef } from "react"
+import TeamsLinkForm from "@/components/TeamsLinkForm"
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -379,6 +380,16 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
       : []
     return [...fromFaculty, ...fromStudents].slice(0, 20)
   }, [facultyWithRules, students, attendeeSearch, attendeeIds, primaryFacultyId, userRole, deptFilter])
+
+  const teamsLinkSlots = useMemo(
+    () => selectedSlots.map((slot) => ({
+      key: `${slot.date}-${slot.start}-${slot.end}`,
+      date: slot.date,
+      startTime: slot.start,
+      endTime: slot.end,
+    })),
+    [selectedSlots]
+  )
 
   // Click outside to close dropdowns
   useEffect(() => {
@@ -910,40 +921,16 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
 
           {/* Teams link form for Faculty/Dean — shown after initial click */}
           {(userRole === "FACULTY" || userRole === "DEAN") && showTeamsLinkForm && (
-
-            <div className="mb-4 space-y-3">
-              <div>{selectedSlots.length}</div>
-              <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Microsoft Teams Links</p>
-              <div className="flex flex-wrap gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "single"} onChange={() => setTeamsLinkMode("single")} className="accent-gold-600" />
-                  <span className="text-sm text-slate-700">One single link for all time slots</span>
-                </label>
-                {selectedSlots.length > 1 && (<label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "per-slot"} onChange={() => setTeamsLinkMode("per-slot")} className="accent-gold-600" />
-                  <span className="text-sm text-slate-700">Assign each with a link</span>
-                </label>)}
-              </div>
-              <div className="space-y-3">
-                {teamsLinkMode === "single" && (
-                  <div>
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Single meeting link for all time slots</p>
-                    <input type="url" value={singleLink} onChange={(e) => setSingleLink(e.target.value)} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
-                  </div>
-                )}
-                {selectedSlots.length > 1 && teamsLinkMode === "per-slot" && selectedSlots && (
-                  <div className="space-y-3">
-                    {selectedSlots.map((slot) => (
-                      <div key={slot.date + slot.start + slot.end}>
-                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{slot.date} {slot.start}–{slot.end}</p>
-                        <input type="url" value={slotLinks[`${slot.date}-${slot.start}-${slot.end}`] || ""} onChange={(e) => setSlotLinks((prev) => ({ ...prev, [`${slot.date}-${slot.start}-${slot.end}`]: e.target.value }))} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {teamsLinkError && <p className="text-xs text-red-600 font-semibold">{teamsLinkError}</p>}
-            </div>
+            <TeamsLinkForm
+              teamsLinkMode={teamsLinkMode}
+              onModeChange={setTeamsLinkMode}
+              singleLink={singleLink}
+              onSingleLinkChange={setSingleLink}
+              slotLinks={slotLinks}
+              onSlotLinkChange={(key, value) => setSlotLinks((prev) => ({ ...prev, [key]: value }))}
+              timeSlots={teamsLinkSlots}
+              error={teamsLinkError}
+            />
           )}
 
           <div className="flex items-center gap-3">

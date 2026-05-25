@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react"
 import { StatusBadge } from "@/components/StatusBadge"
 import SubmitButton from "@/components/SubmitButton"
 import { TeamsLinkInput } from "@/components/TeamsLinkInput"
+import TeamsLinkForm from "@/components/TeamsLinkForm"
 import Skeleton from "@/components/Skeleton"
 import type { AppointmentDetailDto } from "@/lib/dtos/Appointments"
 
@@ -43,7 +44,6 @@ export default function AppointmentDetail() {
   const [singleLink, setSingleLink] = useState("")
   const [slotLinks, setSlotLinks] = useState<Record<string, string>>({})
   const [teamsLinkError, setTeamsLinkError] = useState("")
-  const [slotMessage, setSlotMessage] = useState<{ id: string; text: string } | null>(null)
   const [showCompleteForm, setShowCompleteForm] = useState(false)
   const [actionTaken, setActionTaken] = useState("")
   const [completeFiles, setCompleteFiles] = useState<File[]>([])
@@ -313,39 +313,29 @@ export default function AppointmentDetail() {
               return Object.entries(grouped).map(([date, slots]) => (
                 <div key={date} className="space-y-1">
                   <p className="text-xs font-semibold text-slate-600">{date}</p>
-                  {slots.map((slot) => (
-                    <div key={slot.id}>
-                      <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                        <p className="text-sm text-slate-700">{slot.startTime} &ndash; {slot.endTime}</p>
-                        {slot.teamsLink && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const now = new Date()
-                              const today = now.toISOString().slice(0, 10)
-                              const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
-                              const slotDate = slot.date
-                              if (slotDate === today && slot.startTime <= currentTime && currentTime <= slot.endTime) {
-                                window.open(slot.teamsLink!, "_blank", "noopener,noreferrer")
-                              } else {
-                                setSlotMessage({ id: slot.id, text: "This time slot is not currently active" })
-                                setTimeout(() => setSlotMessage(null), 3000)
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-gold-600 hover:text-gold-700"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                            Join
-                          </button>
-                        )}
+                  {slots.map((slot) => {
+                    const effectiveLink = slot.teamsLink || appointment.teamsLink
+                    return (
+                      <div key={slot.id}>
+                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                          <p className="text-sm text-slate-700">{slot.startTime} &ndash; {slot.endTime}</p>
+                          {effectiveLink && (
+                            <a
+                              href={effectiveLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                              Join
+                            </a>
+                          )}
+                        </div>
                       </div>
-                      {slotMessage?.id === slot.id && (
-                        <p className="text-[10px] text-amber-600 font-semibold mt-0.5 px-2.5">{slotMessage.text}</p>
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ))
             })()}
@@ -354,39 +344,21 @@ export default function AppointmentDetail() {
 
         {/* Microsoft Teams Links (input: only before accept) */}
         {(role === "FACULTY" || role === "DEAN") && effectiveStatus === "PENDING" && showTeamsLinkForm && (
-          <div className="mb-6 space-y-3">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Microsoft Teams Links</p>
-            <div className="flex flex-wrap gap-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "single"} onChange={() => setTeamsLinkMode("single")} className="accent-gold-600" />
-                <span className="text-sm text-slate-700">One single link for all time slots</span>
-              </label>
-              {appointment.timeSlots?.length > 1 && (
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "per-slot"} onChange={() => setTeamsLinkMode("per-slot")} className="accent-gold-600" />
-                <span className="text-sm text-slate-700">Assign each with a link</span>
-              </label>)}
-            </div>
-            <div className="space-y-3">
-              {teamsLinkMode === "single" && (
-                <div>
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Single meeting link for all time slots</p>
-                  <input type="url" value={singleLink} onChange={(e) => setSingleLink(e.target.value)} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
-                </div>
-              )}
-              {teamsLinkMode === "per-slot" && appointment.timeSlots && (
-                <div className="space-y-3">
-                  {appointment.timeSlots.map((slot) => (
-                    <div key={slot.id}>
-                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{slot.date} {slot.startTime}–{slot.endTime}</p>
-                      <input type="url" value={slotLinks[slot.id] || ""} onChange={(e) => setSlotLinks((prev) => ({ ...prev, [slot.id]: e.target.value }))} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {teamsLinkError && <p className="text-xs text-red-600 font-semibold">{teamsLinkError}</p>}
-          </div>
+          <TeamsLinkForm
+            teamsLinkMode={teamsLinkMode}
+            onModeChange={setTeamsLinkMode}
+            singleLink={singleLink}
+            onSingleLinkChange={setSingleLink}
+            slotLinks={slotLinks}
+            onSlotLinkChange={(key, value) => setSlotLinks((prev) => ({ ...prev, [key]: value }))}
+            timeSlots={(appointment.timeSlots || []).map((slot) => ({
+              key: slot.id,
+              date: slot.date,
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+            }))}
+            error={teamsLinkError}
+          />
         )}
 
         {/* People: student + faculty (hide own card + hide if info is in organizer line) */}

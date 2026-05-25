@@ -326,9 +326,7 @@ function mapAppointmentToMeetingData(appointment: any) {
     teamsLink: appointment.teamsLink,
     status: appointment.status === "CANCELLED"
       ? "CANCELLED"
-      : appointment.status === "APPROVED"
-        ? "CONFIRMED"
-        : appointment.status as any,
+      : appointment.status as any,
     createdAt: new Date(appointment.requestedAt),
     organizer,
     participants,
