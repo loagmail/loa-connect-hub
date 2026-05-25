@@ -283,7 +283,7 @@ export default function AppointmentDetail() {
                 {appointment.meetingType === "CONSULTATION" ? "Consultation" : "Internal"}
               </span>
             )}
-            { isFaculty || isDean ? (
+            { (isFaculty || isDean)  && isOrganizer ? (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border bg-green-50 text-green-700 border-green-200">
                 Auto-accepted
               </span>
