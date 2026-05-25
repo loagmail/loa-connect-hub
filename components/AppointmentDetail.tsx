@@ -48,6 +48,7 @@ export default function AppointmentDetail() {
   const [actionTaken, setActionTaken] = useState("")
   const [completeFiles, setCompleteFiles] = useState<File[]>([])
   const [completeError, setCompleteError] = useState("")
+  const [previewFile, setPreviewFile] = useState<AppointmentDetailDto["files"][number] | null>(null)
 
   const role = (session?.user as any)?.role
   const userEmail = (session?.user as any)?.email
@@ -448,12 +449,88 @@ export default function AppointmentDetail() {
                   </div>
                 </div>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                  attendeeBadgeColors[a.status] || "bg-slate-100 text-slate-500 border-slate-200"
+                  effectiveStatus === "COMPLETED" && a.status === "PENDING"
+                    ? "bg-amber-100 text-amber-700 border-amber-200"
+                    : attendeeBadgeColors[a.status] || "bg-slate-100 text-slate-500 border-slate-200"
                 }`}>
-                  {a.status}
+                  {effectiveStatus === "COMPLETED" && a.status === "PENDING" ? "INVITED" : a.status}
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Completed Details (visible to all when COMPLETED) ────── */}
+      {effectiveStatus === "COMPLETED" && (
+        <div className="card p-6 bg-white space-y-6">
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+            Appointment Completed
+          </h2>
+
+          {appointment.actionTaken && (
+            <div>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Actions Taken
+              </p>
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <p className="text-sm text-slate-700 whitespace-pre-wrap">{appointment.actionTaken}</p>
+              </div>
+            </div>
+          )}
+
+          {appointment.files && appointment.files.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Screenshot Proof ({appointment.files.length})
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {appointment.files.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setPreviewFile(f)}
+                    className="group relative aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-gold-400 hover:shadow-md transition-all"
+                  >
+                    <img
+                      src={`data:${f.fileType};base64,${f.fileData}`}
+                      alt={f.fileName}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Image Preview Modal ──────────────────────────────────── */}
+      {previewFile && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setPreviewFile(null)}
+        >
+          <div
+            className="relative max-w-3xl max-h-[90vh] rounded-xl overflow-hidden bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewFile(null)}
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors text-lg font-bold"
+            >
+              &times;
+            </button>
+            <img
+              src={`data:${previewFile.fileType};base64,${previewFile.fileData}`}
+              alt={previewFile.fileName}
+              className="max-w-full max-h-[90vh] object-contain"
+            />
+            <p className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 pt-8 pb-3 text-xs text-white/90 truncate">
+              {previewFile.fileName}
+            </p>
           </div>
         </div>
       )}

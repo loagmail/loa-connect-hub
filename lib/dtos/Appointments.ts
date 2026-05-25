@@ -56,6 +56,8 @@ export interface AppointmentDetailDto {
   attendees: AttendeeDto[]
   /** Timeslots for this appointment */
   timeSlots: TimeSlotDto[]
+  /** Actions taken (set when completed by faculty) */
+  actionTaken: string | null
   /** Uploaded files (screen captures, etc.) */
   files: AppointmentFileDto[]
 }

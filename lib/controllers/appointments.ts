@@ -585,6 +585,7 @@ export async function getAppointmentDetail(id: string) {
     teamsSyncStatus: appointment.teamsSyncStatus,
     teamsSyncRetries: appointment.teamsSyncRetries,
     teamsSyncError: appointment.teamsSyncError,
+    actionTaken: appointment.actionTaken || null,
     teamsSyncLastAttempt: appointment.teamsSyncLastAttempt,
     requestedAt: appointment.requestedAt,
     updatedAt: appointment.updatedAt,
