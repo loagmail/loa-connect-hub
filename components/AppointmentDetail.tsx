@@ -43,6 +43,11 @@ export default function AppointmentDetail() {
   const [singleLink, setSingleLink] = useState("")
   const [slotLinks, setSlotLinks] = useState<Record<string, string>>({})
   const [teamsLinkError, setTeamsLinkError] = useState("")
+  const [slotMessage, setSlotMessage] = useState<{ id: string; text: string } | null>(null)
+  const [showCompleteForm, setShowCompleteForm] = useState(false)
+  const [actionTaken, setActionTaken] = useState("")
+  const [completeFiles, setCompleteFiles] = useState<File[]>([])
+  const [completeError, setCompleteError] = useState("")
 
   const role = (session?.user as any)?.role
   const userEmail = (session?.user as any)?.email
@@ -163,6 +168,77 @@ export default function AppointmentDetail() {
     }
   }
 
+  const handleCompleteSubmit = async () => {
+    setCompleteError("")
+
+    if (actionTaken.trim().length < 100) {
+      setCompleteError("Actions taken must be at least 100 characters")
+      return
+    }
+
+    if (completeFiles.length === 0) {
+      setCompleteError("Please upload at least one screenshot as proof")
+      return
+    }
+
+    setActionLoading("complete")
+
+    try {
+      const filePayload = await Promise.all(
+        completeFiles.map(async (f) => {
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              const result = reader.result as string
+              resolve(result.split(",")[1])
+            }
+            reader.onerror = reject
+            reader.readAsDataURL(f)
+          })
+          return {
+            fileName: f.name,
+            fileType: f.type,
+            fileData: base64,
+            fileSize: f.size,
+          }
+        })
+      )
+
+      const fileRes = await fetch(`/api/appointments/${appointmentId}/files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files: filePayload }),
+      })
+
+      if (!fileRes.ok) {
+        const fileData = await fileRes.json()
+        setCompleteError(fileData.error || "Failed to upload files")
+        setActionLoading("")
+        return
+      }
+
+      const res = await fetch(`/api/appointments/${appointmentId}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actionTaken: actionTaken.trim() }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        if (data.appointment) setAppointment(data.appointment)
+        setLocalStatus("COMPLETED")
+        setShowCompleteForm(false)
+        setActionTaken("")
+        setCompleteFiles([])
+      } else {
+        setCompleteError(data.error || "Failed to complete appointment")
+      }
+    } catch {
+      setCompleteError("An error occurred")
+    } finally {
+      setActionLoading("")
+    }
+  }
+
   // ── Loading ──────────────────────────────────────────────────────
   if (loading) return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto space-y-4">
@@ -218,40 +294,91 @@ export default function AppointmentDetail() {
           </p>
         )}
 
-        {/* Schedule — primary slot */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-amber-50 border border-amber-100 mb-3">
-          <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-            <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-xs text-amber-600 font-semibold uppercase tracking-wider">Scheduled</p>
-            <p className="text-sm font-bold text-amber-900">{appointment.date}</p>
-            <p className="text-sm font-medium text-amber-700">{appointment.startTime} &ndash; {appointment.endTime}</p>
-          </div>
-        </div>
-
-        {/* Other timeslots */}
-        {appointment.timeSlots && appointment.timeSlots.length > 1 && (
+        {/* Time slots */}
+        {appointment.timeSlots && appointment.timeSlots.length > 0 && (
           <div className="mb-6 space-y-2">
             <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Time slots</p>
-            {appointment.timeSlots.map((slot, idx) => {
-              if (slot.date === appointment.date && slot.startTime === appointment.startTime && slot.endTime === appointment.endTime) return null
-              return (
-                <div key={slot.id || idx} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-700">{slot.date}</p>
-                    <p className="text-xs text-slate-500">{slot.startTime} &ndash; {slot.endTime}</p>
-                  </div>
+            {(() => {
+              const grouped: Record<string, typeof appointment.timeSlots> = {}
+              for (const slot of appointment.timeSlots) {
+                if (!grouped[slot.date]) grouped[slot.date] = []
+                grouped[slot.date].push(slot)
+              }
+              return Object.entries(grouped).map(([date, slots]) => (
+                <div key={date} className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-600">{date}</p>
+                  {slots.map((slot) => (
+                    <div key={slot.id}>
+                      <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                        <p className="text-sm text-slate-700">{slot.startTime} &ndash; {slot.endTime}</p>
+                        {slot.teamsLink && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const now = new Date()
+                              const today = now.toISOString().slice(0, 10)
+                              const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+                              const slotDate = slot.date
+                              if (slotDate === today && slot.startTime <= currentTime && currentTime <= slot.endTime) {
+                                window.open(slot.teamsLink!, "_blank", "noopener,noreferrer")
+                              } else {
+                                setSlotMessage({ id: slot.id, text: "This time slot is not currently active" })
+                                setTimeout(() => setSlotMessage(null), 3000)
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-gold-600 hover:text-gold-700"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Join
+                          </button>
+                        )}
+                      </div>
+                      {slotMessage?.id === slot.id && (
+                        <p className="text-[10px] text-amber-600 font-semibold mt-0.5 px-2.5">{slotMessage.text}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              )
-            })}
+              ))
+            })()}
+          </div>
+        )}
+
+        {/* Microsoft Teams Links (input: only before accept) */}
+        {(role === "FACULTY" || role === "DEAN") && effectiveStatus === "PENDING" && showTeamsLinkForm && (
+          <div className="mb-6 space-y-3">
+            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Microsoft Teams Links</p>
+            <div className="flex flex-wrap gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "single"} onChange={() => setTeamsLinkMode("single")} className="accent-gold-600" />
+                <span className="text-sm text-slate-700">One single link for all time slots</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="teams-link-mode" checked={teamsLinkMode === "per-slot"} onChange={() => setTeamsLinkMode("per-slot")} className="accent-gold-600" />
+                <span className="text-sm text-slate-700">Assign each with a link</span>
+              </label>
+            </div>
+            <div className="space-y-3">
+              {teamsLinkMode === "single" && (
+                <div>
+                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Single meeting link for all time slots</p>
+                  <input type="url" value={singleLink} onChange={(e) => setSingleLink(e.target.value)} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
+                </div>
+              )}
+              {teamsLinkMode === "per-slot" && appointment.timeSlots && (
+                <div className="space-y-3">
+                  {appointment.timeSlots.map((slot) => (
+                    <div key={slot.id}>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{slot.date} {slot.startTime}–{slot.endTime}</p>
+                      <input type="url" value={slotLinks[slot.id] || ""} onChange={(e) => setSlotLinks((prev) => ({ ...prev, [slot.id]: e.target.value }))} placeholder="https://teams.microsoft.com/l/meetup-join/..." className="input text-xs py-2 w-full" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {teamsLinkError && <p className="text-xs text-red-600 font-semibold">{teamsLinkError}</p>}
           </div>
         )}
 
@@ -287,66 +414,6 @@ export default function AppointmentDetail() {
         {appointment.description && (
           <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-100">
             <p className="text-sm text-slate-600">{appointment.description}</p>
-          </div>
-        )}
-
-        {/* Teams Sync */}
-        {effectiveStatus === "APPROVED" && (
-          <div className={`p-4 rounded-xl border mb-6 ${
-            appointment.teamsSyncStatus === "WRITTEN"
-              ? "bg-emerald-50 border-emerald-200"
-              : appointment.teamsSyncStatus === "FAILED"
-              ? "bg-red-50 border-red-200"
-              : "bg-amber-50 border-amber-200"
-          }`}>
-            <div className="flex items-center gap-3">
-              {appointment.teamsSyncStatus === "WRITTEN" && (
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-              {appointment.teamsSyncStatus === "FAILED" && (
-                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-              )}
-              {appointment.teamsSyncStatus === "UNWRITTEN" && (
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5 text-amber-600 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-bold text-slate-800">
-                  {appointment.teamsSyncStatus === "WRITTEN" && "Microsoft Teams Meeting Created"}
-                  {appointment.teamsSyncStatus === "FAILED" && "Microsoft Teams Sync Failed"}
-                  {appointment.teamsSyncStatus === "UNWRITTEN" && "Microsoft Teams Meeting Pending"}
-                </p>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  {appointment.teamsSyncStatus === "WRITTEN" && "The meeting link is active and ready to use."}
-                  {appointment.teamsSyncStatus === "FAILED" && `Sync failed after ${appointment.teamsSyncRetries} attempts. ${appointment.teamsSyncError || ""}`}
-                  {appointment.teamsSyncStatus === "UNWRITTEN" && "The meeting link will be available shortly after sync completes."}
-                </p>
-              </div>
-            </div>
-            {appointment.teamsSyncStatus === "WRITTEN" && appointment.teamsLink && (
-              <a
-                href={appointment.teamsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-amber-700 bg-white border border-amber-200 hover:bg-amber-50 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Join Teams Meeting
-              </a>
-            )}
           </div>
         )}
 
@@ -425,73 +492,10 @@ export default function AppointmentDetail() {
             </div>
           )}
 
-          {/* Faculty/Dean: Teams link form (shown after clicking Accept) */}
+          {/* Faculty/Dean: Confirm/Cancel after setting Teams links */}
           {(isFaculty || isDean) && showTeamsLinkForm && (
-            <div className="space-y-4">
-              <p className="text-sm font-bold text-slate-800">Set Microsoft Teams link(s) to approve</p>
-              <div className="flex flex-wrap gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="teams-link-mode"
-                    checked={teamsLinkMode === "single"}
-                    onChange={() => setTeamsLinkMode("single")}
-                    className="accent-gold-600"
-                  />
-                  <span className="text-sm text-slate-700">One single link for all time slots</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="teams-link-mode"
-                    checked={teamsLinkMode === "per-slot"}
-                    onChange={() => setTeamsLinkMode("per-slot")}
-                    className="accent-gold-600"
-                  />
-                  <span className="text-sm text-slate-700">Assign each with a link</span>
-                </label>
-              </div>
-              <div className="space-y-3">
-                {teamsLinkMode === "single" && (
-                  <div>
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Single meeting link for all time slots</p>
-                    <input
-                      type="url"
-                      value={singleLink}
-                      onChange={(e) => setSingleLink(e.target.value)}
-                      placeholder="https://teams.microsoft.com/l/meetup-join/..."
-                      className="input text-xs py-2 w-full"
-                    />
-                  </div>
-                )}
-                {teamsLinkMode === "per-slot" && appointment.timeSlots && (
-                  <div className="space-y-3">
-                    {appointment.timeSlots.map((slot) => {
-                      const isPrimary =
-                        slot.date === appointment.date &&
-                        slot.startTime === appointment.startTime &&
-                        slot.endTime === appointment.endTime
-                      return (
-                        <div key={slot.id}>
-                          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                            {isPrimary ? `${slot.date} ${slot.startTime}–${slot.endTime} (primary)` : `${slot.date} ${slot.startTime}–${slot.endTime}`}
-                          </p>
-                          <input
-                            type="url"
-                            value={slotLinks[slot.id] || ""}
-                            onChange={(e) => setSlotLinks((prev) => ({ ...prev, [slot.id]: e.target.value }))}
-                            placeholder="https://teams.microsoft.com/l/meetup-join/..."
-                            className="input text-xs py-2 w-full"
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-              {teamsLinkError && (
-                <p className="text-xs text-red-600 font-semibold">{teamsLinkError}</p>
-              )}
+            <div className="space-y-2">
+              {teamsLinkError && <p className="text-xs text-red-600 font-semibold">{teamsLinkError}</p>}
               <div className="flex flex-wrap gap-2">
                 <SubmitButton
                   onClick={handleConfirmApprove}
@@ -515,15 +519,14 @@ export default function AppointmentDetail() {
             </div>
           )}
 
-          {/* Faculty/Dean: complete/cancel APPROVED */}
-          {(isFaculty || isDean) && effectiveStatus === "APPROVED" && (
+          {/* Faculty/Dean: complete/cancel APPROVED (without active form) */}
+          {(isFaculty || isDean) && effectiveStatus === "APPROVED" && !showCompleteForm && (
             <div className="flex flex-wrap gap-2">
               <SubmitButton
-                onClick={() => handleAction("complete")}
-                loading={actionLoading === "complete"}
+                onClick={() => setShowCompleteForm(true)}
                 variant="primary"
               >
-                {actionLoading === "complete" ? "Completing..." : "Mark Complete"}
+                Mark Complete
               </SubmitButton>
               <SubmitButton
                 onClick={() => handleAction("cancel")}
@@ -532,6 +535,85 @@ export default function AppointmentDetail() {
               >
                 {actionLoading === "cancel" ? "Cancelling..." : "Cancel"}
               </SubmitButton>
+            </div>
+          )}
+
+          {/* Faculty/Dean: Complete form */}
+          {(isFaculty || isDean) && showCompleteForm && (
+            <div className="space-y-4">
+              <p className="text-sm font-bold text-slate-800">Complete Appointment</p>
+
+              <div>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Actions Taken <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={actionTaken}
+                  onChange={(e) => setActionTaken(e.target.value)}
+                  rows={4}
+                  placeholder="Describe what actions were taken during this appointment..."
+                  className="input text-xs py-2 w-full resize-none"
+                />
+                <p className={`text-[10px] mt-0.5 ${actionTaken.trim().length >= 100 ? "text-emerald-600" : "text-slate-400"}`}>
+                  {actionTaken.trim().length}/100 minimum
+                </p>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Screenshot proof (images only, up to 3)
+                </label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/gif,image/webp"
+                  multiple
+                  disabled={completeFiles.length >= 3}
+                  onChange={(e) => {
+                    const newFiles = Array.from(e.target.files || [])
+                    setCompleteFiles((prev) => [...prev, ...newFiles].slice(0, 3))
+                  }}
+                  className="text-xs mt-1"
+                />
+                {completeFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {completeFiles.map((f, i) => (
+                      <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 text-xs text-slate-600">
+                        <span className="truncate max-w-[120px]">{f.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setCompleteFiles((prev) => prev.filter((_, j) => j !== i))}
+                          className="text-red-500 hover:text-red-700 font-bold leading-none"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {completeError && <p className="text-xs text-red-600 font-semibold">{completeError}</p>}
+
+              <div className="flex flex-wrap gap-2">
+                <SubmitButton
+                  onClick={handleCompleteSubmit}
+                  loading={actionLoading === "complete"}
+                  variant="primary"
+                >
+                  {actionLoading === "complete" ? "Completing..." : "Submit & Complete"}
+                </SubmitButton>
+                <SubmitButton
+                  onClick={() => {
+                    setShowCompleteForm(false)
+                    setActionTaken("")
+                    setCompleteFiles([])
+                    setCompleteError("")
+                  }}
+                  variant="secondary"
+                >
+                  Cancel
+                </SubmitButton>
+              </div>
             </div>
           )}
 

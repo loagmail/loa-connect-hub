@@ -21,32 +21,32 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const userEmail = (session.user as any).email
   const { id, action } = await params
 
-  try {
-    let appointment
+    try {
+      let appointment
+      let body: any = {}
+      try { body = await request.json() } catch {}
 
-    switch (action) {
-      case "accept":
-      case "approve":
-        await acceptAppointment(id, userId)
-        // Re-fetch enriched detail so per-slot Teams links, files, etc. are included
-        appointment = await getAppointmentDetail(id)
-        break
-      case "decline":
-      case "reject":
-        appointment = await declineAppointment(id, userId)
-        break
-      case "complete":
-        const { actionTaken } = await request.json()
-        await completeAppointment(id, userId, actionTaken)
-        appointment = await getAppointmentDetail(id)
-        break
-      case "cancel":
-        appointment = await cancelAppointment(id, userId, userEmail)
-        break
-      case "teams-link":
-        const { teamsLink } = await request.json()
-        appointment = await updateTeamsLink(id, userId, teamsLink)
-        break
+      switch (action) {
+        case "accept":
+        case "approve":
+          await acceptAppointment(id, userId)
+          // Re-fetch enriched detail so per-slot Teams links, files, etc. are included
+          appointment = await getAppointmentDetail(id)
+          break
+        case "decline":
+        case "reject":
+          appointment = await declineAppointment(id, userId)
+          break
+        case "complete":
+          await completeAppointment(id, userId, body.actionTaken)
+          appointment = await getAppointmentDetail(id)
+          break
+        case "cancel":
+          appointment = await cancelAppointment(id, userId, userEmail)
+          break
+        case "teams-link":
+          appointment = await updateTeamsLink(id, userId, body.teamsLink)
+          break
       case "attendee-accept":
         return NextResponse.json(await attendeeAcceptAppointment(id, userId))
       case "attendee-decline":
