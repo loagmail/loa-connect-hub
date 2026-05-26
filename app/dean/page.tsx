@@ -1,75 +1,56 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { AppointmentCard } from "@/components/AppointmentCard"
+import { ConsultationsTimeline } from "@/components/ConsultationsTimeline"
 import { listFacultyAppointments } from "@/lib/controllers/appointments"
 import { userRepository, departmentRepository } from "@/lib/repositories/factory"
 
-const statusLabels: Record<string, string> = {
-  all: "All Statuses",
-  PENDING: "Pending",
-  APPROVED: "Approved",
-  CONFIRMED: "Confirmed",
-  REJECTED: "Rejected",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-}
-
-export default async function DeanDashboard(props: {
-  searchParams?: Promise<{ status?: string }>
-}) {
+export default async function DeanDashboard() {
   const session = await auth()
   if (!session?.user) redirect("/login")
   if ((session.user as any).role !== "DEAN") redirect("/login")
 
   const deanId = (session.user as any).id
   const department = await departmentRepository.findByDeanId(deanId)
-  const searchParams = await props.searchParams
-  const activeStatus = statusLabels[searchParams?.status || "all"] ? (searchParams?.status as string) : "all"
 
   const facultyUsers = department
     ? await userRepository.listByDepartment(department.id)
     : []
 
-  const facultyMembers = facultyUsers.filter(u => u.role === "FACULTY" || u.role === "DEAN")
+  const facultyMembers = facultyUsers.filter(
+    (u: any) => u.role === "FACULTY" || u.role === "DEAN"
+  )
 
-  let totalAppointments = 0
-  let pendingAppointments = 0
-  let upcomingAppointments = 0
-  const allUpcoming: any[] = []
-  const allRequests: any[] = []
-  const facultyAppointmentCounts: { name: string; total: number; pending: number }[] = []
+  let upcomingCount = 0
+  let pendingCount = 0
+  const timelineEvents: any[] = []
 
   const today = new Date().toISOString().slice(0, 10)
 
   for (const faculty of facultyMembers) {
     const appointments = await listFacultyAppointments(faculty.id)
-    const pending = appointments.filter(a => a.status === "PENDING").length
-    totalAppointments += appointments.length
-    pendingAppointments += pending
-    facultyAppointmentCounts.push({
-      name: faculty.name,
-      total: appointments.length,
-      pending,
-    })
 
-    for (const a of appointments) {
-          if (a.date >= today && (a.status === "APPROVED" || a.status === "PENDING")) {
-        allUpcoming.push({ ...a, facultyName: faculty.name })
-      }
-      if (a.status === "PENDING") {
-        allRequests.push({ ...a, facultyName: faculty.name })
-      }
+    upcomingCount += appointments.filter(
+      (a: any) => a.date >= today && (a.status === "APPROVED" || a.status === "PENDING")
+    ).length
+    pendingCount += appointments.filter((a: any) => a.status === "PENDING").length
+
+    for (const a of appointments as any[]) {
+      timelineEvents.push({
+        id: a.id,
+        title: a.title || `Meeting with ${a.student?.name || "Attendee"}`,
+        subtitle: faculty.name,
+        date: a.date || "",
+        startTime: a.startTime || "",
+        endTime: a.endTime || "",
+        status: a.status,
+        type: "appointment" as const,
+        teamsLink: a.teamsLink,
+      })
     }
   }
 
-  upcomingAppointments = allUpcoming.length
-
-  allUpcoming.sort((a, b) => a.date.localeCompare(b.date))
-  allRequests.sort((a, b) => a.date.localeCompare(b.date))
-
-  const filteredUpcoming = activeStatus === "all" ? allUpcoming : allUpcoming.filter((a) => a.status === activeStatus)
-  const filteredRequests = activeStatus === "all" ? allRequests : allRequests.filter((a) => a.status === activeStatus)
+  timelineEvents.sort((a, b) => a.date.localeCompare(b.date))
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -86,162 +67,37 @@ export default async function DeanDashboard(props: {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div className="card p-5 bg-white">
-          <p className="text-3xl font-bold text-slate-900">{facultyMembers.length}</p>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Faculty Members</p>
+          <p className="text-3xl font-bold text-slate-900">{upcomingCount}</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Upcoming Meetings</p>
         </div>
         <div className="card p-5 bg-white">
-          <p className="text-3xl font-bold text-slate-900">{upcomingAppointments}</p>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Upcoming Schedules</p>
-        </div>
-        <div className="card p-5 bg-white">
-          <p className="text-3xl font-bold text-slate-900">{pendingAppointments}</p>
+          <p className="text-3xl font-bold text-slate-900">{pendingCount}</p>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Pending Requests</p>
         </div>
       </div>
 
-      {/* Upcoming Consultation Schedules */}
-      <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Upcoming Consultation Schedules</h2>
-            <p className="text-sm text-slate-500 mt-1">Filter schedules by status.</p>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {Object.entries(statusLabels).map(([key, label]) => (
-              <Link
-                key={key}
-                href={`/dean?status=${key}`}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  activeStatus === key ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+      {/* Quick Create CTA */}
+      <div className="card p-6 bg-white flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-slate-900">Need to schedule a meeting?</p>
+          <p className="text-xs text-slate-500 mt-0.5">Create a meeting with your colleagues.</p>
         </div>
-        {filteredUpcoming.length === 0 ? (
-          <div className="card p-12 text-center bg-white">
-            <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4 text-slate-400">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <p className="text-slate-700 font-semibold text-sm">No upcoming schedules</p>
-            <p className="text-slate-400 text-xs mt-1">No upcoming appointments across your department.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredUpcoming.slice(0, 10).map((appointment: any) => (
-              <AppointmentCard key={appointment.id} appointment={appointment} role="FACULTY" />
-            ))}
-            {filteredUpcoming.length > 10 && (
-              <p className="text-xs text-slate-500 text-center pt-2">
-                Showing 10 of {filteredUpcoming.length} upcoming schedules
-              </p>
-            )}
-          </div>
-        )}
-      </section>
+        <Link
+          href="/faculty/meetings/new"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gold-600 text-white text-sm font-semibold hover:bg-gold-700 transition-colors shadow-sm"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Create a Meeting
+        </Link>
+      </div>
 
-      {/* Consultation Requests */}
+      {/* Calendar Timeline */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-900">Consultation Requests</h2>
-          {allRequests.length > 0 && (
-            <span className="text-xs font-semibold bg-amber-500/20 text-amber-600 px-2.5 py-0.5 rounded-full">
-              {allRequests.length} pending
-            </span>
-          )}
-        </div>
-        {filteredRequests.length === 0 ? (
-          <div className="card p-12 text-center bg-white">
-            <p className="text-slate-700 font-semibold text-sm">No pending requests</p>
-            <p className="text-slate-400 text-xs mt-1">No pending consultation requests across your department.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredRequests.slice(0, 10).map((appointment: any) => (
-              <AppointmentCard key={appointment.id} appointment={appointment} role="FACULTY" />
-            ))}
-            {filteredRequests.length > 10 && (
-              <p className="text-xs text-slate-500 text-center pt-2">
-                Showing 10 of {filteredRequests.length} pending requests
-              </p>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Faculty Overview */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-900">Faculty Overview</h2>
-        {facultyAppointmentCounts.length === 0 ? (
-          <div className="card p-12 text-center bg-white">
-            <p className="text-slate-500 text-sm">No faculty members found in your department.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="pb-3 pr-4">Faculty</th>
-                  <th className="pb-3 pr-4">Total Appointments</th>
-                  <th className="pb-3 pr-4">Pending</th>
-                  <th className="pb-3 pr-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {facultyAppointmentCounts.map((f) => (
-                  <tr key={f.name} className="border-b border-slate-100">
-                    <td className="py-3 pr-4 font-medium text-slate-800">{f.name}</td>
-                    <td className="py-3 pr-4 text-slate-600">{f.total}</td>
-                    <td className="py-3 pr-4">
-                      <span className={`text-xs font-semibold ${f.pending > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                        {f.pending}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <Link
-                        href="/faculty/availability"
-                        className="text-gold-600 hover:text-gold-800 text-xs font-semibold"
-                      >
-                        View Details
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      {/* Quick Links */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link
-          href="/faculty"
-          className="card p-5 bg-white hover:shadow-md transition-shadow"
-        >
-          <p className="font-semibold text-slate-900">My Appointments</p>
-          <p className="text-xs text-slate-500 mt-1">View and manage your own consultations</p>
-        </Link>
-        <Link
-          href="/faculty/availability"
-          className="card p-5 bg-white hover:shadow-md transition-shadow"
-        >
-          <p className="font-semibold text-slate-900">Availability Settings</p>
-          <p className="text-xs text-slate-500 mt-1">Configure your consultation availability hours</p>
-        </Link>
-        <Link
-          href="/faculty/meetings"
-          className="card p-5 bg-white hover:shadow-md transition-shadow"
-        >
-          <p className="font-semibold text-slate-900">Faculty Consultations</p>
-          <p className="text-xs text-slate-500 mt-1">Schedule and manage faculty-to-faculty consultations</p>
-        </Link>
+        <ConsultationsTimeline events={timelineEvents} variant="meetings" />
       </section>
     </div>
   )

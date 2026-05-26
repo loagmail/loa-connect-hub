@@ -7,6 +7,7 @@ import type { CalendarEvent } from "./CalendarView"
 
 interface Props {
   events: CalendarEvent[]
+  variant?: "consultations" | "meetings"
 }
 
 const RANGES = [
@@ -18,7 +19,7 @@ const RANGES = [
 type Range = (typeof RANGES)[number]["key"]
 type ViewMode = "timeline" | "calendar"
 
-export function ConsultationsTimeline({ events }: Props) {
+export function ConsultationsTimeline({ events, variant = "consultations" }: Props) {
   const [range, setRange] = useState<Range>("month")
   const [view, setView] = useState<ViewMode>("timeline")
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -52,7 +53,7 @@ export function ConsultationsTimeline({ events }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-lg font-bold text-slate-900">Upcoming Consultations</h2>
+        <h2 className="text-lg font-bold text-slate-900">{variant === "meetings" ? "Upcoming Meetings" : "Upcoming Consultations"}</h2>
         <div className="flex items-center gap-2">
           {/* View toggle */}
           <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
@@ -101,7 +102,7 @@ export function ConsultationsTimeline({ events }: Props) {
             {selectedDate ? (
               <CalendarView
                 events={dayEvents}
-                emptyMessage="No consultations on this day"
+                emptyMessage={variant === "meetings" ? "No meetings on this day" : "No consultations on this day"}
                 emptySubtext=""
               />
             ) : (
@@ -121,11 +122,15 @@ export function ConsultationsTimeline({ events }: Props) {
         <CalendarView
           events={filtered}
           emptyMessage={
-            range === "week" ? "No consultations scheduled this week" :
-            range === "month" ? "No consultations scheduled this month" :
-            "No scheduled consultations yet"
+            variant === "meetings"
+              ? (range === "week" ? "No meetings scheduled this week" :
+                 range === "month" ? "No meetings scheduled this month" :
+                 "No scheduled meetings yet")
+              : (range === "week" ? "No consultations scheduled this week" :
+                 range === "month" ? "No consultations scheduled this month" :
+                 "No scheduled consultations yet")
           }
-          emptySubtext="Book a consultation slot above to populate your calendar timeline."
+          emptySubtext={variant === "meetings" ? "Create a meeting above to populate your calendar timeline." : "Book a consultation slot above to populate your calendar timeline."}
         />
       )}
     </div>
