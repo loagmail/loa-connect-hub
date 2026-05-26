@@ -40,8 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/app/generated/prisma
 
-# sqlite database
-prisma/dev.db
-prisma/dev.db-journal
