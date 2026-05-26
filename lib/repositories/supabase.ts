@@ -291,6 +291,20 @@ export const appointmentRepository: IAppointmentRepository = {
     if (error) throw error
     return (data || []) as AppointmentFileData[]
   },
+  async listFacultyAppointmentsByDateRange(facultyId, startDate, endDate, status) {
+    let query = supabase
+      .from("appointments")
+      .select("date, startTime, endTime")
+      .eq("facultyId", facultyId)
+      .gte("date", startDate)
+      .lte("date", endDate)
+    if (status) {
+      query = query.eq("status", status)
+    }
+    const { data, error } = await query.order("date", { ascending: true }).order("startTime", { ascending: true })
+    if (error) throw error
+    return data as any
+  },
 }
 
 const meetingSelect = `

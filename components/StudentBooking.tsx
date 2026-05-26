@@ -118,6 +118,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
   const [showPrimaryDropdown, setShowPrimaryDropdown] = useState(false)
   const [showAttendeeDropdown, setShowAttendeeDropdown] = useState(false)
   const [deptFilter, setDeptFilter] = useState<string>("all")
+  const [bookedAppointments, setBookedAppointments] = useState<{ date: string; startTime: string; endTime: string }[]>([])
   const primaryRef = useRef<HTMLDivElement>(null)
   const attendeeRef = useRef<HTMLDivElement>(null)
 
@@ -135,6 +136,23 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
   const selectedDateStr = selectedDay ? fmtDate(currentYear, currentMonth, selectedDay) : null
   const isSelectedToday = selectedDateStr === todayStr
 
+  // Fetch primary faculty's booked (APPROVED) appointments for the visible month
+  useEffect(() => {
+    if (!primaryFacultyId || userRole !== "STUDENT") {
+      setBookedAppointments([])
+      return
+    }
+    const startDate = fmtDate(currentYear, currentMonth, 1)
+    const endDate = fmtDate(currentYear, currentMonth, getDaysInMonth(currentYear, currentMonth))
+
+    fetch(`/api/appointments/faculty-booked?facultyId=${primaryFacultyId}&startDate=${startDate}&endDate=${endDate}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.appointments) setBookedAppointments(data.appointments)
+      })
+      .catch(() => setBookedAppointments([]))
+  }, [primaryFacultyId, currentYear, currentMonth])
+
   const hourOptions = useMemo(() => {
     const base = allow24Hours
       ? Array.from({ length: 24 }, (_, i) => i)
@@ -146,6 +164,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
     const currentHour = now.getHours()
     return base.filter((h) => h > currentHour)
   }, [allow24Hours, isSelectedToday, now])
+
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ success: number; errors: string[]; sessionGroupId?: string } | null>(null)
   const [showTeamsLinkForm, setShowTeamsLinkForm] = useState(false)
@@ -172,54 +191,141 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
     ) || null
   }
 
-  // Available slots for selected date based on selected faculty
-  const availableSlots = useMemo(() => {
+  // Free time ranges for selected date — rule window minus booked (APPROVED) appointments
+  const freeRanges = useMemo(() => {
     if (!selectedDay || selectedFaculty.length === 0) return []
     const dateStr = fmtDate(currentYear, currentMonth, selectedDay)
-    const rules = selectedFaculty
-      .map((f) => getActiveRule(f, dateStr))
-      .filter((r): r is NonNullable<typeof r> => r !== null && !r.isBlocked && !!r.startTime && !!r.endTime)
+    const faculty = selectedFaculty[0]
+    const rule = getActiveRule(faculty, dateStr)
 
-    if (rules.length === 0) return []
+    if (!rule || rule.isBlocked || !rule.startTime || !rule.endTime) return []
 
-    // Find overlap across all selected faculty
-    let latestStart = rules[0].startTime!
-    let earliestEnd = rules[0].endTime!
-    for (const r of rules) {
-      if (r.startTime! > latestStart) latestStart = r.startTime!
-      if (r.endTime! < earliestEnd) earliestEnd = r.endTime!
+    // Start with the full rule window
+    let ranges = [{ start: rule.startTime, end: rule.endTime }]
+
+    // Subtract booked appointments
+    const dayBookings = bookedAppointments.filter((a) => a.date === dateStr)
+    for (const apt of dayBookings) {
+      const newRanges: { start: string; end: string }[] = []
+      for (const r of ranges) {
+        if (apt.startTime < r.end && apt.endTime > r.start) {
+          // Range before the booked slot
+          if (apt.startTime > r.start) {
+            newRanges.push({ start: r.start, end: apt.startTime })
+          }
+          // Range after the booked slot
+          if (apt.endTime < r.end) {
+            newRanges.push({ start: apt.endTime, end: r.end })
+          }
+        } else {
+          newRanges.push(r)
+        }
+      }
+      ranges = newRanges
     }
-    if (latestStart >= earliestEnd) return []
-    return generateSlots(latestStart, earliestEnd)
-  }, [selectedDay, selectedFaculty, currentYear, currentMonth])
 
-  // Check if a day has availability for ALL selected faculty
-  const dayHasCommonSlots = (year: number, month: number, day: number): boolean => {
-    if (selectedFaculty.length === 0) return false
-    const dateStr = fmtDate(year, month, day)
-    const rules = selectedFaculty
-      .map((f) => getActiveRule(f, dateStr))
-      .filter((r): r is NonNullable<typeof r> => r !== null && !r.isBlocked && !!r.startTime && !!r.endTime)
+    return ranges.sort((a, b) => a.start.localeCompare(b.start))
+  }, [selectedDay, selectedFaculty, currentYear, currentMonth, bookedAppointments])
 
-    if (rules.length < selectedFaculty.length) return false
-
-    let latestStart = rules[0].startTime!
-    let earliestEnd = rules[0].endTime!
-    for (const r of rules) {
-      if (r.startTime! > latestStart) latestStart = r.startTime!
-      if (r.endTime! < earliestEnd) earliestEnd = r.endTime!
+  // For students: constrain hour options to only hours within free time ranges
+  const studentHourOptions = useMemo(() => {
+    if (userRole !== "STUDENT" || freeRanges.length === 0) return hourOptions
+    const availableHours = new Set<number>()
+    for (const range of freeRanges) {
+      const startH = parseInt(range.start.split(":")[0])
+      const endH = parseInt(range.end.split(":")[0])
+      for (let h = startH; h <= endH; h++) {
+        availableHours.add(h)
+      }
     }
-    return latestStart < earliestEnd
+    // Also respect today's past-hour filter
+    if (!isSelectedToday) return Array.from(availableHours).sort((a, b) => a - b)
+    const currentHour = now.getHours()
+    return Array.from(availableHours).filter((h) => h > currentHour).sort((a, b) => a - b)
+  }, [hourOptions, freeRanges, userRole, isSelectedToday, now])
+
+  // Client-side validation helpers for time selectors
+  const existingDaySlotsEndMax = useMemo(() => {
+    if (!selectedDay) return null
+    const dateStr = fmtDate(currentYear, currentMonth, selectedDay)
+    const daySlots = selectedSlots.filter(s => s.date === dateStr)
+    if (daySlots.length === 0) return null
+    return daySlots.reduce((max, s) => s.end > max ? s.end : max, "00:00")
+  }, [selectedDay, selectedSlots, currentYear, currentMonth])
+
+  // Filtered start hours: no overlap with existing slots on the same day
+  const startHourOpts = useMemo(() => {
+    let hours = studentHourOptions
+    if (userRole === "STUDENT" && existingDaySlotsEndMax) {
+      const minH = parseInt(existingDaySlotsEndMax.split(":")[0])
+      hours = hours.filter(h => h >= minH)
+    }
+    return hours
+  }, [studentHourOptions, existingDaySlotsEndMax, userRole])
+
+  // Filtered start minutes: when same hour as last slot's end, only allow minutes >= end minute
+  const getStartMinuteOpts = (selHour: number) => {
+    if (!existingDaySlotsEndMax || userRole !== "STUDENT") return MINUTE_OPTIONS
+    const [endH, endM] = existingDaySlotsEndMax.split(":").map(Number)
+    if (selHour !== endH) return MINUTE_OPTIONS
+    return MINUTE_OPTIONS.filter(m => m >= endM)
   }
 
-  // Check if a day has ANY availability (for non-check mode)
-  const dayHasAnySlots = (year: number, month: number, day: number): boolean => {
-    if (selectedFaculty.length === 0) return false
+  // Filtered end hours: must be >= start hour (for 30-min min duration)
+  const getEndHourOpts = (start: string | null) => {
+    if (!start || userRole !== "STUDENT") return studentHourOptions
+    const [sH, sM] = start.split(":").map(Number)
+    const minEndMinutes = sH * 60 + sM + 30
+    const minEndH = Math.floor(minEndMinutes / 60)
+    return studentHourOptions.filter(h => h >= minEndH)
+  }
+
+  // Filtered end minutes: when same hour as min end hour, only allow minutes >= min end minute
+  const getEndMinuteOpts = (start: string | null, selEndHour: number) => {
+    if (!start || userRole !== "STUDENT") return MINUTE_OPTIONS
+    const [sH, sM] = start.split(":").map(Number)
+    const minEndMinutes = sH * 60 + sM + 30
+    const minEndH = Math.floor(minEndMinutes / 60)
+    const minEndM = minEndMinutes % 60
+    if (selEndHour !== minEndH) return MINUTE_OPTIONS
+    return MINUTE_OPTIONS.filter(m => m >= minEndM)
+  }
+
+  // Determine day status for student booking (primary faculty only)
+  const getDayStatus = (year: number, month: number, day: number): "available" | "partially" | "not-available" | "blocked" => {
+    if (selectedFaculty.length === 0) return "not-available"
     const dateStr = fmtDate(year, month, day)
-    return selectedFaculty.some((f) => {
-      const rule = getActiveRule(f, dateStr)
-      return rule && !rule.isBlocked && rule.startTime && rule.endTime
-    })
+    const faculty = selectedFaculty[0]
+    const rule = getActiveRule(faculty, dateStr)
+
+    if (!rule) return "not-available"
+    if (rule.isBlocked) return "blocked"
+    if (!rule.startTime || !rule.endTime) return "blocked"
+
+    // Get ACCEPTED appointments for this day
+    const dayBookings = bookedAppointments.filter((a) => a.date === dateStr)
+    if (dayBookings.length === 0) return "available"
+
+    // Calculate total available time from rule
+    const ruleStart = timeToMinutes(parseInt(rule.startTime.split(":")[0]), parseInt(rule.startTime.split(":")[1]))
+    const ruleEnd = timeToMinutes(parseInt(rule.endTime.split(":")[0]), parseInt(rule.endTime.split(":")[1]))
+    const totalAvailableMinutes = ruleEnd - ruleStart
+
+    // Calculate overlapping booked minutes
+    let bookedMinutes = 0
+    for (const apt of dayBookings) {
+      const aptStart = timeToMinutes(parseInt(apt.startTime.split(":")[0]), parseInt(apt.startTime.split(":")[1]))
+      const aptEnd = timeToMinutes(parseInt(apt.endTime.split(":")[0]), parseInt(apt.endTime.split(":")[1]))
+      const overlapStart = Math.max(aptStart, ruleStart)
+      const overlapEnd = Math.min(aptEnd, ruleEnd)
+      if (overlapStart < overlapEnd) {
+        bookedMinutes += overlapEnd - overlapStart
+      }
+    }
+
+    if (bookedMinutes === 0) return "available"
+    if (bookedMinutes >= totalAvailableMinutes) return "not-available"
+    return "partially"
   }
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
@@ -255,7 +361,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
 
   const handleDayClick = (day: number) => {
     setSelectedDay(day)
-    setSelectedSlots([]); setResult(null); setConflicts([])
+    setSelectedSlots([]); setManualTime(null); setResult(null); setConflicts([])
   }
 
   const handleAddSlot = (slot: { start: string; end: string }) => {
@@ -265,6 +371,12 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
     setSelectedSlots((prev) => {
       const exists = prev.some((s) => s.date === newSlot.date && s.start === newSlot.start && s.end === newSlot.end)
       if (exists) return prev
+      // Also reject overlap with existing slots on same day
+      const overlaps = prev.some((s) => {
+        if (s.date !== dateStr) return false
+        return slot.start < s.end && slot.end > s.start
+      })
+      if (overlaps) return prev
       return [...prev, newSlot]
     })
     setResult(null)
@@ -619,9 +731,10 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
         <section className="space-y-3">
           <h3 className="text-sm font-bold text-slate-700">3. Pick a Date & Time</h3>
           <div className="flex gap-3 text-[10px] font-semibold">
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Available for All</span>
+            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Available</span>
             <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" /> Partially Available</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400" /> Conflicting Schedules</span>
+            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400" /> Not Available</span>
+            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-400" /> Blocked</span>
           </div>
 
           {/* Calendar */}
@@ -648,8 +761,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
             <div className="grid grid-cols-7">
               {calendarCells.map((day, idx) => {
                 if (day === null) return <div key={`empty-${idx}`} className="p-2" />
-                const isAllAvailable = dayHasCommonSlots(currentYear, currentMonth, day)
-                const isPartiallyAvailable = dayHasAnySlots(currentYear, currentMonth, day)
+                const dayStatus = getDayStatus(currentYear, currentMonth, day)
                 const isToday = day === now.getDate() && currentMonth === now.getMonth() && currentYear === now.getFullYear()
                 const isSelected = selectedDay === day
                 const isPast = currentYear < now.getFullYear() ||
@@ -671,17 +783,21 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                     </span>
                     {!isPast && (
                       <div className="mt-1">
-                        {isAllAvailable ? (
+                        {dayStatus === "available" ? (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">
-                            Available for All
+                            Available
                           </span>
-                        ) : isPartiallyAvailable ? (
+                        ) : dayStatus === "partially" ? (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-700">
                             Partial
                           </span>
-                        ) : (
+                        ) : dayStatus === "not-available" ? (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-red-100 text-red-700">
-                            Conflicting
+                            Not Available
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-600">
+                            Blocked
                           </span>
                         )}
                       </div>
@@ -699,18 +815,29 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                 {fmtDate(currentYear, currentMonth, selectedDay)}
               </h4>
 
-              {/* {availableSlots.length > 0 && (
+              {/* Hourly suggestions — click to pre-fill time selectors, then adjust */}
+              {userRole === "STUDENT" && freeRanges.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-600 mb-2">Quick available blocks:</p>
+                  <p className="text-xs font-semibold text-slate-600 mb-2">Available blocks — click to use, then edit the time:</p>
                   <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                    {availableSlots.map((slot, i) => {
-                      const isSelected = selectedSlots.some(
-                        (s) => s.date === fmtDate(currentYear, currentMonth, selectedDay!) && s.start === slot.start && s.end === slot.end
-                      )
+                    {freeRanges.flatMap((range) => {
+                      const suggestions: { start: string; end: string }[] = []
+                      const startH = parseInt(range.start.split(":")[0])
+                      const endH = parseInt(range.end.split(":")[0])
+                      for (let h = startH; h < endH; h++) {
+                        suggestions.push({
+                          start: `${String(h).padStart(2, "0")}:00`,
+                          end: `${String(h + 1).padStart(2, "0")}:00`,
+                        })
+                      }
+                      return suggestions
+                    }).map((slot, i) => {
+                      const isSelected = manualTime?.start === slot.start && manualTime?.end === slot.end
                       return (
                         <button
                           key={i}
-                          onClick={() => { handleAddSlot(slot); setManualTime(null) }}
+                          type="button"
+                          onClick={() => setManualTime({ start: slot.start, end: slot.end })}
                           className={`card p-3 bg-white border flex items-center justify-between transition-colors ${
                             isSelected
                               ? "border-gold-300 bg-gold-50/50"
@@ -733,10 +860,10 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                     })}
                   </div>
                 </div>
-              )} */}
+              )}
 
               <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                {availableSlots.length === 0 ? (
+                {freeRanges.length === 0 ? (
                   <div className="text-xs text-red-700">
                     <p className="font-semibold">No common availability</p>
                     <p className="opacity-75">Add a custom block and invited faculty will review it.</p>
@@ -745,15 +872,17 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                   <p className="text-xs text-slate-500">You can also add additional custom blocks for this day.</p>
                 )}
                 <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={allow24Hours}
-                      onChange={(e) => setAllow24Hours(e.target.checked)}
-                      className="w-3.5 h-3.5 rounded border-slate-300 text-gold-600 focus:ring-gold-500"
-                    />
-                    Allow 24-hour range (00:00 – 23:00)
-                  </label>
+                  {userRole !== "STUDENT" && (
+                    <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={allow24Hours}
+                        onChange={(e) => setAllow24Hours(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-slate-300 text-gold-600 focus:ring-gold-500"
+                      />
+                      Allow 24-hour range (00:00 – 23:00)
+                    </label>
+                  )}
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Start time */}
                     <select
@@ -761,12 +890,13 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                       onChange={(e) => {
                         const h = e.target.value
                         const m = manualTime?.start?.split(":")[1] || "00"
-                        setManualTime((prev) => ({ start: `${h}:${m}`, end: prev?.end || "" }))
+                        // Clear end when start changes to avoid stale duration
+                        setManualTime((prev) => ({ start: `${h}:${m}`, end: "" }))
                       }}
                       className="input text-xs w-auto py-1.5"
                     >
                       <option value="" disabled>HH</option>
-                      {hourOptions.map((h) => (
+                      {startHourOpts.map((h) => (
                         <option key={h} value={String(h).padStart(2, "0")}>{String(h).padStart(2, "0")}</option>
                       ))}
                     </select>
@@ -776,12 +906,13 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                       onChange={(e) => {
                         const m = e.target.value
                         const h = manualTime?.start?.split(":")[0] || "00"
-                        setManualTime((prev) => ({ start: `${h}:${m}`, end: prev?.end || "" }))
+                        // Clear end when start minute changes
+                        setManualTime((prev) => ({ start: `${h}:${m}`, end: "" }))
                       }}
                       className="input text-xs w-auto py-1.5"
                     >
                       <option value="" disabled>MM</option>
-                      {MINUTE_OPTIONS.map((m) => (
+                      {getStartMinuteOpts(parseInt(manualTime?.start?.split(":")[0] || "0")).map((m) => (
                         <option key={m} value={String(m).padStart(2, "0")}>{String(m).padStart(2, "0")}</option>
                       ))}
                     </select>
@@ -799,7 +930,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                       className="input text-xs w-auto py-1.5"
                     >
                       <option value="" disabled>HH</option>
-                      {hourOptions.map((h) => (
+                      {getEndHourOpts(manualTime?.start || null).map((h) => (
                         <option key={h} value={String(h).padStart(2, "0")}>{String(h).padStart(2, "0")}</option>
                       ))}
                     </select>
@@ -814,7 +945,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                       className="input text-xs w-auto py-1.5"
                     >
                       <option value="" disabled>MM</option>
-                      {MINUTE_OPTIONS.map((m) => (
+                      {getEndMinuteOpts(manualTime?.start || null, parseInt(manualTime?.end?.split(":")[0] || "0")).map((m) => (
                         <option key={m} value={String(m).padStart(2, "0")}>{String(m).padStart(2, "0")}</option>
                       ))}
                     </select>

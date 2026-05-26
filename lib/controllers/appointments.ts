@@ -575,6 +575,10 @@ export async function retryTeamsSync(id: string, facultyId: string) {
   return appointmentRepository.update(id, { teamsSyncStatus: "UNWRITTEN", teamsSyncRetries: 0, teamsSyncError: null, teamsSyncLastAttempt: null })
 }
 
+export async function getFacultyBookedAppointments(facultyId: string, startDate: string, endDate: string) {
+  return appointmentRepository.listFacultyAppointmentsByDateRange(facultyId, startDate, endDate, "APPROVED")
+}
+
 export async function listStudentAppointments(studentId: string) {
   return appointmentRepository.listByStudent(studentId)
 }

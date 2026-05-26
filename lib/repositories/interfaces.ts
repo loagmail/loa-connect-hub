@@ -160,6 +160,7 @@ export interface IAppointmentRepository {
   listTimeSlots(appointmentId: string): Promise<AppointmentTimeSlotData[]>
   listStudentConflictingSlots(studentId: string, date: string, startTime: string, endTime: string, excludeSessionGroupId?: string): Promise<AppointmentTimeSlotData[]>
   listConflictingSlots(facultyIds: string[], date: string, startTime: string, endTime: string): Promise<AppointmentTimeSlotData[]>
+  listFacultyAppointmentsByDateRange(facultyId: string, startDate: string, endDate: string, status?: string): Promise<AppointmentData[]>
   addFile(appointmentId: string, data: { fileName: string; fileType: string; fileData: string; fileSize: number }): Promise<AppointmentFileData>
   listFiles(appointmentId: string): Promise<AppointmentFileData[]>
 }
