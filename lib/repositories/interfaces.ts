@@ -225,3 +225,39 @@ export interface IAuditLogRepository {
   create(data: { userId?: string | null; email?: string | null; action: string; details?: string | null }): Promise<AuditLogData>
   list(limit?: number): Promise<AuditLogData[]>
 }
+
+// --- Reports ---
+
+export interface FacultyStatsData {
+  facultyId: string
+  facultyName: string
+  total: number
+  completed: number
+  pending: number
+  cancelled: number
+  completionRate: number
+}
+
+export interface RawAppointmentData {
+  id: string
+  facultyId: string
+  facultyName: string
+  studentName: string
+  date: string
+  startTime: string
+  endTime: string
+  status: string
+  title: string | null
+}
+
+export interface IReportsRepository {
+  getDepartmentConsultationStats(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string; status?: string }
+  ): Promise<FacultyStatsData[]>
+
+  getDepartmentConsultationAppointments(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string; status?: string }
+  ): Promise<RawAppointmentData[]>
+}

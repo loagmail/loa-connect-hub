@@ -155,5 +155,5 @@ Based on current progress, here is the feature execution progress:
 - [x] **Phase 12: Email-based Auth & Password Setup** — Accounts activation flow at `/activate`.
 - [x] **Phase 13: Consultation Completion** — Actions taken notes and reports input.
 - [ ] **Phase 14: Attendee Permissions** — Granular meeting access and response permissions.
-- [ ] **Phase 15: Reports & Export** — Summarization metrics, printable reports, and CSV outputs.
+- [x] **Phase 15: Reports & Export** — Summarization metrics, printable reports, and CSV outputs.
 - [x] **Phase 16: Staggered & Multi-Faculty Booking** — Comprehensive multi-slot bookings.

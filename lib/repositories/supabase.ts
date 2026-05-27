@@ -3,9 +3,9 @@ import type {
   AppointmentAttendeeData, AppointmentTimeSlotData,
   UserData, DepartmentData, AvailabilityRuleData,
   PasswordResetTokenData, AuditLogData,
-  AppointmentFileData,
+  AppointmentFileData, FacultyStatsData,
   IUserRepository, IDepartmentRepository, IAppointmentRepository,
-  IAvailabilityRuleRepository, IPasswordResetTokenRepository, IAuditLogRepository,
+  IAvailabilityRuleRepository, IPasswordResetTokenRepository, IAuditLogRepository, IReportsRepository,
 } from "./interfaces"
 
 async function singleQuery<T>(builder: any): Promise<T | null> {
@@ -434,5 +434,145 @@ export const auditLogRepository: IAuditLogRepository = {
       .limit(limit)
     if (error) throw error
     return data as AuditLogData[]
+  },
+}
+
+export const reportsRepository: IReportsRepository = {
+  async getDepartmentConsultationStats(departmentId, filters) {
+    // 1. Fetch all FACULTY users in this department
+    const { data: facultyUsers, error: facultyError } = await supabase
+      .from("users")
+      .select("id, name")
+      .eq("departmentId", departmentId)
+      .eq("role", "FACULTY")
+    if (facultyError) throw facultyError
+
+    const facultyIds = (facultyUsers || []).map((u: any) => u.id)
+    if (facultyIds.length === 0) return []
+
+    // 2. Build the appointments query for CONSULTATION type
+    let query = supabase
+      .from("appointments")
+      .select("facultyId, status")
+      .eq("meetingType", "CONSULTATION")
+      .in("facultyId", facultyIds)
+
+    if (filters?.startDate) {
+      query = query.gte("date", filters.startDate)
+    }
+    if (filters?.endDate) {
+      query = query.lte("date", filters.endDate)
+    }
+    if (filters?.status) {
+      const statusMap: Record<string, string> = {
+        "completed": "COMPLETED",
+        "pending": "PENDING",
+        "approved": "APPROVED",
+        "cancelled": "CANCELLED",
+        "rejected": "REJECTED",
+      }
+      const dbStatus = statusMap[filters.status.toLowerCase()] || filters.status
+      query = query.eq("status", dbStatus)
+    }
+
+    const { data: appointments, error: apptError } = await query
+    if (apptError) throw apptError
+
+    // 3. Aggregate in TypeScript
+    const statsMap = new Map<string, FacultyStatsData>()
+
+    for (const faculty of facultyUsers || []) {
+      statsMap.set((faculty as any).id, {
+        facultyId: (faculty as any).id,
+        facultyName: (faculty as any).name,
+        total: 0,
+        completed: 0,
+        pending: 0,
+        cancelled: 0,
+        completionRate: 0,
+      })
+    }
+
+    for (const apt of (appointments || []) as any[]) {
+      const stat = statsMap.get(apt.facultyId)
+      if (!stat) continue
+
+      stat.total++
+
+      switch (apt.status) {
+        case "COMPLETED":
+          stat.completed++
+          break
+        case "PENDING":
+        case "APPROVED":
+          stat.pending++
+          break
+        case "CANCELLED":
+          stat.cancelled++
+          break
+      }
+    }
+
+    // Calculate completion rate for each faculty member
+    for (const stat of statsMap.values()) {
+      stat.completionRate = stat.total > 0
+        ? Math.round((stat.completed / stat.total) * 100)
+        : 0
+    }
+
+    return Array.from(statsMap.values())
+  },
+
+  async getDepartmentConsultationAppointments(departmentId, filters) {
+    const { data: facultyUsers, error: facultyError } = await supabase
+      .from("users")
+      .select("id, name")
+      .eq("departmentId", departmentId)
+      .eq("role", "FACULTY")
+    if (facultyError) throw facultyError
+
+    const facultyIds = (facultyUsers || []).map((u: any) => u.id)
+    if (facultyIds.length === 0) return []
+
+    const facultyNameMap = new Map((facultyUsers || []).map((u: any) => [u.id, u.name]))
+
+    let query = supabase
+      .from("appointments")
+      .select("id, facultyId, date, startTime, endTime, status, title, student:users!appointments_studentId_fkey(name)")
+      .eq("meetingType", "CONSULTATION")
+      .in("facultyId", facultyIds)
+
+    if (filters?.startDate) {
+      query = query.gte("date", filters.startDate)
+    }
+    if (filters?.endDate) {
+      query = query.lte("date", filters.endDate)
+    }
+    if (filters?.status) {
+      const statusMap: Record<string, string> = {
+        "completed": "COMPLETED",
+        "pending": "PENDING",
+        "approved": "APPROVED",
+        "cancelled": "CANCELLED",
+        "rejected": "REJECTED",
+      }
+      const dbStatus = statusMap[filters.status.toLowerCase()] || filters.status
+      query = query.eq("status", dbStatus)
+    }
+
+    const { data: appointments, error: apptError } = await query.order("date", { ascending: true }).order("startTime", { ascending: true })
+    if (apptError) throw apptError
+
+    return ((appointments || []) as any[]).map((apt: any) => ({
+      id: apt.id,
+      facultyId: apt.facultyId,
+      facultyName: facultyNameMap.get(apt.facultyId) || "Unknown",
+      studentName: apt.student?.name || "Unknown",
+      date: apt.date,
+      startTime: apt.startTime,
+      endTime: apt.endTime,
+      status: apt.status,
+      title: apt.title,
+    }))
   },
 }

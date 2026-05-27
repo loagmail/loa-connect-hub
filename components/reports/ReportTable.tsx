@@ -1,0 +1,110 @@
+"use client"
+
+import type { FacultyStatsData } from "@/lib/repositories/interfaces"
+
+interface ReportTableProps {
+  stats: FacultyStatsData[]
+}
+
+export function ReportTable({ stats }: ReportTableProps) {
+  if (stats.length === 0) {
+    return (
+      <div className="rounded-2xl border border-slate-200/70 bg-white p-8 shadow-sm text-center">
+        <p className="text-slate-400 text-sm">No faculty data available for this department.</p>
+      </div>
+    )
+  }
+
+  const sorted = [...stats].sort((a, b) => b.total - a.total)
+
+  return (
+    <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+      <div className="px-6 py-4 border-b border-slate-100">
+        <h3 className="text-sm font-bold text-slate-800">Faculty Consultation Summary</h3>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 bg-slate-50/50">
+              <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Faculty
+              </th>
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Total
+              </th>
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Completed
+              </th>
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Pending
+              </th>
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Cancelled
+              </th>
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Completion Rate
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {sorted.map((stat) => (
+              <tr
+                key={stat.facultyId}
+                className="transition-colors duration-150 hover:bg-slate-50/80"
+              >
+                <td className="px-6 py-4 font-medium text-slate-800 whitespace-nowrap">
+                  {stat.facultyName}
+                </td>
+                <td className="px-4 py-4 text-center text-slate-700 font-mono text-sm">
+                  {stat.total}
+                </td>
+                <td className="px-4 py-4 text-center text-emerald-600 font-mono text-sm">
+                  {stat.completed}
+                </td>
+                <td className="px-4 py-4 text-center text-amber-600 font-mono text-sm">
+                  {stat.pending}
+                </td>
+                <td className="px-4 py-4 text-center text-slate-400 font-mono text-sm">
+                  {stat.cancelled}
+                </td>
+                <td className="px-4 py-4 text-center">
+                  <CompletionBadge rate={stat.completionRate} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function CompletionBadge({ rate }: { rate: number }) {
+  let bg: string
+  let text: string
+  let dot: string
+
+  if (rate >= 80) {
+    bg = "bg-emerald-100"
+    text = "text-emerald-800"
+    dot = "bg-emerald-500"
+  } else if (rate >= 50) {
+    bg = "bg-amber-100"
+    text = "text-amber-800"
+    dot = "bg-amber-500"
+  } else {
+    bg = "bg-red-100"
+    text = "text-red-800"
+    dot = "bg-red-500"
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${bg} ${text} transition-all duration-200`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+      {rate}%
+    </span>
+  )
+}
