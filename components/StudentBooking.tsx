@@ -400,6 +400,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
         title: title.trim(),
         description: description.trim() || undefined,
         attendeeOptions: attendeeIds.map((id) => ({ userId: id, isMandatory: true })),
+        meetingType: userRole === "STUDENT" ? "CONSULTATION" : "INTERNAL",
       }
 
       // If creator is faculty/dean and teams form is shown, validate and attach links
