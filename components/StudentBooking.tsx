@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useEffect, useRef } from "react"
 import TeamsLinkForm from "@/components/TeamsLinkForm"
+import { useRouter } from "next/navigation"
 
+const router = useRouter()
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
@@ -459,7 +461,12 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
         errors: [err.message || "An unexpected error occurred. Check server logs."]
       });
     } finally {
-      setSubmitting(false)
+      //TODO: Remove if error 
+      if (userRole === "STUDENT") {
+        router.push("/student/meetings")
+      } else {
+        router.push("/faculty/meetings")
+      }
     }
   }
 
