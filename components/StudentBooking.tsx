@@ -473,30 +473,35 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
 
   const matchesDept = (dept: string | null) => deptFilter === "all" || dept === deptFilter
 
-  // Autocomplete search results
-  const primarySearchResults = useMemo(() => {
-    if (!primarySearch.trim()) return []
-    const q = primarySearch.toLowerCase()
-    return facultyWithRules.filter(
-      (f) => f.id !== primaryFacultyId && matchesDept(f.department) && (f.name.toLowerCase().includes(q) || f.email.toLowerCase().includes(q))
-    ).slice(0, 20)
-  }, [facultyWithRules, primarySearch, primaryFacultyId, deptFilter])
+  const isValidSchoolEmail = (email: string) =>
+    email
+      .toLowerCase()
+      .endsWith("@itmlyceumalabang.onmicrosoft.com")
 
-  const attendeeSearchResults = useMemo(() => {
-    if (!attendeeSearch.trim()) return []
+  type SearchPerson = {
+    id: string
+    name: string
+    email: string
+    department: string | null
+  }
 
-    const q = attendeeSearch.toLowerCase()
+  function searchPeople({
+    query,
+    includeStudents = false,
+    excludeIds = [],
+  }: {
+    query: string
+    includeStudents?: boolean
+    excludeIds?: string[]
+  }) {
+    if (!query.trim()) return []
 
-    const isValidSchoolEmail = (email: string) =>
-      email
-        .toLowerCase()
-        .endsWith("@itmlyceumalabang.onmicrosoft.com")
+    const q = query.toLowerCase()
 
-    const fromFaculty = facultyWithRules.filter(
+    const facultyResults: SearchPerson[] = facultyWithRules.filter(
       (f) =>
         isValidSchoolEmail(f.email) &&
-        f.id !== primaryFacultyId &&
-        !attendeeIds.includes(f.id) &&
+        !excludeIds.includes(f.id) &&
         matchesDept(f.department) &&
         (
           f.name.toLowerCase().includes(q) ||
@@ -504,12 +509,12 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
         )
     )
 
-    const fromStudents =
-      userRole !== "STUDENT" && students
+    const studentResults: SearchPerson[] =
+      includeStudents && students
         ? students.filter(
           (s) =>
             isValidSchoolEmail(s.email) &&
-            !attendeeIds.includes(s.id) &&
+            !excludeIds.includes(s.id) &&
             (
               s.name.toLowerCase().includes(q) ||
               s.email.toLowerCase().includes(q)
@@ -517,24 +522,46 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
         )
         : []
 
-    // Deduplicate by ID
-    const unique = Array.from(
+    return Array.from(
       new Map(
-        [...fromFaculty, ...fromStudents].map((p) => [p.id, p])
+        [...facultyResults, ...studentResults]
+          .map((p) => [p.id, p])
       ).values()
-    )
+    ).slice(0, 20)
+  }
 
-    return unique.slice(0, 20)
+  // Autocomplete search results
+  const primarySearchResults = useMemo(() => {
+    return searchPeople({
+      query: primarySearch,
+      includeStudents: false,
+      excludeIds: primaryFacultyId ? [primaryFacultyId] : [],
+    })
   }, [
+    primarySearch,
+    primaryFacultyId,
     facultyWithRules,
-    students,
+    deptFilter,
+  ])
+
+  const attendeeSearchResults = useMemo(() => {
+    return searchPeople({
+      query: attendeeSearch,
+      includeStudents: userRole !== "STUDENT",
+      excludeIds: [
+        primaryFacultyId,
+        ...attendeeIds,
+      ].filter(Boolean) as string[],
+    })
+  }, [
     attendeeSearch,
     attendeeIds,
     primaryFacultyId,
     userRole,
+    students,
+    facultyWithRules,
     deptFilter,
   ])
-
   const teamsLinkSlots = useMemo(
     () => selectedSlots.map((slot) => ({
       key: `${slot.date}-${slot.start}-${slot.end}`,
