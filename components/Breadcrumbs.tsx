@@ -32,11 +32,13 @@ export default function Breadcrumbs() {
 
   return (
     <nav className="flex items-center gap-1 text-xs text-slate-400 px-6 py-3 border-b border-slate-100 bg-white">
-      {items.map((item) => (
+      {items.map((item, index) => (
         <span key={item.href} className="flex items-center gap-1">
-          <svg className="w-3 h-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
+          {index > 0 && (
+            <svg className="w-3 h-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          )}
           {item.href === pathname ? (
             <span className="text-slate-700 font-semibold">{item.label}</span>
           ) : (
