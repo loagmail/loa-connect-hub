@@ -144,11 +144,10 @@ export default async function MeetingsPage(props: {
               <Link
                 key={key}
                 href={`/faculty/meetings?filter=${key}&status=${activeStatus}&sort=${activeSort}`}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${
-                  activeFilter === key
+                className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${activeFilter === key
                     ? "border-gold-500 bg-gold-500 text-white"
                     : "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
+                  }`}
               >
                 {label}
               </Link>
@@ -251,6 +250,17 @@ export default async function MeetingsPage(props: {
                     </div>
                   ))}
                 </div> */}
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <Link
+                    href={hasRole(role, "STUDENT") ? `/student/meetings/${meeting.id}` : `/faculty/meetings/${meeting.id}`}
+                    className="text-xs font-semibold text-gold-600 hover:text-gold-700 inline-flex items-center gap-1"
+                  >
+                    View Details
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
               </Link>
             )
           })}
