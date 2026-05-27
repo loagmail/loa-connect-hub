@@ -484,14 +484,56 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
 
   const attendeeSearchResults = useMemo(() => {
     if (!attendeeSearch.trim()) return []
+
     const q = attendeeSearch.toLowerCase()
-    const fromFaculty = facultyWithRules
-      .filter((f) => f.id !== primaryFacultyId && !attendeeIds.includes(f.id) && matchesDept(f.department) && (f.name.toLowerCase().includes(q) || f.email.toLowerCase().includes(q)))
-    const fromStudents = userRole !== "STUDENT" && students
-      ? students.filter((s) => !attendeeIds.includes(s.id) && (s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)))
-      : []
-    return [...fromFaculty, ...fromStudents].slice(0, 20)
-  }, [facultyWithRules, students, attendeeSearch, attendeeIds, primaryFacultyId, userRole, deptFilter])
+
+    const isValidSchoolEmail = (email: string) =>
+      email
+        .toLowerCase()
+        .endsWith("@itmlyceumalabang.onmicrosoft.com")
+
+    const fromFaculty = facultyWithRules.filter(
+      (f) =>
+        isValidSchoolEmail(f.email) &&
+        f.id !== primaryFacultyId &&
+        !attendeeIds.includes(f.id) &&
+        matchesDept(f.department) &&
+        (
+          f.name.toLowerCase().includes(q) ||
+          f.email.toLowerCase().includes(q)
+        )
+    )
+
+    const fromStudents =
+      userRole !== "STUDENT" && students
+        ? students.filter(
+          (s) =>
+            isValidSchoolEmail(s.email) &&
+            !attendeeIds.includes(s.id) &&
+            (
+              s.name.toLowerCase().includes(q) ||
+              s.email.toLowerCase().includes(q)
+            )
+        )
+        : []
+
+    // Deduplicate by ID
+    const unique = Array.from(
+      new Map(
+        [...fromFaculty, ...fromStudents].map((p) => [p.id, p])
+      ).values()
+    )
+
+    return unique.slice(0, 20)
+  }, [
+    facultyWithRules,
+    students,
+    attendeeSearch,
+    attendeeIds,
+    primaryFacultyId,
+    userRole,
+    deptFilter,
+  ])
 
   const teamsLinkSlots = useMemo(
     () => selectedSlots.map((slot) => ({
@@ -838,11 +880,10 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                           key={i}
                           type="button"
                           onClick={() => setManualTime({ start: slot.start, end: slot.end })}
-                          className={`card p-3 bg-white border flex items-center justify-between transition-colors ${
-                            isSelected
-                              ? "border-gold-300 bg-gold-50/50"
-                              : "border-slate-200 hover:border-slate-300"
-                          }`}
+                          className={`card p-3 bg-white border flex items-center justify-between transition-colors ${isSelected
+                            ? "border-gold-300 bg-gold-50/50"
+                            : "border-slate-200 hover:border-slate-300"
+                            }`}
                         >
                           <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
                             <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
