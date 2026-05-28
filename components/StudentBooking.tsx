@@ -105,7 +105,7 @@ function generateSlots(startTime: string, endTime: string): { start: string; end
 
 export default function StudentBooking({ facultyWithRules, userRole, students, serverNow, currentUserId }: Props) {
 
-  const [now] = useState(() => new Date(serverNow || Date.now()))
+  const now = useMemo(() => new Date(serverNow || Date.now()), [serverNow])
   const [currentMonth, setCurrentMonth] = useState(now.getMonth())
   const [currentYear, setCurrentYear] = useState(now.getFullYear())
   const router = useRouter()
@@ -141,7 +141,10 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
 
   // Fetch primary faculty's booked (APPROVED) appointments for the visible month
   useEffect(() => {
-    if (!primaryFacultyId || userRole !== "STUDENT") return
+    if (!primaryFacultyId || userRole !== "STUDENT") {
+      setBookedAppointments([])
+      return
+    }
     const startDate = fmtDate(currentYear, currentMonth, 1)
     const endDate = fmtDate(currentYear, currentMonth, getDaysInMonth(currentYear, currentMonth))
 
@@ -443,7 +446,6 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
           sessionGroupId: data.sessionGroupId,
         })
         setPrimaryFacultyId(null)
-        setBookedAppointments([])
         setAttendeeIds([])
         setSelectedDay(null)
         setSelectedSlots([])
@@ -674,7 +676,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
                 </span>
                 <button
                   type="button"
-                  onClick={() => { setPrimaryFacultyId(null); setBookedAppointments([]); setAttendeeIds([]) }}
+                  onClick={() => { setPrimaryFacultyId(null); setAttendeeIds([]) }}
                   className="text-xs text-red-500 hover:text-red-700 font-bold ml-1"
                 >
                   &times;

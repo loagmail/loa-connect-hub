@@ -36,7 +36,7 @@ export default function Sidebar() {
     return null
   }
 
-  const role = (session.user as { role?: string })?.role
+  const role = (session.user as any)?.role
   if (!role) return null
 
   const primaryRole = getPrimaryRole(role)

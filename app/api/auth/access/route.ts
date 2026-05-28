@@ -9,6 +9,6 @@ export async function GET() {
   }
 
   const config = await loadAccessConfig()
-  const group = userGroup((session.user as { role?: string }).role)
+  const group = userGroup((session.user as any).role)
   return NextResponse.json(config[group] || { pages: [], apis: [] })
 }
