@@ -421,7 +421,7 @@ export default function AppointmentDetail() {
                     ? "bg-amber-100 text-amber-700 border-amber-200"
                     : attendeeBadgeColors[a.status] || "bg-slate-100 text-slate-500 border-slate-200"
                 }`}>
-                  {effectiveStatus === "COMPLETED" && a.status === "PENDING" ? "INVITED" : "REQUIRES NO ACTION"}
+                  {effectiveStatus === "COMPLETED" && a.status === "PENDING" ? "INVITED" : "OPTIONAL"}
                 </span>
               </div>
             ))}
