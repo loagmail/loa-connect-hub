@@ -644,7 +644,7 @@ CREATE TABLE IF NOT EXISTS group_access (
 
 INSERT INTO group_access ("groupName", pages, apis) VALUES
   ('ADMIN',
-   '["/admin","/admin/users","/admin/users/deleted","/admin/access-config","/faq"]'::JSONB,
+   '["/admin","/admin/data-management","/admin/users","/admin/users/deleted","/admin/access-config","/faq"]'::JSONB,
    '["/api/admin"]'::JSONB),
   ('DEAN',
    '["/dean","/dean/upload","/faculty/meetings","/faculty/availability","/faculty/reports","/faq"]'::JSONB,
