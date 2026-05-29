@@ -4,6 +4,7 @@ import { getDeanDepartmentStats } from "@/lib/controllers/reports"
 import { ReportFilters } from "@/components/reports/ReportFilters"
 import { DeanReportsTabs } from "@/components/reports/DeanReportsTabs"
 import { CsvExport } from "@/components/reports/CsvExport"
+import { PdfExport } from "@/components/reports/PdfExport"
 import { Suspense } from "react"
 import { hasRole } from "@/lib/utils/roles"
 
@@ -48,6 +49,16 @@ export default async function DeanReportsPage(props: {
           <p className="text-base text-slate-500 mt-1 font-medium">{data.departmentName}</p>
         </div>
         <div className="flex items-center gap-3">
+          <PdfExport
+            departmentName={data.departmentName}
+            stats={data.stats}
+            rawAppointments={data.rawAppointments}
+            summaries={data.summaries}
+            departmentFrequency={data.departmentFrequency}
+            facultyFrequency={data.facultyFrequency}
+            departmentYearlyFrequency={data.departmentYearlyFrequency}
+            facultyYearlyFrequency={data.facultyYearlyFrequency}
+          />
           <CsvExport
             departmentName={data.departmentName}
             stats={data.stats}

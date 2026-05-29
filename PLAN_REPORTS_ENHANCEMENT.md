@@ -31,11 +31,18 @@ Extend the `/faculty/reports` page (Dean Reports) with 3 new tabs:
 - `components/reports/ConsultationSummaryView.tsx`
 - `components/reports/FrequencyView.tsx`
 
+## Completed (v2 - PDF Export)
+
+| Item | Status | Notes |
+|------|--------|-------|
+| PdfExport component (full report) | ✅ Done | `PdfExport.tsx` — programmatic multi-section PDF via `jspdf` + `jspdf-autotable` |
+| Per-tab PDF export | ✅ Done | Added to `DeanReportsTabs.tsx` — captures visible tab DOM via `html2canvas` |
+| Page integration | ✅ Done | `page.tsx` — header toolbar button |
+| Plan doc updated | ✅ Done | This entry |
+
 ## Pending for Future
 
-### PDF Export
-- Generate PDF per tab (formatted, print-friendly)
-- Options: print button or server-side PDF generation
+### Enhanced Filters
 
 ### Enhanced Filters
 - Per-faculty filter inside tabs
