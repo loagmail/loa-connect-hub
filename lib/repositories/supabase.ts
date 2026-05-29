@@ -228,7 +228,7 @@ export const departmentRepository: IDepartmentRepository = {
     return (data?.[0] as DepartmentData) ?? null
   },
   async create(data) {
-    const { data: created, error } = await supabase.from("departments").insert(data).select("*").single()
+    const { data: created, error } = await supabase.from("departments").insert({ ...data, isDisabled: false }).select("*").single()
     if (error) throw error
     return created as DepartmentData
   },

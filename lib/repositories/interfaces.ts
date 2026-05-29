@@ -53,6 +53,7 @@ export interface DepartmentData {
   name: string
   code: string
   deanId: string | null
+  isDisabled: boolean
 }
 
 export interface ListUsersOptions {

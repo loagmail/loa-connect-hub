@@ -10,14 +10,27 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
   }
 
-  const { data, error } = await supabase
-    .from("department_courses")
-    .select("*, department:departments(name, code)")
-    .order("departmentId", { ascending: true })
-    .order("code", { ascending: true })
+  const [coursesRes, deptsRes] = await Promise.all([
+    supabase
+      .from("department_courses")
+      .select("*")
+      .order("departmentId", { ascending: true })
+      .order("code", { ascending: true }),
+    supabase
+      .from("departments")
+      .select("id, name, code")
+  ])
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data || [])
+  if (coursesRes.error) return NextResponse.json({ error: coursesRes.error.message }, { status: 500 })
+  if (deptsRes.error) return NextResponse.json({ error: deptsRes.error.message }, { status: 500 })
+
+  const deptsMap = new Map((deptsRes.data || []).map((d: any) => [d.id, d]))
+  const joinedData = (coursesRes.data || []).map((c: any) => ({
+    ...c,
+    department: deptsMap.get(c.departmentId) || null
+  }))
+
+  return NextResponse.json(joinedData)
 }
 
 export async function POST(request: NextRequest) {
@@ -37,7 +50,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from("department_courses")
     .insert({ departmentId, name, code })
-    .select("*, department:departments(name, code)")
+    .select()
     .single()
 
   if (error) {
@@ -47,5 +60,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data)
+  const { data: deptData } = await supabase
+    .from("departments")
+    .select("name, code")
+    .eq("id", departmentId)
+    .single()
+
+  const responseData = {
+    ...data,
+    department: deptData || null
+  }
+
+  return NextResponse.json(responseData)
 }

@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS departments (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   name TEXT NOT NULL,
   code TEXT NOT NULL UNIQUE,
-  "deanId" TEXT
+  "deanId" TEXT,
+  "isDisabled" BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS role (
@@ -680,3 +681,9 @@ $$;
 -- =========================================================
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMPTZ;
+
+-- =========================================================
+-- Migration 12: Add isDisabled column to departments table
+-- =========================================================
+
+ALTER TABLE departments ADD COLUMN IF NOT EXISTS "isDisabled" BOOLEAN NOT NULL DEFAULT FALSE;
