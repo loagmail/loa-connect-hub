@@ -1,11 +1,16 @@
 import { departmentRepository, reportsRepository } from "@/lib/repositories/factory"
-import type { FacultyStatsData, RawAppointmentData } from "@/lib/repositories/interfaces"
+import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData } from "@/lib/repositories/interfaces"
 
 export interface DeanDepartmentStatsResult {
   departmentName: string
   departmentId: string
   stats: FacultyStatsData[]
   rawAppointments: RawAppointmentData[]
+  summaries: ConsultationSummaryData[]
+  departmentFrequency: DepartmentFrequencyEntry[]
+  facultyFrequency: FacultyFrequencyData[]
+  departmentYearlyFrequency: DepartmentYearlyEntry[]
+  facultyYearlyFrequency: FacultyYearlyData[]
 }
 
 export async function getDeanDepartmentStats(
@@ -21,9 +26,14 @@ export async function getDeanDepartmentStats(
     )
   }
 
-  const [stats, rawAppointments] = await Promise.all([
+  const [stats, rawAppointments, summaries, departmentFrequency, facultyFrequency, departmentYearlyFrequency, facultyYearlyFrequency] = await Promise.all([
     reportsRepository.getDepartmentConsultationStats(department.id, filters),
     reportsRepository.getDepartmentConsultationAppointments(department.id, filters),
+    reportsRepository.getConsultationSummaries(department.id, filters),
+    reportsRepository.getDepartmentFrequency(department.id, filters),
+    reportsRepository.getFacultyFrequency(department.id, filters),
+    reportsRepository.getDepartmentYearlyFrequency(department.id, filters),
+    reportsRepository.getFacultyYearlyFrequency(department.id, filters),
   ])
 
   return {
@@ -31,5 +41,10 @@ export async function getDeanDepartmentStats(
     departmentId: department.id,
     stats,
     rawAppointments,
+    summaries,
+    departmentFrequency,
+    facultyFrequency,
+    departmentYearlyFrequency,
+    facultyYearlyFrequency,
   }
 }

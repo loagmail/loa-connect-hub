@@ -2,8 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getDeanDepartmentStats } from "@/lib/controllers/reports"
 import { ReportFilters } from "@/components/reports/ReportFilters"
-import { ReportCharts } from "@/components/reports/ReportCharts"
-import { ReportsView } from "@/components/reports/ReportsView"
+import { DeanReportsTabs } from "@/components/reports/DeanReportsTabs"
 import { CsvExport } from "@/components/reports/CsvExport"
 import { Suspense } from "react"
 import { hasRole } from "@/lib/utils/roles"
@@ -38,14 +37,6 @@ export default async function DeanReportsPage(props: {
     )
   }
 
-  // Compute summary metrics
-  const totalConsultations = data.stats.reduce((sum, s) => sum + s.total, 0)
-  const totalCompleted = data.stats.reduce((sum, s) => sum + s.completed, 0)
-  const totalPending = data.stats.reduce((sum, s) => sum + s.pending, 0)
-  const overallCompletionRate = totalConsultations > 0
-    ? Math.round((totalCompleted / totalConsultations) * 100)
-    : 0
-
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* Header */}
@@ -61,6 +52,11 @@ export default async function DeanReportsPage(props: {
             departmentName={data.departmentName}
             stats={data.stats}
             rawAppointments={data.rawAppointments}
+            summaries={data.summaries}
+            departmentFrequency={data.departmentFrequency}
+            facultyFrequency={data.facultyFrequency}
+            departmentYearlyFrequency={data.departmentYearlyFrequency}
+            facultyYearlyFrequency={data.facultyYearlyFrequency}
           />
         </div>
       </div>
@@ -70,57 +66,17 @@ export default async function DeanReportsPage(props: {
         <ReportFilters />
       </Suspense>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <SummaryCard
-          label="Total Consultations"
-          value={totalConsultations}
-          color="blue"
-        />
-        <SummaryCard
-          label="Overall Completion Rate"
-          value={`${overallCompletionRate}%`}
-          color="green"
-        />
-        <SummaryCard
-          label="Pending Requests"
-          value={totalPending}
-          color="amber"
-        />
-      </div>
-
-      {/* Charts */}
-      <ReportCharts stats={data.stats} />
-
-      {/* Data View (Summary Table / Timeline Toggle) */}
-      <ReportsView stats={data.stats} rawAppointments={data.rawAppointments} />
-    </div>
-  )
-}
-
-function SummaryCard({
-  label,
-  value,
-  color,
-}: {
-  label: string
-  value: string | number
-  color: "blue" | "green" | "amber"
-}) {
-  const colorClasses = {
-    blue: "from-blue-50 to-blue-100/50 border-blue-200/60 text-blue-700",
-    green: "from-emerald-50 to-emerald-100/50 border-emerald-200/60 text-emerald-700",
-    amber: "from-amber-50 to-amber-100/50 border-amber-200/60 text-amber-700",
-  }
-
-  return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br ${colorClasses[color]} p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5`}
-    >
-      <p className="text-4xl font-bold tracking-tight">{value}</p>
-      <p className="text-xs font-semibold uppercase tracking-wider mt-1.5 opacity-75">
-        {label}
-      </p>
+      {/* Tab content (client-side switching) */}
+      <DeanReportsTabs
+        stats={data.stats}
+        rawAppointments={data.rawAppointments}
+        summaries={data.summaries}
+        departmentFrequency={data.departmentFrequency}
+        facultyFrequency={data.facultyFrequency}
+        departmentYearlyFrequency={data.departmentYearlyFrequency}
+        facultyYearlyFrequency={data.facultyYearlyFrequency}
+        deanId={deanId}
+      />
     </div>
   )
 }

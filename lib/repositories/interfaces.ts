@@ -251,6 +251,62 @@ export interface RawAppointmentData {
   title: string | null
 }
 
+export interface ConsultationSummaryData {
+  id: string
+  facultyId: string
+  facultyName: string
+  studentName: string
+  studentId: string
+  date: string
+  startTime: string
+  endTime: string
+  status: string
+  title: string | null
+  description: string | null
+  actionTaken: string | null
+  additionalRemarks: string | null
+  hasFiles: boolean
+}
+
+export interface DepartmentFrequencyEntry {
+  month: string
+  monthName: string
+  year: number
+  count: number
+}
+
+export interface FacultyFrequencyData {
+  facultyId: string
+  facultyName: string
+  total: number
+  averagePerMonth: number
+  monthlyCounts: { month: string; monthName: string; count: number }[]
+}
+
+export interface DepartmentYearlyEntry {
+  year: number
+  count: number
+}
+
+export interface FacultyYearlyData {
+  facultyId: string
+  facultyName: string
+  total: number
+  averagePerYear: number
+  yearlyCounts: { year: number; count: number }[]
+}
+
+export interface DepartmentSummary {
+  id: string
+  name: string
+  facultyCount: number
+  total: number
+  completed: number
+  pending: number
+  cancelled: number
+  completionRate: number
+}
+
 export interface IReportsRepository {
   getDepartmentConsultationStats(
     departmentId: string,
@@ -261,4 +317,29 @@ export interface IReportsRepository {
     departmentId: string,
     filters?: { startDate?: string; endDate?: string; status?: string }
   ): Promise<RawAppointmentData[]>
+
+  getConsultationSummaries(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string; status?: string }
+  ): Promise<ConsultationSummaryData[]>
+
+  getDepartmentFrequency(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string }
+  ): Promise<DepartmentFrequencyEntry[]>
+
+  getFacultyFrequency(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string }
+  ): Promise<FacultyFrequencyData[]>
+
+  getDepartmentYearlyFrequency(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string }
+  ): Promise<DepartmentYearlyEntry[]>
+
+  getFacultyYearlyFrequency(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string }
+  ): Promise<FacultyYearlyData[]>
 }
