@@ -205,7 +205,7 @@ function SummaryCard({
   )
 }
 
-// ─── Department Monthly Chart ─────────────────
+// ─── Department Monthly Chart (Line Graph) ────
 
 function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEntry[] }) {
   if (entries.length === 0) {
@@ -224,16 +224,28 @@ function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEnt
   const avg = total / entries.length
   const maxCount = Math.max(...entries.map((e) => e.count), 1)
 
-  const chartHeight = 200
-  const barAreaWidth = 700
-  const padding = { top: 10, right: 10, bottom: 40, left: 10 }
-  const plotWidth = barAreaWidth - padding.left - padding.right
-  const plotHeight = chartHeight - padding.top - padding.bottom
-  const barCount = entries.length
-  const totalGap = (barCount - 1) * 8
-  const barWidth = Math.min(48, (plotWidth - totalGap) / barCount)
-  const actualTotalWidth = barCount * barWidth + (barCount - 1) * 8
-  const offsetX = padding.left + (plotWidth - actualTotalWidth) / 2
+  const width = 700
+  const height = 220
+  const padding = { top: 20, right: 30, bottom: 44, left: 44 }
+  const plotWidth = width - padding.left - padding.right
+  const plotHeight = height - padding.top - padding.bottom
+
+  const stepX = entries.length > 1 ? plotWidth / (entries.length - 1) : 0
+
+  // Build polyline points string
+  const points = entries
+    .map((e, i) => {
+      const x = padding.left + i * stepX
+      const y = padding.top + plotHeight - (e.count / maxCount) * plotHeight
+      return `${x},${y}`
+    })
+    .join(" ")
+
+  // Y-axis ticks
+  const yTickCount = 4
+  const yTicks = Array.from({ length: yTickCount + 1 }, (_, i) =>
+    Math.round((maxCount / yTickCount) * i)
+  )
 
   return (
     <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
@@ -242,46 +254,124 @@ function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEnt
 
       <div className="overflow-x-auto">
         <svg
-          width={barAreaWidth}
-          height={chartHeight + 10}
-          viewBox={`0 0 ${barAreaWidth} ${chartHeight + 10}`}
+          width={width}
+          height={height}
+          viewBox={`0 0 ${width} ${height}`}
           className="min-w-full"
         >
-          {entries.map((entry, i) => {
-            const x = offsetX + i * (barWidth + 8)
-            const barHeightVal = (entry.count / maxCount) * plotHeight
-            const y = chartHeight - padding.bottom - barHeightVal
-
+          {/* Y-axis grid lines + labels */}
+          {yTicks.map((tick) => {
+            const y = padding.top + plotHeight - (tick / maxCount) * plotHeight
             return (
-              <g key={entry.month}>
-                <rect
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={barHeightVal}
-                  rx={4}
-                  className="fill-gold-500 transition-all duration-300 hover:fill-gold-600"
+              <g key={`ytick-${tick}`}>
+                <line
+                  x1={padding.left}
+                  y1={y}
+                  x2={width - padding.right}
+                  y2={y}
+                  stroke="#e2e8f0"
+                  strokeWidth={1}
                 />
                 <text
-                  x={x + barWidth / 2}
-                  y={y - 6}
+                  x={padding.left - 8}
+                  y={y + 3}
+                  textAnchor="end"
+                  className="fill-slate-400 text-[10px] font-medium"
+                >
+                  {tick}
+                </text>
+              </g>
+            )
+          })}
+
+          {/* Average line */}
+          {avg > 0 && (
+            <g>
+              <line
+                x1={padding.left}
+                y1={padding.top + plotHeight - (avg / maxCount) * plotHeight}
+                x2={width - padding.right}
+                y2={padding.top + plotHeight - (avg / maxCount) * plotHeight}
+                stroke="#94a3b8"
+                strokeWidth={1.5}
+                strokeDasharray="6 4"
+              />
+              <text
+                x={width - padding.right - 4}
+                y={padding.top + plotHeight - (avg / maxCount) * plotHeight - 4}
+                textAnchor="end"
+                className="fill-slate-400 text-[10px] font-medium"
+              >
+                Avg: {avg.toFixed(1)}
+              </text>
+            </g>
+          )}
+
+          {/* Area fill under the line */}
+          {entries.length > 1 && (
+            <polygon
+              points={`${padding.left},${padding.top + plotHeight} ${points} ${padding.left + (entries.length - 1) * stepX},${padding.top + plotHeight}`}
+              fill="url(#monthlyGradient)"
+            />
+          )}
+
+          {/* Gradient definition */}
+          <defs>
+            <linearGradient id="monthlyGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#d4a047" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#d4a047" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+
+          {/* Line */}
+          {entries.length > 1 && (
+            <polyline
+              points={points}
+              fill="none"
+              stroke="#d4a047"
+              strokeWidth={2.5}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          )}
+
+          {/* Points + labels */}
+          {entries.map((entry, i) => {
+            const x = padding.left + i * stepX
+            const y = padding.top + plotHeight - (entry.count / maxCount) * plotHeight
+            return (
+              <g key={entry.month}>
+                {/* Value label */}
+                <text
+                  x={x}
+                  y={y - 10}
                   textAnchor="middle"
                   className="fill-slate-600 text-[11px] font-semibold font-mono"
                 >
                   {entry.count}
                 </text>
+                {/* Dot */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={4}
+                  className="fill-white stroke-gold-500"
+                  strokeWidth={2.5}
+                />
+                {/* X-axis label */}
                 <text
-                  x={x + barWidth / 2}
-                  y={chartHeight - padding.bottom + 16}
+                  x={x}
+                  y={padding.top + plotHeight + 16}
                   textAnchor="middle"
                   className="fill-slate-500 text-[10px] font-medium"
                 >
                   {entry.monthName.slice(0, 3)}
                 </text>
+                {/* Year label (show once per year) */}
                 {i === 0 || entries[i - 1].year !== entry.year ? (
                   <text
-                    x={x + barWidth / 2}
-                    y={chartHeight - padding.bottom + 30}
+                    x={x}
+                    y={padding.top + plotHeight + 30}
                     textAnchor="middle"
                     className="fill-slate-400 text-[9px]"
                   >
@@ -292,37 +382,26 @@ function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEnt
             )
           })}
 
-          {avg > 0 && (
-            <g>
-              <line
-                x1={padding.left}
-                y1={chartHeight - padding.bottom - (avg / maxCount) * plotHeight}
-                x2={barAreaWidth - padding.right}
-                y2={chartHeight - padding.bottom - (avg / maxCount) * plotHeight}
-                stroke="#94a3b8"
-                strokeWidth={1.5}
-                strokeDasharray="6 4"
-              />
-              <text
-                x={barAreaWidth - padding.right - 4}
-                y={chartHeight - padding.bottom - (avg / maxCount) * plotHeight - 4}
-                textAnchor="end"
-                className="fill-slate-400 text-[10px] font-medium"
-              >
-                Avg: {avg.toFixed(1)}
-              </text>
-            </g>
+          {/* Single point (no line possible) */}
+          {entries.length === 1 && (
+            <circle
+              cx={padding.left}
+              cy={padding.top + plotHeight - (entries[0].count / maxCount) * plotHeight}
+              r={4}
+              className="fill-white stroke-gold-500"
+              strokeWidth={2.5}
+            />
           )}
         </svg>
       </div>
 
       <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-gold-500" />
+          <div className="w-6 h-[3px] rounded-full bg-gold-500" />
           <span className="text-xs text-slate-500">Consultations</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 border-t-2 border-dashed border-slate-400" />
+          <span className="w-3 inline-block border-t-2 border-dashed border-slate-400" />
           <span className="text-xs text-slate-500">Average</span>
         </div>
       </div>
@@ -330,7 +409,7 @@ function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEnt
   )
 }
 
-// ─── Department Yearly Chart ──────────────────
+// ─── Department Yearly Chart (Line Graph) ─────
 
 function DepartmentYearlyChart({ entries }: { entries: DepartmentYearlyEntry[] }) {
   if (entries.length === 0) {
@@ -349,16 +428,28 @@ function DepartmentYearlyChart({ entries }: { entries: DepartmentYearlyEntry[] }
   const avg = total / entries.length
   const maxCount = Math.max(...entries.map((e) => e.count), 1)
 
-  const chartHeight = 200
-  const barAreaWidth = 700
-  const padding = { top: 10, right: 10, bottom: 40, left: 10 }
-  const plotWidth = barAreaWidth - padding.left - padding.right
-  const plotHeight = chartHeight - padding.top - padding.bottom
-  const barCount = entries.length
-  const totalGap = (barCount - 1) * 16
-  const barWidth = Math.min(80, (plotWidth - totalGap) / barCount)
-  const actualTotalWidth = barCount * barWidth + (barCount - 1) * 16
-  const offsetX = padding.left + (plotWidth - actualTotalWidth) / 2
+  const width = 700
+  const height = 220
+  const padding = { top: 20, right: 30, bottom: 44, left: 44 }
+  const plotWidth = width - padding.left - padding.right
+  const plotHeight = height - padding.top - padding.bottom
+
+  const stepX = entries.length > 1 ? plotWidth / (entries.length - 1) : 0
+
+  // Build polyline points string
+  const points = entries
+    .map((e, i) => {
+      const x = padding.left + i * stepX
+      const y = padding.top + plotHeight - (e.count / maxCount) * plotHeight
+      return `${x},${y}`
+    })
+    .join(" ")
+
+  // Y-axis ticks
+  const yTickCount = 4
+  const yTicks = Array.from({ length: yTickCount + 1 }, (_, i) =>
+    Math.round((maxCount / yTickCount) * i)
+  )
 
   return (
     <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
@@ -367,37 +458,114 @@ function DepartmentYearlyChart({ entries }: { entries: DepartmentYearlyEntry[] }
 
       <div className="overflow-x-auto">
         <svg
-          width={barAreaWidth}
-          height={chartHeight + 10}
-          viewBox={`0 0 ${barAreaWidth} ${chartHeight + 10}`}
+          width={width}
+          height={height}
+          viewBox={`0 0 ${width} ${height}`}
           className="min-w-full"
         >
-          {entries.map((entry, i) => {
-            const x = offsetX + i * (barWidth + 16)
-            const barHeightVal = (entry.count / maxCount) * plotHeight
-            const y = chartHeight - padding.bottom - barHeightVal
-
+          {/* Y-axis grid lines + labels */}
+          {yTicks.map((tick) => {
+            const y = padding.top + plotHeight - (tick / maxCount) * plotHeight
             return (
-              <g key={entry.year}>
-                <rect
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={barHeightVal}
-                  rx={4}
-                  className="fill-gold-500 transition-all duration-300 hover:fill-gold-600"
+              <g key={`ytick-${tick}`}>
+                <line
+                  x1={padding.left}
+                  y1={y}
+                  x2={width - padding.right}
+                  y2={y}
+                  stroke="#e2e8f0"
+                  strokeWidth={1}
                 />
                 <text
-                  x={x + barWidth / 2}
-                  y={y - 6}
+                  x={padding.left - 8}
+                  y={y + 3}
+                  textAnchor="end"
+                  className="fill-slate-400 text-[10px] font-medium"
+                >
+                  {tick}
+                </text>
+              </g>
+            )
+          })}
+
+          {/* Average line */}
+          {avg > 0 && (
+            <g>
+              <line
+                x1={padding.left}
+                y1={padding.top + plotHeight - (avg / maxCount) * plotHeight}
+                x2={width - padding.right}
+                y2={padding.top + plotHeight - (avg / maxCount) * plotHeight}
+                stroke="#94a3b8"
+                strokeWidth={1.5}
+                strokeDasharray="6 4"
+              />
+              <text
+                x={width - padding.right - 4}
+                y={padding.top + plotHeight - (avg / maxCount) * plotHeight - 4}
+                textAnchor="end"
+                className="fill-slate-400 text-[10px] font-medium"
+              >
+                Avg: {avg.toFixed(1)}
+              </text>
+            </g>
+          )}
+
+          {/* Area fill under the line */}
+          {entries.length > 1 && (
+            <polygon
+              points={`${padding.left},${padding.top + plotHeight} ${points} ${padding.left + (entries.length - 1) * stepX},${padding.top + plotHeight}`}
+              fill="url(#yearlyGradient)"
+            />
+          )}
+
+          {/* Gradient definition */}
+          <defs>
+            <linearGradient id="yearlyGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#d4a047" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#d4a047" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+
+          {/* Line */}
+          {entries.length > 1 && (
+            <polyline
+              points={points}
+              fill="none"
+              stroke="#d4a047"
+              strokeWidth={2.5}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          )}
+
+          {/* Points + labels */}
+          {entries.map((entry, i) => {
+            const x = padding.left + i * stepX
+            const y = padding.top + plotHeight - (entry.count / maxCount) * plotHeight
+            return (
+              <g key={entry.year}>
+                {/* Value label */}
+                <text
+                  x={x}
+                  y={y - 10}
                   textAnchor="middle"
                   className="fill-slate-600 text-[11px] font-semibold font-mono"
                 >
                   {entry.count}
                 </text>
+                {/* Dot */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={4}
+                  className="fill-white stroke-gold-500"
+                  strokeWidth={2.5}
+                />
+                {/* X-axis label */}
                 <text
-                  x={x + barWidth / 2}
-                  y={chartHeight - padding.bottom + 16}
+                  x={x}
+                  y={padding.top + plotHeight + 16}
                   textAnchor="middle"
                   className="fill-slate-500 text-[10px] font-medium"
                 >
@@ -407,37 +575,26 @@ function DepartmentYearlyChart({ entries }: { entries: DepartmentYearlyEntry[] }
             )
           })}
 
-          {avg > 0 && (
-            <g>
-              <line
-                x1={padding.left}
-                y1={chartHeight - padding.bottom - (avg / maxCount) * plotHeight}
-                x2={barAreaWidth - padding.right}
-                y2={chartHeight - padding.bottom - (avg / maxCount) * plotHeight}
-                stroke="#94a3b8"
-                strokeWidth={1.5}
-                strokeDasharray="6 4"
-              />
-              <text
-                x={barAreaWidth - padding.right - 4}
-                y={chartHeight - padding.bottom - (avg / maxCount) * plotHeight - 4}
-                textAnchor="end"
-                className="fill-slate-400 text-[10px] font-medium"
-              >
-                Avg: {avg.toFixed(1)}
-              </text>
-            </g>
+          {/* Single point */}
+          {entries.length === 1 && (
+            <circle
+              cx={padding.left}
+              cy={padding.top + plotHeight - (entries[0].count / maxCount) * plotHeight}
+              r={4}
+              className="fill-white stroke-gold-500"
+              strokeWidth={2.5}
+            />
           )}
         </svg>
       </div>
 
       <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-gold-500" />
+          <div className="w-6 h-[3px] rounded-full bg-gold-500" />
           <span className="text-xs text-slate-500">Consultations</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 border-t-2 border-dashed border-slate-400" />
+          <span className="w-3 inline-block border-t-2 border-dashed border-slate-400" />
           <span className="text-xs text-slate-500">Average</span>
         </div>
       </div>
