@@ -239,7 +239,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                         : "bg-gray-100 text-gray-500"
                     }`}
                   >
-                    att.status
+                    {att.status}
                     {/* {att.isMandatory !== false ? "Required" : "Optional"} */}
                   </span>
                 </span>
