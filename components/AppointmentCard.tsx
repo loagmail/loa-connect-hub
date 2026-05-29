@@ -155,7 +155,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-800 leading-tight">{appointment.faculty.name}</p>
-                <p className="text-xs text-slate-400 mt-0.5">Faculty Consultant</p>
+                <p className="text-xs text-slate-400 mt-0.5">Faculty / Professor</p>
               </div>
             </div>
           )}
@@ -214,7 +214,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
           {/* Attendee badges */}
           {appointment.attendees && appointment.attendees.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">With:</span>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Optional Attendee(s):</span>
               {appointment.attendees.map((att) => (
                 <span
                   key={att.id}
@@ -239,7 +239,8 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                         : "bg-gray-100 text-gray-500"
                     }`}
                   >
-                    {att.isMandatory !== false ? "Required" : "Optional"}
+                    att.status
+                    {/* {att.isMandatory !== false ? "Required" : "Optional"} */}
                   </span>
                 </span>
               ))}
