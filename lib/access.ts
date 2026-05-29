@@ -7,11 +7,11 @@ interface GroupAccessEntry {
 
 const DEFAULT_CONFIG: Record<string, GroupAccessEntry> = {
   ADMIN: {
-    pages: ["/", "/admin", "/admin/data-management", "/admin/users", "/admin/users/deleted", "/admin/access-config", "/admin/reports", "/faq"],
+    pages: ["/", "/admin", "/admin/data-management", "/admin/users", "/admin/users/deleted", "/admin/access-config", "/admin/departments", "/admin/reports", "/faq"],
     apis: ["/api/admin"],
   },
   DEAN: {
-    pages: ["/", "/dean", "/dean/upload", "/faculty/meetings", "/faculty/availability", "/faculty/reports", "/faq"],
+    pages: ["/", "/dean", "/dean/upload", "/dean/departments", "/faculty/meetings", "/faculty/availability", "/faculty/reports", "/faq"],
     apis: ["/api/admin/users", "/api/import/users", "/api/appointments", "/api/availability-rules"],
   },
   FACULTY: {

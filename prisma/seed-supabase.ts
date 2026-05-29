@@ -9,10 +9,14 @@ async function main() {
     "appointment_attendees",
     "appointments",
     "faculty_availability_rules",
-
     "password_reset_tokens",
     "sessions",
     "accounts",
+    "appointment_time_slots",
+    "appointment_files",
+    "userrole",
+    "audit_logs",
+    "department_courses",
     "users",
     "departments",
   ]
@@ -23,6 +27,7 @@ async function main() {
     }
   }
 
+  // ── ADMIN ──────────────────────────────────────────────────
   const { data: admin, error: adminErr } = await supabase
     .from("users")
     .insert({ name: "Mr. Admin", email: "admin@lyceumalabang.ph", passwordHash, hasLoggedInBefore: true })
@@ -31,6 +36,7 @@ async function main() {
   if (adminErr) throw adminErr
   await supabase.from("userrole").insert({ userId: admin.id, roleName: "ADMIN" })
 
+  // ── DEAN ──────────────────────────────────────────────────
   const { data: dean, error: deanErr } = await supabase
     .from("users")
     .insert({ name: "Regie Ellana", email: "regie@itmlyceumalabang.onmicrosoft.com", passwordHash })
@@ -39,6 +45,7 @@ async function main() {
   if (deanErr) throw deanErr
   await supabase.from("userrole").insert({ userId: dean.id, roleName: "DEAN" })
 
+  // ── DEPARTMENT ────────────────────────────────────────────
   const { data: department, error: deptErr } = await supabase
     .from("departments")
     .insert({ name: "College of Computer Studies", code: "CCS", deanId: dean.id })
@@ -48,25 +55,52 @@ async function main() {
 
   await supabase.from("users").update({ departmentId: department.id }).eq("id", dean.id)
 
-  const { data: faculty1, error: facErr } = await supabase
-    .from("users")
-    .insert({ name: "Nin Alamo", email: "nino_francisco_alamo@itmlyceumalabang.onmicrosoft.com", passwordHash, departmentId: department.id })
-    .select("*")
-    .single()
-  if (facErr) throw facErr
-  await supabase.from("userrole").insert({ userId: faculty1.id, roleName: "FACULTY" })
+  // ── DEPARTMENT COURSES ────────────────────────────────────
+  await supabase.from("department_courses").insert([
+    { departmentId: department.id, name: "Bachelor of Science in Information Technology", code: "BSIT" },
+    { departmentId: department.id, name: "Bachelor of Science in Computer Science", code: "BSCS" },
+  ])
 
-  const { data: student1, error: stuErr } = await supabase
-    .from("users")
-    .insert({ name: "Nino Francisco Alamo", email: "nin.alamo@outlook.com", passwordHash })
-    .select("*")
-    .single()
-  if (stuErr) throw stuErr
-  await supabase.from("userrole").insert({ userId: student1.id, roleName: "STUDENT" })
+  // ── FACULTY (3) ───────────────────────────────────────────
+  const facultyData = [
+    { name: "Nin Alamo", email: "nino_francisco_alamo@itmlyceumalabang.onmicrosoft.com" },
+    { name: "Maria Santos", email: "maria.santos@itmlyceumalabang.onmicrosoft.com" },
+    { name: "Juan Dela Cruz", email: "juan.delacruz@itmlyceumalabang.onmicrosoft.com" },
+  ]
+  const facultyUsers: any[] = []
+  for (const f of facultyData) {
+    const { data: user, error: err } = await supabase
+      .from("users")
+      .insert({ name: f.name, email: f.email, passwordHash, departmentId: department.id })
+      .select("*")
+      .single()
+    if (err) throw err
+    facultyUsers.push(user)
+    await supabase.from("userrole").insert({ userId: user.id, roleName: "FACULTY" })
+  }
 
-  // Default availability rules for faculty: Mon-Fri 08:00-18:00, Sat-Sun blocked
-  const allFaculty = [faculty1]
-  for (const faculty of allFaculty) {
+  // ── STUDENTS (5) ──────────────────────────────────────────
+  const studentData = [
+    { name: "Alice Reyes", email: "alice.reyes@itmlyceumalabang.onmicrosoft.com", course: "BSIT" },
+    { name: "Bob Martinez", email: "bob.martinez@itmlyceumalabang.onmicrosoft.com", course: "BSIT" },
+    { name: "Charlie Gomez", email: "charlie.gomez@itmlyceumalabang.onmicrosoft.com", course: "BSCS" },
+    { name: "Diana Lopez", email: "diana.lopez@itmlyceumalabang.onmicrosoft.com", course: "BSCS" },
+    { name: "Ethan Fernandez", email: "ethan.fernandez@itmlyceumalabang.onmicrosoft.com", course: "BSIT" },
+  ]
+  const studentUsers: any[] = []
+  for (const s of studentData) {
+    const { data: user, error: err } = await supabase
+      .from("users")
+      .insert({ name: s.name, email: s.email, passwordHash, departmentId: department.id, course: s.course })
+      .select("*")
+      .single()
+    if (err) throw err
+    studentUsers.push(user)
+    await supabase.from("userrole").insert({ userId: user.id, roleName: "STUDENT" })
+  }
+
+  // ── FACULTY AVAILABILITY ─────────────────────────────────
+  for (const faculty of facultyUsers) {
     for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
       const isWeekend = dayOfWeek >= 5
       const { error: ruleErr } = await supabase
@@ -86,13 +120,14 @@ async function main() {
   }
 
   console.log({
-    admin: { name: admin.name, role: admin.role },
-    dean: { name: dean.name, role: dean.role, department: department.name },
-    faculty: [{ name: faculty1.name }],
-    students: [{ name: student1.name, email: student1.email }],
-    totalUsers: 4,
+    admin: { name: admin.name, role: (admin as any).role },
+    dean: { name: dean.name, role: (dean as any).role, department: department.name },
+    faculty: facultyUsers.map((f) => f.name),
+    students: studentUsers.map((s) => ({ name: s.name, email: s.email, course: s.course })),
+    totalUsers: 1 + 1 + facultyUsers.length + studentUsers.length,
     departments: [{ name: department.name, code: department.code }],
-    availabilityRules: `${allFaculty.length} faculty × 7 days = ${allFaculty.length * 7} rules`,
+    departmentCourses: ["BSIT", "BSCS"],
+    availabilityRules: `${facultyUsers.length} faculty × 7 days = ${facultyUsers.length * 7} rules`,
   })
 }
 

@@ -352,130 +352,134 @@ CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token
   ON password_reset_tokens(token);
 
 -- =========================================================
--- 7. SEED DATA
+-- 7. DEPARTMENT COURSES (managed by admin/dean)
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS department_courses (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  "departmentId" TEXT NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  code TEXT NOT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE("departmentId", code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_department_courses_dept
+  ON department_courses("departmentId");
+
+INSERT INTO department_courses (id, "departmentId", name, code)
+SELECT d.id, d.id, 'Bachelor of Science in Information Technology', 'BSIT'
+FROM departments d WHERE d.code = 'CCS'
+AND NOT EXISTS (SELECT 1 FROM department_courses WHERE "departmentId" = d.id AND code = 'BSIT');
+
+INSERT INTO department_courses (id, "departmentId", name, code)
+SELECT d.id || '2', d.id, 'Bachelor of Science in Computer Science', 'BSCS'
+FROM departments d WHERE d.code = 'CCS'
+AND NOT EXISTS (SELECT 1 FROM department_courses WHERE "departmentId" = d.id AND code = 'BSCS');
+
+-- =========================================================
+-- 8. SEED DATA
+--    Uses fixed UUIDs for idempotent re-runs and to align
+--    with prisma/seed-supabase.ts expectations.
 -- =========================================================
 
 DO $$
 DECLARE
-  _admin_id TEXT := gen_random_uuid()::TEXT;
-  _dean_id TEXT := gen_random_uuid()::TEXT;
-  _dept_id TEXT := gen_random_uuid()::TEXT;
-  _faculty1_id TEXT := gen_random_uuid()::TEXT;
-  _student1_id TEXT := gen_random_uuid()::TEXT;
+  _admin_id TEXT    := 'a0000000-0000-0000-0000-000000000001';
+  _dept_id TEXT    := 'b0000000-0000-0000-0000-000000000001';
+  _dean_id TEXT    := 'c0000000-0000-0000-0000-000000000001';
+  _faculty1_id TEXT := 'd0000000-0000-0000-0000-000000000001';
+  _faculty2_id TEXT := 'd0000000-0000-0000-0000-000000000002';
+  _faculty3_id TEXT := 'd0000000-0000-0000-0000-000000000003';
+  _student1_id TEXT := 'e0000000-0000-0000-0000-000000000001';
+  _student2_id TEXT := 'e0000000-0000-0000-0000-000000000002';
+  _student3_id TEXT := 'e0000000-0000-0000-0000-000000000003';
+  _student4_id TEXT := 'e0000000-0000-0000-0000-000000000004';
+  _student5_id TEXT := 'e0000000-0000-0000-0000-000000000005';
+  _course_bsit_id TEXT := 'f0000000-0000-0000-0000-000000000001';
+  _course_bscs_id TEXT := 'f0000000-0000-0000-0000-000000000002';
 
-  _hash TEXT := crypt('a7Kx9mPq4Rz2wY8b', gen_salt('bf', 12));
+  _hash TEXT := '$2b$12$GvU25kxpeLdvzSUmiZNm9edIlzresvMlzb2cT1PLdsQYjPAqRyYNW';
 BEGIN
 
-  -- ADMIN
-  INSERT INTO users (
-    id,
-    name,
-    email,
-    "passwordHash",
-    "hasLoggedInBefore"
-  )
-  VALUES (
-    _admin_id,
-    'Mr. Admin',
-    'admin@lyceumalabang.ph',
-    _hash,
-    true
-  );
+  -- ── ADMIN ──────────────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash", "hasLoggedInBefore")
+  VALUES (_admin_id, 'Mr. Admin', 'admin@lyceumalabang.ph', _hash, true)
+  ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO userrole ("userId", "roleName") VALUES (_admin_id, 'ADMIN');
+  INSERT INTO userrole ("userId", "roleName") VALUES (_admin_id, 'ADMIN')
+  ON CONFLICT DO NOTHING;
 
-  -- DEAN
-  INSERT INTO users (
-    id,
-    name,
-    email,
-    "passwordHash"
-  )
-  VALUES (
-    _dean_id,
-    'Regie Ellana',
-    'regie@itmlyceumalabang.onmicrosoft.com',
-    _hash
-  );
+  -- ── DEAN ──────────────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash")
+  VALUES (_dean_id, 'Regie Ellana', 'regie@itmlyceumalabang.onmicrosoft.com', _hash)
+  ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO userrole ("userId", "roleName") VALUES (_dean_id, 'DEAN');
+  INSERT INTO userrole ("userId", "roleName") VALUES (_dean_id, 'DEAN')
+  ON CONFLICT DO NOTHING;
 
-  -- DEPARTMENT
-  INSERT INTO departments (
-    id,
-    name,
-    code,
-    "deanId"
-  )
-  VALUES (
-    _dept_id,
-    'College of Computer Studies',
-    'CCS',
-    _dean_id
-  );
+  -- ── DEPARTMENT (College of Computer Studies) ────────────
+  INSERT INTO departments (id, name, code, "deanId")
+  VALUES (_dept_id, 'College of Computer Studies', 'CCS', _dean_id)
+  ON CONFLICT (id) DO NOTHING;
 
-  UPDATE users
-  SET "departmentId" = _dept_id
-  WHERE id = _dean_id;
+  UPDATE users SET "departmentId" = _dept_id WHERE id = _dean_id AND "departmentId" IS NULL;
 
-  -- FACULTY
-  INSERT INTO users (
-    id,
-    name,
-    email,
-    "passwordHash",
-    "departmentId"
-  )
-  VALUES (
-    _faculty1_id,
-    'Nin Alamo',
-    'nino_francisco_alamo@itmlyceumalabang.onmicrosoft.com',
-    _hash,
-    _dept_id
-  );
+  -- ── DEPARTMENT COURSES ───────────────────────────────────
+  INSERT INTO department_courses (id, "departmentId", name, code) VALUES
+    (_course_bsit_id, _dept_id, 'Bachelor of Science in Information Technology', 'BSIT'),
+    (_course_bscs_id, _dept_id, 'Bachelor of Science in Computer Science', 'BSCS')
+  ON CONFLICT ("departmentId", code) DO NOTHING;
 
-  INSERT INTO userrole ("userId", "roleName") VALUES (_faculty1_id, 'FACULTY');
+  -- ── FACULTY (3) ─────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash", "departmentId") VALUES
+    (_faculty1_id, 'Nin Alamo',           'nino_francisco_alamo@itmlyceumalabang.onmicrosoft.com', _hash, _dept_id),
+    (_faculty2_id, 'Maria Santos',        'maria.santos@itmlyceumalabang.onmicrosoft.com',           _hash, _dept_id),
+    (_faculty3_id, 'Juan Dela Cruz',      'juan.delacruz@itmlyceumalabang.onmicrosoft.com',         _hash, _dept_id)
+  ON CONFLICT (id) DO NOTHING;
 
-  -- STUDENT
-  INSERT INTO users (
-    id,
-    name,
-    email,
-    "passwordHash"
-  )
-  VALUES (
-    _student1_id,
-    'Nino Francisco Alamo',
-    'nin.alamo@outlook.com',
-    _hash
-  );
+  INSERT INTO userrole ("userId", "roleName") VALUES
+    (_faculty1_id, 'FACULTY'),
+    (_faculty2_id, 'FACULTY'),
+    (_faculty3_id, 'FACULTY')
+  ON CONFLICT DO NOTHING;
 
-  INSERT INTO userrole ("userId", "roleName") VALUES (_student1_id, 'STUDENT');
+  -- ── STUDENTS (5) ────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash", "departmentId", course) VALUES
+    (_student1_id, 'Alice Reyes',       'alice.reyes@itmlyceumalabang.onmicrosoft.com',     _hash, _dept_id, 'BSIT'),
+    (_student2_id, 'Bob Martinez',      'bob.martinez@itmlyceumalabang.onmicrosoft.com',    _hash, _dept_id, 'BSIT'),
+    (_student3_id, 'Charlie Gomez',     'charlie.gomez@itmlyceumalabang.onmicrosoft.com',   _hash, _dept_id, 'BSCS'),
+    (_student4_id, 'Diana Lopez',       'diana.lopez@itmlyceumalabang.onmicrosoft.com',     _hash, _dept_id, 'BSCS'),
+    (_student5_id, 'Ethan Fernandez',   'ethan.fernandez@itmlyceumalabang.onmicrosoft.com', _hash, _dept_id, 'BSIT')
+  ON CONFLICT (id) DO NOTHING;
 
-  -- FACULTY AVAILABILITY
+  INSERT INTO userrole ("userId", "roleName") VALUES
+    (_student1_id, 'STUDENT'),
+    (_student2_id, 'STUDENT'),
+    (_student3_id, 'STUDENT'),
+    (_student4_id, 'STUDENT'),
+    (_student5_id, 'STUDENT')
+  ON CONFLICT DO NOTHING;
+
+  -- ── FACULTY AVAILABILITY ─────────────────────────────────
   FOR i IN 0..6 LOOP
-    INSERT INTO faculty_availability_rules (
-      "facultyId",
-      "dayOfWeek",
-      "isBlocked",
-      "startTime",
-      "endTime",
-      "startDate"
-    )
-    VALUES (
-      _faculty1_id,
-      i,
-      CASE WHEN i >= 5 THEN true ELSE false END,
-      CASE WHEN i >= 5 THEN NULL ELSE '08:00' END,
-      CASE WHEN i >= 5 THEN NULL ELSE '18:00' END,
-      '2026-01-01'
-    );
+    INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
+    VALUES (_faculty1_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
+    ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
+
+    INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
+    VALUES (_faculty2_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
+    ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
+
+    INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
+    VALUES (_faculty3_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
+    ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
   END LOOP;
 
 END $$;
 
 -- =========================================================
--- 8. POST-SCHEMA MIGRATIONS
+-- 9. POST-SCHEMA MIGRATIONS
 -- Apply these *after* the main schema above, against an
 -- existing database that needs to be upgraded.
 -- =========================================================
@@ -644,10 +648,10 @@ CREATE TABLE IF NOT EXISTS group_access (
 
 INSERT INTO group_access ("groupName", pages, apis) VALUES
   ('ADMIN',
-   '["/admin","/admin/data-management","/admin/users","/admin/users/deleted","/admin/access-config","/faq"]'::JSONB,
+   '["/admin","/admin/data-management","/admin/users","/admin/users/deleted","/admin/access-config","/admin/departments","/admin/reports","/faq"]'::JSONB,
    '["/api/admin"]'::JSONB),
   ('DEAN',
-   '["/dean","/dean/upload","/faculty/meetings","/faculty/availability","/faculty/reports","/faq"]'::JSONB,
+   '["/dean","/dean/upload","/dean/departments","/faculty/meetings","/faculty/availability","/faculty/reports","/faq"]'::JSONB,
    '["/api/admin/users","/api/import/users","/api/appointments","/api/availability-rules"]'::JSONB),
   ('FACULTY',
    '["/faculty","/faculty/meetings","/faculty/availability","/faculty/upload","/faq"]'::JSONB,

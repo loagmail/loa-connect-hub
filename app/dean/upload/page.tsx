@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import SubmitButton from "@/components/SubmitButton"
 import { hasRole } from "@/lib/utils/roles"
 
@@ -21,12 +22,41 @@ interface ImportResult {
   parseErrors: { row: number; message: string }[]
 }
 
+interface AllowedCourse {
+  code: string
+  name: string
+}
+
 export default function DeanUploadPage() {
+  const { data: session } = useSession()
   const fileRef = useRef<HTMLInputElement>(null)
   const [importType, setImportType] = useState<ImportType>("users")
   const [result, setResult] = useState<ImportResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [allowedCourses, setAllowedCourses] = useState<AllowedCourse[]>([])
+  const [deptName, setDeptName] = useState("")
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      if (!session) return
+      try {
+        const res = await fetch("/api/admin/department-courses")
+        if (!res.ok) return
+        const allCourses: { code: string; name: string; departmentId: string; department: { name: string } }[] = await res.json()
+        const userId = (session?.user as any)?.id
+        const usersRes = await fetch("/api/admin/users")
+        if (!usersRes.ok) return
+        const usersData = await usersRes.json()
+        const myDept = (usersData.departments || []).find((d: any) => d.deanId === userId)
+        if (myDept) {
+          setDeptName(myDept.name)
+          setAllowedCourses(allCourses.filter((c) => c.departmentId === myDept.id))
+        }
+      } catch { /* ignore */ }
+    }
+    fetchCourses()
+  }, [session])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -120,6 +150,20 @@ export default function DeanUploadPage() {
           </a>
         </button>
       </div>
+
+      {importType === "students" && allowedCourses.length > 0 && (
+        <div className="card p-4 bg-blue-50 border border-blue-200 space-y-2">
+          <p className="text-xs font-semibold text-blue-700">Allowed Courses for {deptName || "Your Department"}</p>
+          <div className="flex flex-wrap gap-2">
+            {allowedCourses.map((c) => (
+              <span key={c.code} className="text-xs font-mono font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                {c.code}
+              </span>
+            ))}
+          </div>
+          <p className="text-[10px] text-blue-500">Course codes are limited to 10 characters. Only courses listed above are valid for student imports.</p>
+        </div>
+      )}
 
       {/* Upload Form */}
       <form onSubmit={handleSubmit} className="card p-6 bg-white space-y-4">

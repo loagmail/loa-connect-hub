@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { parseCsv, getCsvTemplate } from "@/lib/services/csvParser"
 import { importUsers } from "@/lib/services/userImport"
+import { departmentRepository } from "@/lib/repositories/factory"
 import { logAuditEvent } from "@/lib/services/audit"
 import { hasRole } from "@/lib/utils/roles"
 
@@ -37,7 +38,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "CSV parsing failed", details: parseErrors }, { status: 400 })
   }
 
-  const result = await importUsers(rows, "FACULTY", null)
+  const userId = (session!.user as any).id
+  let departmentId: string | null = null
+  const dept = await departmentRepository.findByDeanId(userId)
+  if (dept) {
+    departmentId = dept.id
+  } else {
+    const user = await departmentRepository.listAll()
+    if (!dept && role) {
+      const { userRepository } = await import("@/lib/repositories/factory")
+      const userData = await userRepository.findById(userId)
+      departmentId = userData?.departmentId ?? null
+    }
+  }
+
+  const result = await importUsers(rows, "FACULTY", departmentId)
 
   await logAuditEvent({
     userId: (session!.user as any).id,

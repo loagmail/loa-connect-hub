@@ -22,7 +22,18 @@ const HEADERS: Record<CsvTemplateType, string[]> = {
 const ALLOWED_DOMAIN = "@itmlyceumalabang.onmicrosoft.com"
 
 export function getCsvTemplate(type: CsvTemplateType): string {
-  return HEADERS[type].join(",") + "\n"
+  const headers = HEADERS[type].join(",")
+  const samples: Record<CsvTemplateType, string[]> = {
+    full: [
+      "Jane Faculty,jane.faculty@itmlyceumalabang.onmicrosoft.com,CCS,false",
+      "Mike Dean,mike.dean@itmlyceumalabang.onmicrosoft.com,CCS,true",
+    ],
+    students: [
+      "Alice Student,alice.student@itmlyceumalabang.onmicrosoft.com,BSIT",
+      "Bob Martinez,bob.martinez@itmlyceumalabang.onmicrosoft.com,BSCS",
+    ],
+  }
+  return headers + "\n" + samples[type].join("\n") + "\n"
 }
 
 export function parseCsv(text: string, templateType: CsvTemplateType): CsvParseResult {

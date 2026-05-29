@@ -101,7 +101,7 @@ export async function importUsers(
         continue
       }
 
-      const deptForCreate = hasRole(role, "STUDENT") ? null : departmentId
+      const deptForCreate = hasRole(role, "STUDENT") ? uploaderDepartmentId : departmentId
 
       const user = await userRepository.create({
         name: row.name,
