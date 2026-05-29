@@ -644,7 +644,7 @@ CREATE TABLE IF NOT EXISTS group_access (
 
 INSERT INTO group_access ("groupName", pages, apis) VALUES
   ('ADMIN',
-   '["/admin","/admin/users","/admin/access-config","/faq"]'::JSONB,
+   '["/admin","/admin/users","/admin/users/deleted","/admin/access-config","/faq"]'::JSONB,
    '["/api/admin"]'::JSONB),
   ('DEAN',
    '["/dean","/dean/upload","/faculty/meetings","/faculty/availability","/faculty/reports","/faq"]'::JSONB,
@@ -659,3 +659,26 @@ INSERT INTO group_access ("groupName", pages, apis) VALUES
    '[]'::JSONB,
    '[]'::JSONB)
 ON CONFLICT ("groupName") DO NOTHING;
+
+-- =========================================================
+-- Migration 10: RPC for database size checking
+-- Run this to enable the get_database_size RPC used by the
+-- admin dashboard's storage threshold indicator.
+-- =========================================================
+
+CREATE OR REPLACE FUNCTION get_database_size()
+RETURNS BIGINT
+LANGUAGE SQL
+STABLE
+AS $$
+  SELECT pg_database_size(current_database());
+$$;
+
+-- =========================================================
+-- Migration 11: Add deletedAt column to users table for
+-- soft-delete support. When a user is "deleted", this column
+-- is set to NOW() instead of removing the record.
+-- Existing queries filter out soft-deleted users by default.
+-- =========================================================
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMPTZ;

@@ -7,6 +7,7 @@ import type {
   DepartmentFrequencyEntry, FacultyFrequencyData,
   IUserRepository, IDepartmentRepository, IAppointmentRepository,
   IAvailabilityRuleRepository, IPasswordResetTokenRepository, IAuditLogRepository, IReportsRepository,
+  ListUsersOptions,
 } from "./interfaces"
 
 const USER_SELECT = "*, userrole(roleName)"
@@ -50,7 +51,9 @@ function isMissingUserrole(err: any): boolean {
 export const userRepository: IUserRepository = {
   async findByEmail(email) {
     try {
-      return await singleQueryWithRoles(supabase.from("users").select(USER_SELECT).eq("email", email))
+      return await singleQueryWithRoles(
+        supabase.from("users").select(USER_SELECT).eq("email", email)
+      )
     } catch (err) {
       if (isMissingUserrole(err)) {
         const { data } = await supabase.from("users").select("*").eq("email", email).single()
@@ -61,7 +64,9 @@ export const userRepository: IUserRepository = {
   },
   async findById(id) {
     try {
-      return await singleQueryWithRoles(supabase.from("users").select(USER_SELECT).eq("id", id))
+      return await singleQueryWithRoles(
+        supabase.from("users").select(USER_SELECT).eq("id", id)
+      )
     } catch (err) {
       if (isMissingUserrole(err)) {
         const { data } = await supabase.from("users").select("*").eq("id", id).single()
@@ -75,7 +80,6 @@ export const userRepository: IUserRepository = {
     const { data, error } = await supabase.from("users").insert(userFields).select("*").single()
     if (error) throw error
 
-    // Insert role(s)
     if (role) {
       const roleNames = role.split("|")
       for (const roleName of roleNames) {
@@ -84,16 +88,16 @@ export const userRepository: IUserRepository = {
       }
     }
 
-    // Re-fetch with roles attached
     const { data: withRoles } = await supabase.from("users").select(USER_SELECT).eq("id", data.id).single()
     return toUserWithRole(withRoles)
   },
-  async listByRole(role) {
+  async listByRole(role, options) {
     try {
-      const { data, error } = await supabase
-        .from("users")
-        .select(USER_SELECT)
-        .eq("userrole.roleName", role)
+      let query = supabase.from("users").select(USER_SELECT).eq("userrole.roleName", role)
+      if (!options?.includeDeleted) {
+        query = query.is("deletedAt", null)
+      }
+      const { data, error } = await query
       if (error) throw error
       return toUsersWithRoles(data)
     } catch (err) {
@@ -104,9 +108,13 @@ export const userRepository: IUserRepository = {
       throw err
     }
   },
-  async listByDepartment(departmentId) {
+  async listByDepartment(departmentId, options) {
     try {
-      const { data, error } = await supabase.from("users").select(USER_SELECT).eq("departmentId", departmentId)
+      let query = supabase.from("users").select(USER_SELECT).eq("departmentId", departmentId)
+      if (!options?.includeDeleted) {
+        query = query.is("deletedAt", null)
+      }
+      const { data, error } = await query
       if (error) throw error
       return toUsersWithRoles(data)
     } catch (err) {
@@ -117,9 +125,13 @@ export const userRepository: IUserRepository = {
       throw err
     }
   },
-  async listByIds(ids) {
+  async listByIds(ids, options) {
     try {
-      const { data, error } = await supabase.from("users").select(USER_SELECT).in("id", ids)
+      let query = supabase.from("users").select(USER_SELECT).in("id", ids)
+      if (!options?.includeDeleted) {
+        query = query.is("deletedAt", null)
+      }
+      const { data, error } = await query
       if (error) throw error
       return toUsersWithRoles(data)
     } catch (err) {
@@ -130,14 +142,22 @@ export const userRepository: IUserRepository = {
       throw err
     }
   },
-  async listAll() {
+  async listAll(options) {
     try {
-      const { data, error } = await supabase.from("users").select(USER_SELECT).order("createdAt", { ascending: false })
+      let query = supabase.from("users").select(USER_SELECT).order("createdAt", { ascending: false })
+      if (!options?.includeDeleted) {
+        query = query.is("deletedAt", null)
+      }
+      const { data, error } = await query
       if (error) throw error
       return toUsersWithRoles(data)
     } catch (err) {
       if (isMissingUserrole(err)) {
-        const { data } = await supabase.from("users").select("*").order("createdAt", { ascending: false })
+        let query = supabase.from("users").select("*").order("createdAt", { ascending: false })
+        if (!options?.includeDeleted) {
+          query = query.is("deletedAt", null)
+        }
+        const { data } = await query
         return (data || []).map((u: any) => ({ ...u, role: "GUEST" })) as UserData[]
       }
       throw err
@@ -145,14 +165,11 @@ export const userRepository: IUserRepository = {
   },
   async update(id, data) {
     const { role, ...userFields } = data as any
-    // Update user fields (without role)
     if (Object.keys(userFields).length > 0) {
       const { error } = await supabase.from("users").update(userFields).eq("id", id)
       if (error) throw error
     }
-    // Update roles if provided
     if (role) {
-      // Delete existing roles and re-insert
       const { error: delErr } = await supabase.from("userrole").delete().eq("userId", id)
       if (delErr) throw delErr
       const roleNames = role.split("|")
@@ -161,10 +178,38 @@ export const userRepository: IUserRepository = {
         if (roleErr) throw roleErr
       }
     }
-    // Re-fetch with roles
     const { data: updated, error: fetchErr } = await supabase.from("users").select(USER_SELECT).eq("id", id).single()
     if (fetchErr) throw fetchErr
     return toUserWithRole(updated)
+  },
+  async softDelete(id) {
+    const { error } = await supabase.from("users").update({ deletedAt: new Date().toISOString() }).eq("id", id)
+    if (error) throw error
+  },
+  async restore(id) {
+    const { error } = await supabase.from("users").update({ deletedAt: null }).eq("id", id)
+    if (error) throw error
+  },
+  async permanentDelete(id) {
+    const { error } = await supabase.from("users").delete().eq("id", id)
+    if (error) throw error
+  },
+  async listDeleted() {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select(USER_SELECT)
+        .not("deletedAt", "is", null)
+        .order("deletedAt", { ascending: false })
+      if (error) throw error
+      return toUsersWithRoles(data)
+    } catch (err) {
+      if (isMissingUserrole(err)) {
+        const { data } = await supabase.from("users").select("*").not("deletedAt", "is", null)
+        return (data || []).map((u: any) => ({ ...u, role: "GUEST" })) as UserData[]
+      }
+      throw err
+    }
   },
 }
 

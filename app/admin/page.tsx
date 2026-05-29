@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { userRepository } from "@/lib/repositories/factory"
 import { auditLogRepository } from "@/lib/repositories/factory"
 import { hasRole } from "@/lib/utils/roles"
+import { getDatabaseSize, formatBytes, getStoragePercentage, getStorageColor } from "@/lib/controllers/database-size"
 
 async function getUsers() {
   const users = await userRepository.listAll()
@@ -18,10 +19,14 @@ export default async function AdminDashboard() {
   if (!session?.user) redirect("/login")
   if (!hasRole((session.user as any).role, "ADMIN")) redirect("/login")
 
-  const [users, auditLogs] = await Promise.all([
+  const [users, auditLogs, dbSize] = await Promise.all([
     getUsers(),
     getAuditLogs(),
+    getDatabaseSize(),
   ])
+
+  const storagePercent = getStoragePercentage(dbSize.estimatedTotalBytes)
+  const storageColor = getStorageColor(storagePercent)
 
   const adminCount = users.filter((u: any) => hasRole(u.role, "ADMIN")).length
   const deanCount = users.filter((u: any) => hasRole(u.role, "DEAN")).length
@@ -58,6 +63,50 @@ export default async function AdminDashboard() {
           <p className="text-2xl font-bold text-red-600">{disabledCount}</p>
           <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Disabled</p>
         </div>
+      </div>
+
+      {/* Database Storage */}
+      <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <div>
+            <h3 className="text-sm font-bold text-slate-800">Database Storage</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {dbSize.usedRpc ? "Live" : "Estimated"} &middot; Free tier: 500 MB
+            </p>
+          </div>
+          <span className="text-sm font-bold text-slate-700 tabular-nums">
+            {formatBytes(dbSize.estimatedTotalBytes)}
+            <span className="text-slate-400 font-medium"> / 500 MB</span>
+          </span>
+        </div>
+        <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              storageColor === "emerald"
+                ? "bg-gradient-to-r from-emerald-400 to-emerald-500"
+                : storageColor === "amber"
+                ? "bg-gradient-to-r from-amber-400 to-amber-500"
+                : "bg-gradient-to-r from-red-400 to-red-500"
+            }`}
+            style={{ width: `${storagePercent}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between mt-1.5">
+          <span className={`text-xs font-semibold ${
+            storageColor === "emerald" ? "text-emerald-600" :
+            storageColor === "amber" ? "text-amber-600" : "text-red-600"
+          }`}>
+            {storagePercent}% used
+          </span>
+          <span className="text-xs text-slate-400">
+            {formatBytes(dbSize.fileBytes)} in file attachments
+          </span>
+        </div>
+        {!dbSize.usedRpc && (
+          <p className="text-[10px] text-slate-400 mt-2 italic">
+            Install the <code className="text-[10px] bg-slate-100 px-1 py-0.5 rounded">get_database_size</code> Postgres function for accurate live measurement.
+          </p>
+        )}
       </div>
 
       {/* All Platform Users */}

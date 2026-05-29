@@ -12,6 +12,7 @@ export interface UserData {
   tokenVersion: number
   onboardingVersion: number
   createdAt: Date
+  deletedAt: Date | null
 }
 
 export interface CreateUserInput {
@@ -54,15 +55,23 @@ export interface DepartmentData {
   deanId: string | null
 }
 
+export interface ListUsersOptions {
+  includeDeleted?: boolean
+}
+
 export interface IUserRepository {
   findByEmail(email: string): Promise<UserData | null>
   findById(id: string): Promise<UserData | null>
   create(input: CreateUserInput): Promise<UserData>
-  listByRole(role: string): Promise<UserData[]>
-  listByDepartment(departmentId: string): Promise<UserData[]>
-  listByIds(ids: string[]): Promise<UserData[]>
-  listAll(): Promise<UserData[]>
+  listByRole(role: string, options?: ListUsersOptions): Promise<UserData[]>
+  listByDepartment(departmentId: string, options?: ListUsersOptions): Promise<UserData[]>
+  listByIds(ids: string[], options?: ListUsersOptions): Promise<UserData[]>
+  listAll(options?: ListUsersOptions): Promise<UserData[]>
   update(id: string, data: Partial<UserData>): Promise<UserData>
+  softDelete(id: string): Promise<void>
+  restore(id: string): Promise<void>
+  permanentDelete(id: string): Promise<void>
+  listDeleted(): Promise<UserData[]>
 }
 
 export interface IDepartmentRepository {
@@ -111,8 +120,12 @@ export interface IUserRepository {
   findByEmail(email: string): Promise<UserData | null>
   findById(id: string): Promise<UserData | null>
   create(input: CreateUserInput): Promise<UserData>
-  listByRole(role: string): Promise<UserData[]>
-  listAll(): Promise<UserData[]>
+  listByRole(role: string, options?: ListUsersOptions): Promise<UserData[]>
+  listAll(options?: ListUsersOptions): Promise<UserData[]>
+  softDelete(id: string): Promise<void>
+  restore(id: string): Promise<void>
+  permanentDelete(id: string): Promise<void>
+  listDeleted(): Promise<UserData[]>
 }
 
 export interface AppointmentAttendeeData {
