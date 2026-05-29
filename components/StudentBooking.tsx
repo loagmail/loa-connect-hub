@@ -1118,7 +1118,7 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
             />
           </div>
           <div>
-            <label className="input-label">Description / Agenda (optional)</label>
+            <label className="input-label">Concern / Agenda (optional)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
