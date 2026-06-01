@@ -4,7 +4,8 @@ import SubmitButton from "@/components/SubmitButton"
 import { useState, FormEvent, useEffect, use } from "react"
 import Link from "next/link"
 
-const REQUIRED_DOMAIN = "@itmlyceumalabang.onmicrosoft.com"
+const REQUIRED_STUDENT_DOMAIN = "@itmlyceumalabang.onmicrosoft.com"
+const REQUIRED_FACULTY_DOMAIN = "@lyceumalabang.edu.ph"
 const EXEMPT_EMAILS = ["nin.alamo@outlook.com"]
 const RESEND_COOLDOWN = 60 // seconds
 
@@ -28,8 +29,13 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
     if (loading) return
     setError("")
 
-    if (!email.toLowerCase().endsWith(REQUIRED_DOMAIN) && !EXEMPT_EMAILS.includes(email.toLowerCase())) {
-      setError(`Email must end with ${REQUIRED_DOMAIN}`)
+    if (!email.toLowerCase().endsWith(REQUIRED_STUDENT_DOMAIN) && !email.toLowerCase().endsWith(REQUIRED_FACULTY_DOMAIN)) {
+      setError(`Email must end with ${REQUIRED_STUDENT_DOMAIN} or ${REQUIRED_FACULTY_DOMAIN}`)
+      return
+    }
+
+    if (!EXEMPT_EMAILS.includes(email.toLowerCase())) {
+      setError("This email is not allowed to be activated.")
       return
     }
 
@@ -142,7 +148,7 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
             onChange={(e) => { setEmail(e.target.value); setState("idle") }}
             required
             className="input text-slate-800"
-            placeholder={`user${REQUIRED_DOMAIN}`}
+            placeholder={`user${REQUIRED_STUDENT_DOMAIN}`}
           />
         </div>
 
