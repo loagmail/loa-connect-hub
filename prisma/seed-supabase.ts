@@ -63,9 +63,9 @@ async function main() {
 
   // ── FACULTY (3) ───────────────────────────────────────────
   const facultyData = [
-    { name: "Nin Alamo", email: "nino_francisco_alamo@itmlyceumalabang.onmicrosoft.com" },
-    { name: "Maria Santos", email: "maria.santos@itmlyceumalabang.onmicrosoft.com" },
-    { name: "Juan Dela Cruz", email: "juan.delacruz@itmlyceumalabang.onmicrosoft.com" },
+    { name: "Nin Alamo", email: "nino_francisco_alamo@lyceumalabang.edu.ph" },
+    { name: "Maria Santos", email: "maria.santos@lyceumalabang.edu.ph" },
+    { name: "Juan Dela Cruz", email: "juan.delacruz@lyceumalabang.edu.ph" },
   ]
   const facultyUsers: Record<string, unknown>[] = []
   for (const f of facultyData) {

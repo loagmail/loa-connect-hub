@@ -20,6 +20,7 @@ const HEADERS: Record<CsvTemplateType, string[]> = {
 }
 
 const ALLOWED_DOMAIN = "@itmlyceumalabang.onmicrosoft.com"
+const ALLOWED_FACULTY_DOMAIN = "@lyceumalabang.edu.ph"
 
 export function getCsvTemplate(type: CsvTemplateType): string {
   const headers = HEADERS[type].join(",")
@@ -29,8 +30,8 @@ export function getCsvTemplate(type: CsvTemplateType): string {
       "Mike Dean,mike.dean@itmlyceumalabang.onmicrosoft.com,CCS,true",
     ],
     students: [
-      "Alice Student,alice.student@itmlyceumalabang.onmicrosoft.com,BSIT",
-      "Bob Martinez,bob.martinez@itmlyceumalabang.onmicrosoft.com,BSCS",
+      "Alice Student,alice.student@lyceumalabang.edu.ph,BSIT",
+      "Bob Martinez,bob.martinez@lyceumalabang.edu.ph,BSCS",
     ],
   }
   return headers + "\n" + samples[type].join("\n") + "\n"
@@ -81,10 +82,12 @@ export function parseCsv(text: string, templateType: CsvTemplateType): CsvParseR
     const name = cols[0]
     const email = cols[1].toLowerCase().trim()
 
-    if (!email.endsWith(ALLOWED_DOMAIN)) {
-      errors.push({ row: i + 1, message: `Email "${email}" must end with ${ALLOWED_DOMAIN}` })
+    if (!email.endsWith(ALLOWED_DOMAIN) && !email.endsWith(ALLOWED_FACULTY_DOMAIN)) {
+      errors.push({ row: i + 1, message: `Email "${email}" must end with ${ALLOWED_DOMAIN} or ${ALLOWED_FACULTY_DOMAIN}` })
       continue
     }
+
+
 
     if (name.length === 0) {
       errors.push({ row: i + 1, message: "Name is required" })

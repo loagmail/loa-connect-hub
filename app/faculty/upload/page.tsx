@@ -119,8 +119,8 @@ export default function FacultyUploadPage() {
         </div>
         <div className="bg-slate-50 rounded-lg p-4 text-xs font-mono text-slate-600 leading-relaxed">
           name, microsoft email, course<br />
-          Alice Student, alice.student@itmlyceumalabang.onmicrosoft.com, BSIT<br />
-          Bob Martinez, bob.martinez@itmlyceumalabang.onmicrosoft.com, BSCS
+          Alice Student, alice.student@lyceumalabang.edu.ph, BSIT<br />
+          Bob Martinez, bob.martinez@lyceumalabang.edu.ph, BSCS
         </div>
         <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
           <li><strong>Header row required</strong> — must match: <code className="bg-slate-100 px-1 rounded">name, microsoft email, course</code></li>
