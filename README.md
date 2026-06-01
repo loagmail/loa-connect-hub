@@ -22,20 +22,26 @@ app/                          # Next.js App Router — pages, layouts, API route
 ├── admin/                    # Admin dashboard & management
 ├── api/                      # REST API routes (thin handlers -> controllers)
 ├── dean/                     # Dean dashboard & management
+├── dean/m/                   # Dean mobile companion pages (departments, upload)
 ├── faculty/                  # Faculty dashboard & management
+├── faculty/m/                # Faculty mobile companion pages (meetings)
 ├── student/                  # Student dashboard & booking
+├── student/m/                # Student mobile companion pages (book, meetings)
+├── 403/                      # Access denied page
+├── faq/                      # FAQ page
 ├── layout.tsx                # Root layout (SessionProvider + AppShell)
 └── page.tsx                  # Root page (role-based redirect / multi-role selector)
 
-components/                   # React components (36 files)
+components/                   # React components (37 files)
 ├── reports/                  # Report-related components (12 files)
+├── MobileBookingFlow.tsx     # Mobile booking wizard (step-by-step)
 ├── AppShell.tsx              # App layout shell (sidebar + breadcrumbs)
 ├── BookingCalendar.tsx       # Calendar slot selection
 ├── BookingForm.tsx           # Booking form
-├── Sidebar.tsx               # App sidebar navigation
+├── Sidebar.tsx               # App sidebar navigation (dark mode toggle)
 └── ...                       # StatusBadge, Skeleton, SubmitButton, etc.
 
-lib/                          # Business logic (29 files)
+lib/                          # Business logic (32 files)
 ├── controllers/              # Domain logic (appointments, auth, reports, etc.)
 ├── repositories/             # Data access layer (interfaces + Supabase impl)
 ├── services/                 # Cross-cutting (email, audit, CSV, iCal)
@@ -49,7 +55,7 @@ lib/                          # Business logic (29 files)
 ```
 Browser HTTP Request
     ↓
-proxy.ts (NextAuth Middleware) — JWT validation, role-based page access
+proxy.ts (NextAuth Middleware) — JWT validation, mobile-UA redirect, role-based page access
     ↓
 Next.js App Router / API Routes
     ↓
@@ -64,6 +70,24 @@ Supabase PostgreSQL
 
 Server Components fetch data directly via controllers and pass props to Client Components.
 
+### Mobile Companion Pages
+
+Mobile user-agents are auto-redirected from desktop routes to their `/m/` counterparts via `proxy.ts`. The proxy rewrites mobile paths back to desktop equivalents (`toDesktopPath()`) for role-based access checks, so the auth config stays simple.
+
+| Desktop Route | Mobile Route | Purpose |
+|---|---|---|
+| `/student/book` | `/student/m/book` | Step-by-step booking wizard (same-department faculty filter) |
+| `/student/meetings` | `/student/m/meetings` | Student consultation list |
+| `/student/meetings/[id]` | `/student/m/meetings/[id]` | Student consultation detail |
+| `/faculty/meetings` | `/faculty/m/meetings` | Faculty meeting list |
+| `/faculty/meetings/new` | `/faculty/m/meetings/new` | Faculty create meeting (wraps StudentBooking) |
+| `/faculty/meetings/[id]` | `/faculty/m/meetings/[id]` | Faculty meeting detail |
+| `/dean` | `/dean/m` | Desktop-only notice (dashboard excluded from mobile) |
+| `/dean/departments` | `/dean/m/departments` | Department courses management |
+| `/dean/upload` | `/dean/m/upload` | Bulk CSV import |
+
+Desktop opt-out via `?desktop=1` query param.
+
 ### Current Patterns
 
 | Pattern | Implementation |
@@ -72,7 +96,7 @@ Server Components fetch data directly via controllers and pass props to Client C
 | **Auth** | NextAuth v4 (Credentials provider, JWT, bcryptjs) |
 | **Authorization** | Middleware (`proxy.ts`) + per-route `auth()` calls + DB role checks |
 | **Data access** | Repository pattern with interface abstraction |
-| **Roles** | Multi-role via `userrole` join table; resolved by priority (ADMIN > DEAN > FACULTY > STUDENT) |
+| **Roles** | Multi-role via pipe-delimited string in `user.role`; resolved by priority (ADMIN > DEAN > FACULTY > STUDENT); Faculty ⇔ Dean mutually exclusive |
 | **UI state** | React built-in hooks (`useState`, `useEffect`); no global state library |
 | **Forms** | Local `useState`; `SubmitButton` double-click prevention |
 | **Email** | Nodemailer (Gmail SMTP), durable via Vercel Workflows with sequenced steps |
@@ -81,15 +105,17 @@ Server Components fetch data directly via controllers and pass props to Client C
 | **PDF export** | jsPDF + jspdf-autotable |
 | **Feature flags** | Environment variables (`EMAIL_FEATURE_FLAG`, `SSO_FEATURE_FLAG`, etc.) |
 | **Loading states** | Dedicated skeleton components + `loading.tsx` per route segment |
+| **Dark mode** | Class-based (`.dark` on `<html>`), persisted in localStorage, Tailwind v4 `@custom-variant dark` |
+| **Mobile detection** | UA regex in `proxy.ts`, desktop opt-out via `?desktop=1` |
 
 ### File Count
 
 | Directory | Source Files |
 |-----------|-------------|
-| `app/` | 77 (pages, API routes, layouts) |
-| `components/` | 36 (React components) |
+| `app/` | 85 (pages, API routes, layouts) |
+| `components/` | 37 (React components) |
 | `lib/` | 32 (controllers, services, workflows, repos, utils, email-templates) |
-| Total | ~149 source files |
+| Total | ~154 source files |
 
 ### Known Issues & Risks
 
@@ -100,6 +126,7 @@ Server Components fetch data directly via controllers and pass props to Client C
 5. **No React Error Boundaries** — No `error.tsx` files. An uncaught client error can collapse the entire component tree.
 6. **Scattered type definitions** — Types live across `lib/models/`, `lib/repositories/interfaces.ts`, and `lib/dtos/`. Inconsistent naming and organization.
 7. **HTML email templates via template literals** — Fragile string concatenation. No type safety or template engine.
+8. **Mobile route sync** — `proxy.ts` has a `toDesktopPath()` mapping and a `MOBILE_ROUTES` table that must be kept in sync when new mobile routes are added.
 
 ## Environment Variables
 
@@ -131,6 +158,10 @@ Client-side pages that fetch data on mount show skeleton placeholders (`componen
 ### Redirect Guard on Login
 
 The login page checks `useSession()` on mount and auto-redirects already-authenticated users to their role-specific dashboard, preventing them from seeing the login form after session errors or redirects.
+
+### Dark Mode
+
+Class-based strategy: `.dark` class on `<html>` toggles Tailwind `dark:` variants. Persisted in `localStorage` with an inline no-flash script in `<head>`. Sidebar toggle uses sun/moon icons. CSS variable overrides in `globals.css` for custom components.
 
 ## Email Delivery via Vercel Workflows
 
@@ -221,3 +252,5 @@ Non-activated accounts must use the activation flow at `/activate`.
 | 14. Attendee Permissions | ✅ Done |
 | 15. Reports & Export | ✅ Done |
 | 16. Staggered & Multi-Faculty Booking | ✅ Done |
+| 17. Mobile Companion Pages | ✅ Done |
+| 18. Dark Mode | ✅ Done |
