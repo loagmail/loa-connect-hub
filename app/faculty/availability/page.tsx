@@ -53,64 +53,152 @@ export default function AvailabilityPage() {
     return true
   })
 
-  const getRule = (day: number): Rule =>
-    activeRules.find((r) => r.dayOfWeek === day) || {
-      id: "",
-      facultyId: "",
-      dayOfWeek: day,
-      isBlocked: day >= 5,
-      startTime: day < 5 ? "08:00" : null,
-      endTime: day < 5 ? "18:00" : null,
-      startDate: startDate,
-      endDate: endDate || null,
+  const getRule = (day: number): Rule | null => {
+    const matches = activeRules.filter(
+      (r) => r.dayOfWeek === day
+    )
+
+    if (matches.length > 0) {
+      return matches.sort(
+        (a, b) => b.startDate.localeCompare(a.startDate)
+      )[0]
     }
 
+    return null;
+    //TODO: Remove this fallback once we have full coverage of all days in the database. This is just to ensure the UI doesn't break if a day is missing from the DB.
+    // return {
+    //   id: "",
+    //   facultyId: "",
+    //   dayOfWeek: day,
+    //   isBlocked: day >= 5,
+    //   startTime: day < 5 ? "08:00" : null,
+    //   endTime: day < 5 ? "18:00" : null,
+    //   startDate,
+    //   endDate: endDate || null,
+    // }
+  }
+
   const pendingRef = useRef(false)
+
+  // const toggleBlocked = async (day: number) => {
+  //   if (pendingRef.current) return
+  //   pendingRef.current = true
+  //   const current = getRule(day)
+  //   const newBlocked = !current.isBlocked
+
+  //   const updated = {
+  //     ...current,
+  //     isBlocked: newBlocked,
+  //     startTime: newBlocked ? null : current.startTime || "08:00",
+  //     endTime: newBlocked ? null : current.endTime || "18:00",
+  //   }
+
+  //   setRules((prev) => {
+  //     const filtered = prev.filter(
+  //       (r) => r.dayOfWeek !== day
+  //     )
+
+  //     return [...filtered, updated].sort(
+  //       (a, b) => a.dayOfWeek - b.dayOfWeek
+  //     )
+  //   })
+
+  //   setPendingChanges((prev) => new Map(prev).set(day, updated))
+  //   pendingRef.current = false
+  // }
 
   const toggleBlocked = async (day: number) => {
     if (pendingRef.current) return
     pendingRef.current = true
+
     const current = getRule(day)
-    const newBlocked = !current.isBlocked
-    
-    const updated = {
-      ...current,
+
+    const base: Rule =
+      current ?? {
+        id: "",
+        facultyId: "",
+        dayOfWeek: day,
+        isBlocked: true,
+        startTime: null,
+        endTime: null,
+        startDate,
+        endDate: endDate || null,
+      }
+
+    const newBlocked = !base.isBlocked
+
+    const updated: Rule = {
+      ...base,
       isBlocked: newBlocked,
-      startTime: newBlocked ? null : current.startTime || "08:00",
-      endTime: newBlocked ? null : current.endTime || "18:00",
+      startTime: newBlocked ? null : base.startTime || "08:00",
+      endTime: newBlocked ? null : base.endTime || "18:00",
     }
-    
+
     setRules((prev) => {
-      const filtered = prev.filter(
-        (r) => !(r.dayOfWeek === day && r.startDate === startDate)
-      )
+      const filtered = prev.filter((r) => r.dayOfWeek !== day)
       return [...filtered, updated].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
     })
-    
+
     setPendingChanges((prev) => new Map(prev).set(day, updated))
+
     pendingRef.current = false
   }
 
-  const updateTime = async (day: number, field: "startTime" | "endTime", value: string) => {
+  // const updateTime = async (day: number, field: "startTime" | "endTime", value: string) => {
+  //   const current = getRule(day)
+  //   const updated = { ...current, [field]: value }
+  //   setRules((prev) => {
+  //     const filtered = prev.filter(
+  //       (r) => r.dayOfWeek !== day
+  //     )
+
+  //     return [...filtered, updated as Rule].sort(
+  //       (a, b) => a.dayOfWeek - b.dayOfWeek
+  //     )
+  //   })
+
+  //   setPendingChanges((prev) => new Map(prev).set(day, updated))
+  // }
+
+  const updateTime = (day: number, field: "startTime" | "endTime", value: string) => {
     const current = getRule(day)
-    const updated = { ...current, [field]: value }
+
+    const base: Rule =
+      current ?? {
+        id: "",
+        facultyId: "",
+        dayOfWeek: day,
+        isBlocked: true,
+        startTime: null,
+        endTime: null,
+        startDate,
+        endDate: endDate || null,
+      }
+
+    const updated: Rule = { ...base, [field]: value }
+
     setRules((prev) => {
-      const filtered = prev.filter(
-        (r) => !(r.dayOfWeek === day && r.startDate === startDate)
-      )
-      return [...filtered, updated as Rule].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+      const filtered = prev.filter((r) => r.dayOfWeek !== day)
+      return [...filtered, updated].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
     })
-    
+
     setPendingChanges((prev) => new Map(prev).set(day, updated))
   }
 
   const saveAll = async () => {
+    console.log("SAVE ALL CLICKED")
+    console.log("pendingChanges size", pendingChanges.size)
     if (pendingChanges.size === 0) return
+
+
     setIsSavingAll(true)
 
     try {
       for (const [day, rule] of pendingChanges) {
-        await fetch("/api/availability-rules", {
+        console.log("SENDING", day, rule)
+
+
+        const res = await fetch("/api/availability-rules", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -122,7 +210,13 @@ export default function AvailabilityPage() {
             endDate: endDate || null,
           }),
         })
+
+        console.log("status", res.status)
       }
+      const res = await fetch("/api/availability-rules")
+      const data = await res.json()
+
+      setRules(data.rules || [])
       setPendingChanges(new Map())
     } finally {
       setIsSavingAll(false)
@@ -195,13 +289,13 @@ export default function AvailabilityPage() {
         {DAY_LABELS.map((label, dayIndex) => {
           const rule = getRule(dayIndex)
           const hasPending = pendingChanges.has(dayIndex)
+          const isBlocked = rule?.isBlocked ?? true
 
           return (
             <div
               key={dayIndex}
-              className={`card p-5 bg-white transition-all ${rule.isBlocked ? "opacity-70" : ""} ${
-                hasPending ? "border-amber-300 border-2 bg-amber-50/30" : ""
-              }`}
+              className={`card p-5 bg-white transition-all ${isBlocked ? "opacity-70" : ""} ${hasPending ? "border-amber-300 border-2 bg-amber-50/30" : ""
+                }`}
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-bold text-slate-800">{label}</span>
@@ -209,7 +303,7 @@ export default function AvailabilityPage() {
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    checked={!rule.isBlocked}
+                    checked={!(rule?.isBlocked ?? true)}
                     onChange={() => toggleBlocked(dayIndex)}
                   />
                   <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold-600" />
@@ -220,13 +314,14 @@ export default function AvailabilityPage() {
                 <div className="text-[10px] text-amber-600 font-semibold mb-2">Pending changes</div>
               )}
 
-              {!rule.isBlocked && (
+
+              {!isBlocked && (
                 <div className="space-y-2">
                   <div>
                     <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">From</label>
                     <input
                       type="time"
-                      value={rule.startTime || "08:00"}
+                      value={rule?.startTime || "08:00"}
                       onChange={(e) => updateTime(dayIndex, "startTime", e.target.value)}
                       className="input text-xs mt-1"
                     />
@@ -235,7 +330,7 @@ export default function AvailabilityPage() {
                     <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">To</label>
                     <input
                       type="time"
-                      value={rule.endTime || "18:00"}
+                      value={rule?.endTime || "18:00"}
                       onChange={(e) => updateTime(dayIndex, "endTime", e.target.value)}
                       className="input text-xs mt-1"
                     />
@@ -243,7 +338,7 @@ export default function AvailabilityPage() {
                 </div>
               )}
 
-              {rule.isBlocked && (
+              {isBlocked && (
                 <p className="text-[11px] text-slate-400 font-medium mt-2">Blocked — no bookings</p>
               )}
             </div>
@@ -253,7 +348,7 @@ export default function AvailabilityPage() {
 
       <div className="card p-5 bg-slate-50 border-slate-200">
         <p className="text-xs text-slate-500 font-medium">
-          <strong>Note:</strong> These rules only apply to students booking consultations. 
+          <strong>Note:</strong> These rules only apply to students booking consultations.
           Faculty-to-faculty meetings bypass these restrictions. Rules with an end date
           will automatically become inactive after that date.
         </p>
@@ -273,11 +368,10 @@ export default function AvailabilityPage() {
         <button
           onClick={saveAll}
           disabled={pendingChanges.size === 0 || isSavingAll}
-          className={`px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all ${
-            pendingChanges.size === 0
-              ? "bg-slate-300 cursor-not-allowed"
-              : "bg-gold-600 hover:bg-gold-700"
-          } ${isSavingAll ? "opacity-70" : ""}`}
+          className={`px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all ${pendingChanges.size === 0
+            ? "bg-slate-300 cursor-not-allowed"
+            : "bg-gold-600 hover:bg-gold-700"
+            } ${isSavingAll ? "opacity-70" : ""}`}
         >
           {isSavingAll ? "Saving..." : "Save Changes"}
         </button>

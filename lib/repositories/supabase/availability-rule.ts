@@ -24,6 +24,8 @@ export const availabilityRuleRepository: IAvailabilityRuleRepository = {
       if (error.code === "PGRST116") return null
       throw error
     }
+
+    console.log("SAVED",data);
     return data as AvailabilityRuleData
   },
   async upsert(input) {

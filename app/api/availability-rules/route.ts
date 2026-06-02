@@ -23,7 +23,9 @@ export async function POST(request: NextRequest) {
   }
 
   const facultyId = (session!.user as Record<string, unknown>).id as string
-  const body = await request.json()
+  const body = await request.json();
+
+  console.log("Received availability rule update:", body);
 
   const { dayOfWeek, isBlocked, startTime, endTime, startDate, endDate } = body
 

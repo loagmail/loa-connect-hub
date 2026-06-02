@@ -163,7 +163,10 @@ export default function StudentBooking({ facultyWithRules, userRole, students, s
   )
 
   const getActiveRule = (faculty: FacultyWithRules, dateStr: string) => {
-    const dayOfWeek = toOurDayOfWeek(new Date(dateStr + "T12:00:00").getDay())
+    // Parse date string as UTC to avoid timezone issues
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const utcDate = new Date(Date.UTC(year, month - 1, day))
+    const dayOfWeek = toOurDayOfWeek(utcDate.getUTCDay())
     return faculty.rules.find(
       (r) =>
         r.dayOfWeek === dayOfWeek &&

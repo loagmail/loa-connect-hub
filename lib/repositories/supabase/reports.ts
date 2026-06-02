@@ -6,7 +6,7 @@ import type { DbRecord } from "./common"
 export const reportsRepository: IReportsRepository = {
   async getDepartmentConsultationStats(departmentId, filters) {
     const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY"))
+      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
       .map(({ id, name }) => ({ id, name }))
 
     const facultyIds = facultyUsers.map((u) => u.id)
@@ -84,7 +84,7 @@ export const reportsRepository: IReportsRepository = {
 
   async getDepartmentConsultationAppointments(departmentId, filters) {
     const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY"))
+      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
       .map(({ id, name }) => ({ id, name }))
 
     const facultyIds = facultyUsers.map((u) => u.id)

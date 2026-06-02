@@ -451,15 +451,15 @@ BEGIN
 
   -- ── STUDENTS (5) ────────────────────────────────────────
   INSERT INTO users (id, name, email, "passwordHash", "departmentId", course) VALUES
-    (_student1_id, 'Alice Reyes',       'alice.reyes@lyceumalabang.edu.ph
+    (_student1_id, 'Alice Reyes',       'alice.reyes@itmlyceumalabang.onmicrosoft.com
 ',     _hash, _dept_id, 'BSIT'),
-    (_student2_id, 'Bob Martinez',      'bob.martinez@lyceumalabang.edu.ph
+    (_student2_id, 'Bob Martinez',      'bob.martinez@itmlyceumalabang.onmicrosoft.com
 ',    _hash, _dept_id, 'BSIT'),
-    (_student3_id, 'Charlie Gomez',     'charlie.gomez@lyceumalabang.edu.ph
+    (_student3_id, 'Charlie Gomez',     'charlie.gomez@itmlyceumalabang.onmicrosoft.com
 ',   _hash, _dept_id, 'BSCS'),
-    (_student4_id, 'Diana Lopez',       'diana.lopez@lyceumalabang.edu.ph
+    (_student4_id, 'Diana Lopez',       'diana.lopez@itmlyceumalabang.onmicrosoft.com
 ',     _hash, _dept_id, 'BSCS'),
-    (_student5_id, 'Ethan Fernandez',   'ethan.fernandez@lyceumalabang.edu.ph
+    (_student5_id, 'Ethan Fernandez',   'ethan.fernandez@itmlyceumalabang.onmicrosoft.com
 ', _hash, _dept_id, 'BSIT')
   ON CONFLICT (id) DO NOTHING;
 
@@ -472,19 +472,19 @@ BEGIN
   ON CONFLICT DO NOTHING;
 
   -- ── FACULTY AVAILABILITY ─────────────────────────────────
-  FOR i IN 0..6 LOOP
-    INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
-    VALUES (_faculty1_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
-    ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
+  -- FOR i IN 0..6 LOOP
+  --   INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
+  --   VALUES (_faculty1_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
+  --   ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
 
-    INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
-    VALUES (_faculty2_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
-    ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
+  --   INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
+  --   VALUES (_faculty2_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
+  --   ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
 
-    INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
-    VALUES (_faculty3_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
-    ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
-  END LOOP;
+  --   INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
+  --   VALUES (_faculty3_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
+  --   ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
+  -- END LOOP;
 
 END $$;
 
