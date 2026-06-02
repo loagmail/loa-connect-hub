@@ -1,4 +1,4 @@
-import { sendConsultationInvite, sendApprovedWithTeamsLink, sendPasswordChangedEmail, sendBookingAcknowledgement, sendMeetingInviteWithICS, sendStatusUpdateEmail } from "@/lib/services/email"
+import { sendConsultationInvite, sendApprovedWithTeamsLink, sendPasswordChangedEmail, sendBookingAcknowledgement, sendMeetingInviteWithICS, sendStatusUpdateEmail, sendActivationEmail, sendForgotPasswordEmail } from "@/lib/services/email"
 
 export async function sendConsultationInviteWorkflow(
   to: { email: string; name: string },
@@ -28,6 +28,26 @@ export async function sendPasswordChangedWorkflow(
   "use workflow"
 
   await sendPasswordChangedEmail(email, name)
+}
+
+export async function sendActivationWorkflow(
+  email: string,
+  name: string,
+  activationUrl: string
+) {
+  "use workflow"
+
+  await sendActivationEmail(email, name, activationUrl)
+}
+
+export async function sendForgotPasswordWorkflow(
+  email: string,
+  name: string,
+  resetUrl: string
+) {
+  "use workflow"
+
+  await sendForgotPasswordEmail(email, name, resetUrl)
 }
 
 import type { ApptWithJoins } from "@/lib/controllers/appointments"

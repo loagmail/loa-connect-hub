@@ -131,8 +131,7 @@ Desktop opt-out via `?desktop=1` query param.
 ### Known Issues & Risks
 
 1. **Minimal test coverage** — Only 2 test files exist for ~17,619 LOC. Critical paths (appointment booking, conflict detection, role resolution, report aggregation) are untested.
-2. **Mitigated — Vercel Workflows for durable email** — Fire-and-forget `.catch()` call sites replaced with Vercel Workflow functions (`lib/workflows/email-workflows.ts`) that provide built-in retries per step. Status notifications (accept, complete, cancel) also use durable workflows. Silent failures remain for non-critical emails not yet migrated.
-3. **HTML email templates via template literals** — Fragile string concatenation. No type safety or template engine.
+2. **HTML email templates via template literals** — Fragile string concatenation. No type safety or template engine.
 
 ## Environment Variables
 

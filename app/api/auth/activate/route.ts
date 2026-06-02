@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { userRepository, passwordResetTokenRepository } from "@/lib/repositories/factory"
 import { randomBytes } from "crypto"
-import { sendActivationEmail } from "@/lib/services/email"
+import { sendActivationWorkflow } from "@/lib/workflows/email-workflows"
 import { logAuditEvent } from "@/lib/services/audit"
 
 export async function POST(req: NextRequest) {
@@ -30,7 +30,9 @@ export async function POST(req: NextRequest) {
     const cb = callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""
     const activationUrl = `${process.env.NEXTAUTH_URL}/change-password?token=${token}${cb}`
 
-    await sendActivationEmail(user.email, user.name, activationUrl)
+    sendActivationWorkflow(user.email, user.name, activationUrl).catch((err) =>
+      console.error("Failed to send activation email:", err)
+    )
     await logAuditEvent({ userId: user.id, email: user.email, action: "ACTIVATE_USER", details: "Activation email sent" })
 
     return NextResponse.json({ success: true })

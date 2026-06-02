@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { userRepository, passwordResetTokenRepository } from "@/lib/repositories/factory"
 import { randomBytes } from "crypto"
-import { sendForgotPasswordEmail, sendActivationEmail } from "@/lib/services/email"
+import { sendActivationWorkflow, sendForgotPasswordWorkflow } from "@/lib/workflows/email-workflows"
 import { logAuditEvent } from "@/lib/services/audit"
 
 export async function POST(req: NextRequest) {
@@ -24,7 +24,9 @@ export async function POST(req: NextRequest) {
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
       await passwordResetTokenRepository.create(user.email, token, expiresAt)
       const activationUrl = `${process.env.NEXTAUTH_URL}/change-password?token=${token}`
-      await sendActivationEmail(user.email, user.name, activationUrl)
+      sendActivationWorkflow(user.email, user.name, activationUrl).catch((err) =>
+        console.error("Failed to send activation email:", err)
+      )
       await logAuditEvent({ userId: user.id, email: user.email, action: "PASSWORD_RESET", details: "Inactive user requested reset — activation email sent" })
       return NextResponse.json({ success: true, code: "ACTIVATION_SENT" })
     }
@@ -36,7 +38,9 @@ export async function POST(req: NextRequest) {
 
     const resetUrl = `${process.env.NEXTAUTH_URL}/change-password?token=${token}`
 
-    await sendForgotPasswordEmail(user.email, user.name, resetUrl)
+    sendForgotPasswordWorkflow(user.email, user.name, resetUrl).catch((err) =>
+      console.error("Failed to send forgot-password email:", err)
+    )
     await logAuditEvent({ userId: user.id, email: user.email, action: "PASSWORD_RESET", details: "Password reset email sent" })
 
     return NextResponse.json({ success: true })
