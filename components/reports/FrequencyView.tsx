@@ -260,10 +260,10 @@ function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEnt
           className="min-w-full"
         >
           {/* Y-axis grid lines + labels */}
-          {yTicks.map((tick) => {
+          {yTicks.map((tick, index) => {
             const y = padding.top + plotHeight - (tick / maxCount) * plotHeight
             return (
-              <g key={`ytick-${tick}`}>
+              <g key={`ytick-${tick}-${index}-${Math.random().toString(36).substr(2, 9)}`}>
                 <line
                   x1={padding.left}
                   y1={y}

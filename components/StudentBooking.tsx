@@ -757,8 +757,8 @@ export default function StudentBooking({ facultyList, userRole, students, server
                     <span className={`text-xs font-semibold ${isToday ? "bg-gold-600 text-white w-6 h-6 rounded-full flex items-center justify-center" : "text-slate-700"}`}>
                       {day}
                     </span>
-                    {!isPast && (
-                      <span className={`mt-0.5 w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+                    {(!isPast) && (
+                      <span className={`mt-0.5 w-1.5 h-1.5 rounded-full shrink-0 ${userRole === "STUDENT" ? dotColor : ""}`}>{}</span>
                     )}
                   </button>
                 )
@@ -820,7 +820,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
               )}
 
               <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                {freeRanges.length === 0 ? (
+                {freeRanges.length === 0 && userRole === "STUDENT" ? (
                   <div className="text-xs text-red-700">
                     <p className="font-semibold">No common availability</p>
                     <p className="opacity-75">Add a custom block and invited faculty will review it.</p>

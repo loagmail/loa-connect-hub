@@ -57,7 +57,7 @@ export default async function FacultyBookPage() {
         <h1 className="text-2xl font-bold text-slate-900">Schedule a Meeting</h1>
         <p className="text-sm text-slate-500 mt-1">Schedule a meeting with optional attendees.</p>
       </div>
-      <StudentBooking facultyWithRules={facultyWithRules as FacultyWithRules[]} userRole={role as "STUDENT" | "FACULTY" | "DEAN"} students={students} serverNow={new Date().toISOString()} currentUserId={currentUserId} />
+      <StudentBooking facultyList={facultyWithRules as FacultyWithRules[]} userRole={role as "STUDENT" | "FACULTY" | "DEAN"} students={students} serverNow={new Date().toISOString()} currentUserId={currentUserId} />
     </div>
   )
 }
