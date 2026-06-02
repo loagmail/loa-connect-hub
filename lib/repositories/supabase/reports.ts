@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { FacultyStatsData, DailyFrequencyData, WeeklyFrequencyData, FacultyResponseTime, ResponseTimeStats, ResponseTimeDistribution, IReportsRepository } from "@/lib/types"
+import type { FacultyStatsData, DailyFrequencyData, WeeklyFrequencyData, FacultyResponseTime, ResponseTimeStats, ResponseTimeDistribution, BacklogEntry, BacklogAgingBucket, BacklogSummary, IReportsRepository } from "@/lib/types"
 import { userRepository } from "./user"
 import type { DbRecord } from "./common"
 
@@ -209,6 +209,119 @@ export const reportsRepository: IReportsRepository = {
       additionalRemarks: apt.additionalRemarks as string | null,
       hasFiles: fileAppointmentIds.has(apt.id as string),
     }))
+  },
+
+  async getDepartmentBacklog(departmentId, filters?) {
+    const facultyUsers = (await userRepository.listByDepartment(departmentId))
+      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
+      .map(({ id, name }) => ({ id, name }))
+
+    const facultyIds = facultyUsers.map((u) => u.id)
+    if (facultyIds.length === 0) {
+      return {
+        entries: [],
+        agingBuckets: [],
+        summary: { totalPending: 0, totalApproved: 0, totalUnresolved: 0, oldestDays: 0, oldestDate: null, oldestFaculty: "", oldestStudent: "" },
+      }
+    }
+
+    const facultyNameMap = new Map(facultyUsers.map((u) => [u.id, u.name]))
+
+    let query = supabase
+      .from("appointments")
+      .select("id, facultyId, date, startTime, endTime, status, title, student:users!appointments_studentId_fkey(name)")
+      .eq("meetingType", "CONSULTATION")
+      .in("facultyId", facultyIds)
+      .in("status", ["PENDING", "APPROVED"])
+
+    if (filters?.startDate) {
+      query = query.gte("date", filters.startDate)
+    }
+    if (filters?.endDate) {
+      query = query.lte("date", filters.endDate)
+    }
+
+    const { data: appointments, error: apptError } = await query.order("date", { ascending: true })
+    if (apptError) throw apptError
+
+    const raw = (appointments || []) as DbRecord[]
+    if (raw.length === 0) {
+      return {
+        entries: [],
+        agingBuckets: [],
+        summary: { totalPending: 0, totalApproved: 0, totalUnresolved: 0, oldestDays: 0, oldestDate: null, oldestFaculty: "", oldestStudent: "" },
+      }
+    }
+
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    const buckets: { label: string; fromDays: number; toDays: number | null }[] = [
+      { label: "0 - 3 Days", fromDays: 0, toDays: 3 },
+      { label: "4 - 7 Days", fromDays: 4, toDays: 7 },
+      { label: "8 - 14 Days", fromDays: 8, toDays: 14 },
+      { label: "More Than 14 Days", fromDays: 14, toDays: null },
+    ]
+
+    const bucketCounts = new Map<string, number>(buckets.map((b) => [b.label, 0]))
+
+    let oldestEntry: BacklogEntry | null = null
+
+    const entries: BacklogEntry[] = raw.map((apt) => {
+      const aptDate = new Date((apt.date as string) + "T00:00:00")
+      const ageMs = today.getTime() - aptDate.getTime()
+      const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24))
+
+      const bucket = buckets.find((b) =>
+        b.toDays === null ? ageDays >= b.fromDays : ageDays >= b.fromDays && ageDays <= b.toDays
+      )
+      const bucketLabel = bucket?.label || "More Than 14 Days"
+      bucketCounts.set(bucketLabel, (bucketCounts.get(bucketLabel) || 0) + 1)
+
+      const entry: BacklogEntry = {
+        id: apt.id as string,
+        facultyId: apt.facultyId as string,
+        facultyName: facultyNameMap.get(apt.facultyId as string) || "Unknown",
+        studentName: (apt.student as DbRecord)?.name as string || "Unknown",
+        date: apt.date as string,
+        startTime: apt.startTime as string,
+        endTime: apt.endTime as string,
+        status: apt.status as "PENDING" | "APPROVED",
+        title: apt.title as string | null,
+        ageDays,
+        agingBucket: bucketLabel,
+      }
+
+      if (!oldestEntry || ageDays > oldestEntry.ageDays) {
+        oldestEntry = entry
+      }
+
+      return entry
+    })
+
+    const totalPending = entries.filter((e) => e.status === "PENDING").length
+    const totalApproved = entries.filter((e) => e.status === "APPROVED").length
+
+    const agingBuckets: BacklogAgingBucket[] = buckets.map((b) => ({
+      label: b.label,
+      fromDays: b.fromDays,
+      toDays: b.toDays,
+      count: bucketCounts.get(b.label) || 0,
+    }))
+
+    const oldest = oldestEntry as BacklogEntry | null
+
+    const summary: BacklogSummary = {
+      totalPending,
+      totalApproved,
+      totalUnresolved: entries.length,
+      oldestDays: oldest?.ageDays || 0,
+      oldestDate: oldest?.date || null,
+      oldestFaculty: oldest?.facultyName || "",
+      oldestStudent: oldest?.studentName || "",
+    }
+
+    return { entries, agingBuckets, summary }
   },
 
   async getDepartmentResponseTimes(departmentId, filters?) {

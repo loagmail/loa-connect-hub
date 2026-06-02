@@ -327,6 +327,37 @@ export interface ResponseTimeDistribution {
   count: number
 }
 
+export interface BacklogEntry {
+  id: string
+  facultyId: string
+  facultyName: string
+  studentName: string
+  date: string
+  startTime: string
+  endTime: string
+  status: "PENDING" | "APPROVED"
+  title: string | null
+  ageDays: number
+  agingBucket: string
+}
+
+export interface BacklogAgingBucket {
+  label: string
+  fromDays: number
+  toDays: number | null
+  count: number
+}
+
+export interface BacklogSummary {
+  totalPending: number
+  totalApproved: number
+  totalUnresolved: number
+  oldestDays: number
+  oldestDate: string | null
+  oldestFaculty: string
+  oldestStudent: string
+}
+
 export interface DepartmentSummary {
   id: string
   name: string
@@ -375,6 +406,15 @@ export interface IReportsRepository {
     departmentId: string,
     filters?: { startDate?: string; endDate?: string }
   ): Promise<WeeklyFrequencyData[]>
+
+  getDepartmentBacklog(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string }
+  ): Promise<{
+    entries: BacklogEntry[]
+    agingBuckets: BacklogAgingBucket[]
+    summary: BacklogSummary
+  }>
 
   getDepartmentResponseTimes(
     departmentId: string,
