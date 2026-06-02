@@ -302,6 +302,31 @@ export interface WeeklyFrequencyData {
   count: number
 }
 
+export interface ResponseTimeStats {
+  averageHours: number
+  medianHours: number
+  fastestHours: number
+  slowestHours: number
+  totalResponded: number
+}
+
+export interface FacultyResponseTime {
+  facultyId: string
+  facultyName: string
+  averageHours: number
+  medianHours: number
+  fastestHours: number
+  slowestHours: number
+  totalResponded: number
+}
+
+export interface ResponseTimeDistribution {
+  label: string
+  fromHours: number
+  toHours: number | null
+  count: number
+}
+
 export interface DepartmentSummary {
   id: string
   name: string
@@ -350,6 +375,15 @@ export interface IReportsRepository {
     departmentId: string,
     filters?: { startDate?: string; endDate?: string }
   ): Promise<WeeklyFrequencyData[]>
+
+  getDepartmentResponseTimes(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string }
+  ): Promise<{
+    stats: ResponseTimeStats
+    byFaculty: FacultyResponseTime[]
+    distribution: ResponseTimeDistribution[]
+  }>
 
   getDepartmentYearlyFrequency(
     departmentId: string,

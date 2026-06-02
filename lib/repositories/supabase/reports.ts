@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { FacultyStatsData, DailyFrequencyData, WeeklyFrequencyData, IReportsRepository } from "@/lib/types"
+import type { FacultyStatsData, DailyFrequencyData, WeeklyFrequencyData, FacultyResponseTime, ResponseTimeStats, ResponseTimeDistribution, IReportsRepository } from "@/lib/types"
 import { userRepository } from "./user"
 import type { DbRecord } from "./common"
 
@@ -209,6 +209,114 @@ export const reportsRepository: IReportsRepository = {
       additionalRemarks: apt.additionalRemarks as string | null,
       hasFiles: fileAppointmentIds.has(apt.id as string),
     }))
+  },
+
+  async getDepartmentResponseTimes(departmentId, filters?) {
+    const facultyUsers = (await userRepository.listByDepartment(departmentId))
+      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
+      .map(({ id, name }) => ({ id, name }))
+
+    const facultyIds = facultyUsers.map((u) => u.id)
+    if (facultyIds.length === 0) {
+      return { stats: { averageHours: 0, medianHours: 0, fastestHours: 0, slowestHours: 0, totalResponded: 0 }, byFaculty: [], distribution: [] }
+    }
+
+    const facultyNameMap = new Map(facultyUsers.map((u) => [u.id, u.name]))
+
+    let query = supabase
+      .from("appointments")
+      .select("facultyId, requestedAt, updatedAt")
+      .eq("meetingType", "CONSULTATION")
+      .in("facultyId", facultyIds)
+      .neq("status", "PENDING")
+
+    if (filters?.startDate) {
+      query = query.gte("date", filters.startDate)
+    }
+    if (filters?.endDate) {
+      query = query.lte("date", filters.endDate)
+    }
+
+    const { data: appointments, error: apptError } = await query
+    if (apptError) throw apptError
+
+    const raw = (appointments || []) as { facultyId: string; requestedAt: string; updatedAt: string }[]
+
+    if (raw.length === 0) {
+      return { stats: { averageHours: 0, medianHours: 0, fastestHours: 0, slowestHours: 0, totalResponded: 0 }, byFaculty: [], distribution: [] }
+    }
+
+    const allHours: number[] = []
+    const facultyMap = new Map<string, number[]>()
+
+    for (const apt of raw) {
+      const req = new Date(apt.requestedAt).getTime()
+      const upd = new Date(apt.updatedAt).getTime()
+      const hours = (upd - req) / (1000 * 60 * 60)
+
+      if (hours < 0) continue
+
+      allHours.push(hours)
+
+      if (!facultyMap.has(apt.facultyId)) {
+        facultyMap.set(apt.facultyId, [])
+      }
+      facultyMap.get(apt.facultyId)!.push(hours)
+    }
+
+    if (allHours.length === 0) {
+      return { stats: { averageHours: 0, medianHours: 0, fastestHours: 0, slowestHours: 0, totalResponded: 0 }, byFaculty: [], distribution: [] }
+    }
+
+    const sorted = [...allHours].sort((a, b) => a - b)
+
+    const avg = allHours.reduce((s, h) => s + h, 0) / allHours.length
+    const mid = Math.floor(sorted.length / 2)
+    const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+
+    const stats: ResponseTimeStats = {
+      averageHours: Math.round(avg * 100) / 100,
+      medianHours: Math.round(median * 100) / 100,
+      fastestHours: Math.round(sorted[0] * 100) / 100,
+      slowestHours: Math.round(sorted[sorted.length - 1] * 100) / 100,
+      totalResponded: allHours.length,
+    }
+
+    const byFaculty: FacultyResponseTime[] = Array.from(facultyMap.entries()).map(([facultyId, hours]) => {
+      const fsorted = [...hours].sort((a, b) => a - b)
+      const fmid = Math.floor(fsorted.length / 2)
+      const fmedian = fsorted.length % 2 !== 0 ? fsorted[fmid] : (fsorted[fmid - 1] + fsorted[fmid]) / 2
+      return {
+        facultyId,
+        facultyName: facultyNameMap.get(facultyId) || "Unknown",
+        averageHours: Math.round((hours.reduce((s, h) => s + h, 0) / hours.length) * 100) / 100,
+        medianHours: Math.round(fmedian * 100) / 100,
+        fastestHours: Math.round(Math.min(...hours) * 100) / 100,
+        slowestHours: Math.round(Math.max(...hours) * 100) / 100,
+        totalResponded: hours.length,
+      }
+    })
+
+    const buckets: { fromHours: number; toHours: number | null; label: string }[] = [
+      { fromHours: 0, toHours: 1, label: "< 1 hour" },
+      { fromHours: 1, toHours: 3, label: "1 - 3 hours" },
+      { fromHours: 3, toHours: 6, label: "3 - 6 hours" },
+      { fromHours: 6, toHours: 12, label: "6 - 12 hours" },
+      { fromHours: 12, toHours: 24, label: "12 - 24 hours" },
+      { fromHours: 24, toHours: 48, label: "24 - 48 hours" },
+      { fromHours: 48, toHours: 72, label: "2 - 3 days" },
+      { fromHours: 72, toHours: 168, label: "3 - 7 days" },
+      { fromHours: 168, toHours: null, label: "> 7 days" },
+    ]
+
+    const distribution: ResponseTimeDistribution[] = buckets.map((bucket) => ({
+      ...bucket,
+      count: allHours.filter((h) =>
+        bucket.toHours === null ? h >= bucket.fromHours : h >= bucket.fromHours && h < bucket.toHours
+      ).length,
+    }))
+
+    return { stats, byFaculty, distribution }
   },
 
   async getDepartmentFrequency(departmentId, filters?) {
