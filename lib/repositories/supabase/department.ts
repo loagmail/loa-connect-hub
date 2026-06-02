@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { DepartmentData, IDepartmentRepository } from "../interfaces"
+import type { DepartmentData, IDepartmentRepository } from "@/lib/types"
 import { singleQuery } from "./common"
 
 export const departmentRepository: IDepartmentRepository = {

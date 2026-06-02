@@ -1,5 +1,5 @@
 import { departmentRepository, reportsRepository } from "@/lib/repositories/factory"
-import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData } from "@/lib/repositories/interfaces"
+import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData } from "@/lib/types"
 
 export interface DeanDepartmentStatsResult {
   departmentName: string

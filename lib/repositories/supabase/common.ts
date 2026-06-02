@@ -1,4 +1,4 @@
-import type { UserData } from "../interfaces"
+import type { UserData } from "@/lib/types"
 
 export interface QueryError {
   code?: string

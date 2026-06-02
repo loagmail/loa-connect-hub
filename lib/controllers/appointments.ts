@@ -3,7 +3,7 @@ import { MIN_TIMESLOT_DURATION_MINUTES, MAX_TIMESLOT_DURATION_MINUTES } from "@/
 import { generateICal } from "@/lib/services/ical"
 import { sendAppointmentCreatedWorkflow, sendConsultationApprovedWorkflow, sendConsultationInviteWorkflow, sendMeetingInviteWithAcknowledgementWorkflow, sendConsultationInviteWithAcknowledgementWorkflow, sendStatusUpdateWorkflow } from "@/lib/workflows/email-workflows"
 import { hasRole } from "@/lib/utils/roles"
-import type { AppointmentData } from "@/lib/repositories/interfaces"
+import type { AppointmentData } from "@/lib/types"
 
 type DbRecord = Record<string, unknown>
 

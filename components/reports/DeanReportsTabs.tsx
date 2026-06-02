@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import html2canvas from "html2canvas"
 import { jsPDF } from "jspdf"
-import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData } from "@/lib/repositories/interfaces"
+import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData } from "@/lib/types"
 import { ReportCharts } from "@/components/reports/ReportCharts"
 import { ReportsView } from "@/components/reports/ReportsView"
 import { ScheduleView } from "@/components/reports/ScheduleView"

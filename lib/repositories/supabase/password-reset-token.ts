@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { PasswordResetTokenData, IPasswordResetTokenRepository } from "../interfaces"
+import type { PasswordResetTokenData, IPasswordResetTokenRepository } from "@/lib/types"
 
 export const passwordResetTokenRepository: IPasswordResetTokenRepository = {
   async create(email, token, expiresAt) {

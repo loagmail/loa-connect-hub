@@ -19,16 +19,28 @@ Optional — guarded by `FEATURE_CREATE_TEAMS_MEETING` flag. Sync tracking field
 ```
 app/                          # Next.js App Router — pages, layouts, API routes
 ├── (auth)/                   # Auth route group (login, activate, forgot-password)
+│   └── error.tsx             # Auth error boundary
 ├── admin/                    # Admin dashboard & management
+│   └── error.tsx             # Admin error boundary
 ├── api/                      # REST API routes (thin handlers -> controllers)
 ├── dean/                     # Dean dashboard & management
+│   ├── error.tsx             # Dean error boundary
+│   └── loading.tsx           # Dean loading state
 ├── dean/m/                   # Dean mobile companion pages (departments, upload)
 ├── faculty/                  # Faculty dashboard & management
+│   ├── error.tsx             # Faculty error boundary
+│   └── loading.tsx           # Faculty loading state
 ├── faculty/m/                # Faculty mobile companion pages (meetings)
 ├── student/                  # Student dashboard & booking
+│   ├── error.tsx             # Student error boundary
+│   ├── loading.tsx           # Student loading state
+│   ├── book/loading.tsx      # Booking loading state
+│   └── meetings/             # Student meetings (with loading.tsx per [id])
 ├── student/m/                # Student mobile companion pages (book, meetings)
 ├── 403/                      # Access denied page
 ├── faq/                      # FAQ page
+├── error.tsx                 # Global error boundary (inside layout)
+├── global-error.tsx          # Root error boundary (outside layout, includes <html>)
 ├── layout.tsx                # Root layout (SessionProvider + AppShell)
 └── page.tsx                  # Root page (role-based redirect / multi-role selector)
 
@@ -45,8 +57,7 @@ lib/                          # Business logic (32 files)
 ├── controllers/              # Domain logic (appointments, auth, reports, etc.)
 ├── repositories/             # Data access layer (interfaces + Supabase impl)
 ├── services/                 # Cross-cutting (email, audit, CSV, iCal)
-├── models/                   # Domain model types
-├── dtos/                     # Data transfer objects
+├── types/                    # Shared type definitions (entity, dto, repository)
 └── utils/                    # Date, roles, semester helpers
 ```
 
@@ -112,19 +123,19 @@ Desktop opt-out via `?desktop=1` query param.
 
 | Directory | Source Files |
 |-----------|-------------|
-| `app/` | 85 (pages, API routes, layouts) |
+| `app/` | 92 (pages, API routes, layouts, error boundaries, loading states) |
 | `components/` | 37 (React components) |
-| `lib/` | 32 (controllers, services, workflows, repos, utils, email-templates) |
-| Total | ~154 source files |
+| `lib/` | 40 (controllers, services, workflows, repos, types, utils, email-templates) |
+| Total | ~169 source files |
 
 ### Known Issues & Risks
 
-1. **Supabase repository is a monolith** — `lib/repositories/supabase.ts` is ~1015 lines implementing 7 repository interfaces in one file. Violates Single Responsibility Principle; hard to test and maintain.
+1. ~~**Supabase repository is a monolith** — `lib/repositories/supabase.ts` is ~1015 lines implementing 7 repository interfaces in one file. Violates Single Responsibility Principle; hard to test and maintain.~~ **Resolved** — Split into 8 files under `lib/repositories/supabase/`.
 2. **Minimal test coverage** — Only 1 test file exists for ~17,619 LOC. Critical paths (appointment booking, conflict detection, role resolution, report aggregation) are untested.
 3. **No client data-fetching library** — All client components use `useEffect` + `fetch()`. No caching, deduplication, stale-while-revalidate, optimistic updates, or automatic retry.
 4. **Mitigated — Vercel Workflows for durable email** — Fire-and-forget `.catch()` call sites replaced with Vercel Workflow functions (`lib/workflows/email-workflows.ts`) that provide built-in retries per step. Status notifications (accept, complete, cancel) also use durable workflows. Silent failures remain for non-critical emails not yet migrated.
-5. **No React Error Boundaries** — No `error.tsx` files. An uncaught client error can collapse the entire component tree.
-6. **Scattered type definitions** — Types live across `lib/models/`, `lib/repositories/interfaces.ts`, and `lib/dtos/`. Inconsistent naming and organization.
+5. ~~**No React Error Boundaries** — No `error.tsx` files. An uncaught client error can collapse the entire component tree.~~ **Resolved** — Added `error.tsx` at root, `global-error.tsx`, and per-route-group (`auth`, `admin`, `dean`, `faculty`, `student`).
+6. ~~**Scattered type definitions** — Types live across `lib/models/`, `lib/repositories/interfaces.ts`, and `lib/dtos/`. Inconsistent naming and organization.~~ **Resolved** — Consolidated into `lib/types/` (`entity.ts`, `dto.ts`, `repository.ts`).
 7. **HTML email templates via template literals** — Fragile string concatenation. No type safety or template engine.
 8. **Mobile route sync** — `proxy.ts` has a `toDesktopPath()` mapping and a `MOBILE_ROUTES` table that must be kept in sync when new mobile routes are added.
 

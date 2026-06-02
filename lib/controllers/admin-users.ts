@@ -1,5 +1,5 @@
 import { userRepository } from "@/lib/repositories/factory"
-import type { UserData } from "@/lib/repositories/interfaces"
+import type { UserData } from "@/lib/types"
 
 export async function softDeleteUser(id: string): Promise<void> {
   const user = await userRepository.findById(id)

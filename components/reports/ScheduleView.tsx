@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import type { RawAppointmentData } from "@/lib/repositories/interfaces"
+import type { RawAppointmentData } from "@/lib/types"
 
 interface ScheduleViewProps {
   rawAppointments: RawAppointmentData[]

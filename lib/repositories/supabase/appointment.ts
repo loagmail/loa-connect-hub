@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase"
 import type {
   AppointmentData, AppointmentAttendeeData, AppointmentTimeSlotData, AppointmentFileData,
   IAppointmentRepository,
-} from "../interfaces"
+} from "@/lib/types"
 import { appointmentSelect } from "./common"
 import type { DbRecord } from "./common"
 

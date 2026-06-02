@@ -1,9 +1,7 @@
 "use client"
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
-import { useCallback, useState, useMemo } from "react"
-import { getRecentSemesters } from "@/lib/utils/semester"
-import type { SemesterInfo } from "@/lib/utils/semester"
+import { useCallback, useState } from "react"
 
 export function ReportFilters() {
   const searchParams = useSearchParams()
@@ -13,8 +11,6 @@ export function ReportFilters() {
   const [startDate, setStartDate] = useState(searchParams.get("startDate") || "")
   const [endDate, setEndDate] = useState(searchParams.get("endDate") || "")
   const [status, setStatus] = useState(searchParams.get("status") || "")
-
-  const presetSemesters = useMemo(() => getRecentSemesters(4), [])
 
   const applyFilters = useCallback(
     (overrides?: { startDate?: string; endDate?: string }) => {
@@ -30,15 +26,6 @@ export function ReportFilters() {
     [startDate, endDate, status, router, pathname]
   )
 
-  const handlePreset = useCallback(
-    (sem: SemesterInfo) => {
-      setStartDate(sem.startDate)
-      setEndDate(sem.endDate)
-      applyFilters({ startDate: sem.startDate, endDate: sem.endDate })
-    },
-    [applyFilters]
-  )
-
   const clearFilters = useCallback(() => {
     setStartDate("")
     setEndDate("")
@@ -47,14 +34,6 @@ export function ReportFilters() {
   }, [router, pathname])
 
   const hasFilters = startDate || endDate || status
-
-  // Determine which preset matches current selection (if any)
-  const activePresetLabel = useMemo(() => {
-    if (!startDate || !endDate) return null
-    return presetSemesters.find(
-      (s) => s.startDate === startDate && s.endDate === endDate
-    )?.label ?? null
-  }, [startDate, endDate, presetSemesters])
 
   return (
     <div className="space-y-4">

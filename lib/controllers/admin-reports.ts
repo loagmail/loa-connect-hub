@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { departmentRepository, reportsRepository, userRepository } from "@/lib/repositories/factory"
-import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData, DepartmentSummary } from "@/lib/repositories/interfaces"
+import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData, DepartmentSummary } from "@/lib/types"
 import { hasRole } from "@/lib/utils/roles"
 
 export interface AdminReportResult {

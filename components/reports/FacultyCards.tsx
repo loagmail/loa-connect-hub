@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback } from "react"
-import type { FacultyStatsData, FacultyFrequencyData } from "@/lib/repositories/interfaces"
+import type { FacultyStatsData, FacultyFrequencyData } from "@/lib/types"
 
 interface FacultyCardsProps {
   stats: FacultyStatsData[]

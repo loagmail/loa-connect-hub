@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import StudentBooking from "@/components/StudentBooking"
 import { userRepository, availabilityRuleRepository, departmentRepository } from "@/lib/repositories/factory"
-import type { AvailabilityRuleData } from "@/lib/repositories/interfaces"
+import type { AvailabilityRuleData } from "@/lib/types"
 
 interface FacultyWithRules {
   id: string

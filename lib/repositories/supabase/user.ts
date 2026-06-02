@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase"
 import type {
   UserData,
   IUserRepository,
-} from "../interfaces"
+} from "@/lib/types"
 import { USER_SELECT, singleQueryWithRoles, toUsersWithRoles, toUserWithRole, isMissingUserrole } from "./common"
 import type { QueryError, DbRecord } from "./common"
 

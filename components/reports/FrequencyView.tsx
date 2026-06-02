@@ -7,7 +7,7 @@ import type {
   DepartmentYearlyEntry,
   FacultyYearlyData,
   FacultyStatsData,
-} from "@/lib/repositories/interfaces"
+} from "@/lib/types"
 import { FacultyCards } from "./FacultyCards"
 
 interface FrequencyViewProps {

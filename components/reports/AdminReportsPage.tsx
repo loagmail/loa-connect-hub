@@ -11,7 +11,7 @@ import type {
   FacultyFrequencyData,
   DepartmentYearlyEntry,
   FacultyYearlyData,
-} from "@/lib/repositories/interfaces"
+} from "@/lib/types"
 import { DeanReportsTabs } from "@/components/reports/DeanReportsTabs"
 
 interface AdminReportsPageProps {

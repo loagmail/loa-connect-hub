@@ -91,13 +91,3 @@ export interface AvailabilityRule {
   startDate: string
   endDate: string | null
 }
-
-export interface UpsertAvailabilityRuleInput {
-  facultyId: string
-  dayOfWeek: number
-  isBlocked: boolean
-  startTime?: string | null
-  endTime?: string | null
-  startDate: string
-  endDate?: string | null
-}

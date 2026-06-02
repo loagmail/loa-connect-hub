@@ -1,3 +1,5 @@
+// ── User ────────────────────────────────────────────────
+
 export interface UserData {
   id: string
   name: string
@@ -24,6 +26,45 @@ export interface CreateUserInput {
   course?: string | null
 }
 
+export interface ListUsersOptions {
+  includeDeleted?: boolean
+}
+
+export interface IUserRepository {
+  findByEmail(email: string): Promise<UserData | null>
+  findById(id: string): Promise<UserData | null>
+  create(input: CreateUserInput): Promise<UserData>
+  listByRole(role: string, options?: ListUsersOptions): Promise<UserData[]>
+  listByDepartment(departmentId: string, options?: ListUsersOptions): Promise<UserData[]>
+  listByIds(ids: string[], options?: ListUsersOptions): Promise<UserData[]>
+  listAll(options?: ListUsersOptions): Promise<UserData[]>
+  update(id: string, data: Partial<UserData>): Promise<UserData>
+  softDelete(id: string): Promise<void>
+  restore(id: string): Promise<void>
+  permanentDelete(id: string): Promise<void>
+  listDeleted(): Promise<UserData[]>
+}
+
+// ── Department ──────────────────────────────────────────
+
+export interface DepartmentData {
+  id: string
+  name: string
+  code: string
+  deanId: string | null
+  isDisabled: boolean
+}
+
+export interface IDepartmentRepository {
+  listAll(): Promise<DepartmentData[]>
+  findById(id: string): Promise<DepartmentData | null>
+  findByDeanId(deanId: string): Promise<DepartmentData | null>
+  create(data: { name: string; code: string; deanId?: string | null }): Promise<DepartmentData>
+  update(id: string, data: Partial<DepartmentData>): Promise<DepartmentData>
+}
+
+// ── Appointment ─────────────────────────────────────────
+
 export interface AppointmentData {
   id: string
   studentId: string
@@ -48,62 +89,6 @@ export interface AppointmentData {
   updatedAt: Date
 }
 
-export interface DepartmentData {
-  id: string
-  name: string
-  code: string
-  deanId: string | null
-  isDisabled: boolean
-}
-
-export interface ListUsersOptions {
-  includeDeleted?: boolean
-}
-
-export interface IUserRepository {
-  findByEmail(email: string): Promise<UserData | null>
-  findById(id: string): Promise<UserData | null>
-  create(input: CreateUserInput): Promise<UserData>
-  listByRole(role: string, options?: ListUsersOptions): Promise<UserData[]>
-  listByDepartment(departmentId: string, options?: ListUsersOptions): Promise<UserData[]>
-  listByIds(ids: string[], options?: ListUsersOptions): Promise<UserData[]>
-  listAll(options?: ListUsersOptions): Promise<UserData[]>
-  update(id: string, data: Partial<UserData>): Promise<UserData>
-  softDelete(id: string): Promise<void>
-  restore(id: string): Promise<void>
-  permanentDelete(id: string): Promise<void>
-  listDeleted(): Promise<UserData[]>
-}
-
-export interface IDepartmentRepository {
-  listAll(): Promise<DepartmentData[]>
-  findById(id: string): Promise<DepartmentData | null>
-  findByDeanId(deanId: string): Promise<DepartmentData | null>
-  create(data: { name: string; code: string; deanId?: string | null }): Promise<DepartmentData>
-  update(id: string, data: Partial<DepartmentData>): Promise<DepartmentData>
-}
-
-export interface AppointmentData {
-  id: string
-  studentId: string
-  facultyId: string
-  createdByEmail: string
-  meetingType: "CONSULTATION"
-  date: string
-  startTime: string
-  endTime: string
-  title: string | null
-  description: string | null
-  status: "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED" | "CANCELLED"
-  teamsLink: string | null
-  teamsSyncStatus: "UNWRITTEN" | "WRITTEN" | "FAILED"
-  teamsSyncRetries: number
-  teamsSyncError: string | null
-  teamsSyncLastAttempt: Date | null
-  requestedAt: Date
-  updatedAt: Date
-}
-
 export interface CreateAppointmentInput {
   studentId: string | null
   facultyId: string
@@ -115,18 +100,6 @@ export interface CreateAppointmentInput {
   endTime: string
   title?: string | null
   description?: string | null
-}
-
-export interface IUserRepository {
-  findByEmail(email: string): Promise<UserData | null>
-  findById(id: string): Promise<UserData | null>
-  create(input: CreateUserInput): Promise<UserData>
-  listByRole(role: string, options?: ListUsersOptions): Promise<UserData[]>
-  listAll(options?: ListUsersOptions): Promise<UserData[]>
-  softDelete(id: string): Promise<void>
-  restore(id: string): Promise<void>
-  permanentDelete(id: string): Promise<void>
-  listDeleted(): Promise<UserData[]>
 }
 
 export interface AppointmentAttendeeData {
@@ -181,6 +154,8 @@ export interface IAppointmentRepository {
   listFiles(appointmentId: string): Promise<AppointmentFileData[]>
 }
 
+// ── Availability Rule ───────────────────────────────────
+
 export interface AvailabilityRuleData {
   id: string
   facultyId: string
@@ -209,7 +184,7 @@ export interface IAvailabilityRuleRepository {
   delete(id: string): Promise<void>
 }
 
-// --- Password Reset Tokens ---
+// ── Password Reset Token ────────────────────────────────
 
 export interface PasswordResetTokenData {
   id: string
@@ -227,6 +202,8 @@ export interface IPasswordResetTokenRepository {
   findByEmail(email: string): Promise<PasswordResetTokenData | null>
 }
 
+// ── Audit Log ───────────────────────────────────────────
+
 export interface AuditLogData {
   id: string
   userId: string | null
@@ -241,7 +218,7 @@ export interface IAuditLogRepository {
   list(limit?: number): Promise<AuditLogData[]>
 }
 
-// --- Reports ---
+// ── Reports ─────────────────────────────────────────────
 
 export interface FacultyStatsData {
   facultyId: string

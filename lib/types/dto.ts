@@ -46,18 +46,11 @@ export interface AppointmentDetailDto {
   teamsSyncLastAttempt: string | null
   requestedAt: string
   updatedAt: string
-  /** The person who created this appointment */
   organizer: UserDto
-  /** The student involved (may be the same as organizer) */
   student: UserDto
-  /** The primary faculty member */
   faculty: UserDto
-  /** Optional additional attendees (excludes organizer and primary faculty) */
   attendees: AttendeeDto[]
-  /** Timeslots for this appointment */
   timeSlots: TimeSlotDto[]
-  /** Actions taken (set when completed by faculty) */
   actionTaken: string | null
-  /** Uploaded files (screen captures, etc.) */
   files: AppointmentFileDto[]
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, Fragment } from "react"
-import type { ConsultationSummaryData } from "@/lib/repositories/interfaces"
+import type { ConsultationSummaryData } from "@/lib/types"
 
 interface ConsultationSummaryViewProps {
   summaries: ConsultationSummaryData[]

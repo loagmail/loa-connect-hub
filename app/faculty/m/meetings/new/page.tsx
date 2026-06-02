@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import StudentBooking from "@/components/StudentBooking"
 import { userRepository, availabilityRuleRepository, departmentRepository } from "@/lib/repositories/factory"
-import type { AvailabilityRuleData } from "@/lib/repositories/interfaces"
+import type { AvailabilityRuleData } from "@/lib/types"
 
 interface FacultyWithRules {
   id: string

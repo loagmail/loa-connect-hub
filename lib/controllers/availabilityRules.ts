@@ -1,5 +1,5 @@
 import { availabilityRuleRepository } from "@/lib/repositories/factory"
-import type { UpsertAvailabilityRuleInput } from "@/lib/repositories/interfaces"
+import type { UpsertAvailabilityRuleInput } from "@/lib/types"
 
 export async function listAvailabilityRules(facultyId: string) {
   return availabilityRuleRepository.listByFaculty(facultyId)

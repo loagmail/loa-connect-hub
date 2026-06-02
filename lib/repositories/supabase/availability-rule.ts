@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { AvailabilityRuleData, IAvailabilityRuleRepository } from "../interfaces"
+import type { AvailabilityRuleData, IAvailabilityRuleRepository } from "@/lib/types"
 
 export const availabilityRuleRepository: IAvailabilityRuleRepository = {
   async listByFaculty(facultyId) {

@@ -1,6 +1,6 @@
 "use client"
 
-import type { FacultyStatsData } from "@/lib/repositories/interfaces"
+import type { FacultyStatsData } from "@/lib/types"
 
 interface ReportChartsProps {
   stats: FacultyStatsData[]

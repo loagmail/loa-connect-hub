@@ -4,7 +4,7 @@ import { userRepository } from "@/lib/repositories/factory"
 import { auditLogRepository } from "@/lib/repositories/factory"
 import { hasRole } from "@/lib/utils/roles"
 import { getDatabaseSize, formatBytes, getStoragePercentage, getStorageColor } from "@/lib/controllers/database-size"
-import type { UserData, AuditLogData } from "@/lib/repositories/interfaces"
+import type { UserData, AuditLogData } from "@/lib/types"
 
 async function getUsers() {
   const users = await userRepository.listAll()

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { AuditLogData, IAuditLogRepository } from "../interfaces"
+import type { AuditLogData, IAuditLogRepository } from "@/lib/types"
 
 export const auditLogRepository: IAuditLogRepository = {
   async create(data) {

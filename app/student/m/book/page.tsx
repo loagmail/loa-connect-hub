@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import MobileBookingFlow from "@/components/MobileBookingFlow"
 import { userRepository, availabilityRuleRepository, departmentRepository } from "@/lib/repositories/factory"
 import { hasRole } from "@/lib/utils/roles"
-import type { AvailabilityRuleData } from "@/lib/repositories/interfaces"
+import type { AvailabilityRuleData } from "@/lib/types"
 
 interface FacultyWithRules {
   id: string

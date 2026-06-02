@@ -6,7 +6,7 @@ import type {
   IPasswordResetTokenRepository,
   IAuditLogRepository,
   IReportsRepository,
-} from "./interfaces"
+} from "@/lib/types"
 
 import { userRepository as supabaseUserRepo } from "./supabase/user"
 import { departmentRepository as supabaseDeptRepo } from "./supabase/department"

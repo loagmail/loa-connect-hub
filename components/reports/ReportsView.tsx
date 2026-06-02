@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { FacultyStatsData, RawAppointmentData } from "@/lib/repositories/interfaces"
+import type { FacultyStatsData, RawAppointmentData } from "@/lib/types"
 import { ReportTable } from "./ReportTable"
 
 interface ReportsViewProps {

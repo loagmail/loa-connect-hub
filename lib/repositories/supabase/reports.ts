@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { FacultyStatsData, IReportsRepository } from "../interfaces"
+import type { FacultyStatsData, IReportsRepository } from "@/lib/types"
 import { userRepository } from "./user"
 import type { DbRecord } from "./common"
 

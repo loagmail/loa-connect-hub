@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge"
 import SubmitButton from "@/components/SubmitButton"
 import TeamsLinkForm from "@/components/TeamsLinkForm"
 import AppointmentDetailSkeleton from "@/components/AppointmentDetailSkeleton"
-import type { AppointmentDetailDto } from "@/lib/dtos/Appointments"
+import type { AppointmentDetailDto } from "@/lib/types"
 import { hasRole } from "@/lib/utils/roles"
 
 function getInitial(name: string) {
