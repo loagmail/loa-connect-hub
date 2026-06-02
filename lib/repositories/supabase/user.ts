@@ -10,11 +10,11 @@ export const userRepository: IUserRepository = {
   async findByEmail(email) {
     try {
       return await singleQueryWithRoles(
-        supabase.from("users").select(USER_SELECT).eq("email", email) as unknown as { single(): Promise<{ data: unknown; error: QueryError | null }> }
+        supabase.from("users").select(USER_SELECT).ilike("email", email) as unknown as { single(): Promise<{ data: unknown; error: QueryError | null }> }
       )
     } catch (err) {
       if (isMissingUserrole(err as QueryError)) {
-        const { data } = await supabase.from("users").select("*").eq("email", email).single()
+        const { data } = await supabase.from("users").select("*").ilike("email", email).single()
         return data ? { ...data, role: "GUEST" } as UserData : null
       }
       throw err
@@ -35,6 +35,7 @@ export const userRepository: IUserRepository = {
   },
   async create(input) {
     const { role, ...userFields } = input
+    userFields.email = userFields.email?.toLowerCase() ?? userFields.email
     const { data, error } = await supabase.from("users").insert(userFields).select("*").single()
     if (error) throw error
 
@@ -123,6 +124,7 @@ export const userRepository: IUserRepository = {
   },
   async update(id, data) {
     const { role, ...userFields } = data
+    if (userFields.email) userFields.email = userFields.email.toLowerCase()
     if (Object.keys(userFields).length > 0) {
       const { error } = await supabase.from("users").update(userFields).eq("id", id)
       if (error) throw error
