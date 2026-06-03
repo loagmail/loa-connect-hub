@@ -297,7 +297,7 @@ export default function AdminDepartmentsPage() {
                   <select
                     value={editDeptDeanId}
                     onChange={(e) => setEditDeptDeanId(e.target.value)}
-                    className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full text-sm bg-white border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
                   >
                     <option value="">Unassigned</option>
                     {deans.map((d) => (
@@ -344,7 +344,7 @@ export default function AdminDepartmentsPage() {
                   <select
                     value={newDeptDeanId}
                     onChange={(e) => setNewDeptDeanId(e.target.value)}
-                    className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full text-sm bg-white border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
                   >
                     <option value="">Select Dean...</option>
                     {deans.map((d) => (
@@ -506,7 +506,7 @@ export default function AdminDepartmentsPage() {
                 <select
                   value={newCourseDeptId}
                   onChange={(e) => setNewCourseDeptId(e.target.value)}
-                  className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className="w-full text-sm bg-white border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
                   required
                 >
                   <option value="">Select department...</option>

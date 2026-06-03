@@ -102,6 +102,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [allow24Hours, setAllow24Hours] = useState(false)
+  const [showAllBlocks, setShowAllBlocks] = useState(false)
 
   const todayStr = useMemo(() => fmtDate(now.getFullYear(), now.getMonth(), now.getDate()), [now])
   const selectedDateStr = selectedDay ? fmtDate(currentYear, currentMonth, selectedDay) : null
@@ -246,7 +247,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
 
   // Filtered end hours: must be >= start hour (for 30-min min duration)
   const getEndHourOpts = (start: string | null) => {
-    if (!start || userRole !== "STUDENT") return studentHourOptions
+    if (!start) return studentHourOptions
     const [sH, sM] = start.split(":").map(Number)
     const minEndMinutes = sH * 60 + sM + 30
     const minEndH = Math.floor(minEndMinutes / 60)
@@ -255,7 +256,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
 
   // Filtered end minutes: when same hour as min end hour, only allow minutes >= min end minute
   const getEndMinuteOpts = (start: string | null, selEndHour: number) => {
-    if (!start || userRole !== "STUDENT") return MINUTE_OPTIONS
+    if (!start) return MINUTE_OPTIONS
     const [sH, sM] = start.split(":").map(Number)
     const minEndMinutes = sH * 60 + sM + 30
     const minEndH = Math.floor(minEndMinutes / 60)
@@ -712,12 +713,14 @@ export default function StudentBooking({ facultyList, userRole, students, server
       {primaryFacultyId && (userRole === "STUDENT" || attendeeIds.length > 0) && (
         <section className="space-y-3">
           <h3 className="text-sm font-bold text-slate-700">3. Pick a Date & Time</h3>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold">
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" /> Available</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" /> Partial</span>
-            <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 shrink-0" /> Unavail.</span>
-            {/* <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" /> Blocked</span> */}
-          </div>
+          {userRole === "STUDENT" && (
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold">
+              <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" /> Available</span>
+              <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" /> Partial</span>
+              <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 shrink-0" /> Unavail.</span>
+              {/* <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" /> Blocked</span> */}
+            </div>
+          )}
 
           {/* Calendar */}
           <div className="flex items-center justify-between">
@@ -785,50 +788,67 @@ export default function StudentBooking({ facultyList, userRole, students, server
               </h4>
 
               {/* Hourly suggestions — click to pre-fill time selectors, then adjust */}
-              {userRole === "STUDENT" && freeRanges.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-600 mb-2">Available blocks — click to use, then edit the time:</p>
-                  <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    {freeRanges.flatMap((range) => {
-                      const suggestions: { start: string; end: string }[] = []
-                      const startH = parseInt(range.start.split(":")[0])
-                      const endH = parseInt(range.end.split(":")[0])
-                      for (let h = startH; h < endH; h++) {
-                        suggestions.push({
-                          start: `${String(h).padStart(2, "0")}:00`,
-                          end: `${String(h + 1).padStart(2, "0")}:00`,
-                        })
-                      }
-                      return suggestions
-                    }).map((slot, i) => {
-                      const isSelected = manualTime?.start === slot.start && manualTime?.end === slot.end
-                      return (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setManualTime({ start: slot.start, end: slot.end })}
-                          className={`card p-3 bg-white border flex items-center justify-between transition-colors ${isSelected
-                            ? "border-gold-300 bg-gold-50/50"
-                            : "border-slate-200 hover:border-slate-300"
-                            }`}
-                        >
-                          <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-                            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {slot.start} – {slot.end}
-                          </div>
-                          {isSelected && (
-                            <svg className="w-4 h-4 text-gold-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      )
-                    })}
+              {freeRanges.length > 0 && (() => {
+                const isToday =
+                  selectedDay === now.getDate() &&
+                  currentMonth === now.getMonth() &&
+                  currentYear === now.getFullYear()
+                const currentMinutes = now.getHours() * 60 + now.getMinutes()
+                const suggestions = freeRanges.flatMap((range) => {
+                  const result: { start: string; end: string }[] = []
+                  const startH = parseInt(range.start.split(":")[0])
+                  const endH = parseInt(range.end.split(":")[0])
+                  for (let h = startH; h < endH; h++) {
+                    if (isToday && timeToMinutes(h, 0) < currentMinutes) continue
+                    result.push({
+                      start: `${String(h).padStart(2, "0")}:00`,
+                      end: `${String(h + 1).padStart(2, "0")}:00`,
+                    })
+                  }
+                  return result
+                })
+                const currentDateStr = fmtDate(currentYear, currentMonth, selectedDay)
+                const addedSlotsForDate = selectedSlots.filter(s => s.date === currentDateStr)
+                const filteredSuggestions = suggestions.filter(s =>
+                  !addedSlotsForDate.some(a =>
+                    a.start < s.end && s.start < a.end
+                  )
+                )
+                const displayed = showAllBlocks ? filteredSuggestions : filteredSuggestions.slice(0, 5)
+                return (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600 mb-2">Suggested — click to use, then edit the time:</p>
+                    <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      {displayed.map((slot, i) => {
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setManualTime({ start: slot.start, end: slot.end })}
+                            className="card p-3 bg-white border border-slate-200 hover:border-slate-300 flex items-center justify-between transition-colors"
+                          >
+                            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+                              <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {slot.start} – {slot.end}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {filteredSuggestions.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllBlocks(!showAllBlocks)}
+                        className="mt-2 text-xs font-semibold text-gold-600 hover:text-gold-700"
+                      >
+                        {showAllBlocks ? "Show less" : `Show more (${filteredSuggestions.length - 5} more)`}
+                      </button>
+                    )}
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
               <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
                 {freeRanges.length === 0 && userRole === "STUDENT" ? (
@@ -859,7 +879,8 @@ export default function StudentBooking({ facultyList, userRole, students, server
                         onChange={(e) => {
                           const h = e.target.value
                           const m = manualTime?.start?.split(":")[1] || "00"
-                          setManualTime({ start: `${h}:${m}`, end: "" })
+                          const endH = Math.min(parseInt(h) + 1, 23)
+                          setManualTime({ start: `${h}:${m}`, end: `${String(endH).padStart(2, "0")}:00` })
                         }}
                         className="input text-xs py-2 flex-1 sm:w-auto min-w-0"
                       >
@@ -874,7 +895,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
                         onChange={(e) => {
                           const m = e.target.value
                           const h = manualTime?.start?.split(":")[0] || "00"
-                          setManualTime({ start: `${h}:${m}`, end: "" })
+                          setManualTime((prev) => ({ start: `${h}:${m}`, end: prev?.end || "" }))
                         }}
                         className="input text-xs py-2 flex-1 sm:w-auto min-w-0"
                       >
