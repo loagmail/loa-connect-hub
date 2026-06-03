@@ -10,10 +10,6 @@ export default function SearchInput({ query }: { query: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setValue(query)
-  }, [query])
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       if (value !== query) {
         const params = new URLSearchParams(searchParams.toString())
