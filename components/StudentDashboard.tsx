@@ -45,7 +45,7 @@ function daysUntil(dateStr: string): number {
 }
 
 export default function StudentDashboard({ studentName, course, appointments }: Props) {
-  const greeting = useMemo(getGreeting, [])
+  const greeting = useMemo(() => getGreeting(), [])
 
   const stats = useMemo(() => {
     const total = appointments.length
@@ -131,7 +131,7 @@ export default function StudentDashboard({ studentName, course, appointments }: 
           </div>
           <Link
             href="/student/book"
-            className="inline-flex items-center justify-center gap-1.5 px-5 py-3 sm:py-2.5 rounded-xl bg-gold-600 text-white text-sm font-semibold hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm min-h-[44px] sm:min-h-0"
+            className="inline-flex items-center justify-center gap-1.5 px-5 py-3 sm:py-2.5 rounded-lg bg-gold-600 text-white text-sm font-semibold hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm min-h-[44px] sm:min-h-0"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -323,7 +323,7 @@ export default function StudentDashboard({ studentName, course, appointments }: 
           </p>
           <Link
             href="/student/book"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold-600 text-white font-semibold text-sm hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gold-600 text-white font-semibold text-sm hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

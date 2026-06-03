@@ -148,7 +148,7 @@ export default async function MeetingsPage(props: {
         </div>
         <Link
           href="/faculty/meetings/new"
-          className="btn-primary text-sm font-semibold px-5 py-2.5"
+          className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg bg-gold-600 text-white text-sm font-semibold hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm"
         >
           + New Meeting
         </Link>

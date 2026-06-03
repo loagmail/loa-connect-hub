@@ -203,7 +203,7 @@ export function OnboardingWalkthrough({ role, userId }: OnboardingWalkthroughPro
               <button
                 onClick={next}
                 disabled={loading}
-                className="px-5 py-2 rounded-xl bg-gold-600 text-white text-sm font-semibold hover:bg-gold-700 transition-colors shadow-sm disabled:opacity-50"
+                className="px-5 py-2 rounded-lg bg-gold-600 text-white text-sm font-semibold hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
               >
                 {loading
                   ? "Finishing..."

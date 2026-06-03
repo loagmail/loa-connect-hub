@@ -314,9 +314,9 @@ export default function AvailabilityPage() {
         <button
           onClick={saveAll}
           disabled={pendingChanges.size === 0 || isSavingAll}
-          className={`px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all ${pendingChanges.size === 0
+          className={`px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all duration-200 ${pendingChanges.size === 0
             ? "bg-slate-300 cursor-not-allowed"
-            : "bg-gold-600 hover:bg-gold-700"
+            : "bg-gold-600 hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
             } ${isSavingAll ? "opacity-70" : ""}`}
         >
           {isSavingAll ? "Saving..." : "Save Changes"}

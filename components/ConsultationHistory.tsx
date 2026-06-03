@@ -61,7 +61,7 @@ export default function ConsultationHistory({ studentName, course, appointments 
           </p>
           <Link
             href="/student/book"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gold-600 text-white font-semibold text-sm hover:bg-gold-700 transition-all duration-200 shadow-sm"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gold-600 text-white font-semibold text-sm hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm"
           >
             Book Your First Consultation
           </Link>

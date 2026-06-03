@@ -63,7 +63,7 @@ export default async function MobileStudentMeetings(props: {
         <h1 className="text-xl font-bold text-slate-900">My Consultations</h1>
         <Link
           href="/student/m/book"
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg bg-gold-600 text-white hover:bg-gold-700 transition-colors min-h-[44px]"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg bg-gold-600 text-white hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm min-h-[44px]"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

@@ -146,7 +146,7 @@ export function ReportFiltersWithDept({
       <div className="flex items-center gap-2">
         <button
           onClick={applyFilters}
-          className="px-4 py-2 rounded-lg bg-gold-600 text-white text-sm font-semibold hover:bg-gold-700 transition-colors shadow-sm"
+          className="px-4 py-2 rounded-lg bg-gold-600 text-white text-sm font-semibold hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm"
         >
           Apply Filters
         </button>
