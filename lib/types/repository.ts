@@ -434,4 +434,58 @@ export interface IReportsRepository {
     departmentId: string,
     filters?: { startDate?: string; endDate?: string }
   ): Promise<FacultyYearlyData[]>
+
+  getConsultationCoverageData(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string }
+  ): Promise<CoverageReportData>
+
+  getWorkloadDistribution(
+    departmentId: string,
+    filters?: { startDate?: string; endDate?: string }
+  ): Promise<WorkloadDistributionData>
+}
+
+export interface CoverageData {
+  totalStudents: number
+  studentsWithConsultations: number
+  studentsWithoutConsultations: number
+  coveragePercentage: number
+}
+
+export interface CoverageTrendEntry {
+  month: string
+  monthName: string
+  year: number
+  totalStudents: number
+  studentsWithConsultations: number
+  coveragePercentage: number
+}
+
+export interface CoverageReportData {
+  overall: CoverageData
+  byDepartment: (CoverageData & { departmentId: string; departmentName: string })[]
+  trend: CoverageTrendEntry[]
+  departmentName: string
+}
+
+export interface WorkloadDistributionEntry {
+  facultyId: string
+  facultyName: string
+  departmentId: string
+  departmentName: string
+  total: number
+  completed: number
+  pending: number
+  approved: number
+  rejected: number
+  cancelled: number
+  completionRate: number
+  departmentShare: number
+}
+
+export interface WorkloadDistributionData {
+  entries: WorkloadDistributionEntry[]
+  departmentTotal: number
+  departmentName: string
 }

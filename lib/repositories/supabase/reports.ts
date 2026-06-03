@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { FacultyStatsData, DailyFrequencyData, WeeklyFrequencyData, FacultyResponseTime, ResponseTimeStats, ResponseTimeDistribution, BacklogEntry, BacklogAgingBucket, BacklogSummary, IReportsRepository } from "@/lib/types"
+import type { FacultyStatsData, DailyFrequencyData, WeeklyFrequencyData, FacultyResponseTime, ResponseTimeStats, ResponseTimeDistribution, BacklogEntry, BacklogAgingBucket, BacklogSummary, IReportsRepository, CoverageData, CoverageTrendEntry, WorkloadDistributionEntry } from "@/lib/types"
 import { userRepository } from "./user"
 import type { DbRecord } from "./common"
 
@@ -737,5 +737,163 @@ export const reportsRepository: IReportsRepository = {
         yearlyCounts,
       }
     })
+  },
+
+  async getConsultationCoverageData(departmentId, filters?) {
+    const students = (await userRepository.listByDepartment(departmentId))
+      .filter((u) => u.role.includes("STUDENT"))
+
+    const studentIds = students.map((s) => s.id)
+    if (studentIds.length === 0) {
+      const dept = await supabase.from("departments").select("name").eq("id", departmentId).single()
+      const deptName = (dept.data as DbRecord)?.name as string || "Unknown"
+      return {
+        overall: { totalStudents: 0, studentsWithConsultations: 0, studentsWithoutConsultations: 0, coveragePercentage: 0 },
+        byDepartment: [{ departmentId, departmentName: deptName, totalStudents: 0, studentsWithConsultations: 0, studentsWithoutConsultations: 0, coveragePercentage: 0 }],
+        trend: [],
+        departmentName: deptName,
+      }
+    }
+
+    let aptQuery = supabase
+      .from("appointments")
+      .select("studentId, date")
+      .eq("meetingType", "CONSULTATION")
+      .in("status", ["COMPLETED", "APPROVED"])
+      .in("studentId", studentIds)
+
+    if (filters?.startDate) {
+      aptQuery = aptQuery.gte("date", filters.startDate)
+    }
+    if (filters?.endDate) {
+      aptQuery = aptQuery.lte("date", filters.endDate)
+    }
+
+    const { data: appointments, error: aptError } = await aptQuery
+    if (aptError) throw aptError
+
+    const consultedStudentIds = new Set((appointments || []).map((a: DbRecord) => a.studentId as string))
+    const studentsWithConsultations = consultedStudentIds.size
+    const totalStudents = studentIds.length
+    const studentsWithoutConsultations = totalStudents - studentsWithConsultations
+    const coveragePercentage = totalStudents > 0 ? Math.round((studentsWithConsultations / totalStudents) * 100) : 0
+
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"]
+
+    const monthMap = new Map<string, Set<string>>()
+    for (const apt of (appointments || []) as DbRecord[]) {
+      const month = (apt.date as string).substring(0, 7)
+      if (!monthMap.has(month)) {
+        monthMap.set(month, new Set())
+      }
+      monthMap.get(month)!.add(apt.studentId as string)
+    }
+
+    const cumulativeConsulted = new Set<string>()
+    const trend: CoverageTrendEntry[] = Array.from(monthMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, ids]) => {
+        for (const id of ids) {
+          cumulativeConsulted.add(id)
+        }
+        const [yearStr, monthNum] = month.split("-")
+        return {
+          month,
+          monthName: monthNames[parseInt(monthNum, 10) - 1],
+          year: parseInt(yearStr, 10),
+          totalStudents,
+          studentsWithConsultations: cumulativeConsulted.size,
+          coveragePercentage: Math.round((cumulativeConsulted.size / totalStudents) * 100),
+        }
+      })
+
+    const dept = await supabase.from("departments").select("name").eq("id", departmentId).single()
+    const deptName = (dept.data as DbRecord)?.name as string || "Unknown"
+
+    const coverageData: CoverageData = {
+      totalStudents,
+      studentsWithConsultations,
+      studentsWithoutConsultations,
+      coveragePercentage,
+    }
+
+    return {
+      overall: coverageData,
+      byDepartment: [{ ...coverageData, departmentId, departmentName: deptName }],
+      trend,
+      departmentName: deptName,
+    }
+  },
+
+  async getWorkloadDistribution(departmentId, filters?) {
+    const facultyUsers = (await userRepository.listByDepartment(departmentId))
+      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
+      .map(({ id, name }) => ({ id, name }))
+
+    const facultyIds = facultyUsers.map((u) => u.id)
+    const dept = await supabase.from("departments").select("name").eq("id", departmentId).single()
+    const departmentName = (dept.data as DbRecord)?.name as string || "Unknown"
+
+    if (facultyIds.length === 0) {
+      return { entries: [], departmentTotal: 0, departmentName }
+    }
+
+    let query = supabase
+      .from("appointments")
+      .select("facultyId, status")
+      .eq("meetingType", "CONSULTATION")
+      .in("facultyId", facultyIds)
+
+    if (filters?.startDate) {
+      query = query.gte("date", filters.startDate)
+    }
+    if (filters?.endDate) {
+      query = query.lte("date", filters.endDate)
+    }
+
+    const { data: appointments, error: apptError } = await query
+    if (apptError) throw apptError
+
+    const statsMap = new Map<string, WorkloadDistributionEntry>()
+    for (const faculty of facultyUsers) {
+      statsMap.set(faculty.id, {
+        facultyId: faculty.id,
+        facultyName: faculty.name,
+        departmentId,
+        departmentName,
+        total: 0,
+        completed: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        cancelled: 0,
+        completionRate: 0,
+        departmentShare: 0,
+      })
+    }
+
+    for (const apt of (appointments || []) as DbRecord[]) {
+      const stat = statsMap.get(apt.facultyId as string)
+      if (!stat) continue
+      stat.total++
+      switch (apt.status) {
+        case "COMPLETED": stat.completed++; break
+        case "PENDING": stat.pending++; break
+        case "APPROVED": stat.approved++; break
+        case "REJECTED": stat.rejected++; break
+        case "CANCELLED": stat.cancelled++; break
+      }
+    }
+
+    const departmentTotal = Array.from(statsMap.values()).reduce((s, e) => s + e.total, 0)
+
+    const entries = Array.from(statsMap.values()).map((e) => ({
+      ...e,
+      completionRate: e.total > 0 ? Math.round((e.completed / e.total) * 100) : 0,
+      departmentShare: departmentTotal > 0 ? Math.round((e.total / departmentTotal) * 100) : 0,
+    }))
+
+    return { entries, departmentTotal, departmentName }
   },
 }

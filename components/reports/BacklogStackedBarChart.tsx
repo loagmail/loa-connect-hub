@@ -33,7 +33,6 @@ export function BacklogStackedBarChart({ byFaculty }: BacklogStackedBarChartProp
   }
 
   const maxTotal = Math.max(...byFaculty.map((f) => f.buckets.reduce((s, b) => s + b.count, 0)), 1)
-  const barHeight = 36
 
   return (
     <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">

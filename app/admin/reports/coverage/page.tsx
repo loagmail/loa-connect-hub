@@ -1,12 +1,12 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { getAdminReportData } from "@/lib/controllers/admin-reports"
-import { DepartmentHealthReport } from "@/components/reports/DepartmentHealthReport"
+import { getConsultationCoverageData } from "@/lib/controllers/coverage-reports"
+import { CoverageReport } from "@/components/reports/CoverageReport"
 import { ReportFiltersWithDept } from "@/components/reports/ReportFiltersWithDept"
 import { resolveReportDepartment } from "@/lib/utils/report-helpers"
 import { Suspense } from "react"
 
-export default async function HealthReportPage(props: {
+export default async function CoverageReportPage(props: {
   searchParams?: Promise<{ startDate?: string; endDate?: string; departmentId?: string }>
 }) {
   const session = await auth()
@@ -22,11 +22,11 @@ export default async function HealthReportPage(props: {
 
   let data
   try {
-    data = await getAdminReportData(filters, departmentId)
+    data = await getConsultationCoverageData(departmentId, filters)
   } catch (err) {
     return (
       <div className="max-w-6xl mx-auto space-y-8 pb-12">
-        <h1 className="text-2xl font-bold text-slate-900">Department Consultation Health Report</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Consultation Coverage Report</h1>
         <div className="rounded-2xl border border-slate-200/70 bg-white p-8 shadow-sm text-center">
           <p className="text-slate-500">{(err as Error).message}</p>
         </div>
@@ -44,7 +44,12 @@ export default async function HealthReportPage(props: {
         />
       </Suspense>
 
-      <DepartmentHealthReport departments={data.departments} />
+      <CoverageReport
+        overall={data.overall}
+        byDepartment={data.byDepartment}
+        trend={data.trend}
+        departmentName={data.departmentName}
+      />
     </div>
   )
 }

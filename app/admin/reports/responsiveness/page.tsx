@@ -2,14 +2,27 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getResponsivenessReportData } from "@/lib/controllers/responsiveness-reports"
 import { ResponsivenessReport } from "@/components/reports/ResponsivenessReport"
+import { ReportFiltersWithDept } from "@/components/reports/ReportFiltersWithDept"
+import { resolveReportDepartment } from "@/lib/utils/report-helpers"
+import { Suspense } from "react"
 
-export default async function ResponsivenessPage() {
+export default async function ResponsivenessPage(props: {
+  searchParams?: Promise<{ startDate?: string; endDate?: string; departmentId?: string }>
+}) {
   const session = await auth()
   if (!session?.user) redirect("/login")
 
+  const searchParams = await props.searchParams
+  const { departmentId, departments, isDean } = await resolveReportDepartment(session, searchParams?.departmentId || null)
+
+  const filters = {
+    startDate: searchParams?.startDate || undefined,
+    endDate: searchParams?.endDate || undefined,
+  }
+
   let data
   try {
-    data = await getResponsivenessReportData(null)
+    data = await getResponsivenessReportData(departmentId, filters)
   } catch (err) {
     return (
       <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -22,7 +35,15 @@ export default async function ResponsivenessPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto pb-12">
+    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <Suspense fallback={<div className="h-12" />}>
+        <ReportFiltersWithDept
+          departments={departments}
+          selectedDepartmentId={departmentId}
+          isDean={isDean}
+        />
+      </Suspense>
+
       <ResponsivenessReport
         stats={data.stats}
         byFaculty={data.byFaculty}
