@@ -159,8 +159,8 @@ export default function ChangePasswordPage({ searchParams }: ChangePasswordProps
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-800 font-display tracking-tight">Set Password</h1>
-        <p className="text-slate-400 mt-1.5 text-xs font-semibold uppercase tracking-wider">Choose a secure password</p>
+        <h1 className="text-2xl font-extrabold text-primary font-display tracking-tight">Set Password</h1>
+        <p className="text-tertiary mt-1.5 text-xs font-semibold uppercase tracking-wider">Choose a secure password</p>
       </div>
 
       {error && (
@@ -171,7 +171,7 @@ export default function ChangePasswordPage({ searchParams }: ChangePasswordProps
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="password" className="block text-xs font-semibold text-slate-500 mb-1.5">
+          <label htmlFor="password" className="block text-xs font-semibold text-tertiary mb-1.5">
             New Password
           </label>
           <input
@@ -180,13 +180,13 @@ export default function ChangePasswordPage({ searchParams }: ChangePasswordProps
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="input text-slate-800"
+            className="input text-primary"
             placeholder="At least 6 characters"
           />
         </div>
 
         <div>
-          <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-500 mb-1.5">
+          <label htmlFor="confirmPassword" className="block text-xs font-semibold text-tertiary mb-1.5">
             Confirm Password
           </label>
           <input
@@ -195,7 +195,7 @@ export default function ChangePasswordPage({ searchParams }: ChangePasswordProps
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="input text-slate-800"
+            className="input text-primary"
             placeholder="Re-enter your password"
           />
         </div>

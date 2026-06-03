@@ -65,26 +65,26 @@ export default function TimeSlotPicker({
   }
 
   return (
-    <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
+    <div className="space-y-2 p-3 rounded-lg bg-surface border border-default">
       {freeRanges.length === 0 && userRole === "STUDENT" ? (
         <div className="text-xs text-red-700">
           <p className="font-semibold">No common availability</p>
           <p className="opacity-75">Add a custom block and invited faculty will review it.</p>
         </div>
       ) : (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-tertiary">
           You can also add additional custom blocks for this day.
         </p>
       )}
 
       <div className="flex flex-col gap-2">
         {userRole !== "STUDENT" && (
-          <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+          <label className="flex items-center gap-2 text-xs text-secondary cursor-pointer">
             <input
               type="checkbox"
               checked={allow24Hours}
               onChange={onToggle24Hours}
-              className="w-3.5 h-3.5 rounded border-slate-300 text-gold-600 focus:ring-gold-500"
+              className="w-3.5 h-3.5 rounded border-strong text-gold-600 focus:ring-gold-500"
             />
             Allow 24-hour range (00:00 – 23:00)
           </label>
@@ -92,7 +92,7 @@ export default function TimeSlotPicker({
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="flex items-center gap-1">
-            <label className="text-[10px] font-semibold text-slate-400 sm:hidden w-8">
+            <label className="text-[10px] font-semibold text-tertiary sm:hidden w-8">
               Start
             </label>
             <select
@@ -115,7 +115,7 @@ export default function TimeSlotPicker({
                 </option>
               ))}
             </select>
-            <span className="text-slate-400 font-bold shrink-0">:</span>
+            <span className="text-tertiary font-bold shrink-0">:</span>
             <select
               value={manualTime?.start?.split(":")[1] || ""}
               onChange={(e) => {
@@ -138,11 +138,11 @@ export default function TimeSlotPicker({
           </div>
 
           <div className="flex items-center justify-center sm:px-2">
-            <span className="text-xs font-semibold text-slate-400">to</span>
+            <span className="text-xs font-semibold text-tertiary">to</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <label className="text-[10px] font-semibold text-slate-400 sm:hidden w-8">
+            <label className="text-[10px] font-semibold text-tertiary sm:hidden w-8">
               End
             </label>
             <select
@@ -164,7 +164,7 @@ export default function TimeSlotPicker({
                 </option>
               ))}
             </select>
-            <span className="text-slate-400 font-bold shrink-0">:</span>
+            <span className="text-tertiary font-bold shrink-0">:</span>
             <select
               value={manualTime?.end?.split(":")[1] || ""}
               onChange={(e) => {
@@ -198,7 +198,7 @@ export default function TimeSlotPicker({
           </button>
         </div>
 
-        <p className="text-[10px] text-slate-500">
+        <p className="text-[10px] text-tertiary">
           Min 30 min, max 8 hrs per block. 15-min intervals.
         </p>
       </div>

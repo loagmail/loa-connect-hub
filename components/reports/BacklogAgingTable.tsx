@@ -16,9 +16,9 @@ export function BacklogAgingTable({ entries }: BacklogAgingTableProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">Aging Table</h3>
-        <div className="flex items-center justify-center h-32 text-slate-400 text-sm">
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-primary mb-4">Aging Table</h3>
+        <div className="flex items-center justify-center h-32 text-tertiary text-sm">
           No unresolved consultations
         </div>
       </div>
@@ -26,20 +26,20 @@ export function BacklogAgingTable({ entries }: BacklogAgingTableProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b border-slate-100">
-        <h3 className="text-sm font-bold text-slate-800">Aging Table</h3>
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-default">
+        <h3 className="text-sm font-bold text-primary">Aging Table</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50">
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Aging Bucket</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Faculty</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Student</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Date</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Age</th>
+            <tr className="border-b border-default bg-surface/50">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Aging Bucket</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Faculty</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Student</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Date</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Status</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Age</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -58,33 +58,33 @@ export function BacklogAgingTable({ entries }: BacklogAgingTableProps) {
 
               if (group.entries.length === 0) {
                 return (
-                  <tr key={group.label} className={`${bucketColor} border-b border-slate-100`}>
+                  <tr key={group.label} className={`${bucketColor} border-b border-default`}>
                     <td className="px-4 py-3" colSpan={6}>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${bucketBadge}`}>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${bucketBadge}`}>
                         {group.label}
                       </span>
-                      <span className="text-xs text-slate-400 ml-2">No entries</span>
+                      <span className="text-xs text-tertiary ml-2">No entries</span>
                     </td>
                   </tr>
                 )
               }
 
               return group.entries.map((entry, idx) => (
-                <tr key={entry.id} className={`${idx === 0 ? bucketColor : ""} transition-colors duration-150 hover:bg-slate-50`}>
+                <tr key={entry.id} className={`${idx === 0 ? bucketColor : ""} transition-colors duration-150 hover:bg-surface-hover`}>
                   <td className="px-4 py-3">
                     {idx === 0 && (
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${bucketBadge}`}>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${bucketBadge}`}>
                         {group.label}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-800 whitespace-nowrap">{entry.facultyName}</td>
-                  <td className="px-4 py-3 text-slate-600">{entry.studentName}</td>
-                  <td className="px-4 py-3 text-center font-mono text-xs text-slate-500">{entry.date}</td>
+                  <td className="px-4 py-3 font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
+                  <td className="px-4 py-3 text-secondary">{entry.studentName}</td>
+                  <td className="px-4 py-3 text-center font-mono text-xs text-tertiary">{entry.date}</td>
                   <td className="px-4 py-3 text-center">
                     <StatusBadge status={entry.status} />
                   </td>
-                  <td className="px-4 py-3 text-center font-mono text-sm font-semibold text-slate-700">
+                  <td className="px-4 py-3 text-center font-mono text-sm font-semibold text-secondary">
                     {entry.ageDays}d
                   </td>
                 </tr>
@@ -100,13 +100,13 @@ export function BacklogAgingTable({ entries }: BacklogAgingTableProps) {
 function StatusBadge({ status }: { status: string }) {
   if (status === "PENDING") {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-100 text-amber-700">
         Pending
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">
       Approved
     </span>
   )

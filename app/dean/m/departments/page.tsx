@@ -107,10 +107,10 @@ export default function MobileDeanDepartmentsPage() {
   return (
     <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-24">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-900">Departments</h1>
+        <h1 className="text-xl font-bold text-primary">Departments</h1>
         <Link
           href="/dean/departments?desktop=1"
-          className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
+          className="text-xs text-tertiary hover:text-secondary underline underline-offset-2"
         >
           Desktop view
         </Link>
@@ -119,37 +119,37 @@ export default function MobileDeanDepartmentsPage() {
       {error && <p className="text-xs font-medium text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
 
       {loading ? (
-        <div className="text-sm text-slate-500">Loading...</div>
+        <div className="text-sm text-tertiary">Loading...</div>
       ) : !department ? (
-        <div className="card p-6 bg-white text-center">
-          <p className="text-sm text-slate-500">No department assigned to your account.</p>
+        <div className="card p-6 bg-surface text-center">
+          <p className="text-sm text-tertiary">No department assigned to your account.</p>
         </div>
       ) : (
         <>
-          <div className="card p-4 bg-white">
-            <p className="text-sm font-semibold text-slate-800">{department.name}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{department.code}</p>
+          <div className="card p-4 bg-surface">
+            <p className="text-sm font-semibold text-primary">{department.name}</p>
+            <p className="text-xs text-tertiary mt-0.5">{department.code}</p>
           </div>
 
-          <form onSubmit={handleAdd} className="card p-4 bg-white space-y-3">
-            <p className="text-sm font-bold text-slate-700">Add Course</p>
+          <form onSubmit={handleAdd} className="card p-4 bg-surface space-y-3">
+            <p className="text-sm font-bold text-secondary">Add Course</p>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Course Name</label>
+              <label className="block text-xs font-semibold text-tertiary mb-1">Course Name</label>
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-gold-400 min-h-[44px]"
+                className="w-full text-sm border border-strong rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-gold-400 min-h-[44px]"
                 placeholder="e.g. Bachelor of Science in IT"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Course Code (max 10 chars)</label>
+              <label className="block text-xs font-semibold text-tertiary mb-1">Course Code (max 10 chars)</label>
               <input
                 value={newCode}
                 onChange={(e) => setNewCode(e.target.value.toUpperCase())}
                 maxLength={10}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-gold-400 min-h-[44px]"
+                className="w-full text-sm border border-strong rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-gold-400 min-h-[44px]"
                 placeholder="e.g. BSIT"
                 required
               />
@@ -158,15 +158,15 @@ export default function MobileDeanDepartmentsPage() {
           </form>
 
           {courses.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center">No courses configured yet. Add one above.</p>
+            <p className="text-xs text-tertiary text-center">No courses configured yet. Add one above.</p>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm font-bold text-slate-700">Courses</p>
+              <p className="text-sm font-bold text-secondary">Courses</p>
               {courses.map((c) => (
-                <div key={c.id} className="card p-4 bg-white flex items-center justify-between min-h-[44px]">
+                <div key={c.id} className="card p-4 bg-surface flex items-center justify-between min-h-[44px]">
                   <div>
-                    <p className="text-xs font-semibold text-slate-700 font-mono">{c.code}</p>
-                    <p className="text-xs text-slate-500">{c.name}</p>
+                    <p className="text-xs font-semibold text-secondary font-mono">{c.code}</p>
+                    <p className="text-xs text-tertiary">{c.name}</p>
                   </div>
                   <button
                     onClick={() => handleDelete(c.id)}
@@ -182,7 +182,7 @@ export default function MobileDeanDepartmentsPage() {
           <div className="text-center pt-2">
             <Link
               href="/dean/departments?desktop=1"
-              className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
+              className="text-xs text-tertiary hover:text-secondary underline underline-offset-2"
             >
               Desktop view
             </Link>

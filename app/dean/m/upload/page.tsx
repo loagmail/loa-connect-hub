@@ -60,10 +60,10 @@ export default function MobileDeanUploadPage() {
   return (
     <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-24">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-900">Bulk Import</h1>
+        <h1 className="text-xl font-bold text-primary">Bulk Import</h1>
         <Link
           href="/dean/upload?desktop=1"
-          className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
+          className="text-xs text-tertiary hover:text-secondary underline underline-offset-2"
         >
           Desktop view
         </Link>
@@ -72,12 +72,12 @@ export default function MobileDeanUploadPage() {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => { setImportType("users"); setResult(null); setError("") }}
-          className={`card p-4 bg-white text-left border-2 transition-colors min-h-[44px] ${
+          className={`card p-4 bg-surface text-left border-2 transition-colors min-h-[44px] ${
             importType === "users" ? "border-gold-300 bg-gold-50/30" : "border-transparent hover:border-slate-200"
           }`}
         >
-          <p className="text-xs font-semibold text-slate-700">Faculty / Staff</p>
-          <p className="text-[10px] font-mono text-slate-400 mt-1">name, email, dept</p>
+          <p className="text-xs font-semibold text-secondary">Faculty / Staff</p>
+          <p className="text-[10px] font-mono text-tertiary mt-1">name, email, dept</p>
           {importType === "users" && (
             <span className="inline-block mt-1 text-[9px] font-bold text-gold-600 bg-gold-100 px-2 py-0.5 rounded-full">SELECTED</span>
           )}
@@ -85,12 +85,12 @@ export default function MobileDeanUploadPage() {
 
         <button
           onClick={() => { setImportType("students"); setResult(null); setError("") }}
-          className={`card p-4 bg-white text-left border-2 transition-colors min-h-[44px] ${
+          className={`card p-4 bg-surface text-left border-2 transition-colors min-h-[44px] ${
             importType === "students" ? "border-gold-300 bg-gold-50/30" : "border-transparent hover:border-slate-200"
           }`}
         >
-          <p className="text-xs font-semibold text-slate-700">Students</p>
-          <p className="text-[10px] font-mono text-slate-400 mt-1">name, email, course</p>
+          <p className="text-xs font-semibold text-secondary">Students</p>
+          <p className="text-[10px] font-mono text-tertiary mt-1">name, email, course</p>
           {importType === "students" && (
             <span className="inline-block mt-1 text-[9px] font-bold text-gold-600 bg-gold-100 px-2 py-0.5 rounded-full">SELECTED</span>
           )}
@@ -120,17 +120,17 @@ export default function MobileDeanUploadPage() {
         </a>
       </div>
 
-      <form onSubmit={handleSubmit} className="card p-4 bg-white space-y-4">
-        <p className="text-xs font-semibold text-slate-500">
+      <form onSubmit={handleSubmit} className="card p-4 bg-surface space-y-4">
+        <p className="text-xs font-semibold text-tertiary">
           Importing as: <span className="text-gold-600">{importType === "users" ? "Faculty / Staff" : "Students"}</span>
         </p>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1.5">CSV File</label>
+          <label className="block text-xs font-semibold text-tertiary mb-1.5">CSV File</label>
           <input
             ref={fileRef}
             type="file"
             accept=".csv"
-            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gold-50 file:text-gold-700 hover:file:bg-gold-100 min-h-[44px]"
+            className="block w-full text-sm text-tertiary file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gold-50 file:text-gold-700 hover:file:bg-gold-100 min-h-[44px]"
           />
         </div>
         {error && <p className="text-xs font-medium text-red-600">{error}</p>}
@@ -142,32 +142,32 @@ export default function MobileDeanUploadPage() {
       {result && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
-            <div className="card p-3 bg-white text-center min-h-[44px] flex flex-col items-center justify-center">
+            <div className="card p-3 bg-surface text-center min-h-[44px] flex flex-col items-center justify-center">
               <p className="text-xl font-bold text-emerald-600">{totalImported}</p>
-              <p className="text-[10px] font-semibold text-slate-500">Created</p>
+              <p className="text-[10px] font-semibold text-tertiary">Created</p>
             </div>
-            <div className="card p-3 bg-white text-center min-h-[44px] flex flex-col items-center justify-center">
+            <div className="card p-3 bg-surface text-center min-h-[44px] flex flex-col items-center justify-center">
               <p className="text-xl font-bold text-amber-600">{totalSkipped}</p>
-              <p className="text-[10px] font-semibold text-slate-500">Skipped</p>
+              <p className="text-[10px] font-semibold text-tertiary">Skipped</p>
             </div>
-            <div className="card p-3 bg-white text-center min-h-[44px] flex flex-col items-center justify-center">
+            <div className="card p-3 bg-surface text-center min-h-[44px] flex flex-col items-center justify-center">
               <p className="text-xl font-bold text-red-600">{totalErrors}</p>
-              <p className="text-[10px] font-semibold text-slate-500">Errors</p>
+              <p className="text-[10px] font-semibold text-tertiary">Errors</p>
             </div>
           </div>
 
           {result.created.length > 0 && (
             <section className="space-y-2">
-              <h3 className="text-sm font-bold text-slate-700">Created Users</h3>
+              <h3 className="text-sm font-bold text-secondary">Created Users</h3>
               <div className="space-y-2">
                 {result.created.map((u) => (
-                  <div key={u.email} className="card p-3 bg-white">
-                    <p className="text-sm font-semibold text-slate-800">{u.name}</p>
-                    <p className="text-xs text-slate-500">{u.email}</p>
+                  <div key={u.email} className="card p-3 bg-surface">
+                    <p className="text-sm font-semibold text-primary">{u.name}</p>
+                    <p className="text-xs text-tertiary">{u.email}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase">{u.role}</span>
-                      <span className="text-[10px] text-slate-400">·</span>
-                      <span className="text-[10px] text-slate-400">{u.department || u.course || "—"}</span>
+                      <span className="text-[10px] font-semibold text-tertiary uppercase">{u.role}</span>
+                      <span className="text-[10px] text-tertiary">·</span>
+                      <span className="text-[10px] text-tertiary">{u.department || u.course || "—"}</span>
                     </div>
                   </div>
                 ))}
@@ -177,8 +177,8 @@ export default function MobileDeanUploadPage() {
 
           {result.skipped.length > 0 && (
             <section className="space-y-2">
-              <h3 className="text-sm font-bold text-slate-700">Skipped</h3>
-              <div className="text-xs text-slate-500 space-y-1">
+              <h3 className="text-sm font-bold text-secondary">Skipped</h3>
+              <div className="text-xs text-tertiary space-y-1">
                 {result.skipped.map((s) => (
                   <p key={`skip-${s.row}`}>Row {s.row}: {s.email} — {s.reason}</p>
                 ))}
@@ -188,7 +188,7 @@ export default function MobileDeanUploadPage() {
 
           {(result.parseErrors.length > 0 || result.errors.length > 0) && (
             <section className="space-y-2">
-              <h3 className="text-sm font-bold text-slate-700">Errors</h3>
+              <h3 className="text-sm font-bold text-secondary">Errors</h3>
               <div className="text-xs text-red-600 space-y-1">
                 {result.parseErrors.map((e) => (
                   <p key={`parse-${e.row}`}>Row {e.row}: {e.message}</p>
@@ -205,7 +205,7 @@ export default function MobileDeanUploadPage() {
       <div className="text-center pt-2">
         <Link
           href="/dean/upload?desktop=1"
-          className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
+          className="text-xs text-tertiary hover:text-secondary underline underline-offset-2"
         >
           Desktop view
         </Link>

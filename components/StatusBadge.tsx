@@ -30,7 +30,7 @@ const statusStyles: Record<string, { bg: string; text: string; dot: string; bord
   },
   CANCELLED: { 
     bg: "bg-slate-50/60", 
-    text: "text-slate-600", 
+    text: "text-secondary", 
     dot: "bg-slate-400", 
     border: "border-slate-200/60" 
   },
@@ -39,13 +39,13 @@ const statusStyles: Record<string, { bg: string; text: string; dot: string; bord
 export function StatusBadge({ status }: { status: string }) {
   const style = statusStyles[status] || {
     bg: "bg-slate-50/60",
-    text: "text-slate-700",
+    text: "text-secondary",
     dot: "bg-slate-400",
     border: "border-slate-200/60"
   }
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${style.bg} ${style.text} ${style.border}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] border ${style.bg} ${style.text} ${style.border}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
       <span className="tracking-wider uppercase">{STATUS_LABELS[status] || status}</span>
     </span>

@@ -77,18 +77,18 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-800 font-display tracking-tight">Check Your Email</h1>
-          <p className="text-slate-400 mt-1.5 text-xs font-semibold uppercase tracking-wider">Activation link sent</p>
+          <h1 className="text-2xl font-extrabold text-primary font-display tracking-tight">Check Your Email</h1>
+          <p className="text-tertiary mt-1.5 text-xs font-semibold uppercase tracking-wider">Activation link sent</p>
         </div>
 
-        <p className="text-sm text-slate-500 text-center">
-          We sent an activation link to <span className="font-semibold text-slate-700">{email}</span>.
+        <p className="text-sm text-tertiary text-center">
+          We sent an activation link to <span className="font-semibold text-secondary">{email}</span>.
           Click the link to set your password.
         </p>
 
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-tertiary">
           {cooldown > 0 ? (
-            <>Resend available in <span className="font-semibold text-slate-600">{cooldown}s</span></>
+            <>Resend available in <span className="font-semibold text-secondary">{cooldown}s</span></>
           ) : (
             <>Didn&apos;t receive it?{" "}
               <button onClick={() => { setCooldown(RESEND_COOLDOWN); handleSubmit({ preventDefault: () => {} } as FormEvent) }} className="text-gold-600 hover:text-gold-700 font-semibold">
@@ -98,7 +98,7 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
           )}
         </p>
         <p className="text-center">
-          <Link href="/login" className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors">
+          <Link href="/login" className="text-xs text-tertiary hover:text-secondary font-medium transition-colors">
             &larr; Back to login
           </Link>
         </p>
@@ -114,8 +114,8 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1119 9z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-800 font-display tracking-tight">Activate Account</h1>
-        <p className="text-slate-400 mt-1.5 text-xs font-semibold uppercase tracking-wider">Enter your email to begin</p>
+        <h1 className="text-2xl font-extrabold text-primary font-display tracking-tight">Activate Account</h1>
+        <p className="text-tertiary mt-1.5 text-xs font-semibold uppercase tracking-wider">Enter your email to begin</p>
       </div>
 
       {state === "exists-activated" && (
@@ -140,7 +140,7 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-xs font-semibold text-slate-500 mb-1.5">
+          <label htmlFor="email" className="block text-xs font-semibold text-tertiary mb-1.5">
             Microsoft Email Address
           </label>
           <input
@@ -149,7 +149,7 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
             value={email}
             onChange={(e) => { setEmail(e.target.value); setState("idle") }}
             required
-            className="input text-slate-800"
+            className="input text-primary"
             placeholder={`user${REQUIRED_STUDENT_DOMAIN}`}
           />
         </div>
@@ -159,14 +159,14 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
         </SubmitButton>
       </form>
 
-      <p className="mt-6 text-center text-xs text-slate-500 font-medium">
+      <p className="mt-6 text-center text-xs text-tertiary font-medium">
         Already activated?{" "}
         <Link href="/login" className="text-gold-600 hover:text-gold-700 font-semibold transition-colors">
           Sign in
         </Link>
       </p>
       <p className="text-center -mt-3">
-        <Link href="/forgot-password" className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors">
+        <Link href="/forgot-password" className="text-xs text-tertiary hover:text-secondary font-medium transition-colors">
           Forgot password?
         </Link>
       </p>

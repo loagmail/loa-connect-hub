@@ -33,8 +33,8 @@ function LoginForm() {
             className="h-10 object-contain"
           />
         </div>
-        <h1 className="text-xl font-bold text-slate-800 font-display tracking-tight">Student Portal Sign In</h1>
-        <p className="text-slate-500 mt-1 text-xs font-semibold uppercase tracking-wider">Academic e-Consultations</p>
+        <h1 className="text-xl font-bold text-primary font-display tracking-tight">Student Portal Sign In</h1>
+        <p className="text-tertiary mt-1 text-xs font-semibold uppercase tracking-wider">Academic e-Consultations</p>
       </div>
 
       {error && (
@@ -48,7 +48,7 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">
+          <label htmlFor="email" className="block text-xs font-semibold text-secondary mb-1.5 uppercase tracking-wider">
             Email Address
           </label>
           <input
@@ -57,13 +57,13 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gold-400/30 focus:border-gold-500 transition-all"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-strong bg-surface text-sm text-primary placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gold-400/30 focus:border-gold-500 transition-all"
             placeholder="you@itmlyceumalabang.onmicrosoft.com"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">
+          <label htmlFor="password" className="block text-xs font-semibold text-secondary mb-1.5 uppercase tracking-wider">
             Password
           </label>
           <input
@@ -72,7 +72,7 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gold-400/30 focus:border-gold-500 transition-all"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-strong bg-surface text-sm text-primary placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gold-400/30 focus:border-gold-500 transition-all"
             placeholder="******"
           />
         </div>
@@ -83,10 +83,10 @@ function LoginForm() {
       </form>
 
       <div className="text-center space-y-3">
-        <Link href="/forgot-password" className="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors">
+        <Link href="/forgot-password" className="text-xs hover:text-secondary text-tertiary font-medium transition-colors">
           Forgot password?
         </Link>
-        <p className="text-xs text-slate-500 font-medium">
+        <p className="text-xs text-tertiary font-medium">
           First time here?{" "}
           <Link href="/activate" className="text-gold-600 hover:text-gold-700 font-semibold transition-colors">
             Activate your account

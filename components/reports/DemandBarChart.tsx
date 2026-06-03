@@ -13,9 +13,9 @@ interface DemandBarChartProps {
 export function DemandBarChart({ data, title }: DemandBarChartProps) {
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">{title}</h3>
-        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">No data available</div>
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-primary mb-4">{title}</h3>
+        <div className="flex items-center justify-center h-48 text-tertiary text-sm">No data available</div>
       </div>
     )
   }
@@ -27,9 +27,9 @@ export function DemandBarChart({ data, title }: DemandBarChartProps) {
   const sorted = [...data]
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-      <h3 className="text-sm font-bold text-slate-800 mb-1">{title}</h3>
-      <p className="text-xs text-slate-400 mb-4">{data.length} data points</p>
+    <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+      <h3 className="text-sm font-bold text-primary mb-1">{title}</h3>
+      <p className="text-xs text-tertiary mb-4">{data.length} data points</p>
 
       <div className="overflow-x-auto">
         <div className="flex items-end gap-1.5" style={{ height: barHeight, minWidth: Math.max(data.length * 24, 400) }}>
@@ -43,7 +43,7 @@ export function DemandBarChart({ data, title }: DemandBarChartProps) {
                   title={`${d.label}: ${d.count}`}
                 />
                 {showLabels && (
-                  <span className="text-[8px] text-slate-400 text-center truncate w-full leading-tight">
+                  <span className="text-[8px] text-tertiary text-center truncate w-full leading-tight">
                     {d.label}
                   </span>
                 )}

@@ -54,8 +54,8 @@ export default async function FacultyBookPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Schedule a Meeting</h1>
-        <p className="text-sm text-slate-500 mt-1">Schedule a meeting with optional attendees.</p>
+        <h1 className="text-2xl font-bold text-primary">Schedule a Meeting</h1>
+        <p className="text-sm text-tertiary mt-1">Schedule a meeting with optional attendees.</p>
       </div>
       <StudentBooking facultyList={facultyWithRules as FacultyWithRules[]} userRole={role as "STUDENT" | "FACULTY" | "DEAN"} students={students} serverNow={new Date().toISOString()} currentUserId={currentUserId} />
     </div>

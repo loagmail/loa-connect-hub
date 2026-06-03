@@ -200,7 +200,7 @@ export default function BookingCalendar({ facultyWithRules }: Props) {
 
       {/* Faculty Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
-        <label className="text-xs font-semibold text-slate-500">Professor:</label>
+        <label className="text-xs font-semibold text-tertiary">Professor:</label>
         <select
           value={facultyFilter}
           onChange={(e) => {
@@ -221,18 +221,18 @@ export default function BookingCalendar({ facultyWithRules }: Props) {
       <div className="flex items-center justify-between">
         <button
           onClick={prevMonth}
-          className="p-3 sm:p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="p-3 sm:p-2 rounded-lg hover:bg-surface-hover text-tertiary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h3 className="text-lg font-bold text-slate-800">
+        <h3 className="text-lg font-bold text-primary">
           {MONTH_NAMES[currentMonth]} {currentYear}
         </h3>
         <button
           onClick={nextMonth}
-          className="p-3 sm:p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="p-3 sm:p-2 rounded-lg hover:bg-surface-hover text-tertiary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -241,10 +241,10 @@ export default function BookingCalendar({ facultyWithRules }: Props) {
       </div>
 
       {/* Calendar Grid */}
-      <div className="card overflow-hidden bg-white">
-        <div className="grid grid-cols-7 border-b border-slate-100">
+      <div className="card overflow-hidden bg-surface">
+        <div className="grid grid-cols-7 border-b border-default">
           {DAY_NAMES.map((d) => (
-            <div key={d} className="px-2 py-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div key={d} className="px-2 py-2 text-center text-[10px] font-bold text-tertiary uppercase tracking-wider">
               {d}
             </div>
           ))}
@@ -284,7 +284,7 @@ export default function BookingCalendar({ facultyWithRules }: Props) {
                     <span
                       className={`
                         text-xs font-semibold
-                        ${isToday ? "bg-gold-600 text-white w-6 h-6 rounded-full flex items-center justify-center" : "text-slate-700"}
+                        ${isToday ? "bg-gold-600 text-white w-6 h-6 rounded-full flex items-center justify-center" : "text-secondary"}
                       `}
                     >
                       {day}
@@ -301,14 +301,14 @@ export default function BookingCalendar({ facultyWithRules }: Props) {
       {/* Selected Day — Available Blocks */}
       {selectedDay && availableSlots.length > 0 && selectedFaculty && (
         <div className="space-y-3">
-          <h4 className="text-sm font-bold text-slate-700">
+          <h4 className="text-sm font-bold text-secondary">
             {selectedFaculty.name} &middot; {MONTH_NAMES[currentMonth]} {selectedDay}, {currentYear}
           </h4>
           <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {availableSlots.map((slot, i) => (
-              <div key={i} className="card p-3 bg-white border-slate-200 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between">
-                <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-                  <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div key={i} className="card p-3 bg-surface border-default flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between">
+                <div className="flex items-center gap-2 text-sm text-secondary font-medium">
+                  <svg className="w-4 h-4 text-tertiary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {slot.start} – {slot.end}
@@ -326,21 +326,21 @@ export default function BookingCalendar({ facultyWithRules }: Props) {
       )}
 
       {!selectedFaculty ? (
-        <div className="card p-12 text-center bg-white">
-          <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+        <div className="card p-12 text-center bg-surface">
+          <div className="w-12 h-12 bg-surface border border-default rounded-xl flex items-center justify-center mx-auto mb-4 text-tertiary">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <p className="text-slate-700 font-semibold text-sm">Select a professor</p>
-          <p className="text-slate-400 text-xs mt-1">Choose a faculty member above to see their available consultation slots.</p>
+          <p className="text-secondary font-semibold text-sm">Select a professor</p>
+          <p className="text-tertiary text-xs mt-1">Choose a faculty member above to see their available consultation slots.</p>
         </div>
       ) : selectedDay && availableSlots.length === 0 ? (
-        <div className="card p-6 text-center bg-white">
-          <p className="text-sm text-slate-500">No available time slots for this day.</p>
+        <div className="card p-6 text-center bg-surface">
+          <p className="text-sm text-tertiary">No available time slots for this day.</p>
         </div>
       ) : !selectedDay ? (
-        <p className="text-xs text-slate-400 text-center">Click a highlighted day above to see available time slots.</p>
+        <p className="text-xs text-tertiary text-center">Click a highlighted day above to see available time slots.</p>
       ) : null}
 
       {/* Booking Form Modal */}

@@ -101,7 +101,7 @@ export default async function StudentMeetings(props: {
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-        <h2 className="text-lg font-bold text-slate-900">
+        <h2 className="text-lg font-bold text-primary">
           My Requests
         </h2>
 
@@ -124,7 +124,7 @@ export default async function StudentMeetings(props: {
       </div>
 
       {/* Filter Pills + Sort Toggle */}
-      <div className="card p-4 bg-white">
+      <div className="card p-4 bg-surface">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(filterLabels).map(([key, label]) => (
@@ -134,7 +134,7 @@ export default async function StudentMeetings(props: {
                 className={`px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-full transition-colors border ${
                   activeFilter === key
                     ? "border-gold-500 bg-gold-500 text-white"
-                    : "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "border-default bg-surface text-secondary hover:bg-slate-200"
                 }`}
               >
                 {label}
@@ -143,7 +143,7 @@ export default async function StudentMeetings(props: {
           </div>
           <Link
             href={`/student/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort === "asc" ? "desc" : "asc"}`}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1 shrink-0 py-2 sm:py-0"
+            className="text-xs font-semibold text-tertiary hover:text-secondary transition-colors flex items-center gap-1 shrink-0 py-2 sm:py-0"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               {activeSort === "asc" ? (
@@ -165,8 +165,8 @@ export default async function StudentMeetings(props: {
 
       {/* Appointment Cards */}
       {sorted.length === 0 ? (
-        <div className="card p-12 text-center bg-white">
-          <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+        <div className="card p-12 text-center bg-surface">
+          <div className="w-12 h-12 bg-surface border border-default rounded-xl flex items-center justify-center mx-auto mb-4 text-tertiary">
             <svg
               className="w-6 h-6"
               fill="none"
@@ -182,13 +182,13 @@ export default async function StudentMeetings(props: {
             </svg>
           </div>
 
-          <p className="text-slate-700 font-semibold text-sm">
+          <p className="text-secondary font-semibold text-sm">
             {activeTab === "all"
               ? `No ${filterLabel.toLowerCase()}`
               : `No ${activeTab} ${filterLabel.toLowerCase()}`}
           </p>
 
-          <p className="text-slate-400 text-xs mt-1">
+          <p className="text-tertiary text-xs mt-1">
             {activeTab === "approved"
               ? "Accepted consultations will appear here once faculty confirms your booking."
               : activeTab === "all"

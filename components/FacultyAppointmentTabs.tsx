@@ -35,7 +35,7 @@ export function FacultyAppointmentTabs({
     counts.cancelled
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200">
+    <div className="flex items-center gap-1 overflow-x-auto border-b border-default">
       {TABS.map((tab) => {
         const isActive = activeTab === tab.key
 
@@ -64,7 +64,7 @@ export function FacultyAppointmentTabs({
               ${
                 isActive
                   ? "border-gold-600 text-gold-700"
-                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                  : "border-transparent text-tertiary hover:border-strong hover:text-secondary"
               }
             `}
           >
@@ -72,11 +72,11 @@ export function FacultyAppointmentTabs({
 
             <span
               className={`
-                rounded-full px-1.5 py-0.5 text-[10px] font-bold
+                rounded-full px-1.5 py-0.5 text-[10px]
                 ${
                   isActive
                     ? "bg-gold-100 text-gold-700"
-                    : "bg-slate-100 text-slate-500"
+                    : "bg-surface text-tertiary"
                 }
               `}
             >

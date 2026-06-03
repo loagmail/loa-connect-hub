@@ -255,20 +255,20 @@ export default function AppointmentDetail() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* ── Main ticket card ──────────────────────────────────────── */}
-      <div className="card p-6 bg-white mb-6">
+      <div className="card p-6 bg-surface mb-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-6">
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900">
+          <h1 className="text-lg sm:text-xl font-bold text-primary">
             {appointment.title || (appointment.meetingType === "CONSULTATION" ? "Consultation" : "Meeting")}
           </h1>
           <div className="flex items-center gap-2 self-start">
             {appointment.meetingType && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
                 Consultation
               </span>
             )}
             { (isFaculty || isDean)  && isOrganizer ? (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border bg-green-50 text-green-700 border-green-200">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs uppercase tracking-wider border bg-green-50 text-green-700 border-green-200">
                 Auto-accepted
               </span>
             ) :  <StatusBadge status={effectiveStatus} /> }
@@ -278,9 +278,9 @@ export default function AppointmentDetail() {
 
         {/* Organizer */}
         {appointment.organizer && (
-          <p className="text-xs text-slate-400 mb-4">
-            Organized by <span className="font-semibold text-slate-600">{appointment.organizer.name}</span>
-            {appointment.organizer.email && <span className="text-slate-400"> &lt;{appointment.organizer.email}&gt;</span>}
+          <p className="text-xs text-tertiary mb-4">
+            Organized by <span className="font-semibold text-secondary">{appointment.organizer.name}</span>
+            {appointment.organizer.email && <span className="text-tertiary"> &lt;{appointment.organizer.email}&gt;</span>}
           </p>
         )}
 
@@ -295,7 +295,7 @@ export default function AppointmentDetail() {
         {/* Time slots */}
         {appointment.timeSlots && appointment.timeSlots.length > 0 && (
           <div className="mb-6 space-y-2">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Time slots</p>
+            <p className="text-xs text-tertiary font-medium uppercase tracking-wider">Time slots</p>
             {(() => {
               const grouped: Record<string, typeof appointment.timeSlots> = {}
               for (const slot of appointment.timeSlots) {
@@ -304,19 +304,19 @@ export default function AppointmentDetail() {
               }
               return Object.entries(grouped).map(([date, slots]) => (
                 <div key={date} className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-600">{date}</p>
+                  <p className="text-xs font-semibold text-secondary">{date}</p>
                   {slots.map((slot) => {
                     const effectiveLink = slot.teamsLink || appointment.teamsLink
                     return (
                       <div key={slot.id}>
-                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                          <p className="text-sm text-slate-700">{slot.startTime} &ndash; {slot.endTime}</p>
+                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-surface border border-default">
+                          <p className="text-sm text-secondary">{slot.startTime} &ndash; {slot.endTime}</p>
                           {effectiveLink && (
                             <a
                               href={effectiveLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -356,26 +356,26 @@ export default function AppointmentDetail() {
         {/* People: student + faculty (hide own card + hide if info is in organizer line) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {(!isFaculty && !isDean && !facultyIsOrganizer) && (
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-surface border border-default">
               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getAvatarClass(appointment.faculty.name)} flex items-center justify-center text-lg font-bold shadow-sm shrink-0`}>
                 {getInitial(appointment.faculty.name)}
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Faculty</p>
-                <p className="text-sm font-bold text-slate-800">{appointment.faculty.name}</p>
-                <p className="text-xs text-slate-400">{appointment.faculty.email}</p>
+                <p className="text-xs text-tertiary font-medium uppercase tracking-wider">Faculty</p>
+                <p className="text-sm font-bold text-primary">{appointment.faculty.name}</p>
+                <p className="text-xs text-tertiary">{appointment.faculty.email}</p>
               </div>
             </div>
           )}
           { appointment.student && (!isStudent && !studentIsOrganizer) && (
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-surface border border-default">
               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getAvatarClass(appointment.student.name)} flex items-center justify-center text-lg font-bold shadow-sm shrink-0`}>
                 {getInitial(appointment.student.name)}
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Student</p>
-                <p className="text-sm font-bold text-slate-800">{appointment.student.name}</p>
-                <p className="text-xs text-slate-400">{appointment.student.email}</p>
+                <p className="text-xs text-tertiary font-medium uppercase tracking-wider">Student</p>
+                <p className="text-sm font-bold text-primary">{appointment.student.name}</p>
+                <p className="text-xs text-tertiary">{appointment.student.email}</p>
               </div>
             </div>
           )}
@@ -383,13 +383,13 @@ export default function AppointmentDetail() {
 
         {/* Description */}
         {appointment.description && (
-          <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-100">
-            <p className="text-sm text-slate-600">{appointment.description}</p>
+          <div className="mb-6 p-4 rounded-xl bg-surface border border-default">
+            <p className="text-sm text-secondary">{appointment.description}</p>
           </div>
         )}
 
         {/* Timestamps */}
-        <div className="text-xs text-slate-400 space-y-1">
+        <div className="text-xs text-tertiary space-y-1">
           <p>Requested: {new Date(appointment.requestedAt).toLocaleString()}</p>
           <p>Last updated: {new Date(appointment.updatedAt).toLocaleString()}</p>
           {appointment.teamsSyncLastAttempt && (
@@ -400,8 +400,8 @@ export default function AppointmentDetail() {
 
       {/* ── Attendees / Participants ──────────────────────────────── */}
       {appointment.attendees && appointment.attendees.length > 0 && (
-        <div className="card p-6 bg-white">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">
+        <div className="card p-6 bg-surface">
+          <h2 className="text-sm font-bold text-primary uppercase tracking-wider mb-4">
             Participants ({appointment.attendees.length})
           </h2>
           <div className="space-y-3">
@@ -413,7 +413,7 @@ export default function AppointmentDetail() {
                   ? { bg: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-500", label: "Declined" }
                   : { bg: "bg-amber-100 text-amber-700 border-amber-200", dot: "bg-amber-500", label: "Invited" }
               return (
-                <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100">
+                <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg bg-surface border border-default">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm shrink-0 ${
                     a.status === "ACCEPTED" ? "bg-emerald-500" : a.status === "DECLINED" ? "bg-red-400" : "bg-slate-400"
                   }`}>
@@ -421,14 +421,14 @@ export default function AppointmentDetail() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-slate-800 truncate">{a.user.name}</p>
+                      <p className="text-sm font-semibold text-primary truncate">{a.user.name}</p>
                       {!a.isMandatory && (
-                        <span className="text-[10px] text-slate-400 font-medium">(Optional)</span>
+                        <span className="text-[10px] text-tertiary font-medium">(Optional)</span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-400 truncate">{a.user.email}</p>
+                    <p className="text-xs text-tertiary truncate">{a.user.email}</p>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border shrink-0 ${statusCfg.bg}`}>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] border shrink-0 ${statusCfg.bg}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
                     {statusCfg.label}
                   </span>
@@ -441,25 +441,25 @@ export default function AppointmentDetail() {
 
       {/* ── Completed Details (visible to all when COMPLETED) ────── */}
       {effectiveStatus === "COMPLETED" && (
-        <div className="card p-6 bg-white space-y-6">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+        <div className="card p-6 bg-surface space-y-6">
+          <h2 className="text-sm font-bold text-primary uppercase tracking-wider">
             Appointment Completed
           </h2>
 
           {appointment.actionTaken && (
             <div>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider mb-2">
                 Actions Taken
               </p>
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">{appointment.actionTaken}</p>
+              <div className="p-4 rounded-xl bg-surface border border-default">
+                <p className="text-sm text-secondary whitespace-pre-wrap">{appointment.actionTaken}</p>
               </div>
             </div>
           )}
 
           {appointment.files && appointment.files.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider mb-2">
                 Screenshot Proof ({appointment.files.length})
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
@@ -468,7 +468,7 @@ export default function AppointmentDetail() {
                     key={f.id}
                     type="button"
                     onClick={() => setPreviewFile(f)}
-                    className="group relative aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-gold-400 hover:shadow-md transition-all"
+                    className="group relative aspect-square rounded-lg overflow-hidden border border-default bg-surface hover:border-gold-400 hover:shadow-md transition-all"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -492,7 +492,7 @@ export default function AppointmentDetail() {
           onClick={() => setPreviewFile(null)}
         >
           <div
-            className="relative max-w-3xl max-h-[90vh] rounded-xl overflow-hidden bg-white shadow-2xl"
+            className="relative max-w-3xl max-h-[90vh] rounded-xl overflow-hidden bg-surface shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -516,11 +516,11 @@ export default function AppointmentDetail() {
       )}
 
       {/* ── Actions ───────────────────────────────────────────────── */}
-      <div className="card p-5 bg-white">
+      <div className="card p-5 bg-surface">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="space-y-3 flex-1 w-full">
           {isOptional ? (
-            <p className="text-sm text-slate-400 italic text-center">View-only mode</p>
+            <p className="text-sm text-tertiary italic text-center">View-only mode</p>
           ) : (
             <>
             {/* Student: cancel PENDING */}
@@ -609,10 +609,10 @@ export default function AppointmentDetail() {
           {/* Faculty/Dean: Complete form */}
           {(isFaculty || isDean) && showCompleteForm && (
             <div className="space-y-4">
-              <p className="text-sm font-bold text-slate-800">Complete Appointment</p>
+              <p className="text-sm font-bold text-primary">Complete Appointment</p>
 
               <div>
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">
                   Actions Taken <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -622,13 +622,13 @@ export default function AppointmentDetail() {
                   placeholder="Describe what actions were taken during this appointment..."
                   className="input text-xs py-2 w-full resize-none"
                 />
-                <p className={`text-[10px] mt-0.5 ${actionTaken.trim().length >= 100 ? "text-emerald-600" : "text-slate-400"}`}>
+                <p className={`text-[10px] mt-0.5 ${actionTaken.trim().length >= 100 ? "text-emerald-600" : "text-tertiary"}`}>
                   {actionTaken.trim().length}/100 minimum
                 </p>
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <label className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">
                   Screenshot proof (images only, up to 3)
                 </label>
                 <input
@@ -645,7 +645,7 @@ export default function AppointmentDetail() {
                 {completeFiles.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {completeFiles.map((f, i) => (
-                      <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 text-xs text-slate-600">
+                      <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded bg-surface text-xs text-secondary">
                         <span className="truncate max-w-[120px]">{f.name}</span>
                         <button
                           type="button"
@@ -729,7 +729,7 @@ export default function AppointmentDetail() {
 
           {/* Terminal states */}
           {(effectiveStatus === "REJECTED" || effectiveStatus === "COMPLETED" || effectiveStatus === "CANCELLED") && (
-            <p className="text-sm text-slate-400 italic">No further actions available</p>
+            <p className="text-sm text-tertiary italic">No further actions available</p>
           )}
             </>
           )}

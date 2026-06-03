@@ -119,12 +119,12 @@ export function WorkloadDistributionReport({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-slate-500">{departmentName}</p>
+          <p className="text-sm text-tertiary">{departmentName}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={exportCSV}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-default text-xs font-semibold text-secondary hover:bg-surface-hover hover:border-strong transition-all duration-200"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -133,7 +133,7 @@ export function WorkloadDistributionReport({
           </button>
           <button
             onClick={exportExcel}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-default text-xs font-semibold text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -144,8 +144,8 @@ export function WorkloadDistributionReport({
       </div>
 
       {/* Date Range Notice */}
-      <div className="flex items-center gap-2 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-        <svg className="w-4 h-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <div className="flex items-center gap-2 rounded-xl border border-default/70 bg-surface px-4 py-3 text-xs text-tertiary">
+        <svg className="w-4 h-4 shrink-0 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
         </svg>
         <span>All charts and tables on this page reflect the selected date range above.</span>
@@ -159,9 +159,9 @@ export function WorkloadDistributionReport({
       </div>
 
       {/* Horizontal Bar Chart */}
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-        <h3 className="text-sm font-bold text-slate-800 mb-1">Distribution Overview</h3>
-        <p className="text-xs text-slate-400 mb-5">Horizontal bars showing each faculty&apos;s consultation volume relative to the department total</p>
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+        <h3 className="text-sm font-bold text-primary mb-1">Distribution Overview</h3>
+        <p className="text-xs text-tertiary mb-5">Horizontal bars showing each faculty&apos;s consultation volume relative to the department total</p>
 
         {hasData ? (
           <div className="space-y-4">
@@ -177,21 +177,21 @@ export function WorkloadDistributionReport({
                 <div key={entry.facultyId}>
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-medium text-slate-700 truncate">{entry.facultyName}</span>
-                      <span className="text-[10px] text-slate-400 font-mono shrink-0">({entry.departmentName})</span>
+                      <span className="font-medium text-secondary truncate">{entry.facultyName}</span>
+                      <span className="text-[10px] text-tertiary font-mono shrink-0">({entry.departmentName})</span>
                     </div>
                     <div className="flex items-center gap-3 shrink-0 ml-2">
-                      <span className="font-mono text-slate-500">{entry.total}</span>
+                      <span className="font-mono text-tertiary">{entry.total}</span>
                       <span className="font-mono text-xs font-semibold min-w-[3rem] text-right">{entry.departmentShare}%</span>
                     </div>
                   </div>
-                  <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="w-full h-4 bg-surface rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${shareColor}`}
                       style={{ width: `${Math.max(pct, entry.total > 0 ? 2 : 0)}%` }}
                     />
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 mt-0.5">
+                  <div className="flex items-center justify-between text-[10px] text-tertiary mt-0.5">
                     <span>{entry.completed} completed / {entry.pending} pending</span>
                     <span>{entry.completionRate}% rate</span>
                   </div>
@@ -200,59 +200,59 @@ export function WorkloadDistributionReport({
             })}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+          <div className="flex items-center justify-center h-48 text-tertiary text-sm">
             No data available
           </div>
         )}
       </div>
 
       {/* Distribution Table */}
-      <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h3 className="text-sm font-bold text-slate-800">Faculty Consultation Distribution</h3>
+      <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-default">
+          <h3 className="text-sm font-bold text-primary">Faculty Consultation Distribution</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Faculty</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Department</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Total</th>
+              <tr className="border-b border-default bg-surface/50">
+                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Faculty</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Department</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Total</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-emerald-600">Completed</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-amber-600">Pending</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-blue-600">Approved</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-red-600">Rejected</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Cancelled</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Rate</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Share</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Cancelled</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Rate</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Share</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              <tr className="bg-slate-50/30 font-medium">
-                <td className="px-6 py-4 font-bold text-slate-900 whitespace-nowrap" colSpan={2}>
+              <tr className="bg-surface/30 font-medium">
+                <td className="px-6 py-4 font-bold text-primary whitespace-nowrap" colSpan={2}>
                   {entries.length} Faculty
                 </td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-slate-700">{departmentTotal}</td>
+                <td className="px-4 py-4 text-center font-mono text-sm text-secondary">{departmentTotal}</td>
                 <td className="px-4 py-4 text-center font-mono text-sm text-emerald-600">{completedConsultations}</td>
                 <td className="px-4 py-4 text-center font-mono text-sm text-amber-600">{pendingConsultations}</td>
                 <td className="px-4 py-4 text-center font-mono text-sm text-blue-600">{entries.reduce((s, e) => s + e.approved, 0)}</td>
                 <td className="px-4 py-4 text-center font-mono text-sm text-red-600">{entries.reduce((s, e) => s + e.rejected, 0)}</td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-slate-500">{entries.reduce((s, e) => s + e.cancelled, 0)}</td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-slate-500">
+                <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">{entries.reduce((s, e) => s + e.cancelled, 0)}</td>
+                <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">
                   {departmentTotal > 0 ? Math.round((completedConsultations / departmentTotal) * 100) : 0}%
                 </td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-slate-500">100%</td>
+                <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">100%</td>
               </tr>
               {sorted.map((entry) => (
-                <tr key={entry.facultyId} className="transition-colors duration-150 hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-800 whitespace-nowrap">{entry.facultyName}</td>
-                  <td className="px-4 py-4 text-sm text-slate-500">{entry.departmentName}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-slate-700">{entry.total}</td>
+                <tr key={entry.facultyId} className="transition-colors duration-150 hover:bg-surface-hover">
+                  <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
+                  <td className="px-4 py-4 text-sm text-tertiary">{entry.departmentName}</td>
+                  <td className="px-4 py-4 text-center font-mono text-sm text-secondary">{entry.total}</td>
                   <td className="px-4 py-4 text-center font-mono text-sm text-emerald-600">{entry.completed}</td>
                   <td className="px-4 py-4 text-center font-mono text-sm text-amber-600">{entry.pending}</td>
                   <td className="px-4 py-4 text-center font-mono text-sm text-blue-600">{entry.approved}</td>
                   <td className="px-4 py-4 text-center font-mono text-sm text-red-600">{entry.rejected}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-slate-500">{entry.cancelled}</td>
+                  <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">{entry.cancelled}</td>
                   <td className="px-4 py-4 text-center">
                     <RateBadge rate={entry.completionRate} />
                   </td>
@@ -290,7 +290,7 @@ function RateBadge({ rate }: { rate: number }) {
       ? "bg-amber-100 text-amber-800 before:bg-amber-500"
       : "bg-red-100 text-red-800 before:bg-red-500"
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${colors} before:w-1.5 before:h-1.5 before:rounded-full transition-all duration-200`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs ${colors} before:w-1.5 before:h-1.5 before:rounded-full transition-all duration-200`}>
       {rate}%
     </span>
   )
@@ -301,9 +301,9 @@ function ShareBadge({ share }: { share: number }) {
     ? "bg-purple-100 text-purple-800"
     : share >= 15
       ? "bg-indigo-100 text-indigo-800"
-      : "bg-slate-100 text-slate-800"
+      : "bg-surface text-primary"
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${colors} transition-all duration-200`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${colors} transition-all duration-200`}>
       {share}%
     </span>
   )

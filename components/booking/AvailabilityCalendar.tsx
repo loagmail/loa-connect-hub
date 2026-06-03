@@ -68,18 +68,18 @@ export default function AvailabilityCalendar({
       <div className="flex items-center justify-between">
         <button
           onClick={onPrevMonth}
-          className="p-3 sm:p-2 rounded-lg hover:bg-slate-100 text-slate-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="p-3 sm:p-2 rounded-lg hover:bg-surface-hover text-tertiary min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h4 className="text-base font-bold text-slate-800">
+        <h4 className="text-base font-bold text-primary">
           {MONTH_NAMES[currentMonth]} {currentYear}
         </h4>
         <button
           onClick={onNextMonth}
-          className="p-3 sm:p-2 rounded-lg hover:bg-slate-100 text-slate-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="p-3 sm:p-2 rounded-lg hover:bg-surface-hover text-tertiary min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -87,12 +87,12 @@ export default function AvailabilityCalendar({
         </button>
       </div>
 
-      <div className="card overflow-hidden bg-white">
-        <div className="grid grid-cols-7 border-b border-slate-100">
+      <div className="card overflow-hidden bg-surface">
+        <div className="grid grid-cols-7 border-b border-default">
           {DAY_NAMES.map((d) => (
             <div
               key={d}
-              className="px-1 sm:px-2 py-2 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+              className="px-1 sm:px-2 py-2 text-center text-[10px] font-bold text-tertiary uppercase tracking-wider"
             >
               {d}
             </div>
@@ -127,7 +127,7 @@ export default function AvailabilityCalendar({
                 key={day}
                 onClick={() => { if (!isPast) onDayClick(day) }}
                 disabled={isPast}
-                className={`p-1 sm:p-2 min-h-[40px] sm:min-h-[56px] border border-slate-50 relative transition-colors flex flex-col items-center justify-start
+                className={`p-1 sm:p-2 min-h-[40px] sm:min-h-[56px] border border-default relative transition-colors flex flex-col items-center justify-start
                   ${isSelected ? "bg-gold-50 border-gold-200 z-10" : ""}
                   ${!isPast ? "hover:bg-gold-50/50 cursor-pointer" : ""}
                   ${isPast ? "opacity-40" : ""}`}
@@ -136,7 +136,7 @@ export default function AvailabilityCalendar({
                   className={`text-xs font-semibold ${
                     isToday
                       ? "bg-gold-600 text-white w-6 h-6 rounded-full flex items-center justify-center"
-                      : "text-slate-700"
+                      : "text-secondary"
                   }`}
                 >
                   {day}

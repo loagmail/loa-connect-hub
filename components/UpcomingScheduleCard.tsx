@@ -17,19 +17,19 @@ interface UpcomingScheduleCardProps {
 
 export function UpcomingScheduleCard({ appointment }: UpcomingScheduleCardProps) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 hover:shadow-sm transition">
+    <div className="bg-surface rounded-2xl border border-default p-4 hover:shadow-sm transition">
       <div className="flex gap-4 items-start">
 
         {/* Time Block */}
-        <div className="flex flex-col items-center justify-center min-w-[70px] rounded-xl bg-slate-50 border border-slate-200 px-2 py-3">
-          <span className="text-xs text-slate-400 font-medium">
+        <div className="flex flex-col items-center justify-center min-w-[70px] rounded-xl bg-surface border border-default px-2 py-3">
+          <span className="text-xs text-tertiary font-medium">
             {appointment.date}
           </span>
-          <span className="text-sm font-bold text-slate-800">
+          <span className="text-sm font-bold text-primary">
             {appointment.startTime}
           </span>
-          <span className="text-[11px] text-slate-400">–</span>
-          <span className="text-sm font-bold text-slate-800">
+          <span className="text-[11px] text-tertiary">–</span>
+          <span className="text-sm font-bold text-primary">
             {appointment.endTime}
           </span>
         </div>
@@ -38,15 +38,15 @@ export function UpcomingScheduleCard({ appointment }: UpcomingScheduleCardProps)
         <div className="flex-1 space-y-2">
 
           {/* Title (Most Important) */}
-          <p className="text-base font-bold text-slate-900 leading-snug">
+          <p className="text-base font-bold text-primary leading-snug">
             {appointment.title || "Consultation Session"}
           </p>
 
           {/* Faculty */}
           {appointment.faculty && (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-tertiary">
               Faculty:{" "}
-              <span className="font-medium text-slate-700">
+              <span className="font-medium text-secondary">
                 {appointment.faculty.name}
               </span>
             </p>
@@ -54,7 +54,7 @@ export function UpcomingScheduleCard({ appointment }: UpcomingScheduleCardProps)
 
           {/* Description */}
           {appointment.description && (
-            <p className="text-xs text-slate-400 line-clamp-2">
+            <p className="text-xs text-tertiary line-clamp-2">
               {appointment.description}
             </p>
           )}
@@ -74,13 +74,13 @@ export function UpcomingScheduleCard({ appointment }: UpcomingScheduleCardProps)
 
         {/* Right Side */}
         <div className="flex flex-col items-end gap-2">
-          <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-semibold">
+          <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">
             Upcoming
           </span>
 
           <Link
             href={`/appointments/${appointment.id}`}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+            className="text-xs font-semibold text-tertiary hover:text-secondary"
           >
             View
           </Link>

@@ -68,24 +68,24 @@ export function CalendarMonthGrid({ events, onDaySelect, selectedDate }: Calenda
     `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
 
   return (
-    <div className="card bg-white overflow-hidden">
+    <div className="card bg-surface overflow-hidden">
       {/* Month header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-default">
         <button
           onClick={prevMonth}
-          className="p-3 sm:p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+          className="p-3 sm:p-1.5 rounded-lg hover:bg-surface-hover text-tertiary transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
           aria-label="Previous month"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h3 className="text-sm font-bold text-slate-800">
+        <h3 className="text-sm font-bold text-primary">
           {MONTH_NAMES[currentMonth]} {currentYear}
         </h3>
         <button
           onClick={nextMonth}
-          className="p-3 sm:p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+          className="p-3 sm:p-1.5 rounded-lg hover:bg-surface-hover text-tertiary transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
           aria-label="Next month"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -95,11 +95,11 @@ export function CalendarMonthGrid({ events, onDaySelect, selectedDate }: Calenda
       </div>
 
       {/* Day names */}
-      <div className="grid grid-cols-7 border-b border-slate-100">
+      <div className="grid grid-cols-7 border-b border-default">
         {DAY_NAMES.map((name) => (
           <div
             key={name}
-            className="px-2 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400"
+            className="px-2 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-tertiary"
           >
             {name}
           </div>
@@ -126,7 +126,7 @@ export function CalendarMonthGrid({ events, onDaySelect, selectedDate }: Calenda
               className={`
                 relative p-1 sm:p-2 min-h-[40px] sm:min-h-[56px] flex flex-col items-center justify-start gap-0.5
                 transition-colors border border-transparent
-                ${isPast ? "opacity-40 cursor-default" : "hover:bg-slate-50 cursor-pointer"}
+                ${isPast ? "opacity-40 cursor-default" : "hover:bg-surface-hover cursor-pointer"}
                 ${isSelected ? "bg-gold-50 border-gold-200 rounded-lg" : ""}
               `}
             >
@@ -134,7 +134,7 @@ export function CalendarMonthGrid({ events, onDaySelect, selectedDate }: Calenda
                 className={`text-xs font-semibold tabular-nums leading-none ${
                   isToday
                     ? "bg-gold-600 text-white w-6 h-6 rounded-full flex items-center justify-center"
-                    : "text-slate-700"
+                    : "text-secondary"
                 }`}
               >
                 {day}

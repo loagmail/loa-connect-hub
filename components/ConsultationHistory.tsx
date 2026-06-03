@@ -51,12 +51,12 @@ export default function ConsultationHistory({ studentName, course, appointments 
   return (
     <div className="max-w-3xl mx-auto pb-16">
       {sorted.length === 0 ? (
-        <div className="card p-12 sm:p-16 bg-white text-center animate-fade-in mt-8">
-          <div className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-5">
+        <div className="card p-12 sm:p-16 bg-surface text-center animate-fade-in mt-8">
+          <div className="w-16 h-16 bg-surface border border-default rounded-2xl flex items-center justify-center mx-auto mb-5">
             <span className="text-3xl">📖</span>
           </div>
-          <h2 className="text-lg font-bold text-slate-900 mb-2">No history yet</h2>
-          <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+          <h2 className="text-lg font-bold text-primary mb-2">No history yet</h2>
+          <p className="text-sm text-tertiary max-w-md mx-auto mb-6">
             Your consultation history will appear here once you start meeting with faculty.
           </p>
           <Link
@@ -69,15 +69,15 @@ export default function ConsultationHistory({ studentName, course, appointments 
       ) : (
         <article className="space-y-0">
           {/* ── Title Page ────────────────────────────────── */}
-          <div className="text-center py-12 sm:py-16 border-b border-slate-200 mb-10">
+          <div className="text-center py-12 sm:py-16 border-b border-default mb-10">
             <p className="text-xs font-semibold text-gold-600 uppercase tracking-widest mb-3">Narrative Report</p>
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl font-bold text-primary tracking-tight leading-tight">
               {studentName}&apos;s Consultation Journey
             </h1>
-            <p className="text-base text-slate-500 mt-3">
+            <p className="text-base text-tertiary mt-3">
               {studentName}{course ? ` · ${course}` : ""}
             </p>
-            <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
+            <div className="flex items-center justify-center gap-4 mt-6 text-xs text-tertiary">
               <span>{sorted.length} entr{sorted.length === 1 ? "y" : "ies"}</span>
               <span className="text-slate-300">·</span>
               <span>{completed.length} completed</span>
@@ -93,7 +93,7 @@ export default function ConsultationHistory({ studentName, course, appointments 
           </div>
 
           {/* ── Foreword ──────────────────────────────────── */}
-          <div className="prose prose-sm max-w-none text-slate-600 mb-12 px-1">
+          <div className="prose prose-sm max-w-none text-secondary mb-12 px-1">
             <p>
               This report documents {studentName}&apos;s consultation history throughout {studentName.split(" ")[0]}&apos;s thesis journey.
               {firstDate && <> It begins on <strong>{formatDate(firstDate)}</strong></>}
@@ -116,7 +116,7 @@ export default function ConsultationHistory({ studentName, course, appointments 
                 <section key={apt.id} className="animate-fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
                   {/* Time gap indicator */}
                   {gap > 1 && (
-                    <div className="flex items-center gap-3 mb-5 text-xs text-slate-400">
+                    <div className="flex items-center gap-3 mb-5 text-xs text-tertiary">
                       <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0" />
                       <span className="italic">{gap} day{gap !== 1 ? "s" : ""} later</span>
                       <span className="flex-1 h-px bg-slate-200" />
@@ -143,30 +143,30 @@ export default function ConsultationHistory({ studentName, course, appointments 
                         {formatDate(apt.date)}
                       </time>
 
-                      <p className="text-sm text-slate-500 mt-0.5">
+                      <p className="text-sm text-tertiary mt-0.5">
                         {apt.startTime} – {apt.endTime}
-                        <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
+                        <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[8px] uppercase tracking-wider ${
                           isCompleted
                             ? "bg-emerald-100 text-emerald-700"
                             : apt.status === "APPROVED"
                               ? "bg-gold-100 text-gold-700"
                               : apt.status === "PENDING"
                                 ? "bg-amber-100 text-amber-700"
-                                : "bg-slate-100 text-slate-500"
+                                : "bg-surface text-tertiary"
                         }`}>
                           {apt.status}
                         </span>
                       </p>
 
-                      <div className="mt-4 space-y-4 text-sm text-slate-700 leading-relaxed">
+                      <div className="mt-4 space-y-4 text-sm text-secondary leading-relaxed">
                         <p>
                           {firstName} met with <strong>{apt.faculty?.name || "a faculty member"}</strong>
                           {apt.title ? <> to discuss &ldquo;<em>{apt.title}</em>&rdquo;.</> : "."}
                         </p>
 
                         {apt.description && (
-                          <div className="pl-4 border-l-2 border-slate-200 text-slate-600">
-                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Topics discussed</p>
+                          <div className="pl-4 border-l-2 border-default text-secondary">
+                            <p className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-1">Topics discussed</p>
                             <p className="whitespace-pre-wrap">{apt.description}</p>
                           </div>
                         )}
@@ -179,7 +179,7 @@ export default function ConsultationHistory({ studentName, course, appointments 
                         )}
 
                         {!apt.description && !apt.actionTaken && (
-                          <p className="text-slate-400 italic text-xs">No details recorded for this session.</p>
+                          <p className="text-tertiary italic text-xs">No details recorded for this session.</p>
                         )}
                       </div>
 
@@ -199,16 +199,16 @@ export default function ConsultationHistory({ studentName, course, appointments 
           </div>
 
           {/* ── Closing ───────────────────────────────────── */}
-          <div className="mt-16 pt-10 border-t border-slate-200">
+          <div className="mt-16 pt-10 border-t border-default">
             <div className="text-center max-w-lg mx-auto">
               <span className="text-3xl block mb-4">📖</span>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-secondary leading-relaxed">
                 This concludes {studentName.split(" ")[0]}&apos;s consultation narrative.
                 {completed.length < sorted.length
                   ? ` ${sorted.length - completed.length} entr${sorted.length - completed.length === 1 ? "y" : "ies"} still pending.`
                   : " All entries have been completed."}
               </p>
-              <p className="text-xs text-slate-400 mt-2">
+              <p className="text-xs text-tertiary mt-2">
                 {uniqueFaculty.length} facult{uniqueFaculty.length === 1 ? "y" : "ies"} · {sorted.length} consultation{sorted.length === 1 ? "" : "s"} · {timespan > 0 ? `${timespan} day${timespan !== 1 ? "s" : ""}` : ""}
               </p>
             </div>

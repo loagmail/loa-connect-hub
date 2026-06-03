@@ -10,12 +10,12 @@ export default function GlobalError({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-slate-50 font-sans antialiased">
+      <body className="min-h-screen bg-surface font-sans antialiased">
         <div className="min-h-screen flex items-center justify-center p-6">
           <div className="text-center max-w-sm">
             <h1 className="text-6xl font-bold text-slate-300">500</h1>
-            <p className="text-lg font-semibold text-slate-900 mt-4">Critical Error</p>
-            <p className="text-sm text-slate-500 mt-2">
+            <p className="text-lg font-semibold text-primary mt-4">Critical Error</p>
+            <p className="text-sm text-tertiary mt-2">
               A critical error occurred. Please refresh the page.
             </p>
             <div className="flex items-center justify-center gap-3 mt-6">

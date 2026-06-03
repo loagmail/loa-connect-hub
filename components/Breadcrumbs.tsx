@@ -42,20 +42,20 @@ export default function Breadcrumbs() {
   return (
     <>
       {/* Mobile: back button + current page */}
-      <nav className="flex items-center gap-2 text-xs text-slate-400 px-4 py-3 border-b border-slate-100 bg-white lg:hidden">
+      <nav className="flex items-center gap-2 text-xs text-tertiary px-4 py-3 border-b border-default bg-surface lg:hidden">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-slate-500 hover:text-slate-700 transition-colors shrink-0 -ml-1 p-1 min-h-[44px] min-w-[44px]"
+          className="flex items-center gap-1 text-tertiary hover:text-secondary transition-colors shrink-0 -ml-1 p-1 min-h-[44px] min-w-[44px]"
           aria-label="Go back"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="text-slate-700 font-semibold truncate min-w-0">{currentLabel}</span>
+        <span className="text-secondary font-semibold truncate min-w-0">{currentLabel}</span>
       </nav>
       {/* Desktop: full breadcrumb trail */}
-      <nav className="hidden lg:flex items-center gap-1 text-xs text-slate-400 px-6 py-3 border-b border-slate-100 bg-white">
+      <nav className="hidden lg:flex items-center gap-1 text-xs text-tertiary px-6 py-3 border-b border-default bg-surface">
         {items.map((item, index) => (
           <span key={item.href} className="flex items-center gap-1 min-w-0">
             {index > 0 && (
@@ -64,9 +64,9 @@ export default function Breadcrumbs() {
               </svg>
             )}
             {item.href === pathname ? (
-              <span className="text-slate-700 font-semibold truncate">{item.label}</span>
+              <span className="text-secondary font-semibold truncate">{item.label}</span>
             ) : (
-              <Link href={item.href} className="hover:text-slate-600 transition-colors truncate">
+              <Link href={item.href} className="hover:text-secondary transition-colors truncate">
                 {item.label}
               </Link>
             )}

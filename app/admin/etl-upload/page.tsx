@@ -152,22 +152,22 @@ export default function EtlUploadPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-slate-900">ETL User Upload</h1>
+        <h1 className="text-lg font-bold text-primary">ETL User Upload</h1>
         {validationDone && (
-          <button onClick={handleReset} className="text-xs text-slate-400 hover:text-slate-600 underline">
+          <button onClick={handleReset} className="text-xs text-tertiary hover:text-secondary underline">
             Start Over
           </button>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-default">
         <button
           onClick={() => { setTab("student"); handleReset() }}
           className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
             tab === "student"
               ? "border-blue-600 text-blue-700"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              : "border-transparent text-tertiary hover:text-secondary"
           }`}
         >
           Student Upload
@@ -177,7 +177,7 @@ export default function EtlUploadPage() {
           className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
             tab === "faculty"
               ? "border-blue-600 text-blue-700"
-              : "border-transparent text-slate-500 hover:text-slate-700"
+              : "border-transparent text-tertiary hover:text-secondary"
           }`}
         >
           Faculty / Dean Upload
@@ -187,25 +187,25 @@ export default function EtlUploadPage() {
       {/* Upload Area */}
       {!validationDone && !result && (
         <div className="space-y-4">
-          <div className="card p-6 bg-white space-y-4">
-            <h2 className="text-sm font-bold text-slate-800">CSV Format</h2>
-            <p className="text-xs text-slate-500">
+          <div className="card p-6 bg-surface space-y-4">
+            <h2 className="text-sm font-bold text-primary">CSV Format</h2>
+            <p className="text-xs text-tertiary">
               Upload a CSV file with the following columns. Paste your CSV or upload a file.
             </p>
 
-            <div className="bg-slate-50 rounded-lg p-4 font-mono text-xs text-slate-600 whitespace-pre overflow-x-auto">
+            <div className="bg-surface rounded-lg p-4 font-mono text-xs text-secondary whitespace-pre overflow-x-auto">
               {tab === "student" ? STUDENT_CSV_EXAMPLE : FACULTY_CSV_EXAMPLE}
             </div>
 
             <div className="flex items-center gap-4">
-              <label className="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50">
+              <label className="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-default hover:bg-surface-hover">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 Upload CSV File
                 <input ref={fileInputRef} type="file" accept=".csv,.txt" onChange={handleFileUpload} className="hidden" />
               </label>
-              <span className="text-xs text-slate-400">or paste below</span>
+              <span className="text-xs text-tertiary">or paste below</span>
             </div>
 
             <textarea
@@ -213,7 +213,7 @@ export default function EtlUploadPage() {
               onChange={handlePaste}
               placeholder="Paste your CSV content here..."
               rows={6}
-              className="w-full border border-slate-200 rounded-lg p-3 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+              className="w-full border border-default rounded-lg p-3 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
             />
 
             <SubmitButton onClick={handleValidate} loading={validating} disabled={!csvText.trim()}>
@@ -228,7 +228,7 @@ export default function EtlUploadPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h2 className="text-sm font-bold text-slate-800">
+              <h2 className="text-sm font-bold text-primary">
                 Preview ({rows.length} rows)
               </h2>
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
@@ -242,33 +242,33 @@ export default function EtlUploadPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100 bg-white rounded-xl border border-slate-200">
+            <table className="min-w-full divide-y divide-slate-100 bg-surface rounded-xl border border-default">
               <thead>
-                <tr className="bg-slate-50">
-                  <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">#</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email</th>
+                <tr className="bg-surface">
+                  <th className="px-4 py-3 text-left text-[10px] font-bold text-tertiary uppercase tracking-wider">#</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold text-tertiary uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold text-tertiary uppercase tracking-wider">Email</th>
                   {tab === "faculty" && (
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Department</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-tertiary uppercase tracking-wider">Department</th>
                   )}
                   {tab === "student" && (
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Course</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-tertiary uppercase tracking-wider">Course</th>
                   )}
                   {tab === "faculty" && (
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dean</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-tertiary uppercase tracking-wider">Dean</th>
                   )}
-                  <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Remove</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-bold text-tertiary uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-bold text-tertiary uppercase tracking-wider">Remove</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.map((row) => (
-                  <tr key={row.rowIndex} className={`hover:bg-slate-50 transition-colors ${!row.isValid ? "bg-red-50/30" : ""}`}>
-                    <td className="px-4 py-3 text-xs text-slate-400 font-mono">{row.rowIndex}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-slate-800">{row.name}</td>
+                  <tr key={row.rowIndex} className={`hover:bg-surface-hover transition-colors ${!row.isValid ? "bg-red-50/30" : ""}`}>
+                    <td className="px-4 py-3 text-xs text-tertiary font-mono">{row.rowIndex}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-primary">{row.name}</td>
                     <td className="px-4 py-3">
                       {row.isValid ? (
-                        <span className="text-sm text-slate-600">{row.email}</span>
+                        <span className="text-sm text-secondary">{row.email}</span>
                       ) : (
                         <input
                           type="text"
@@ -279,13 +279,13 @@ export default function EtlUploadPage() {
                       )}
                     </td>
                     {tab === "faculty" && (
-                      <td className="px-4 py-3 text-sm text-slate-600">{row.department || "\u2014"}</td>
+                      <td className="px-4 py-3 text-sm text-secondary">{row.department || "\u2014"}</td>
                     )}
                     {tab === "student" && (
-                      <td className="px-4 py-3 text-sm text-slate-600">{row.course || "\u2014"}</td>
+                      <td className="px-4 py-3 text-sm text-secondary">{row.course || "\u2014"}</td>
                     )}
                     {tab === "faculty" && (
-                      <td className="px-4 py-3 text-sm text-slate-600">{row.isDean ? "Yes" : "No"}</td>
+                      <td className="px-4 py-3 text-sm text-secondary">{row.isDean ? "Yes" : "No"}</td>
                     )}
                     <td className="px-4 py-3">
                       {row.isValid ? (
@@ -321,13 +321,13 @@ export default function EtlUploadPage() {
           </div>
 
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-tertiary">
               {invalidCount > 0
                 ? `Fix the highlighted rows or remove them before uploading.`
                 : `All ${validCount} rows are ready for upload.`}
             </p>
             <div className="flex items-center gap-3">
-              <button onClick={handleReset} className="btn-secondary text-sm px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50">
+              <button onClick={handleReset} className="btn-secondary text-sm px-4 py-2 rounded-lg border border-default hover:bg-surface-hover">
                 Cancel
               </button>
               <SubmitButton
@@ -345,7 +345,7 @@ export default function EtlUploadPage() {
 
       {/* Result Summary */}
       {result && (
-        <div className="card p-6 bg-white space-y-4">
+        <div className="card p-6 bg-surface space-y-4">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
               result.failed === 0 ? "bg-emerald-100" : "bg-amber-100"
@@ -359,28 +359,28 @@ export default function EtlUploadPage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-800">
+              <p className="text-sm font-bold text-primary">
                 {result.created} user{result.created !== 1 ? "s" : ""} created successfully
               </p>
               {result.failed > 0 && (
                 <p className="text-xs text-amber-600">{result.failed} failed</p>
               )}
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-tertiary mt-0.5">
                 Activation emails sent (may take a few minutes to arrive).
               </p>
             </div>
           </div>
 
           {resultDetails.length > 0 && (
-            <div className="bg-slate-50 rounded-lg p-4 max-h-48 overflow-y-auto">
-              <p className="text-xs font-semibold text-slate-600 mb-2">Created Users</p>
+            <div className="bg-surface rounded-lg p-4 max-h-48 overflow-y-auto">
+              <p className="text-xs font-semibold text-secondary mb-2">Created Users</p>
               <div className="space-y-1.5">
                 {resultDetails.map((u, i) => (
-                  <div key={i} className="text-xs text-slate-500 flex items-center gap-2">
+                  <div key={i} className="text-xs text-tertiary flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                    <span className="font-medium text-slate-700">{u.name}</span>
-                    <span className="text-slate-400">{u.email}</span>
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-500">{u.role}</span>
+                    <span className="font-medium text-secondary">{u.name}</span>
+                    <span className="text-tertiary">{u.email}</span>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-tertiary">{u.role}</span>
                   </div>
                 ))}
               </div>
@@ -414,8 +414,8 @@ export default function EtlUploadPage() {
 
       {/* Empty state after validation with no rows */}
       {validationDone && rows.length === 0 && !result && (
-        <div className="card p-8 bg-white text-center">
-          <p className="text-sm text-slate-400">No rows found in the CSV.</p>
+        <div className="card p-8 bg-surface text-center">
+          <p className="text-sm text-tertiary">No rows found in the CSV.</p>
           <button onClick={handleReset} className="btn-primary text-sm mt-4 px-4 py-2 rounded-lg">
             Try Again
           </button>

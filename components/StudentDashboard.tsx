@@ -108,13 +108,13 @@ export default function StudentDashboard({ studentName, course, appointments }: 
       <div className="animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">
               {greeting}, {studentName.split(" ")[0]}
               <span className="inline-block ml-2 animate-pulse-soft">👋</span>
             </h1>
-            <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
+            <p className="text-sm text-tertiary mt-1 flex items-center gap-2">
               {course && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gold-50 border border-gold-200 text-gold-700 text-xs font-semibold">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gold-50 border border-gold-200 text-gold-700 text-xs">
                   {course}
                 </span>
               )}
@@ -143,15 +143,15 @@ export default function StudentDashboard({ studentName, course, appointments }: 
         ].map((s, i) => (
           <div
             key={s.label}
-            className="card p-4 sm:p-5 bg-white flex items-center gap-3 sm:gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            className="card p-4 sm:p-5 bg-surface flex items-center gap-3 sm:gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             style={{ animationDelay: `${0.08 + i * 0.04}s` }}
           >
             <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${s.bg} flex items-center justify-center text-lg shrink-0`}>
               {s.icon}
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-bold text-slate-900 leading-none">{s.value}</p>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1.5">{s.label}</p>
+              <p className="text-xl sm:text-2xl font-bold text-primary leading-none">{s.value}</p>
+              <p className="text-xs font-semibold text-tertiary uppercase tracking-wider mt-1.5">{s.label}</p>
             </div>
           </div>
         ))}
@@ -160,7 +160,7 @@ export default function StudentDashboard({ studentName, course, appointments }: 
       {/* ── Next Up ──────────────────────────────────────── */}
       {nextUp && (
         <div className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
-          <div className="card p-5 sm:p-6 bg-white border-l-4 border-l-emerald-400 hover:shadow-md transition-shadow duration-200">
+          <div className="card p-5 sm:p-6 bg-surface border-l-4 border-l-emerald-400 hover:shadow-md transition-shadow duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-2xl shrink-0">
@@ -175,14 +175,14 @@ export default function StudentDashboard({ studentName, course, appointments }: 
                         ? " · Tomorrow"
                         : ` · In ${daysUntil(nextUp.date)} days`}
                   </p>
-                  <p className="text-sm font-bold text-slate-900">
+                  <p className="text-sm font-bold text-primary">
                     {nextUp.faculty?.name || "Faculty"}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-tertiary mt-1">
                     {nextUp.date} · {nextUp.startTime} – {nextUp.endTime}
                   </p>
                   {nextUp.title && (
-                    <p className="text-xs text-slate-600 font-medium mt-1">{nextUp.title}</p>
+                    <p className="text-xs text-secondary font-medium mt-1">{nextUp.title}</p>
                   )}
                 </div>
               </div>
@@ -202,7 +202,7 @@ export default function StudentDashboard({ studentName, course, appointments }: 
                 )}
                 <Link
                   href={`/student/meetings/${nextUp.id}`}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-colors min-h-[44px] sm:min-h-0"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-3 sm:py-2 rounded-lg border border-default text-secondary text-xs font-semibold hover:bg-surface-hover hover:border-strong transition-colors min-h-[44px] sm:min-h-0"
                 >
                   Details
                 </Link>
@@ -216,29 +216,29 @@ export default function StudentDashboard({ studentName, course, appointments }: 
       {facultyGroups.length > 0 && (
         <div className="space-y-4 animate-fade-in" style={{ animationDelay: "0.25s" }}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-800">Your Consultation Journey</h2>
+            <h2 className="text-sm font-bold text-primary">Your Consultation Journey</h2>
             <span className="text-2xl">{stats.completed === stats.total ? "🏆" : "📈"}</span>
           </div>
 
           {facultyGroups.map((group) => (
-            <div key={group.name} className="card p-5 sm:p-6 bg-white">
+            <div key={group.name} className="card p-5 sm:p-6 bg-surface">
               {/* Faculty header */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-sm font-bold text-white shadow-sm shrink-0">
                   {group.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800">{group.name}</p>
-                  <p className="text-xs text-slate-400 truncate">{group.email}</p>
+                  <p className="text-sm font-bold text-primary">{group.name}</p>
+                  <p className="text-xs text-tertiary truncate">{group.email}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-lg font-bold text-slate-900">{group.pct}%</p>
-                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{group.completed}/{group.total}</p>
+                  <p className="text-lg font-bold text-primary">{group.pct}%</p>
+                  <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">{group.completed}/{group.total}</p>
                 </div>
               </div>
 
               {/* Progress bar */}
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-4">
+              <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden mb-4">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-gold-400 to-emerald-500 transition-all duration-1000 ease-out"
                   style={{ width: `${group.pct}%` }}
@@ -272,21 +272,21 @@ export default function StudentDashboard({ studentName, course, appointments }: 
                       </div>
                       <div className="flex-1 pb-4 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-semibold text-slate-400">{apt.date}</span>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
+                          <span className="text-xs font-semibold text-tertiary">{apt.date}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8px] uppercase tracking-wider ${
                             isCompleted
                               ? "bg-emerald-100 text-emerald-700"
                               : apt.status === "APPROVED"
                                 ? "bg-gold-100 text-gold-700"
                                 : apt.status === "PENDING"
                                   ? "bg-amber-100 text-amber-700"
-                                  : "bg-slate-100 text-slate-500"
+                                  : "bg-surface text-tertiary"
                           }`}>
                             {apt.status}
                           </span>
                         </div>
                         {apt.title && (
-                          <p className="text-xs text-slate-600 mt-0.5 group-hover:text-gold-700 transition-colors truncate">{apt.title}</p>
+                          <p className="text-xs text-secondary mt-0.5 group-hover:text-gold-700 transition-colors truncate">{apt.title}</p>
                         )}
                       </div>
                     </Link>
@@ -305,12 +305,12 @@ export default function StudentDashboard({ studentName, course, appointments }: 
 
       {/* ── Empty state ──────────────────────────────────── */}
       {appointments.length === 0 && (
-        <div className="card p-12 sm:p-16 bg-white text-center animate-fade-in" style={{ animationDelay: "0.15s" }}>
+        <div className="card p-12 sm:p-16 bg-surface text-center animate-fade-in" style={{ animationDelay: "0.15s" }}>
           <div className="w-16 h-16 bg-gold-50 border border-gold-200 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <span className="text-3xl">📚</span>
           </div>
-          <h2 className="text-lg font-bold text-slate-900 mb-2">Your thesis journey starts here</h2>
-          <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+          <h2 className="text-lg font-bold text-primary mb-2">Your thesis journey starts here</h2>
+          <p className="text-sm text-tertiary max-w-md mx-auto mb-6">
             Book your first consultation with a faculty advisor to discuss your thesis topic, get guidance, and track your progress.
           </p>
           <Link

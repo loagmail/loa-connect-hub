@@ -23,9 +23,9 @@ export function BacklogStackedBarChart({ byFaculty }: BacklogStackedBarChartProp
 
   if (byFaculty.length === 0 || totalAll === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">Backlog by Faculty</h3>
-        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-primary mb-4">Backlog by Faculty</h3>
+        <div className="flex items-center justify-center h-48 text-tertiary text-sm">
           No backlog data
         </div>
       </div>
@@ -35,9 +35,9 @@ export function BacklogStackedBarChart({ byFaculty }: BacklogStackedBarChartProp
   const maxTotal = Math.max(...byFaculty.map((f) => f.buckets.reduce((s, b) => s + b.count, 0)), 1)
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-      <h3 className="text-sm font-bold text-slate-800 mb-1">Backlog by Faculty</h3>
-      <p className="text-xs text-slate-400 mb-5">{totalAll} unresolved consultations</p>
+    <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+      <h3 className="text-sm font-bold text-primary mb-1">Backlog by Faculty</h3>
+      <p className="text-xs text-tertiary mb-5">{totalAll} unresolved consultations</p>
 
       <div className="space-y-4">
         {byFaculty.map((faculty) => {
@@ -45,10 +45,10 @@ export function BacklogStackedBarChart({ byFaculty }: BacklogStackedBarChartProp
           return (
             <div key={faculty.facultyName}>
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-medium text-slate-700 truncate">{faculty.facultyName}</span>
-                <span className="font-mono text-slate-500 ml-2">{total}</span>
+                <span className="font-medium text-secondary truncate">{faculty.facultyName}</span>
+                <span className="font-mono text-tertiary ml-2">{total}</span>
               </div>
-              <div className="flex h-5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="flex h-5 bg-surface rounded-full overflow-hidden">
                 {BUCKET_ORDER.map((label) => {
                   const bucket = faculty.buckets.find((b) => b.label === label)
                   const count = bucket?.count || 0
@@ -74,11 +74,11 @@ export function BacklogStackedBarChart({ byFaculty }: BacklogStackedBarChartProp
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 mt-5 pt-4 border-t border-slate-100">
+      <div className="flex flex-wrap items-center gap-4 mt-5 pt-4 border-t border-default">
         {BUCKET_ORDER.map((label) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: BUCKET_COLORS[label] }} />
-            <span className="text-xs text-slate-500">{label}</span>
+            <span className="text-xs text-tertiary">{label}</span>
           </div>
         ))}
       </div>

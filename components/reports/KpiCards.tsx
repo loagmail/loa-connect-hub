@@ -33,11 +33,11 @@ export function KpiCards({
     {
       label: "Total Consultations",
       value: total,
-      color: "text-slate-900",
-      bg: "bg-slate-50",
-      iconBg: "bg-slate-100",
+      color: "text-primary",
+      bg: "bg-surface",
+      iconBg: "bg-surface",
       iconPath: icons.chart,
-      iconColor: "text-slate-600",
+      iconColor: "text-secondary",
     },
     {
       label: "Completed",
@@ -78,11 +78,11 @@ export function KpiCards({
     {
       label: "Cancelled",
       value: cancelled,
-      color: "text-slate-600",
-      bg: "bg-slate-50",
-      iconBg: "bg-slate-100",
+      color: "text-secondary",
+      bg: "bg-surface",
+      iconBg: "bg-surface",
       iconPath: icons.ban,
-      iconColor: "text-slate-500",
+      iconColor: "text-tertiary",
     },
     {
       label: "Completion Rate",
@@ -100,7 +100,7 @@ export function KpiCards({
       {cards.map((card) => (
         <div
           key={card.label}
-          className={`rounded-2xl border border-slate-200/70 ${card.bg} p-4 shadow-sm transition-all duration-200 hover:shadow-md`}
+          className={`rounded-2xl border border-default/70 ${card.bg} p-4 shadow-sm transition-all duration-200 hover:shadow-md`}
         >
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl ${card.iconBg} flex items-center justify-center shrink-0`}>
@@ -109,7 +109,7 @@ export function KpiCards({
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-500 truncate">{card.label}</p>
+              <p className="text-xs font-medium text-tertiary truncate">{card.label}</p>
               <p className={`text-xl font-bold ${card.color} font-mono mt-0.5`}>{card.value}</p>
             </div>
           </div>

@@ -108,8 +108,8 @@ export default function SelectedSlotsOverview({
   }
 
   return (
-    <form onSubmit={userRole === "STUDENT" ? onBook : undefined} className="card p-5 bg-white space-y-4">
-      <h3 className="text-sm font-bold text-slate-700">4. Confirm Booking</h3>
+    <form onSubmit={userRole === "STUDENT" ? onBook : undefined} className="card p-5 bg-surface space-y-4">
+      <h3 className="text-sm font-bold text-secondary">4. Confirm Booking</h3>
 
       <div className="p-3 rounded-lg bg-gold-50 border border-gold-100 text-sm space-y-3">
         <div>
@@ -118,7 +118,7 @@ export default function SelectedSlotsOverview({
             {selectedSlots.map((slot, index) => (
               <li
                 key={`${slot.date}-${slot.start}-${slot.end}-${index}`}
-                className="flex items-center justify-between rounded-lg bg-white border border-slate-200 px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-lg bg-surface border border-default px-3 py-2 text-sm"
               >
                 <span>
                   {slot.date} · {slot.start} – {slot.end}

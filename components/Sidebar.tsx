@@ -163,7 +163,7 @@ export default function Sidebar() {
 
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-3 left-3 z-50 lg:hidden flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg bg-white border border-slate-200 shadow-sm text-slate-600 hover:bg-slate-50"
+        className="fixed top-3 left-3 z-50 lg:hidden flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg bg-surface border border-default shadow-sm text-secondary hover:bg-surface-hover"
         aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -192,12 +192,12 @@ export default function Sidebar() {
           </div>
           <div>
             <span className="text-sm font-bold text-white tracking-tight">e-Consultation</span>
-            <p className="text-[10px] text-slate-500 font-medium">Academic Portal</p>
+            <p className="text-[10px] text-tertiary font-medium">Academic Portal</p>
           </div>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Main Menu</p>
+          <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-tertiary mb-2">Main Menu</p>
 
           {flatItems.map((link) => (
             <Link
@@ -252,7 +252,7 @@ export default function Sidebar() {
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           pathname === child.href
                             ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
-                            : "text-slate-400 hover:bg-slate-800/50 hover:text-white border border-transparent"
+                            : "text-tertiary hover:bg-slate-800/50 hover:text-white border border-transparent"
                         }`}
                       >
                         <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -274,14 +274,14 @@ export default function Sidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white truncate">{session.user?.name}</p>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold mt-1 ${rc.bg}`}>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] mt-1 ${rc.bg}`}>
                 {rc.label}
               </span>
             </div>
           </div>
           <button
             onClick={toggleTheme}
-            className="mt-2 w-full flex items-center justify-center gap-2 px-3 min-h-[44px] rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors border border-slate-800"
+            className="mt-2 w-full flex items-center justify-center gap-2 px-3 min-h-[44px] rounded-lg text-xs font-medium text-tertiary hover:text-white hover:bg-slate-800/50 transition-colors border border-slate-800"
             aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
           >
             {dark ? (
@@ -298,7 +298,7 @@ export default function Sidebar() {
 
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="mt-2 w-full flex items-center justify-center gap-2 px-3 min-h-[44px] rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors border border-slate-800"
+            className="mt-2 w-full flex items-center justify-center gap-2 px-3 min-h-[44px] rounded-lg text-xs font-medium text-tertiary hover:text-white hover:bg-slate-800/50 transition-colors border border-slate-800"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

@@ -85,8 +85,8 @@ export default function FacultyUploadPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Import Students</h1>
-        <p className="text-sm text-slate-500 mt-1">Upload a CSV file to create student accounts.</p>
+        <h1 className="text-2xl font-bold text-primary">Import Students</h1>
+        <p className="text-sm text-tertiary mt-1">Upload a CSV file to create student accounts.</p>
       </div>
 
       {allowedCourses.length > 0 && (
@@ -103,9 +103,9 @@ export default function FacultyUploadPage() {
         </div>
       )}
 
-      <div className="card p-6 bg-white space-y-4">
+      <div className="card p-6 bg-surface space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-700">CSV Template</h2>
+          <h2 className="text-sm font-semibold text-secondary">CSV Template</h2>
           <a
             href="/api/import/students"
             download="import_students_template.csv"
@@ -117,27 +117,27 @@ export default function FacultyUploadPage() {
             Download Template
           </a>
         </div>
-        <div className="bg-slate-50 rounded-lg p-4 text-xs font-mono text-slate-600 leading-relaxed">
+        <div className="bg-surface rounded-lg p-4 text-xs font-mono text-secondary leading-relaxed">
           name, microsoft email, course<br />
           Alice Student, alice.student@lyceumalabang.edu.ph, BSIT<br />
           Bob Martinez, bob.martinez@lyceumalabang.edu.ph, BSCS
         </div>
-        <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
-          <li><strong>Header row required</strong> — must match: <code className="bg-slate-100 px-1 rounded">name, microsoft email, course</code></li>
+        <ul className="text-xs text-tertiary space-y-1 list-disc list-inside">
+          <li><strong>Header row required</strong> — must match: <code className="bg-surface px-1 rounded">name, microsoft email, course</code></li>
           <li>All imported users are created with <strong>STUDENT</strong> role</li>
           <li><strong>Course</strong> is optional but must be one of the allowed courses listed above if provided</li>
           <li>Course codes are <strong>limited to 10 characters</strong></li>
         </ul>
       </div>
 
-      <form onSubmit={handleSubmit} className="card p-6 bg-white space-y-4">
+      <form onSubmit={handleSubmit} className="card p-6 bg-surface space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1.5">CSV File</label>
+          <label className="block text-xs font-semibold text-tertiary mb-1.5">CSV File</label>
           <input
             ref={fileRef}
             type="file"
             accept=".csv"
-            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gold-50 file:text-gold-700 hover:file:bg-gold-100"
+            className="block w-full text-sm text-tertiary file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gold-50 file:text-gold-700 hover:file:bg-gold-100"
           />
         </div>
         {error && <p className="text-xs font-medium text-red-600">{error}</p>}
@@ -149,27 +149,27 @@ export default function FacultyUploadPage() {
       {result && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
-            <div className="card p-4 bg-white text-center">
+            <div className="card p-4 bg-surface text-center">
               <p className="text-2xl font-bold text-emerald-600">{result.created.length}</p>
-              <p className="text-xs font-semibold text-slate-500">Created</p>
+              <p className="text-xs font-semibold text-tertiary">Created</p>
             </div>
-            <div className="card p-4 bg-white text-center">
+            <div className="card p-4 bg-surface text-center">
               <p className="text-2xl font-bold text-amber-600">{result.skipped.length}</p>
-              <p className="text-xs font-semibold text-slate-500">Skipped</p>
+              <p className="text-xs font-semibold text-tertiary">Skipped</p>
             </div>
-            <div className="card p-4 bg-white text-center">
+            <div className="card p-4 bg-surface text-center">
               <p className="text-2xl font-bold text-red-600">{result.errors.length + result.parseErrors.length}</p>
-              <p className="text-xs font-semibold text-slate-500">Errors</p>
+              <p className="text-xs font-semibold text-tertiary">Errors</p>
             </div>
           </div>
 
           {result.created.length > 0 && (
             <section className="space-y-2">
-              <h3 className="text-sm font-bold text-slate-700">Created Students</h3>
+              <h3 className="text-sm font-bold text-secondary">Created Students</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider">
                       <th className="pb-2 pr-4">Name</th>
                       <th className="pb-2 pr-4">Email</th>
                       <th className="pb-2 pr-4">Course</th>
@@ -177,10 +177,10 @@ export default function FacultyUploadPage() {
                   </thead>
                   <tbody>
                     {result.created.map((u) => (
-                      <tr key={u.email} className="border-b border-slate-100">
-                        <td className="py-2 pr-4 text-slate-800">{u.name}</td>
-                        <td className="py-2 pr-4 text-slate-600 text-xs">{u.email}</td>
-                        <td className="py-2 pr-4 text-slate-500 text-xs">{u.course || "—"}</td>
+                      <tr key={u.email} className="border-b border-default">
+                        <td className="py-2 pr-4 text-primary">{u.name}</td>
+                        <td className="py-2 pr-4 text-secondary text-xs">{u.email}</td>
+                        <td className="py-2 pr-4 text-tertiary text-xs">{u.course || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -191,8 +191,8 @@ export default function FacultyUploadPage() {
 
           {result.skipped.length > 0 && (
             <section className="space-y-2">
-              <h3 className="text-sm font-bold text-slate-700">Skipped</h3>
-              <div className="text-xs text-slate-500 space-y-1">
+              <h3 className="text-sm font-bold text-secondary">Skipped</h3>
+              <div className="text-xs text-tertiary space-y-1">
                 {result.skipped.map((s) => (
                   <p key={`skip-${s.row}`}>Row {s.row}: {s.email} — {s.reason}</p>
                 ))}
@@ -202,7 +202,7 @@ export default function FacultyUploadPage() {
 
           {(result.parseErrors.length > 0 || result.errors.length > 0) && (
             <section className="space-y-2">
-              <h3 className="text-sm font-bold text-slate-700">Errors</h3>
+              <h3 className="text-sm font-bold text-secondary">Errors</h3>
               <div className="text-xs text-red-600 space-y-1">
                 {result.parseErrors.map((e) => (
                   <p key={`parse-${e.row}`}>Row {e.row}: {e.message}</p>

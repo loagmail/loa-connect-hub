@@ -9,11 +9,11 @@ interface ReportChartsProps {
 export function ReportCharts({ stats }: ReportChartsProps) {
   if (stats.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-primary mb-4">
           Department-wide Status Breakdown
         </h3>
-        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+        <div className="flex items-center justify-center h-48 text-tertiary text-sm">
           No data available
         </div>
       </div>
@@ -33,11 +33,11 @@ function DonutChartCard({ stats }: { stats: FacultyStatsData[] }) {
 
   if (total === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-primary mb-4">
           Department-wide Status Breakdown
         </h3>
-        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+        <div className="flex items-center justify-center h-48 text-tertiary text-sm">
           No data available
         </div>
       </div>
@@ -83,11 +83,11 @@ function DonutChartCard({ stats }: { stats: FacultyStatsData[] }) {
   })
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-6 pt-8 shadow-sm transition-all duration-200 hover:shadow-md">
-      <h3 className="text-sm font-bold text-slate-800 mb-1">
+    <div className="rounded-2xl border border-default/70 bg-surface p-6 pt-8 shadow-sm transition-all duration-200 hover:shadow-md">
+      <h3 className="text-sm font-bold text-primary mb-1">
         Department-wide Status Breakdown
       </h3>
-      <p className="text-xs text-slate-400 mb-5">{total} total consultations</p>
+      <p className="text-xs text-tertiary mb-5">{total} total consultations</p>
 
       <div className="flex flex-col items-center">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="drop-shadow-sm">
@@ -116,7 +116,7 @@ function DonutChartCard({ stats }: { stats: FacultyStatsData[] }) {
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: seg.color }}
               />
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-tertiary">
                 {seg.label} ({Math.round(seg.percent * 100)}%)
               </span>
             </div>
@@ -127,8 +127,8 @@ function DonutChartCard({ stats }: { stats: FacultyStatsData[] }) {
         <div className="grid grid-cols-3 gap-4 mt-4 w-full max-w-xs">
           {segments.map((seg) => (
             <div key={seg.label} className="text-center">
-              <p className="text-lg font-bold text-slate-800">{seg.value}</p>
-              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+              <p className="text-lg font-bold text-primary">{seg.value}</p>
+              <p className="text-[10px] font-medium text-tertiary uppercase tracking-wider">
                 {seg.label}
               </p>
             </div>

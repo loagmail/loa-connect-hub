@@ -72,11 +72,11 @@ export function ResponseTimeKpiCards({ stats }: ResponseTimeKpiCardsProps) {
       label: "Total Responded",
       value: String(stats.totalResponded),
       detail: "appointments",
-      color: "text-slate-900",
-      bg: "bg-slate-50",
-      iconBg: "bg-slate-100",
+      color: "text-primary",
+      bg: "bg-surface",
+      iconBg: "bg-surface",
       iconPath: icons.check,
-      iconColor: "text-slate-600",
+      iconColor: "text-secondary",
     },
   ]
 
@@ -85,7 +85,7 @@ export function ResponseTimeKpiCards({ stats }: ResponseTimeKpiCardsProps) {
       {cards.map((card) => (
         <div
           key={card.label}
-          className={`rounded-2xl border border-slate-200/70 ${card.bg} p-4 shadow-sm transition-all duration-200 hover:shadow-md`}
+          className={`rounded-2xl border border-default/70 ${card.bg} p-4 shadow-sm transition-all duration-200 hover:shadow-md`}
         >
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl ${card.iconBg} flex items-center justify-center shrink-0`}>
@@ -94,9 +94,9 @@ export function ResponseTimeKpiCards({ stats }: ResponseTimeKpiCardsProps) {
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-500 truncate">{card.label}</p>
+              <p className="text-xs font-medium text-tertiary truncate">{card.label}</p>
               <p className={`text-xl font-bold ${card.color} font-mono mt-0.5`}>{card.value}</p>
-              <p className="text-[10px] text-slate-400 font-mono">{card.detail}</p>
+              <p className="text-[10px] text-tertiary font-mono">{card.detail}</p>
             </div>
           </div>
         </div>

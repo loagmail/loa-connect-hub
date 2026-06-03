@@ -13,7 +13,7 @@ export default function DeanDashboardLoading() {
       </div>
 
       {/* Quick Create CTA */}
-      <div className="card p-6 bg-white flex items-center justify-between">
+      <div className="card p-6 bg-surface flex items-center justify-between">
         <div className="space-y-2">
           <Skeleton variant="text" className="w-64" />
           <Skeleton variant="text" className="w-48" />

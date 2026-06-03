@@ -92,7 +92,7 @@ export default function UserSearchSelect({
     <div ref={ref} className="relative flex-1">
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary pointer-events-none"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -107,23 +107,23 @@ export default function UserSearchSelect({
         />
       </div>
       {showDropdown && results.length > 0 && (
-        <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-surface border border-default rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {results.map((u) => (
             <button
               key={u.id}
               type="button"
               onClick={() => handleSelect(u)}
-              className="w-full text-left px-3 py-2.5 hover:bg-gold-50 border-b border-slate-50 last:border-b-0 transition-colors"
+              className="w-full text-left px-3 py-2.5 hover:bg-gold-50 border-b border-default last:border-b-0 transition-colors"
             >
-              <p className="text-sm font-medium text-slate-800">{highlightMatch(u.name, search)}</p>
-              <p className="text-xs text-slate-400">{highlightMatch(u.email, search)}</p>
+              <p className="text-sm font-medium text-primary">{highlightMatch(u.name, search)}</p>
+              <p className="text-xs text-tertiary">{highlightMatch(u.email, search)}</p>
             </button>
           ))}
         </div>
       )}
       {showDropdown && search.trim() && results.length === 0 && (
-        <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-3">
-          <p className="text-xs text-slate-400">No users match your search.</p>
+        <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-surface border border-default rounded-lg shadow-lg p-3">
+          <p className="text-xs text-tertiary">No users match your search.</p>
         </div>
       )}
     </div>

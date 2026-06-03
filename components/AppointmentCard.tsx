@@ -140,14 +140,14 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
   const statusIcon = statusIcons[effectiveStatus] || "📋"
 
   return (
-    <div className={`card p-5 bg-white border-l-4 ${borderColor[effectiveStatus] || "border-l-transparent"} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
+    <div className={`card p-5 bg-surface border-l-4 ${borderColor[effectiveStatus] || "border-l-transparent"} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
         <div className="space-y-3 flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-base mr-1" title={effectiveStatus}>{statusIcon}</span>
             <StatusBadge status={effectiveStatus} />
             {appointment.meetingType && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
                 Consultation
               </span>
             )}
@@ -157,7 +157,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                 href={localTeamsLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -173,8 +173,8 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                 {getInitial(appointment.faculty.name)}
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800 leading-tight">{appointment.faculty.name}</p>
-                <p className="text-xs text-slate-400 mt-0.5">Faculty / Professor</p>
+                <p className="text-sm font-semibold text-primary leading-tight">{appointment.faculty.name}</p>
+                <p className="text-xs text-tertiary mt-0.5">Faculty / Professor</p>
               </div>
             </div>
           )}
@@ -184,8 +184,8 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                 {getInitial(appointment.student.name)}
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800 leading-tight">{appointment.student.name}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{appointment.student.email}</p>
+                <p className="text-sm font-semibold text-primary leading-tight">{appointment.student.name}</p>
+                <p className="text-xs text-tertiary mt-0.5">{appointment.student.email}</p>
               </div>
             </div>
           )}
@@ -201,11 +201,11 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                 }
                 return Object.entries(grouped).map(([date, slots]) => (
                   <div key={date}>
-                    <p className="text-xs font-semibold text-slate-600 mb-0.5">{date}</p>
+                    <p className="text-xs font-semibold text-secondary mb-0.5">{date}</p>
                     {slots.map((slot) => (
                       <div key={slot.id} className="flex items-center gap-2 text-xs ml-2">
                         <span className="text-slate-300">\u2022</span>
-                        <span className="text-slate-600 font-medium">{slot.startTime} &ndash; {slot.endTime}</span>
+                        <span className="text-secondary font-medium">{slot.startTime} &ndash; {slot.endTime}</span>
                       </div>
                     ))}
                   </div>
@@ -214,26 +214,26 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
             </div>
           ) : appointment.date ? (
             <div className="flex items-center gap-2 text-xs flex-wrap">
-              <span className="font-medium text-slate-700">{appointment.date}</span>
+              <span className="font-medium text-secondary">{appointment.date}</span>
               <span className="text-slate-300">\u2022</span>
-              <span className="text-slate-600 font-medium">{appointment.startTime} &ndash; {appointment.endTime}</span>
+              <span className="text-secondary font-medium">{appointment.startTime} &ndash; {appointment.endTime}</span>
             </div>
           ) : null}
 
           {/* Title */}
           {appointment.title && (
-            <p className="text-sm font-bold text-slate-800 leading-snug">{appointment.title}</p>
+            <p className="text-sm font-bold text-primary leading-snug">{appointment.title}</p>
           )}
 
           {/* Description (truncated) */}
           {appointment.description && (
-            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{appointment.description}</p>
+            <p className="text-xs text-tertiary line-clamp-2 leading-relaxed">{appointment.description}</p>
           )}
 
           {/* Attendee badges */}
           {appointment.attendees && appointment.attendees.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Optional Attendee(s):</span>
+              <span className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">Optional Attendee(s):</span>
               {appointment.attendees.map((att) => (
                 <span
                   key={att.id}
@@ -241,7 +241,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                   title={`${att.user?.name || "Unknown"} (${att.status})`}
                 >
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${
                       att.status === "ACCEPTED"
                         ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : att.status === "DECLINED"
@@ -265,7 +265,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
             </div>
           )}
 
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-tertiary">
             Requested {new Date(appointment.requestedAt).toLocaleDateString("en-US", {
               month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit"
             })}
@@ -373,7 +373,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
               </SubmitButton>
             )}
             <div className="w-full">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Microsoft Teams Link</p>
+              <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider mb-1.5">Microsoft Teams Link</p>
               <TeamsLinkInput appointmentId={appointment.id} />
             </div>
           </div>
@@ -388,7 +388,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
         </p>
       )}
 
-      <div className="mt-4 pt-3 border-t border-slate-100">
+      <div className="mt-4 pt-3 border-t border-default">
         <Link
           href={hasRole(role, "STUDENT") ? `/student/meetings/${appointment.id}` : `/appointments/${appointment.id}`}
           className="text-xs font-semibold text-gold-600 hover:text-gold-700 inline-flex items-center justify-center sm:justify-start gap-1 w-full sm:w-auto min-h-[44px] sm:min-h-0"

@@ -89,13 +89,13 @@ export function FrequencyView({
     <div className="space-y-6">
       {/* A. Granularity Toggle */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-fit transition-all duration-200">
+        <div className="flex items-center gap-1 p-1 bg-surface rounded-xl w-fit transition-all duration-200">
           <button
             onClick={() => setGranularity("monthly")}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
               granularity === "monthly"
-                ? "bg-white text-slate-800 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-surface text-primary shadow-sm"
+                : "text-tertiary hover:text-secondary"
             }`}
           >
             Monthly
@@ -104,8 +104,8 @@ export function FrequencyView({
             onClick={() => setGranularity("yearly")}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
               granularity === "yearly"
-                ? "bg-white text-slate-800 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-surface text-primary shadow-sm"
+                : "text-tertiary hover:text-secondary"
             }`}
           >
             Yearly
@@ -114,7 +114,7 @@ export function FrequencyView({
 
         <button
           onClick={handleExport}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/70 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-sm hover:shadow-md"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-default/70 text-xs font-semibold text-secondary hover:bg-surface-hover hover:border-strong transition-all duration-200 shadow-sm hover:shadow-md"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -210,10 +210,10 @@ function SummaryCard({
 function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEntry[] }) {
   if (entries.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-        <h3 className="text-sm font-bold text-slate-800 mb-1">Department-wide Consultation Frequency</h3>
-        <p className="text-xs text-slate-400 mb-5">Monthly consultation count</p>
-        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+        <h3 className="text-sm font-bold text-primary mb-1">Department-wide Consultation Frequency</h3>
+        <p className="text-xs text-tertiary mb-5">Monthly consultation count</p>
+        <div className="flex items-center justify-center h-48 text-tertiary text-sm">
           No data available
         </div>
       </div>
@@ -248,9 +248,9 @@ function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEnt
   )
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-      <h3 className="text-sm font-bold text-slate-800 mb-1">Department-wide Consultation Frequency</h3>
-      <p className="text-xs text-slate-400 mb-5">Monthly consultation count</p>
+    <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+      <h3 className="text-sm font-bold text-primary mb-1">Department-wide Consultation Frequency</h3>
+      <p className="text-xs text-tertiary mb-5">Monthly consultation count</p>
 
       <div className="overflow-x-auto">
         <svg
@@ -395,14 +395,14 @@ function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEnt
         </svg>
       </div>
 
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-default">
         <div className="flex items-center gap-1.5">
           <div className="w-6 h-[3px] rounded-full bg-gold-500" />
-          <span className="text-xs text-slate-500">Consultations</span>
+          <span className="text-xs text-tertiary">Consultations</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 inline-block border-t-2 border-dashed border-slate-400" />
-          <span className="text-xs text-slate-500">Average</span>
+          <span className="text-xs text-tertiary">Average</span>
         </div>
       </div>
     </div>
@@ -414,10 +414,10 @@ function DepartmentFrequencyChart({ entries }: { entries: DepartmentFrequencyEnt
 function DepartmentYearlyChart({ entries }: { entries: DepartmentYearlyEntry[] }) {
   if (entries.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-        <h3 className="text-sm font-bold text-slate-800 mb-1">Department-wide Consultation Frequency</h3>
-        <p className="text-xs text-slate-400 mb-5">Yearly consultation count</p>
-        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+        <h3 className="text-sm font-bold text-primary mb-1">Department-wide Consultation Frequency</h3>
+        <p className="text-xs text-tertiary mb-5">Yearly consultation count</p>
+        <div className="flex items-center justify-center h-48 text-tertiary text-sm">
           No data available
         </div>
       </div>
@@ -452,9 +452,9 @@ function DepartmentYearlyChart({ entries }: { entries: DepartmentYearlyEntry[] }
   )
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-      <h3 className="text-sm font-bold text-slate-800 mb-1">Department-wide Consultation Frequency</h3>
-      <p className="text-xs text-slate-400 mb-5">Yearly consultation count</p>
+    <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+      <h3 className="text-sm font-bold text-primary mb-1">Department-wide Consultation Frequency</h3>
+      <p className="text-xs text-tertiary mb-5">Yearly consultation count</p>
 
       <div className="overflow-x-auto">
         <svg
@@ -588,14 +588,14 @@ function DepartmentYearlyChart({ entries }: { entries: DepartmentYearlyEntry[] }
         </svg>
       </div>
 
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-default">
         <div className="flex items-center gap-1.5">
           <div className="w-6 h-[3px] rounded-full bg-gold-500" />
-          <span className="text-xs text-slate-500">Consultations</span>
+          <span className="text-xs text-tertiary">Consultations</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 inline-block border-t-2 border-dashed border-slate-400" />
-          <span className="text-xs text-slate-500">Average</span>
+          <span className="text-xs text-tertiary">Average</span>
         </div>
       </div>
     </div>
@@ -607,8 +607,8 @@ function DepartmentYearlyChart({ entries }: { entries: DepartmentYearlyEntry[] }
 function FacultyFrequencyTable({ data, deanId }: { data: FacultyFrequencyData[]; deanId: string }) {
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-8 shadow-sm text-center">
-        <p className="text-slate-400 text-sm">No faculty frequency data available for the selected period.</p>
+      <div className="rounded-2xl border border-default/70 bg-surface p-8 shadow-sm text-center">
+        <p className="text-tertiary text-sm">No faculty frequency data available for the selected period.</p>
       </div>
     )
   }
@@ -623,25 +623,25 @@ function FacultyFrequencyTable({ data, deanId }: { data: FacultyFrequencyData[];
   )
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
-      <div className="px-6 py-4 border-b border-slate-100">
-        <h3 className="text-sm font-bold text-slate-800">Per-Faculty Frequency Breakdown</h3>
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+      <div className="px-6 py-4 border-b border-default">
+        <h3 className="text-sm font-bold text-primary">Per-Faculty Frequency Breakdown</h3>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50">
-              <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-default bg-surface/50">
+              <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Faculty
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Total
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Avg / Month
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Monthly Breakdown
               </th>
             </tr>
@@ -650,22 +650,22 @@ function FacultyFrequencyTable({ data, deanId }: { data: FacultyFrequencyData[];
             {sorted.map((faculty) => (
               <tr
                 key={faculty.facultyId}
-                className="transition-colors duration-150 hover:bg-slate-50/80"
+                className="transition-colors duration-150 hover:bg-surface-hover/80"
               >
-                <td className="px-6 py-4 font-medium text-slate-800 whitespace-nowrap">
+                <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">
                   <span className="flex items-center gap-2">
                     {faculty.facultyName}
                     {faculty.facultyId === deanId && (
-                      <span className="shrink-0 bg-gold-100 text-gold-800 rounded-full px-2 py-0.5 text-xs font-semibold">
+                      <span className="shrink-0 bg-gold-100 text-gold-800 rounded-full px-2 py-0.5 text-xs">
                         Dean
                       </span>
                     )}
                   </span>
                 </td>
-                <td className="px-4 py-4 text-center text-slate-700 font-mono text-sm">
+                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
                   {faculty.total}
                 </td>
-                <td className="px-4 py-4 text-center text-slate-600 font-mono text-sm">
+                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
                   {faculty.averagePerMonth.toFixed(1)}
                 </td>
                 <td className="px-4 py-4">
@@ -705,8 +705,8 @@ function FacultyFrequencyTable({ data, deanId }: { data: FacultyFrequencyData[];
 function FacultyYearlyTable({ data, deanId }: { data: FacultyYearlyData[]; deanId: string }) {
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-8 shadow-sm text-center">
-        <p className="text-slate-400 text-sm">No faculty yearly frequency data available.</p>
+      <div className="rounded-2xl border border-default/70 bg-surface p-8 shadow-sm text-center">
+        <p className="text-tertiary text-sm">No faculty yearly frequency data available.</p>
       </div>
     )
   }
@@ -721,25 +721,25 @@ function FacultyYearlyTable({ data, deanId }: { data: FacultyYearlyData[]; deanI
   )
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
-      <div className="px-6 py-4 border-b border-slate-100">
-        <h3 className="text-sm font-bold text-slate-800">Per-Faculty Yearly Frequency Breakdown</h3>
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+      <div className="px-6 py-4 border-b border-default">
+        <h3 className="text-sm font-bold text-primary">Per-Faculty Yearly Frequency Breakdown</h3>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50">
-              <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-default bg-surface/50">
+              <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Faculty
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Total
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Avg / Year
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Yearly Breakdown
               </th>
             </tr>
@@ -748,22 +748,22 @@ function FacultyYearlyTable({ data, deanId }: { data: FacultyYearlyData[]; deanI
             {sorted.map((faculty) => (
               <tr
                 key={faculty.facultyId}
-                className="transition-colors duration-150 hover:bg-slate-50/80"
+                className="transition-colors duration-150 hover:bg-surface-hover/80"
               >
-                <td className="px-6 py-4 font-medium text-slate-800 whitespace-nowrap">
+                <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">
                   <span className="flex items-center gap-2">
                     {faculty.facultyName}
                     {faculty.facultyId === deanId && (
-                      <span className="shrink-0 bg-gold-100 text-gold-800 rounded-full px-2 py-0.5 text-xs font-semibold">
+                      <span className="shrink-0 bg-gold-100 text-gold-800 rounded-full px-2 py-0.5 text-xs">
                         Dean
                       </span>
                     )}
                   </span>
                 </td>
-                <td className="px-4 py-4 text-center text-slate-700 font-mono text-sm">
+                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
                   {faculty.total}
                 </td>
-                <td className="px-4 py-4 text-center text-slate-600 font-mono text-sm">
+                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
                   {faculty.averagePerYear.toFixed(1)}
                 </td>
                 <td className="px-4 py-4">

@@ -390,7 +390,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
       {userRole === "STUDENT" ? (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-700">
+            <h3 className="text-sm font-bold text-secondary">
               1. Select Faculty
               <span className="text-red-500 ml-1">*</span>
             </h3>
@@ -428,14 +428,14 @@ export default function StudentBooking({ facultyList, userRole, students, server
             if (!f) return null
             return (
               <div className="flex items-center gap-2 p-2.5 rounded-lg bg-gold-50 border border-gold-200">
-                <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-xs font-bold text-gold-700">
+                <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-xs text-gold-700">
                   {f.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800">{f.name}</p>
-                  <p className="text-xs text-slate-400">{f.email}</p>
+                  <p className="text-sm font-semibold text-primary">{f.name}</p>
+                  <p className="text-xs text-tertiary">{f.email}</p>
                 </div>
-                <span className="text-[10px] font-semibold text-gold-700 bg-gold-100 px-2 py-0.5 rounded-full border border-gold-200">
+                <span className="text-[10px] text-gold-700 bg-gold-100 px-2 py-0.5 rounded-full border border-gold-200">
                   Primary
                 </span>
                 <button
@@ -452,7 +452,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
       ) : (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-700">
+            <h3 className="text-sm font-bold text-secondary">
               1. Primary Faculty
               <span className="text-red-500 ml-1">*</span>
             </h3>
@@ -462,14 +462,14 @@ export default function StudentBooking({ facultyList, userRole, students, server
             if (!f) return null
             return (
               <div className="flex items-center gap-2 p-2.5 rounded-lg bg-gold-50 border border-gold-200">
-                <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-xs font-bold text-gold-700">
+                <div className="w-8 h-8 rounded-full bg-gold-200 flex items-center justify-center text-xs text-gold-700">
                   {f.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-800">{f.name} <span className="text-xs text-slate-400 font-normal">(You)</span></p>
-                  <p className="text-xs text-slate-400">{f.email}</p>
+                  <p className="text-sm font-semibold text-primary">{f.name} <span className="text-xs text-tertiary font-normal">(You)</span></p>
+                  <p className="text-xs text-tertiary">{f.email}</p>
                 </div>
-                <span className="text-[10px] font-semibold text-gold-700 bg-gold-100 px-2 py-0.5 rounded-full border border-gold-200">
+                <span className="text-[10px] text-gold-700 bg-gold-100 px-2 py-0.5 rounded-full border border-gold-200">
                   Primary
                 </span>
               </div>
@@ -482,7 +482,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
       {primaryFacultyId && (
         <section className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-700">2. Select Attendees <span className="text-slate-400 font-normal text-xs">(Optional)</span></h3>
+            <h3 className="text-sm font-bold text-secondary">2. Select Attendees <span className="text-tertiary font-normal text-xs">(Optional)</span></h3>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2">
@@ -515,7 +515,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
                 const person = f || s
                 if (!person) return null
                 return (
-                  <div key={id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-700">
+                  <div key={id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-surface border border-default text-xs text-secondary">
                     <span className="font-medium truncate max-w-[120px]">{person.name}</span>
                     <button
                       type="button"
@@ -531,7 +531,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
           )}
 
           {attendeeIds.length === 0 && userRole === "STUDENT" && (
-            <p className="text-xs text-slate-400 italic">No additional attendees selected. Only the primary faculty will be invited.</p>
+            <p className="text-xs text-tertiary italic">No additional attendees selected. Only the primary faculty will be invited.</p>
           )}
           {attendeeIds.length === 0 && userRole !== "STUDENT" && (
             <p className="text-xs text-amber-600 font-semibold italic">At least one attendee is required before selecting a date and time.</p>
@@ -542,7 +542,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
       {/* 3. Date & Time — requires at least one attendee for Faculty/Dean */}
       {primaryFacultyId && (userRole === "STUDENT" || attendeeIds.length > 0) && (
         <section className="space-y-3">
-          <h3 className="text-sm font-bold text-slate-700">3. Pick a Date & Time</h3>
+          <h3 className="text-sm font-bold text-secondary">3. Pick a Date & Time</h3>
 
           <AvailabilityCalendar
             currentYear={currentYear}
@@ -560,7 +560,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
           {/* Available Slots & Manual Time Entry */}
           {selectedDay && (
             <div className="space-y-3">
-              <h4 className="text-sm font-bold text-slate-700">
+              <h4 className="text-sm font-bold text-secondary">
                 {fmtDate(currentYear, currentMonth, selectedDay)}
               </h4>
 
@@ -631,9 +631,9 @@ export default function StudentBooking({ facultyList, userRole, students, server
       <ResultBanner result={result} />
 
       {!primaryFacultyId && (
-        <div className="card p-12 text-center bg-white">
-          <p className="text-slate-700 font-semibold text-sm">Select a primary faculty member</p>
-          <p className="text-slate-400 text-xs mt-1">Pick a faculty member above to see available dates and times.</p>
+        <div className="card p-12 text-center bg-surface">
+          <p className="text-secondary font-semibold text-sm">Select a primary faculty member</p>
+          <p className="text-tertiary text-xs mt-1">Pick a faculty member above to see available dates and times.</p>
         </div>
       )}
     </div>

@@ -37,7 +37,7 @@ const statusColors: Record<string, string> = {
   APPROVED: "bg-cyan-500/20 text-cyan-400",
   REJECTED: "bg-red-500/20 text-red-400",
   COMPLETED: "bg-violet-500/20 text-violet-400",
-  CANCELLED: "bg-slate-500/20 text-slate-400",
+  CANCELLED: "bg-slate-500/20 text-tertiary",
 }
 
 const filterLabels: Record<string, string> = {
@@ -143,8 +143,8 @@ export default async function MeetingsPage(props: {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Meetings</h1>
-          <p className="text-sm text-slate-500 mt-1">Schedule and manage meetings</p>
+          <h1 className="text-2xl font-bold text-primary tracking-tight">Meetings</h1>
+          <p className="text-sm text-tertiary mt-1">Schedule and manage meetings</p>
         </div>
         <Link
           href="/faculty/meetings/new"
@@ -156,22 +156,22 @@ export default async function MeetingsPage(props: {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="card p-5 bg-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Consultations</p>
+        <div className="card p-5 bg-surface">
+          <p className="text-xs font-semibold uppercase tracking-wider text-tertiary">Consultations</p>
           <p className="text-3xl font-bold text-emerald-600 mt-1">{meetings.filter((m) => m.meetingType === "CONSULTATION").length}</p>
         </div>
-        <div className="card p-5 bg-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Internal</p>
+        <div className="card p-5 bg-surface">
+          <p className="text-xs font-semibold uppercase tracking-wider text-tertiary">Internal</p>
           <p className="text-3xl font-bold text-cyan-600 mt-1">{meetings.filter((m) => m.meetingType !== "CONSULTATION").length}</p>
         </div>
-        <div className="card p-5 bg-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total</p>
-          <p className="text-3xl font-bold text-slate-700 mt-1">{meetings.length}</p>
+        <div className="card p-5 bg-surface">
+          <p className="text-xs font-semibold uppercase tracking-wider text-tertiary">Total</p>
+          <p className="text-3xl font-bold text-secondary mt-1">{meetings.length}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="card p-4 bg-white">
+      <div className="card p-4 bg-surface">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(filterLabels).map(([key, label]) => (
@@ -180,7 +180,7 @@ export default async function MeetingsPage(props: {
                 href={`/faculty/meetings?filter=${key}&tab=${activeTab}&sort=${activeSort}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "&showInternal=1" : ""}`}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${activeFilter === key
                     ? "border-gold-500 bg-gold-500 text-white"
-                    : "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "border-default bg-surface text-secondary hover:bg-slate-200"
                   }`}
               >
                 {label}
@@ -190,9 +190,9 @@ export default async function MeetingsPage(props: {
           <div className="flex items-center gap-3">
             <Link
               href={`/faculty/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "" : "&showInternal=1"}`}
-              className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${showInternal ? "border-gold-500 bg-gold-500 text-white" : "border-slate-200 bg-slate-100 text-slate-600"}`}
+              className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${showInternal ? "border-gold-500 bg-gold-500 text-white" : "border-default bg-surface text-secondary"}`}
             >
-              <svg className={`w-3.5 h-3.5 ${showInternal ? "text-white" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className={`w-3.5 h-3.5 ${showInternal ? "text-white" : "text-tertiary"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 {showInternal ? (
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 ) : (
@@ -203,7 +203,7 @@ export default async function MeetingsPage(props: {
             </Link>
             <Link
             href={`/faculty/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort === "asc" ? "desc" : "asc"}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "&showInternal=1" : ""}`}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1"
+            className="text-xs font-semibold text-tertiary hover:text-secondary transition-colors flex items-center gap-1"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               {activeSort === "asc" ? (
@@ -225,14 +225,14 @@ export default async function MeetingsPage(props: {
             counts={counts}
             basePath="/faculty/meetings"
           />
-          <p className="text-xs text-slate-400">Tip: Click a meeting card to view details.</p>
+          <p className="text-xs text-tertiary">Tip: Click a meeting card to view details.</p>
         </div>
       </div>
 
       {/* Meetings list */}
       {sorted.length === 0 ? (
-        <div className="card p-10 bg-white text-center">
-          <p className="text-slate-400 font-medium">No meetings found</p>
+        <div className="card p-10 bg-surface text-center">
+          <p className="text-tertiary font-medium">No meetings found</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -271,12 +271,12 @@ export default async function MeetingsPage(props: {
               <Link
                 key={meeting.id}
                 href={`/faculty/meetings/${meeting.id}`}
-                className="card p-5 bg-white flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:shadow-md transition-shadow"
+                className="card p-5 bg-surface flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-slate-800">{meeting.title}</h3>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColors[meeting.status] || "bg-slate-500/20 text-slate-400"}`}>
+                    <h3 className="font-semibold text-primary">{meeting.title}</h3>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColors[meeting.status] || "bg-slate-500/20 text-tertiary"}`}>
                       {isOrganizer ? "SCHEDULED" : statusLabel}
                     </span>
                     {meeting.meetingType === "CONSULTATION" && (
@@ -290,7 +290,7 @@ export default async function MeetingsPage(props: {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-slate-500">
+                  <div className="flex items-center gap-4 text-sm text-tertiary">
                     <span className="flex items-center gap-1.5">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -305,7 +305,7 @@ export default async function MeetingsPage(props: {
                   </span>
                   </div>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100">
+                <div className="mt-4 pt-3 border-t border-default">
                   <span className="text-xs font-semibold text-gold-600 inline-flex items-center gap-1 cursor-default">
                     View Details
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

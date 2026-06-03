@@ -204,7 +204,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
       {step !== "faculty" && (
         <button
           onClick={handleBack}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 min-h-[44px] -ml-1 px-1"
+          className="flex items-center gap-1.5 text-sm text-tertiary hover:text-secondary min-h-[44px] -ml-1 px-1"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -239,12 +239,12 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
       {/* ── STEP: Faculty ──────────────────────────────────── */}
       {step === "faculty" && (
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-slate-700">Select a faculty member</p>
+          <p className="text-sm font-semibold text-secondary">Select a faculty member</p>
 
           {/* Search */}
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary pointer-events-none"
               fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -254,20 +254,20 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
               value={facultySearch}
               onChange={(e) => setFacultySearch(e.target.value)}
               placeholder="Search by name, department, or email"
-              className="w-full pl-10 pr-4 py-3 text-sm rounded-xl bg-white border border-slate-200 focus:border-gold-400 focus:ring-2 focus:ring-gold-200 outline-none transition-colors"
+              className="w-full pl-10 pr-4 py-3 text-sm rounded-xl bg-surface border border-default focus:border-gold-400 focus:ring-2 focus:ring-gold-200 outline-none transition-colors"
             />
           </div>
 
           {/* Count */}
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-tertiary">
             {filteredFaculty.length === facultyWithRules.length
               ? `${facultyWithRules.length} faculty`
               : `${filteredFaculty.length} of ${facultyWithRules.length} faculty`}
           </p>
 
           {groupedFaculty.length === 0 && (
-            <div className="card p-8 bg-white text-center">
-              <p className="text-sm text-slate-400">No faculty match your search.</p>
+            <div className="card p-8 bg-surface text-center">
+              <p className="text-sm text-tertiary">No faculty match your search.</p>
               <button
                 onClick={() => setFacultySearch("")}
                 className="text-sm text-gold-600 font-semibold mt-2 underline underline-offset-2"
@@ -280,7 +280,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
           <div className="space-y-4">
             {groupedFaculty.map(([dept, members]) => (
               <div key={dept}>
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 px-1">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-tertiary mb-2 px-1">
                   {dept} &middot; {members.length}
                 </h3>
                 <div className="space-y-1.5">
@@ -288,10 +288,10 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
                     <button
                       key={f.id}
                       onClick={() => { setSelectedFacultyId(f.id); setStep("date") }}
-                      className="w-full text-left p-4 rounded-xl bg-white border border-slate-200 hover:border-gold-300 active:bg-gold-50 transition-colors min-h-[60px]"
+                      className="w-full text-left p-4 rounded-xl bg-surface border border-default hover:border-gold-300 active:bg-gold-50 transition-colors min-h-[60px]"
                     >
-                      <p className="text-sm font-semibold text-slate-800">{f.name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{f.department || "No department"}</p>
+                      <p className="text-sm font-semibold text-primary">{f.name}</p>
+                      <p className="text-xs text-tertiary mt-0.5">{f.department || "No department"}</p>
                     </button>
                   ))}
                 </div>
@@ -304,7 +304,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
       {/* ── STEP: Date ─────────────────────────────────────── */}
       {step === "date" && activeFaculty && (
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-slate-700">Select a date for {activeFaculty.name}</p>
+          <p className="text-sm font-semibold text-secondary">Select a date for {activeFaculty.name}</p>
 
           {/* Month nav */}
           <div className="flex items-center justify-between">
@@ -313,19 +313,19 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
                 if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1) }
                 else setCurrentMonth((m) => m - 1)
               }}
-              className="p-2 rounded-lg hover:bg-slate-100 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-500"
+              className="p-2 rounded-lg hover:bg-surface-hover min-h-[44px] min-w-[44px] flex items-center justify-center text-tertiary"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="text-sm font-bold text-slate-800">{MONTH_NAMES[currentMonth]} {currentYear}</span>
+            <span className="text-sm font-bold text-primary">{MONTH_NAMES[currentMonth]} {currentYear}</span>
             <button
               onClick={() => {
                 if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear((y) => y + 1) }
                 else setCurrentMonth((m) => m + 1)
               }}
-              className="p-2 rounded-lg hover:bg-slate-100 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-500"
+              className="p-2 rounded-lg hover:bg-surface-hover min-h-[44px] min-w-[44px] flex items-center justify-center text-tertiary"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -334,7 +334,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
           </div>
 
           {/* Day names */}
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-tertiary uppercase tracking-wider">
             {DAY_NAMES.map((d) => (<div key={d}>{d}</div>))}
           </div>
 
@@ -360,7 +360,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
                     isSelected
                       ? "bg-gold-600 text-white"
                       : isAvailable
-                        ? "bg-white border border-slate-200 text-slate-800 hover:border-gold-400"
+                        ? "bg-surface border border-default text-primary hover:border-gold-400"
                         : "text-slate-300 cursor-not-allowed"
                   }`}
                 >
@@ -375,13 +375,13 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
       {/* ── STEP: Time ─────────────────────────────────────── */}
       {step === "time" && dateStr && (
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-slate-700">
+          <p className="text-sm font-semibold text-secondary">
             Select time on {dateStr}
           </p>
 
           {freeRanges.length === 0 ? (
-            <div className="card p-6 bg-white text-center">
-              <p className="text-sm text-slate-400">No available time slots for this date.</p>
+            <div className="card p-6 bg-surface text-center">
+              <p className="text-sm text-tertiary">No available time slots for this date.</p>
               <button onClick={handleBack} className="text-sm text-gold-600 font-semibold mt-2 underline underline-offset-2">
                 Choose another date
               </button>
@@ -403,7 +403,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
 
                 return (
                   <div key={i} className="space-y-1.5">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">
                       {range.start} &ndash; {range.end}
                     </p>
                     <div className="grid grid-cols-3 gap-2">
@@ -416,7 +416,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
                             className={`py-3 px-2 rounded-xl text-sm font-semibold transition-colors border min-h-[44px] ${
                               isSelected
                                 ? "bg-gold-600 text-white border-gold-600"
-                                : "bg-white border-slate-200 text-slate-700 hover:border-gold-400"
+                                : "bg-surface border-default text-secondary hover:border-gold-400"
                             }`}
                           >
                             {slot.start}
@@ -435,20 +435,20 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
       {/* ── STEP: Confirm & Book ───────────────────────────── */}
       {step === "confirm" && activeFaculty && selectedSlot && dateStr && (
         <div className="space-y-4">
-          <p className="text-sm font-semibold text-slate-700">Review your booking</p>
+          <p className="text-sm font-semibold text-secondary">Review your booking</p>
 
-          <div className="card p-4 bg-white space-y-3">
+          <div className="card p-4 bg-surface space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">Faculty</span>
-              <span className="text-sm font-semibold text-slate-800">{activeFaculty.name}</span>
+              <span className="text-xs text-tertiary">Faculty</span>
+              <span className="text-sm font-semibold text-primary">{activeFaculty.name}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">Date</span>
-              <span className="text-sm font-semibold text-slate-800">{dateStr}</span>
+              <span className="text-xs text-tertiary">Date</span>
+              <span className="text-sm font-semibold text-primary">{dateStr}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">Time</span>
-              <span className="text-sm font-semibold text-slate-800">{selectedSlot.start} &ndash; {selectedSlot.end}</span>
+              <span className="text-xs text-tertiary">Time</span>
+              <span className="text-sm font-semibold text-primary">{selectedSlot.start} &ndash; {selectedSlot.end}</span>
             </div>
           </div>
 
@@ -486,7 +486,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
           )}
 
           {!result && (
-            <button onClick={handleBack} className="w-full text-sm text-slate-500 underline underline-offset-2 py-2">
+            <button onClick={handleBack} className="w-full text-sm text-tertiary underline underline-offset-2 py-2">
               Change time or date
             </button>
           )}
@@ -498,7 +498,7 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
         <div className="text-center pt-2">
           <a
             href="/student/book?desktop=1"
-            className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
+            className="text-xs text-tertiary hover:text-secondary underline underline-offset-2"
           >
             Desktop version
           </a>

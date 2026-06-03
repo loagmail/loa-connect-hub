@@ -78,7 +78,7 @@ export default function SlotSuggestions({
 
   return (
     <div>
-      <p className="text-xs font-semibold text-slate-600 mb-2">
+      <p className="text-xs font-semibold text-secondary mb-2">
         Suggested — click to use, then edit the time:
       </p>
       <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -87,11 +87,11 @@ export default function SlotSuggestions({
             key={i}
             type="button"
             onClick={() => onSlotClick(slot)}
-            className="card p-3 bg-white border border-slate-200 hover:border-slate-300 flex items-center justify-between transition-colors"
+            className="card p-3 bg-surface border border-default hover:border-strong flex items-center justify-between transition-colors"
           >
-            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+            <div className="flex items-center gap-2 text-sm text-secondary font-medium">
               <svg
-                className="w-4 h-4 text-slate-400"
+                className="w-4 h-4 text-tertiary"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

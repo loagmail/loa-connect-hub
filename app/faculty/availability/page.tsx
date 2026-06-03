@@ -183,17 +183,17 @@ export default function AvailabilityPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 font-display">Availability Settings</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold text-primary font-display">Availability Settings</h1>
+        <p className="text-sm text-tertiary mt-1">
           Configure when students can book consultations with you. Weekend blocking is enabled by default.
         </p>
       </div>
 
       {/* Date Range Picker */}
-      <div className="card p-5 bg-white">
+      <div className="card p-5 bg-surface">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-tertiary uppercase tracking-wider mb-2">
               Effective From <span className="text-red-500">*</span>
             </label>
             <input
@@ -204,8 +204,8 @@ export default function AvailabilityPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-              Effective Until <span className="text-slate-400">(optional)</span>
+            <label className="block text-xs font-bold text-tertiary uppercase tracking-wider mb-2">
+              Effective Until <span className="text-tertiary">(optional)</span>
             </label>
             <input
               type="date"
@@ -224,7 +224,7 @@ export default function AvailabilityPage() {
             )}
           </div>
         </div>
-        <p className="text-[11px] text-slate-400 mt-3">
+        <p className="text-[11px] text-tertiary mt-3">
           Rules below apply from <strong>{startDate}</strong>
           {endDate ? <> until <strong>{endDate}</strong></> : <> with no end date</>}.
           After the end date, these rules are disabled and no bookings will be accepted.
@@ -240,11 +240,11 @@ export default function AvailabilityPage() {
           return (
             <div
               key={dayIndex}
-              className={`card p-5 bg-white transition-all ${isBlocked ? "opacity-70" : ""} ${hasPending ? "border-amber-300 border-2 bg-amber-50/30" : ""
+              className={`card p-5 bg-surface transition-all ${isBlocked ? "opacity-70" : ""} ${hasPending ? "border-amber-300 border-2 bg-amber-50/30" : ""
                 }`}
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold text-slate-800">{label}</span>
+                <span className="text-sm font-bold text-primary">{label}</span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -252,7 +252,7 @@ export default function AvailabilityPage() {
                     checked={!(rule?.isBlocked ?? true)}
                     onChange={() => toggleBlocked(dayIndex)}
                   />
-                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold-600" />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-strong after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold-600" />
                 </label>
               </div>
 
@@ -264,7 +264,7 @@ export default function AvailabilityPage() {
               {!isBlocked && (
                 <div className="space-y-2">
                   <div>
-                    <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">From</label>
+                    <label className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">From</label>
                     <input
                       type="time"
                       value={rule?.startTime || "08:00"}
@@ -273,7 +273,7 @@ export default function AvailabilityPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">To</label>
+                    <label className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">To</label>
                     <input
                       type="time"
                       value={rule?.endTime || "18:00"}
@@ -285,15 +285,15 @@ export default function AvailabilityPage() {
               )}
 
               {isBlocked && (
-                <p className="text-[11px] text-slate-400 font-medium mt-2">Blocked — no bookings</p>
+                <p className="text-[11px] text-tertiary font-medium mt-2">Blocked — no bookings</p>
               )}
             </div>
           )
         })}
       </div>
 
-      <div className="card p-5 bg-slate-50 border-slate-200">
-        <p className="text-xs text-slate-500 font-medium">
+      <div className="card p-5 bg-surface border-default">
+        <p className="text-xs text-tertiary font-medium">
           <strong>Note:</strong> These rules only apply to students booking consultations.
           Faculty-to-faculty meetings bypass these restrictions. Rules with an end date
           will automatically become inactive after that date.
@@ -308,7 +308,7 @@ export default function AvailabilityPage() {
             </p>
           )}
           {pendingChanges.size === 0 && (
-            <p className="text-xs text-slate-500 font-medium">All changes saved ✓</p>
+            <p className="text-xs text-tertiary font-medium">All changes saved ✓</p>
           )}
         </div>
         <button

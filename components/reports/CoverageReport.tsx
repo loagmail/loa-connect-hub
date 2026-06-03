@@ -21,7 +21,7 @@ function CoverageDonut({ withConsultations, withoutConsultations }: { withConsul
 
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+      <div className="flex items-center justify-center h-48 text-tertiary text-sm">
         No data available
       </div>
     )
@@ -78,7 +78,7 @@ function CoverageDonut({ withConsultations, withoutConsultations }: { withConsul
         {arcs.map((seg) => (
           <div key={seg.label} className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: seg.color }} />
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-tertiary">
               {seg.label} ({Math.round(seg.percent * 100)}%)
             </span>
           </div>
@@ -88,8 +88,8 @@ function CoverageDonut({ withConsultations, withoutConsultations }: { withConsul
       <div className="grid grid-cols-2 gap-4 mt-4 w-full max-w-xs">
         {segments.map((seg) => (
           <div key={seg.label} className="text-center">
-            <p className="text-lg font-bold text-slate-800">{seg.value}</p>
-            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+            <p className="text-lg font-bold text-primary">{seg.value}</p>
+            <p className="text-[10px] font-medium text-tertiary uppercase tracking-wider">
               {seg.label}
             </p>
           </div>
@@ -102,7 +102,7 @@ function CoverageDonut({ withConsultations, withoutConsultations }: { withConsul
 function CoverageTrendChart({ trend }: { trend: CoverageTrendEntry[] }) {
   if (trend.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+      <div className="flex items-center justify-center h-48 text-tertiary text-sm">
         No trend data available
       </div>
     )
@@ -295,13 +295,13 @@ export function CoverageReport({ overall, byDepartment, trend, departmentName }:
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Consultation Reach Report</h1>
-          <p className="text-sm text-slate-500 mt-1">{departmentName}</p>
+          <h1 className="text-2xl font-bold text-primary">Consultation Reach Report</h1>
+          <p className="text-sm text-tertiary mt-1">{departmentName}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={exportCSV}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-default text-xs font-semibold text-secondary hover:bg-surface-hover hover:border-strong transition-all duration-200"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -310,7 +310,7 @@ export function CoverageReport({ overall, byDepartment, trend, departmentName }:
           </button>
           <button
             onClick={exportExcel}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-default text-xs font-semibold text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -331,41 +331,41 @@ export function CoverageReport({ overall, byDepartment, trend, departmentName }:
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Donut Chart */}
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-          <h3 className="text-sm font-bold text-slate-800 mb-1">Student Reach Distribution</h3>
-          <p className="text-xs text-slate-400 mb-5">{overall.totalStudents} total students</p>
+        <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+          <h3 className="text-sm font-bold text-primary mb-1">Student Reach Distribution</h3>
+          <p className="text-xs text-tertiary mb-5">{overall.totalStudents} total students</p>
           {hasData ? (
             <CoverageDonut
               withConsultations={overall.studentsWithConsultations}
               withoutConsultations={overall.studentsWithoutConsultations}
             />
           ) : (
-            <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+            <div className="flex items-center justify-center h-48 text-tertiary text-sm">
               No data available
             </div>
           )}
         </div>
 
         {/* Trend Chart */}
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-          <h3 className="text-sm font-bold text-slate-800 mb-1">Reach Trend</h3>
-          <p className="text-xs text-slate-400 mb-4">Cumulative students with consultations over time</p>
+        <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+          <h3 className="text-sm font-bold text-primary mb-1">Reach Trend</h3>
+          <p className="text-xs text-tertiary mb-4">Cumulative students with consultations over time</p>
           {trend.length > 0 ? (
             <>
               <CoverageTrendChart trend={trend} />
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-default">
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-emerald-400" />
-                  <span className="text-xs text-slate-500">Reach %</span>
+                  <span className="text-xs text-tertiary">Reach %</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-0.5 bg-gold-400 border-0" style={{ borderTop: "2.5px dashed #d4a04a", width: 16, height: 0 }} />
-                  <span className="text-xs text-slate-500">Students with Consultations</span>
+                  <span className="text-xs text-tertiary">Students with Consultations</span>
                 </div>
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+            <div className="flex items-center justify-center h-48 text-tertiary text-sm">
               No trend data available
             </div>
           )}
@@ -373,26 +373,26 @@ export function CoverageReport({ overall, byDepartment, trend, departmentName }:
       </div>
 
       {/* Department Breakdown Table */}
-      <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h3 className="text-sm font-bold text-slate-800">Department Reach Breakdown</h3>
+      <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-default">
+          <h3 className="text-sm font-bold text-primary">Department Reach Breakdown</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Department</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Total Students</th>
+              <tr className="border-b border-default bg-surface/50">
+                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Department</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Total Students</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-emerald-600">With Consultations</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-amber-600">Without</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Reach</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Reach</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {sortedDepts.map((dept) => (
-                <tr key={dept.departmentId} className="transition-colors duration-150 hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-800 whitespace-nowrap">{dept.departmentName}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-slate-700">{dept.totalStudents}</td>
+                <tr key={dept.departmentId} className="transition-colors duration-150 hover:bg-surface-hover">
+                  <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{dept.departmentName}</td>
+                  <td className="px-4 py-4 text-center font-mono text-sm text-secondary">{dept.totalStudents}</td>
                   <td className="px-4 py-4 text-center font-mono text-sm text-emerald-600">{dept.studentsWithConsultations}</td>
                   <td className="px-4 py-4 text-center font-mono text-sm text-amber-600">{dept.studentsWithoutConsultations}</td>
                   <td className="px-4 py-4 text-center">
@@ -448,7 +448,7 @@ function CoverageBadge({ rate }: { rate: number }) {
   }
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${bg} ${text} transition-all duration-200`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs ${bg} ${text} transition-all duration-200`}>
       <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
       {rate}%
     </span>

@@ -24,38 +24,38 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
 
   if (summaries.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-8 shadow-sm text-center">
-        <p className="text-slate-400 text-sm">No consultation data available for the selected period.</p>
+      <div className="rounded-2xl border border-default/70 bg-surface p-8 shadow-sm text-center">
+        <p className="text-tertiary text-sm">No consultation data available for the selected period.</p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50">
+            <tr className="border-b border-default bg-surface/50">
               <th className="w-8 px-2 py-3" />
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Faculty
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Date
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Time
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Student
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Concern
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Action Taken
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
                 Status
               </th>
             </tr>
@@ -68,11 +68,11 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
                 <Fragment key={item.id}>
                   <tr
                     onClick={() => toggleRow(item.id)}
-                    className="cursor-pointer transition-colors duration-150 hover:bg-slate-50/80"
+                    className="cursor-pointer transition-colors duration-150 hover:bg-surface-hover/80"
                   >
                     <td className="px-2 py-4">
                       <svg
-                        className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                        className={`w-4 h-4 text-tertiary transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -81,22 +81,22 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </td>
-                    <td className="px-4 py-4 font-medium text-slate-800 whitespace-nowrap">
+                    <td className="px-4 py-4 font-medium text-primary whitespace-nowrap">
                       {item.facultyName}
                     </td>
-                    <td className="px-4 py-4 text-slate-700 whitespace-nowrap">
+                    <td className="px-4 py-4 text-secondary whitespace-nowrap">
                       {formatDate(item.date)}
                     </td>
-                    <td className="px-4 py-4 font-mono text-sm text-slate-700 whitespace-nowrap">
+                    <td className="px-4 py-4 font-mono text-sm text-secondary whitespace-nowrap">
                       {item.startTime} &ndash; {item.endTime}
                     </td>
-                    <td className="px-4 py-4 text-slate-700 whitespace-nowrap">
+                    <td className="px-4 py-4 text-secondary whitespace-nowrap">
                       {item.studentName}
                     </td>
-                    <td className="px-4 py-4 text-slate-600 max-w-[200px] truncate">
+                    <td className="px-4 py-4 text-secondary max-w-[200px] truncate">
                       {item.description || item.title || "\u2014"}
                     </td>
-                    <td className="px-4 py-4 text-slate-600 max-w-[180px] truncate">
+                    <td className="px-4 py-4 text-secondary max-w-[180px] truncate">
                       {renderActionTaken(item)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
@@ -106,47 +106,47 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
 
                   {isExpanded && (
                     <tr>
-                      <td colSpan={8} className="px-6 py-4 bg-slate-50">
+                      <td colSpan={8} className="px-6 py-4 bg-surface">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-tertiary mb-1">
                               Concern / Description
                             </h4>
-                            <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                            <p className="text-sm text-secondary whitespace-pre-wrap">
                               {item.description || "No description provided."}
                             </p>
                           </div>
 
                           <div>
-                            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-tertiary mb-1">
                               Action Taken
                             </h4>
-                            <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                            <p className="text-sm text-secondary whitespace-pre-wrap">
                               {renderActionTakenFull(item)}
                             </p>
                           </div>
 
                           {item.additionalRemarks && (
                             <div>
-                              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                              <h4 className="text-xs font-semibold uppercase tracking-wider text-tertiary mb-1">
                                 Additional Remarks
                               </h4>
-                              <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                              <p className="text-sm text-secondary whitespace-pre-wrap">
                                 {item.additionalRemarks}
                               </p>
                             </div>
                           )}
 
                           <div>
-                            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-tertiary mb-1">
                               Proof Files
                             </h4>
                             {item.hasFiles ? (
-                              <p className="text-sm text-slate-600">
+                              <p className="text-sm text-secondary">
                                 Files attached (view in appointment details)
                               </p>
                             ) : (
-                              <p className="text-sm text-slate-400">No files attached</p>
+                              <p className="text-sm text-tertiary">No files attached</p>
                             )}
                           </div>
                         </div>
@@ -189,7 +189,7 @@ function StatusBadge({ status }: { status: string }) {
     COMPLETED: "bg-emerald-100 text-emerald-700",
     PENDING: "bg-amber-100 text-amber-700",
     APPROVED: "bg-cyan-100 text-cyan-700",
-    CANCELLED: "bg-slate-100 text-slate-500",
+    CANCELLED: "bg-surface text-tertiary",
     REJECTED: "bg-red-100 text-red-700",
   }
 
@@ -203,8 +203,8 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-        styles[status] || "bg-slate-100 text-slate-500"
+      className={`px-2.5 py-1 rounded-full text-xs whitespace-nowrap ${
+        styles[status] || "bg-surface text-tertiary"
       }`}
     >
       {labels[status] || status}

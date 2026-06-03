@@ -26,7 +26,7 @@ const badgeColors: Record<string, string> = {
   DEAN: "bg-amber-100 text-amber-700",
   FACULTY: "bg-emerald-100 text-emerald-700",
   STUDENT: "bg-blue-100 text-blue-700",
-  GUEST: "bg-slate-100 text-slate-600",
+  GUEST: "bg-surface text-secondary",
 }
 
 const ADMIN_LOCKED_PAGES = new Set(["/admin", "/admin/users", "/admin/access-config"])
@@ -113,12 +113,12 @@ export default function EditAccessGroupPage() {
     return (
       <div className="max-w-4xl mx-auto space-y-8 pb-12">
         <Link href="/admin/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
-        <p className="text-sm text-slate-400 text-center py-8">Group not found.</p>
+        <p className="text-sm text-tertiary text-center py-8">Group not found.</p>
       </div>
     )
   }
 
-  const badgeColor = badgeColors[group.groupName] || "bg-slate-100 text-slate-600"
+  const badgeColor = badgeColors[group.groupName] || "bg-surface text-secondary"
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
@@ -131,11 +131,11 @@ export default function EditAccessGroupPage() {
           <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${badgeColor}`}>
             {group.groupName}
           </span>
-          <span className="text-xs text-slate-400">Access Group</span>
+          <span className="text-xs text-tertiary">Access Group</span>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-2">Allowed Pages</label>
+          <label className="block text-xs font-semibold text-secondary mb-2">Allowed Pages</label>
           {catalog && (
             <div className="space-y-1 mb-3">
               {Object.entries(catalog.pages).map(([category, items]) => {
@@ -147,7 +147,7 @@ export default function EditAccessGroupPage() {
                 if (visible.length === 0) return null
                 return (
                   <div key={category}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 mt-2 first:mt-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-tertiary mb-1 mt-2 first:mt-0">
                       {category}
                     </p>
                     {visible.map((item) => {
@@ -155,24 +155,24 @@ export default function EditAccessGroupPage() {
                       return (
                         <label
                           key={item.path}
-                          className={`flex items-start gap-2 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer text-xs ${locked ? "opacity-60" : ""}`}
+                          className={`flex items-start gap-2 px-2 py-1.5 rounded hover:bg-surface-hover cursor-pointer text-xs ${locked ? "opacity-60" : ""}`}
                         >
                           <input
                             type="checkbox"
                             checked={selectedPages.includes(item.path)}
                             onChange={() => togglePage(item.path)}
                             disabled={locked}
-                            className="mt-0.5 rounded border-slate-300 text-gold-600 focus:ring-gold-500"
+                            className="mt-0.5 rounded border-strong text-gold-600 focus:ring-gold-500"
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span>{item.label}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">{item.path}</span>
+                              <span className="text-[10px] text-tertiary font-mono">{item.path}</span>
                               {locked && (
-                                <span className="text-[10px] text-slate-400 ml-0">(required)</span>
+                                <span className="text-[10px] text-tertiary ml-0">(required)</span>
                               )}
                             </div>
-                            <p className="text-[10px] text-slate-400 truncate">{item.description}</p>
+                            <p className="text-[10px] text-tertiary truncate">{item.description}</p>
                           </div>
                         </label>
                       )
@@ -182,12 +182,12 @@ export default function EditAccessGroupPage() {
               })}
             </div>
           )}
-          <p className="text-[10px] text-slate-400 mt-1">Child routes are automatically allowed.</p>
+          <p className="text-[10px] text-tertiary mt-1">Child routes are automatically allowed.</p>
         </div>
 
 
 
-        <div className="flex items-center justify-end gap-3 pt-1 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-3 pt-1 border-t border-default">
           {saved && (
             <span className="text-xs font-semibold text-emerald-600">Saved</span>
           )}

@@ -30,7 +30,7 @@ export default function StatusDropdown({
       <input type="hidden" name="sort" value={activeSort} />
       <input type="hidden" name="q" value={query} />
       <label className="w-full sm:w-auto">
-        <span className="block text-xs font-semibold text-slate-500 mb-2">Status</span>
+        <span className="block text-xs font-semibold text-tertiary mb-2">Status</span>
         <select
           name="status"
           value={activeStatus}
@@ -44,7 +44,7 @@ export default function StatusDropdown({
             if (query) params.set("q", query)
             router.push(`/faculty/meetings?${params.toString()}`)
           }}
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition-colors focus:border-slate-400 focus:outline-none"
+          className="w-full rounded-xl border border-default bg-surface px-3 py-2 text-sm text-secondary shadow-sm transition-colors focus:border-slate-400 focus:outline-none"
         >
           {Object.entries(statusLabels).map(([key, label]) => (
             <option key={key} value={key}>{label}</option>

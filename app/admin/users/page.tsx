@@ -36,7 +36,7 @@ const roleColors: Record<string, string> = {
   DEAN: "bg-amber-100 text-amber-700",
   FACULTY: "bg-emerald-100 text-emerald-700",
   STUDENT: "bg-blue-100 text-blue-700",
-  GUEST: "bg-slate-100 text-slate-600",
+  GUEST: "bg-surface text-secondary",
 }
 
 export default function AdminUsersPage() {
@@ -247,7 +247,7 @@ export default function AdminUsersPage() {
     return (
       <div className="max-w-6xl mx-auto space-y-8 pb-12">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Manage Users</h1>
+          <h1 className="text-2xl font-bold text-primary">Manage Users</h1>
         </div>
         <div className="space-y-4">
           <div className="card p-4 space-y-3">
@@ -267,9 +267,9 @@ export default function AdminUsersPage() {
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Manage Users</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-primary">Manage Users</h1>
         <div className="flex items-center gap-3">
-          <p className="text-xs text-slate-500">{filtered.length} user(s)</p>
+          <p className="text-xs text-tertiary">{filtered.length} user(s)</p>
           <SubmitButton onClick={() => setShowCreate(true)} variant="primary" className="text-xs font-semibold px-3 py-3 sm:py-1.5 rounded-lg">
             + Create User
           </SubmitButton>
@@ -279,7 +279,7 @@ export default function AdminUsersPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-3">
         <div className="relative flex-1 min-w-0 w-full sm:w-auto sm:min-w-[200px]">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -315,14 +315,14 @@ export default function AdminUsersPage() {
 
       {/* Empty state */}
       {paginated.length === 0 ? (
-        <p className="text-sm text-slate-400 text-center py-8">No users found.</p>
+        <p className="text-sm text-tertiary text-center py-8">No users found.</p>
       ) : (
         <>
           {/* Desktop table */}
           <div className="desktop-only overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <tr className="border-b border-default text-left text-[10px] font-bold text-tertiary uppercase tracking-wider">
                   <th className="pb-3 pr-4">User</th>
                   <th className="pb-3 pr-4">Role</th>
                   <th className="pb-3 pr-4">Department</th>
@@ -341,21 +341,21 @@ export default function AdminUsersPage() {
                   const isDefaultAdmin = u.email === "admin@lyceumalabang.ph"
 
                   return (
-                    <tr key={u.id} className="border-b border-slate-100">
+                    <tr key={u.id} className="border-b border-default">
                       <td className="py-3 pr-4">
-                        <p className="text-slate-800 font-medium">{u.name}</p>
-                        <p className="text-slate-400 text-xs">{u.email}</p>
+                        <p className="text-primary font-medium">{u.name}</p>
+                        <p className="text-tertiary text-xs">{u.email}</p>
                       </td>
                       <td className="py-3 pr-4 relative">
                         <button
                           onClick={() => !isDefaultAdmin && setRoleMenuOpen(roleMenuOpen === u.id ? null : u.id)}
                           disabled={changingRole === u.id || isDefaultAdmin}
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-full border-0 ${isDefaultAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"} ${roleColors[u.role.split("|")[0]] || "bg-slate-100 text-slate-600"}`}
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full border-0 ${isDefaultAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"} ${roleColors[u.role.split("|")[0]] || "bg-surface text-secondary"}`}
                         >
                           {u.role.split("|").join(", ")}
                         </button>
                         {roleMenuOpen === u.id && (
-                          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg p-2 min-w-[150px] space-y-1">
+                          <div className="absolute top-full left-0 mt-1 z-50 bg-surface border border-default rounded-lg shadow-lg p-2 min-w-[150px] space-y-1">
                             {VALID_ROLES.map((r) => {
                               const checked = hasRole(u.role, r)
                               const isConflicting =
@@ -366,7 +366,7 @@ export default function AdminUsersPage() {
                                 <label
                                   key={r}
                                   className={`flex items-center gap-2 px-2 py-1 rounded text-xs ${
-                                    isConflicting ? "opacity-40 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
+                                    isConflicting ? "opacity-40 cursor-not-allowed" : "bg-surface-hover cursor-pointer"
                                   }`}
                                 >
                                   <input
@@ -388,7 +388,7 @@ export default function AdminUsersPage() {
                                             : toggled
                                       handleRoleChange(u.id, finalRoles)
                                     }}
-                                    className="rounded border-slate-300 text-gold-600 focus:ring-gold-500"
+                                    className="rounded border-strong text-gold-600 focus:ring-gold-500"
                                   />
                                   {r}
                                 </label>
@@ -396,14 +396,14 @@ export default function AdminUsersPage() {
                             })}
                             <button
                               onClick={() => setRoleMenuOpen(null)}
-                              className="w-full mt-1 text-[10px] font-semibold text-slate-400 hover:text-slate-600 py-1"
+                              className="w-full mt-1 text-[10px] font-semibold text-tertiary hover:text-secondary py-1"
                             >
                               Done
                             </button>
                           </div>
                         )}
                       </td>
-                      <td className="py-3 pr-4 text-xs text-slate-500">
+                      <td className="py-3 pr-4 text-xs text-tertiary">
                         {u.departmentId ? deptMap[u.departmentId] || "—" : "—"}
                       </td>
                       <td className="py-3 pr-4">
@@ -413,7 +413,7 @@ export default function AdminUsersPage() {
                           <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Active</span>
                         )}
                       </td>
-                      <td className="py-3 pr-4 text-slate-500 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+                      <td className="py-3 pr-4 text-tertiary text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
                       <td className="py-3 pr-4">
                         {u.hasLoggedInBefore ? (
                           <span className="text-xs text-emerald-600">Yes</span>
@@ -421,12 +421,12 @@ export default function AdminUsersPage() {
                           <span className="text-xs text-amber-600">Pending</span>
                         )}
                       </td>
-                      <td className="py-3 pr-4 text-slate-500 text-xs">
+                      <td className="py-3 pr-4 text-tertiary text-xs">
                         {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : "—"}
                       </td>
                       <td className="py-3 pr-4">
                         {isDefaultAdmin ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-slate-100 text-slate-400 border border-slate-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-surface text-tertiary border border-default">
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
@@ -478,11 +478,11 @@ export default function AdminUsersPage() {
               const isDefaultAdmin = u.email === "admin@lyceumalabang.ph"
 
               return (
-                <div key={u.id} className="card p-4 bg-white space-y-3">
+                <div key={u.id} className="card p-4 bg-surface space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-800 truncate">{u.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                      <p className="text-sm font-bold text-primary truncate">{u.name}</p>
+                      <p className="text-xs text-tertiary truncate">{u.email}</p>
                     </div>
                     {u.isDisabled ? (
                       <span className="shrink-0 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Disabled</span>
@@ -493,17 +493,17 @@ export default function AdminUsersPage() {
 
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                     <div>
-                      <span className="text-slate-400">Role:</span>
+                      <span className="text-tertiary">Role:</span>
                       <div className="relative inline-block">
                         <button
                           onClick={() => !isDefaultAdmin && setRoleMenuOpen(roleMenuOpen === u.id ? null : u.id)}
                           disabled={changingRole === u.id || isDefaultAdmin}
-                          className={`ml-1 text-xs font-semibold px-2 py-0.5 rounded-full ${isDefaultAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"} ${roleColors[u.role.split("|")[0]] || "bg-slate-100 text-slate-600"}`}
+                          className={`ml-1 text-xs font-semibold px-2 py-0.5 rounded-full ${isDefaultAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"} ${roleColors[u.role.split("|")[0]] || "bg-surface text-secondary"}`}
                         >
                           {u.role.split("|").join(", ")}
                         </button>
                         {roleMenuOpen === u.id && (
-                          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg p-2 min-w-[150px] space-y-1">
+                          <div className="absolute top-full left-0 mt-1 z-50 bg-surface border border-default rounded-lg shadow-lg p-2 min-w-[150px] space-y-1">
                             {VALID_ROLES.map((r) => {
                               const checked = hasRole(u.role, r)
                               const isConflicting =
@@ -514,7 +514,7 @@ export default function AdminUsersPage() {
                                 <label
                                   key={r}
                                   className={`flex items-center gap-2 px-2 py-1 rounded text-xs ${
-                                    isConflicting ? "opacity-40 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
+                                    isConflicting ? "opacity-40 cursor-not-allowed" : "bg-surface-hover cursor-pointer"
                                   }`}
                                 >
                                   <input
@@ -535,7 +535,7 @@ export default function AdminUsersPage() {
                                             : toggled
                                       handleRoleChange(u.id, finalRoles)
                                     }}
-                                    className="rounded border-slate-300 text-gold-600 focus:ring-gold-500"
+                                    className="rounded border-strong text-gold-600 focus:ring-gold-500"
                                   />
                                   {r}
                                 </label>
@@ -543,7 +543,7 @@ export default function AdminUsersPage() {
                             })}
                             <button
                               onClick={() => setRoleMenuOpen(null)}
-                              className="w-full mt-1 text-[10px] font-semibold text-slate-400 hover:text-slate-600 py-1"
+                              className="w-full mt-1 text-[10px] font-semibold text-tertiary hover:text-secondary py-1"
                             >
                               Done
                             </button>
@@ -552,28 +552,28 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                     <div>
-                      <span className="text-slate-400">Dept:</span>
-                      <span className="ml-1 text-slate-600">{u.departmentId ? deptMap[u.departmentId] || "—" : "—"}</span>
+                      <span className="text-tertiary">Dept:</span>
+                      <span className="ml-1 text-secondary">{u.departmentId ? deptMap[u.departmentId] || "—" : "—"}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400">Registered:</span>
-                      <span className="ml-1 text-slate-600">{new Date(u.createdAt).toLocaleDateString()}</span>
+                      <span className="text-tertiary">Registered:</span>
+                      <span className="ml-1 text-secondary">{new Date(u.createdAt).toLocaleDateString()}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400">Activated:</span>
+                      <span className="text-tertiary">Activated:</span>
                       <span className={`ml-1 ${u.hasLoggedInBefore ? "text-emerald-600" : "text-amber-600"}`}>
                         {u.hasLoggedInBefore ? "Yes" : "Pending"}
                       </span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-slate-400">Last login:</span>
-                      <span className="ml-1 text-slate-600">{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : "—"}</span>
+                      <span className="text-tertiary">Last login:</span>
+                      <span className="ml-1 text-secondary">{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : "—"}</span>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-2 pt-1">
                     {isDefaultAdmin ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-slate-100 text-slate-400 border border-slate-200">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-surface text-tertiary border border-default">
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
@@ -613,8 +613,8 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 border-t border-default">
+            <div className="flex items-center gap-2 text-xs text-tertiary">
               <span>Rows per page:</span>
               <select
                 value={pageSize}
@@ -626,13 +626,13 @@ export default function AdminUsersPage() {
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-3 text-xs text-tertiary">
               <span>{safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, filtered.length)} of {filtered.length}</span>
               <div className="flex gap-1">
                 <button
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={safePage === 0}
-                  className="p-2 sm:p-1.5 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="p-2 sm:p-1.5 rounded border border-default bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -641,7 +641,7 @@ export default function AdminUsersPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                   disabled={safePage >= totalPages - 1}
-                  className="p-2 sm:p-1.5 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="p-2 sm:p-1.5 rounded border border-default bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -656,14 +656,14 @@ export default function AdminUsersPage() {
       {/* ── Edit User Modal ── */}
       {editUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4" onClick={() => !editSaving && setEditUser(null)}>
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4 max-h-[90vh] overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-slate-900">Edit User</h2>
-            <p className="text-xs text-slate-500">{editUser.email}</p>
+          <div className="bg-surface rounded-xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4 max-h-[90vh] overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-primary">Edit User</h2>
+            <p className="text-xs text-tertiary">{editUser.email}</p>
 
-            <label className="block text-xs font-medium text-slate-700">Name</label>
+            <label className="block text-xs font-medium text-secondary">Name</label>
             <input value={editName} onChange={(e) => setEditName(e.target.value)} className="input text-sm w-full" />
 
-            <label className="block text-xs font-medium text-slate-700">Email</label>
+            <label className="block text-xs font-medium text-secondary">Email</label>
             <input
               value={editEmail}
               onChange={(e) => setEditEmail(e.target.value)}
@@ -671,7 +671,7 @@ export default function AdminUsersPage() {
               disabled={editUser.email === "admin@lyceumalabang.ph"}
             />
 
-            <label className="block text-xs font-medium text-slate-700">Department</label>
+            <label className="block text-xs font-medium text-secondary">Department</label>
             <select value={editDept} onChange={(e) => setEditDept(e.target.value)} className="input text-sm w-full">
               <option value="">— None —</option>
               {departments.map((d) => (
@@ -679,7 +679,7 @@ export default function AdminUsersPage() {
               ))}
             </select>
 
-            <label className="block text-xs font-medium text-slate-700">Roles</label>
+            <label className="block text-xs font-medium text-secondary">Roles</label>
             <div className="flex flex-wrap gap-3">
               {VALID_ROLES.map((r) => {
                 const checked = editRoles.includes(r)
@@ -715,7 +715,7 @@ export default function AdminUsersPage() {
                               : next
                         setEditRoles(final)
                       }}
-                      className="rounded border-slate-300 text-gold-600 focus:ring-gold-500"
+                      className="rounded border-strong text-gold-600 focus:ring-gold-500"
                     />
                     {r}
                   </label>
@@ -734,7 +734,7 @@ export default function AdminUsersPage() {
                 <button
                   onClick={() => setEditUser(null)}
                   disabled={editSaving}
-                  className="text-xs font-semibold px-4 py-3 sm:py-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex-1 sm:flex-none"
+                  className="text-xs font-semibold px-4 py-3 sm:py-2 rounded-lg border border-default bg-surface-hover disabled:opacity-50 flex-1 sm:flex-none"
                 >
                   Cancel
                 </button>
@@ -750,16 +750,16 @@ export default function AdminUsersPage() {
       {/* ── Create User Modal ── */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4" onClick={() => !createSaving && setShowCreate(false)}>
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4 max-h-[90vh] overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-slate-900">Create User</h2>
+          <div className="bg-surface rounded-xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4 max-h-[90vh] overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-primary">Create User</h2>
 
-            <label className="block text-xs font-medium text-slate-700">Name *</label>
+            <label className="block text-xs font-medium text-secondary">Name *</label>
             <input value={createName} onChange={(e) => setCreateName(e.target.value)} className="input text-sm w-full" placeholder="Full name" />
 
-            <label className="block text-xs font-medium text-slate-700">Email *</label>
+            <label className="block text-xs font-medium text-secondary">Email *</label>
             <input value={createEmail} onChange={(e) => setCreateEmail(e.target.value)} className="input text-sm w-full" placeholder="email@example.com" type="email" />
 
-            <label className="block text-xs font-medium text-slate-700">Roles *</label>
+            <label className="block text-xs font-medium text-secondary">Roles *</label>
             <div className="flex flex-wrap gap-3">
               {VALID_ROLES.map((r) => {
                 const checked = createRoles.includes(r)
@@ -795,7 +795,7 @@ export default function AdminUsersPage() {
                               : next
                         setCreateRoles(final)
                       }}
-                      className="rounded border-slate-300 text-gold-600 focus:ring-gold-500"
+                      className="rounded border-strong text-gold-600 focus:ring-gold-500"
                     />
                     {r}
                   </label>
@@ -803,7 +803,7 @@ export default function AdminUsersPage() {
               })}
             </div>
 
-            <label className="block text-xs font-medium text-slate-700">Department</label>
+            <label className="block text-xs font-medium text-secondary">Department</label>
             <select value={createDept} onChange={(e) => setCreateDept(e.target.value)} className="input text-sm w-full">
               <option value="">— None —</option>
               {departments.map((d) => (
@@ -817,7 +817,7 @@ export default function AdminUsersPage() {
               <button
                 onClick={() => { setShowCreate(false); setCreateError("") }}
                 disabled={createSaving}
-                className="text-xs font-semibold px-4 py-3 sm:py-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 w-full sm:w-auto"
+                className="text-xs font-semibold px-4 py-3 sm:py-2 rounded-lg border border-default bg-surface-hover disabled:opacity-50 w-full sm:w-auto"
               >
                 Cancel
               </button>

@@ -13,9 +13,9 @@ interface DemandLineChartProps {
 export function DemandLineChart({ data, title }: DemandLineChartProps) {
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">{title}</h3>
-        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">No data available</div>
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-primary mb-4">{title}</h3>
+        <div className="flex items-center justify-center h-48 text-tertiary text-sm">No data available</div>
       </div>
     )
   }
@@ -37,9 +37,9 @@ export function DemandLineChart({ data, title }: DemandLineChartProps) {
   const areaPath = `${linePath} L${xScale(data.length - 1)},${padding.top + chartH} L${xScale(0)},${padding.top + chartH} Z`
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-      <h3 className="text-sm font-bold text-slate-800 mb-1">{title}</h3>
-      <p className="text-xs text-slate-400 mb-4">{data.length} data points</p>
+    <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+      <h3 className="text-sm font-bold text-primary mb-1">{title}</h3>
+      <p className="text-xs text-tertiary mb-4">{data.length} data points</p>
 
       <div className="overflow-x-auto">
         <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="min-w-[700px]">

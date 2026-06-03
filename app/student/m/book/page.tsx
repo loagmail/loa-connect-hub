@@ -40,8 +40,8 @@ export default async function MobileStudentBookPage() {
   return (
     <div className="px-4 py-6 max-w-lg mx-auto space-y-6 pb-24">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Book Consultation</h1>
-        <p className="text-sm text-slate-500 mt-1">Pick a faculty member and available time.</p>
+        <h1 className="text-xl font-bold text-primary">Book Consultation</h1>
+        <p className="text-sm text-tertiary mt-1">Pick a faculty member and available time.</p>
       </div>
       <MobileBookingFlow facultyWithRules={facultyWithRules as FacultyWithRules[]} userRole="STUDENT" serverNow={new Date().toISOString()} />
     </div>

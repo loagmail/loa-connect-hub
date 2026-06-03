@@ -55,14 +55,14 @@ export function CalendarView({ events, emptyMessage, emptySubtext }: CalendarVie
 
   if (sortedDates.length === 0) {
     return (
-      <div className="card p-12 text-center bg-white">
-        <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+      <div className="card p-12 text-center bg-surface">
+        <div className="w-12 h-12 bg-surface border border-default rounded-xl flex items-center justify-center mx-auto mb-4 text-tertiary">
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
-        <p className="text-slate-700 font-semibold text-sm">{emptyMessage || "No upcoming events"}</p>
-        {emptySubtext && <p className="text-slate-400 text-xs mt-1">{emptySubtext}</p>}
+        <p className="text-secondary font-semibold text-sm">{emptyMessage || "No upcoming events"}</p>
+        {emptySubtext && <p className="text-tertiary text-xs mt-1">{emptySubtext}</p>}
       </div>
     )
   }
@@ -76,18 +76,18 @@ export function CalendarView({ events, emptyMessage, emptySubtext }: CalendarVie
         const dateFormatted = formatDate(date)
 
         return (
-          <div key={date} className={`card overflow-hidden bg-white transition-opacity duration-200 ${past ? "opacity-60" : ""}`}>
-            <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2.5">
+          <div key={date} className={`card overflow-hidden bg-surface transition-opacity duration-200 ${past ? "opacity-60" : ""}`}>
+            <div className="px-5 py-3 bg-surface border-b border-default flex items-center gap-2.5">
               <div className="w-1.5 h-1.5 rounded-full bg-gold-600 ring-4 ring-gold-50" />
-              <h3 className="font-semibold text-slate-800 text-sm tracking-tight">{dateFormatted}</h3>
-              <span className="text-[10px] bg-slate-100 text-slate-500 font-semibold px-2 py-0.5 rounded border border-slate-200/40">{date}</span>
+              <h3 className="font-semibold text-primary text-sm tracking-tight">{dateFormatted}</h3>
+              <span className="text-[10px] bg-surface text-tertiary font-semibold px-2 py-0.5 rounded border border-default/40">{date}</span>
               {past && (
-                <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">Past</span>
+                <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-tertiary bg-surface px-1.5 py-0.5 rounded">Past</span>
               )}
             </div>
             <div className="divide-y divide-slate-100">
               {dayEvents.map((event) => (
-                <div key={event.id} className="px-4 sm:px-5 py-3.5 hover:bg-slate-50 transition-colors">
+                <div key={event.id} className="px-4 sm:px-5 py-3.5 hover:bg-surface-hover transition-colors">
                   <div className="flex items-start gap-3 sm:gap-4">
                     <div className="mt-0.5 w-14 sm:w-16 shrink-0 text-right">
                       <span className={`text-sm font-bold tabular-nums leading-none tracking-tight block ${
@@ -97,14 +97,14 @@ export function CalendarView({ events, emptyMessage, emptySubtext }: CalendarVie
                       }`}>
                         {event.startTime}
                       </span>
-                      <span className="block text-[11px] text-slate-400 font-semibold tabular-nums leading-none mt-1">
+                      <span className="block text-[11px] text-tertiary font-semibold tabular-nums leading-none mt-1">
                         {event.endTime}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-slate-800 tracking-tight truncate">{event.title}</p>
+                      <p className="text-sm font-semibold text-primary tracking-tight truncate">{event.title}</p>
                       {event.subtitle && (
-                        <p className="text-xs text-slate-500 mt-1 truncate">{event.subtitle}</p>
+                        <p className="text-xs text-tertiary mt-1 truncate">{event.subtitle}</p>
                       )}
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         {event.type === "available" && (

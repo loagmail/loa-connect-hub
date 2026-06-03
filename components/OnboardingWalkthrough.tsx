@@ -141,7 +141,7 @@ export function OnboardingWalkthrough({ role, userId }: OnboardingWalkthroughPro
       />
 
       {/* Card */}
-      <div className="relative w-full max-w-lg mx-4 bg-white rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden transition-all duration-300">
+      <div className="relative w-full max-w-lg mx-4 bg-surface rounded-3xl shadow-2xl border border-default/80 overflow-hidden transition-all duration-300">
         {/* Top accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-gold-500 to-amber-500" />
 
@@ -160,7 +160,7 @@ export function OnboardingWalkthrough({ role, userId }: OnboardingWalkthroughPro
                 }`}
               />
             ))}
-            <span className="ml-auto text-xs text-slate-400 font-medium">
+            <span className="ml-auto text-xs text-tertiary font-medium">
               {currentStep + 1} / {steps.length}
             </span>
           </div>
@@ -179,14 +179,14 @@ export function OnboardingWalkthrough({ role, userId }: OnboardingWalkthroughPro
           </div>
 
           {/* Content */}
-          <h2 className="text-xl font-bold text-slate-900 mb-2">{step.title}</h2>
-          <p className="text-sm text-slate-500 leading-relaxed">{step.description}</p>
+          <h2 className="text-xl font-bold text-primary mb-2">{step.title}</h2>
+          <p className="text-sm text-tertiary leading-relaxed">{step.description}</p>
 
           {/* Actions */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-default">
             <button
               onClick={complete}
-              className="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-sm font-medium text-tertiary hover:text-secondary transition-colors"
             >
               Skip tour
             </button>
@@ -195,7 +195,7 @@ export function OnboardingWalkthrough({ role, userId }: OnboardingWalkthroughPro
               {currentStep > 0 && (
                 <button
                   onClick={() => setCurrentStep((s) => s - 1)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 rounded-xl border border-default text-sm font-semibold text-secondary hover:bg-surface-hover transition-colors"
                 >
                   Back
                 </button>

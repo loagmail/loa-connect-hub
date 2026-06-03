@@ -74,9 +74,9 @@ export function StatusDistributionChart({
 
   if (total === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 mb-4">Status Distribution</h3>
-        <div className="flex items-center justify-center h-48 text-slate-400 text-sm">
+      <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-primary mb-4">Status Distribution</h3>
+        <div className="flex items-center justify-center h-48 text-tertiary text-sm">
           No data available
         </div>
       </div>
@@ -84,9 +84,9 @@ export function StatusDistributionChart({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
-      <h3 className="text-sm font-bold text-slate-800 mb-1">Status Distribution</h3>
-      <p className="text-xs text-slate-400 mb-5">{total} total consultations</p>
+    <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm transition-all duration-200 hover:shadow-md">
+      <h3 className="text-sm font-bold text-primary mb-1">Status Distribution</h3>
+      <p className="text-xs text-tertiary mb-5">{total} total consultations</p>
 
       <div className="flex flex-col items-center">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="drop-shadow-sm">
@@ -111,7 +111,7 @@ export function StatusDistributionChart({
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: COLORS[seg.key as keyof typeof COLORS] }}
               />
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-tertiary">
                 {STATUS_LABELS[seg.key]} ({Math.round(seg.percent * 100)}%)
               </span>
             </div>
@@ -121,8 +121,8 @@ export function StatusDistributionChart({
         <div className="grid grid-cols-5 gap-3 mt-4 w-full max-w-md">
           {arcs.map((seg) => (
             <div key={seg.key} className="text-center">
-              <p className="text-lg font-bold text-slate-800">{seg.value}</p>
-              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+              <p className="text-lg font-bold text-primary">{seg.value}</p>
+              <p className="text-[10px] font-medium text-tertiary uppercase tracking-wider">
                 {STATUS_LABELS[seg.key]}
               </p>
             </div>

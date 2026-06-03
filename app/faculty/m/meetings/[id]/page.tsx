@@ -40,11 +40,11 @@ const statusStyles: Record<string, { bg: string; text: string; dot: string; bord
   APPROVED: { bg: "bg-emerald-50/60", text: "text-emerald-800", dot: "bg-emerald-500", border: "border-emerald-200/60" },
   REJECTED: { bg: "bg-rose-50/60", text: "text-rose-800", dot: "bg-rose-500", border: "border-rose-200/60" },
   COMPLETED: { bg: "bg-gold-50/60", text: "text-gold-800", dot: "bg-gold-500", border: "border-gold-200/60" },
-  CANCELLED: { bg: "bg-slate-50/60", text: "text-slate-600", dot: "bg-slate-400", border: "border-slate-200/60" },
+  CANCELLED: { bg: "bg-surface/60", text: "text-secondary", dot: "bg-slate-400", border: "border-default/60" },
 }
 
 function getStyle(status: string) {
-  return statusStyles[status] || { bg: "bg-slate-50/60", text: "text-slate-700", dot: "bg-slate-400", border: "border-slate-200/60" }
+  return statusStyles[status] || { bg: "bg-surface/60", text: "text-secondary", dot: "bg-slate-400", border: "border-default/60" }
 }
 
 export default function FacultyMobileMeetingDetail() {
@@ -147,7 +147,7 @@ export default function FacultyMobileMeetingDetail() {
   if (loading) {
     return (
       <div className="max-w-lg mx-auto px-4 py-6 pb-24 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3 text-slate-400">
+        <div className="flex flex-col items-center gap-3 text-tertiary">
           <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -174,16 +174,16 @@ export default function FacultyMobileMeetingDetail() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 pb-24 space-y-4">
-      <Link href="/faculty/m/meetings" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 min-h-[44px]">
+      <Link href="/faculty/m/meetings" className="inline-flex items-center gap-1 text-sm text-tertiary hover:text-secondary min-h-[44px]">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
         Back to meetings
       </Link>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-5">
+      <div className="bg-surface rounded-xl border border-default p-5 space-y-5">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-lg font-bold text-slate-900 leading-tight">
+          <h1 className="text-lg font-bold text-primary leading-tight">
             {appointment.title || (appointment.meetingType === "CONSULTATION" ? "Consultation" : "Meeting")}
           </h1>
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border shrink-0 ${s.bg} ${s.text} ${s.border}`}>
@@ -202,24 +202,24 @@ export default function FacultyMobileMeetingDetail() {
 
         <div className="space-y-3">
           {appointment.date && (
-            <div className="flex items-center gap-3 text-sm text-slate-600">
-              <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex items-center gap-3 text-sm text-secondary">
+              <svg className="w-4 h-4 text-tertiary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span>{appointment.date}</span>
             </div>
           )}
           {appointment.startTime && appointment.endTime && (
-            <div className="flex items-center gap-3 text-sm text-slate-600">
-              <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex items-center gap-3 text-sm text-secondary">
+              <svg className="w-4 h-4 text-tertiary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>{appointment.startTime} &ndash; {appointment.endTime}</span>
             </div>
           )}
           {!appointment.date && slot && (
-            <div className="flex items-center gap-3 text-sm text-slate-600">
-              <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex items-center gap-3 text-sm text-secondary">
+              <svg className="w-4 h-4 text-tertiary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span>{slot.date} &middot; {slot.startTime} &ndash; {slot.endTime}</span>
@@ -227,21 +227,21 @@ export default function FacultyMobileMeetingDetail() {
           )}
         </div>
 
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-default">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-indigo-500 flex items-center justify-center text-sm font-bold text-white shadow-sm shrink-0">
             {(appointment.student?.name || "?").charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Student</p>
-            <p className="text-sm font-bold text-slate-800">{appointment.student?.name}</p>
-            <p className="text-xs text-slate-400">{appointment.student?.email}</p>
+            <p className="text-xs text-tertiary font-medium uppercase tracking-wider">Student</p>
+            <p className="text-sm font-bold text-primary">{appointment.student?.name}</p>
+            <p className="text-xs text-tertiary">{appointment.student?.email}</p>
           </div>
         </div>
 
         {appointment.organizer && (
-          <p className="text-xs text-slate-400">
-            Organized by <span className="font-semibold text-slate-600">{appointment.organizer.name}</span>
-            {appointment.organizer.email && <span className="text-slate-400"> &lt;{appointment.organizer.email}&gt;</span>}
+          <p className="text-xs text-tertiary">
+            Organized by <span className="font-semibold text-secondary">{appointment.organizer.name}</span>
+            {appointment.organizer.email && <span className="text-tertiary"> &lt;{appointment.organizer.email}&gt;</span>}
           </p>
         )}
 
@@ -259,25 +259,25 @@ export default function FacultyMobileMeetingDetail() {
               Join Microsoft Teams
             </a>
           ) : (
-            <p className="text-xs text-slate-400 text-center">Teams link not yet available</p>
+            <p className="text-xs text-tertiary text-center">Teams link not yet available</p>
           )
         )}
       </div>
 
       {appointment.description && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-2">Description</p>
-          <p className="text-sm text-slate-600">{appointment.description}</p>
+        <div className="bg-surface rounded-xl border border-default p-5">
+          <p className="text-xs text-tertiary font-medium uppercase tracking-wider mb-2">Description</p>
+          <p className="text-sm text-secondary">{appointment.description}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+      <div className="bg-surface rounded-xl border border-default p-5 space-y-4">
         {actionError && (
           <p className="text-xs text-red-600 font-semibold text-center">{actionError}</p>
         )}
 
         {isOptional ? (
-          <p className="text-sm text-slate-400 italic text-center">View-only mode</p>
+          <p className="text-sm text-tertiary italic text-center">View-only mode</p>
         ) : (
           <>
             {appointment.status === "PENDING" && !showAcceptForm && (
@@ -303,7 +303,7 @@ export default function FacultyMobileMeetingDetail() {
             {appointment.status === "PENDING" && showAcceptForm && (
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">
                     Teams Meeting Link <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -360,7 +360,7 @@ export default function FacultyMobileMeetingDetail() {
             )}
 
             {(appointment.status === "COMPLETED" || appointment.status === "CANCELLED" || appointment.status === "REJECTED") && (
-              <p className="text-sm text-slate-400 italic text-center">No further actions</p>
+              <p className="text-sm text-tertiary italic text-center">No further actions</p>
             )}
           </>
         )}
@@ -369,7 +369,7 @@ export default function FacultyMobileMeetingDetail() {
       <div className="text-center pt-2">
         <Link
           href={`/faculty/meetings/${appointmentId}?desktop=1`}
-          className="text-[11px] text-slate-400 hover:text-slate-600 underline"
+          className="text-[11px] text-tertiary hover:text-secondary underline"
         >
           Desktop view
         </Link>

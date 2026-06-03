@@ -79,7 +79,7 @@ export default function DataManagementPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-12">
-      <h1 className="text-2xl font-bold text-slate-900">Data Management</h1>
+      <h1 className="text-2xl font-bold text-primary">Data Management</h1>
 
       {result && (
         <div className={`rounded-xl border p-4 text-sm font-medium ${
@@ -98,9 +98,9 @@ export default function DataManagementPage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-red-200 bg-white shadow-sm p-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-2">Consultation Records</h2>
-        <p className="text-sm text-slate-500 mb-5">
+      <div className="rounded-2xl border border-red-200 bg-surface shadow-sm p-6">
+        <h2 className="text-lg font-bold text-primary mb-2">Consultation Records</h2>
+        <p className="text-sm text-tertiary mb-5">
           This will permanently delete all consultation records including appointments, attendee data, time slots, and
           uploaded files. A JSON export will be downloaded before deletion.
         </p>
@@ -112,9 +112,9 @@ export default function DataManagementPage() {
         </button>
       </div>
 
-      <div className="rounded-2xl border border-red-200 bg-white shadow-sm p-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-2">Student Records</h2>
-        <p className="text-sm text-slate-500 mb-5">
+      <div className="rounded-2xl border border-red-200 bg-surface shadow-sm p-6">
+        <h2 className="text-lg font-bold text-primary mb-2">Student Records</h2>
+        <p className="text-sm text-tertiary mb-5">
           This will permanently delete all student accounts. Their appointments will be orphaned (student references
           set to null) and attendee data will be removed. A JSON export will be downloaded before deletion.
         </p>
@@ -128,8 +128,8 @@ export default function DataManagementPage() {
 
       {modalType && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={closeModal}>
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-slate-900">
+          <div className="bg-surface rounded-xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-primary">
               {isStudents ? "Confirm Export & Delete Students" : "Confirm Export & Clear"}
             </h2>
             <p className="text-sm text-red-600 font-semibold">
@@ -138,7 +138,7 @@ export default function DataManagementPage() {
                 : "This will permanently delete ALL consultation records. This action CANNOT be undone."}
             </p>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-secondary mb-1">
                 Type <span className="font-bold">CONFIRM</span> to proceed
               </label>
               <input
@@ -153,7 +153,7 @@ export default function DataManagementPage() {
               <button
                 onClick={closeModal}
                 disabled={loading}
-                className="text-xs font-semibold px-4 py-3 sm:py-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 cursor-pointer w-full sm:w-auto"
+                className="text-xs font-semibold px-4 py-3 sm:py-2 rounded-lg border border-default hover:bg-surface-hover disabled:opacity-50 cursor-pointer w-full sm:w-auto"
               >
                 Cancel
               </button>

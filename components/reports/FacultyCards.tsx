@@ -69,8 +69,8 @@ export function FacultyCards({ stats, facultyFrequency, deanId }: FacultyCardsPr
 
   if (sorted.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-8 shadow-sm text-center">
-        <p className="text-slate-400 text-sm">No faculty data available.</p>
+      <div className="rounded-2xl border border-default/70 bg-surface p-8 shadow-sm text-center">
+        <p className="text-tertiary text-sm">No faculty data available.</p>
       </div>
     )
   }
@@ -78,10 +78,10 @@ export function FacultyCards({ stats, facultyFrequency, deanId }: FacultyCardsPr
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-slate-800">Per-Faculty Cards</h3>
+        <h3 className="text-sm font-bold text-primary">Per-Faculty Cards</h3>
         <button
           onClick={handleExport}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/70 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-sm hover:shadow-md"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-default/70 text-xs font-semibold text-secondary hover:bg-surface-hover hover:border-strong transition-all duration-200 shadow-sm hover:shadow-md"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -98,20 +98,20 @@ export function FacultyCards({ stats, facultyFrequency, deanId }: FacultyCardsPr
           return (
             <div
               key={stat.facultyId}
-              className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
+              className="rounded-2xl border border-default/70 bg-surface p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
             >
               <div className="flex items-center gap-2 mb-3">
-                <span className="font-bold text-slate-800 text-sm truncate">{stat.facultyName}</span>
+                <span className="font-bold text-primary text-sm truncate">{stat.facultyName}</span>
                 {isDean && (
-                  <span className="shrink-0 bg-gold-100 text-gold-800 rounded-full px-2 py-0.5 text-xs font-semibold">
+                  <span className="shrink-0 bg-gold-100 text-gold-800 rounded-full px-2 py-0.5 text-xs">
                     Dean
                   </span>
                 )}
               </div>
 
               <div className="flex items-baseline gap-1.5 mb-3">
-                <span className="text-2xl font-bold text-slate-800">{stat.total}</span>
-                <span className="text-xs text-slate-400 font-medium">Total Consultations</span>
+                <span className="text-2xl font-bold text-primary">{stat.total}</span>
+                <span className="text-xs text-tertiary font-medium">Total Consultations</span>
               </div>
 
               <div className="mb-3">
@@ -122,8 +122,8 @@ export function FacultyCards({ stats, facultyFrequency, deanId }: FacultyCardsPr
                   />
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs font-semibold text-slate-600">{Math.round(completionPercent)}%</span>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-xs font-semibold text-secondary">{Math.round(completionPercent)}%</span>
+                  <span className="text-[10px] text-tertiary">
                     {stat.completed} completed &middot; {stat.pending} pending
                   </span>
                 </div>
@@ -138,7 +138,7 @@ export function FacultyCards({ stats, facultyFrequency, deanId }: FacultyCardsPr
 
               {freq && freq.monthlyCounts.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-1.5">
+                  <p className="text-[10px] font-medium text-tertiary uppercase tracking-wider mb-1.5">
                     Monthly trend
                   </p>
                   <div className="flex items-end gap-1">
@@ -158,7 +158,7 @@ export function FacultyCards({ stats, facultyFrequency, deanId }: FacultyCardsPr
                             }}
                             title={`${mc ? mc.monthName : month}: ${count}`}
                           />
-                          <span className="text-[8px] text-slate-400 font-medium leading-none">
+                          <span className="text-[8px] text-tertiary font-medium leading-none">
                             {mc ? mc.monthName[0] : ""}
                           </span>
                         </div>

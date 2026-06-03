@@ -9,11 +9,11 @@ export default function AuthErrorPage({
   reset: () => void
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-surface flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
         <h1 className="text-6xl font-bold text-slate-300">500</h1>
-        <p className="text-lg font-semibold text-slate-900 mt-4">Something went wrong</p>
-        <p className="text-sm text-slate-500 mt-2">
+        <p className="text-lg font-semibold text-primary mt-4">Something went wrong</p>
+        <p className="text-sm text-tertiary mt-2">
           An authentication error occurred. Please try again.
         </p>
         <div className="flex items-center justify-center gap-3 mt-6">

@@ -34,7 +34,7 @@ export default function TeamsLinkForm({
 
   return (
     <div className="mb-4 space-y-3">
-      <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">{label}</p>
+      <p className="text-xs text-tertiary font-medium uppercase tracking-wider">{label}</p>
       <div className="flex flex-wrap gap-3">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
@@ -44,7 +44,7 @@ export default function TeamsLinkForm({
             onChange={() => onModeChange("single")}
             className="accent-gold-600"
           />
-          <span className="text-sm text-slate-700">One single link for all time slots</span>
+          <span className="text-sm text-secondary">One single link for all time slots</span>
         </label>
         {showPerSlotOption && (
           <label className="flex items-center gap-2 cursor-pointer">
@@ -55,7 +55,7 @@ export default function TeamsLinkForm({
               onChange={() => onModeChange("per-slot")}
               className="accent-gold-600"
             />
-            <span className="text-sm text-slate-700">Assign each slot its own link</span>
+            <span className="text-sm text-secondary">Assign each slot its own link</span>
           </label>
         )}
       </div>
@@ -63,7 +63,7 @@ export default function TeamsLinkForm({
       <div className="space-y-3">
         {teamsLinkMode === "single" && (
           <div>
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider mb-1">
               Single meeting link for all time slots
             </p>
             <input
@@ -80,7 +80,7 @@ export default function TeamsLinkForm({
           <div className="space-y-3">
             {timeSlots.map((slot) => (
               <div key={slot.key}>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider mb-1">
                   {slot.date} {slot.startTime}–{slot.endTime}
                 </p>
                 <input

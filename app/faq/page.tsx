@@ -51,20 +51,20 @@ export default async function FaqPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Frequently Asked Questions</h1>
-        <p className="text-sm text-slate-500 mt-1">Everything you need to know about the e-Consult platform.</p>
+        <h1 className="text-2xl font-bold text-primary">Frequently Asked Questions</h1>
+        <p className="text-sm text-tertiary mt-1">Everything you need to know about the e-Consult platform.</p>
       </div>
 
       <div className="space-y-3">
         {faqs.map((faq, i) => (
-          <details key={i} className="card bg-white overflow-hidden group">
-            <summary className="px-6 py-4 cursor-pointer list-none flex items-center justify-between gap-4 text-sm font-semibold text-slate-800 hover:text-gold-700 transition-colors">
+          <details key={i} className="card bg-surface overflow-hidden group">
+            <summary className="px-6 py-4 cursor-pointer list-none flex items-center justify-between gap-4 text-sm font-semibold text-primary hover:text-gold-700 transition-colors">
               {faq.q}
-              <svg className="w-4 h-4 text-slate-400 shrink-0 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-4 h-4 text-tertiary shrink-0 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </summary>
-            <div className="px-6 pb-4 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+            <div className="px-6 pb-4 text-sm text-secondary leading-relaxed border-t border-default pt-3">
               {faq.a}
             </div>
           </details>

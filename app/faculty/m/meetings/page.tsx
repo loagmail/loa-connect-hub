@@ -27,7 +27,7 @@ const statusStyles: Record<string, string> = {
   APPROVED: "bg-emerald-100 text-emerald-700",
   REJECTED: "bg-red-100 text-red-700",
   COMPLETED: "bg-violet-100 text-violet-700",
-  CANCELLED: "bg-slate-200 text-slate-600",
+  CANCELLED: "bg-slate-200 text-secondary",
 }
 
 const statusLabels: Record<string, string> = {
@@ -77,7 +77,7 @@ export default async function MobileFacultyMeetings(props: {
   return (
     <div className="px-4 py-6 max-w-lg mx-auto space-y-4 pb-24">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-900">Meetings</h1>
+        <h1 className="text-xl font-bold text-primary">Meetings</h1>
         <Link
           href="/faculty/m/meetings/new"
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg bg-gold-600 text-white hover:bg-gold-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm min-h-[44px]"
@@ -98,7 +98,7 @@ export default async function MobileFacultyMeetings(props: {
               className={`px-3 py-2 text-xs font-semibold rounded-full transition-colors border min-h-[36px] flex items-center ${
                 activeFilter === key
                   ? "border-gold-500 bg-gold-500 text-white"
-                  : "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  : "border-default bg-surface text-secondary hover:bg-slate-200"
               }`}
             >
               {label}
@@ -107,7 +107,7 @@ export default async function MobileFacultyMeetings(props: {
         </div>
         <Link
           href={`/faculty/m/meetings?filter=${activeFilter}&sort=${activeSort === "asc" ? "desc" : "asc"}`}
-          className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors flex items-center gap-1 shrink-0 min-h-[36px]"
+          className="text-xs font-semibold text-tertiary hover:text-secondary transition-colors flex items-center gap-1 shrink-0 min-h-[36px]"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             {activeSort === "asc" ? (
@@ -121,16 +121,16 @@ export default async function MobileFacultyMeetings(props: {
       </div>
 
       {sorted.length === 0 ? (
-        <div className="card p-10 bg-white text-center">
-          <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+        <div className="card p-10 bg-surface text-center">
+          <div className="w-12 h-12 bg-surface border border-default rounded-xl flex items-center justify-center mx-auto mb-4 text-tertiary">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <p className="text-slate-700 font-semibold text-sm">
+          <p className="text-secondary font-semibold text-sm">
             {activeFilter === "all" ? "No meetings" : `No ${activeFilter} meetings`}
           </p>
-          <p className="text-slate-400 text-xs mt-1">Schedule a meeting to get started.</p>
+          <p className="text-tertiary text-xs mt-1">Schedule a meeting to get started.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -138,23 +138,23 @@ export default async function MobileFacultyMeetings(props: {
             <Link
               key={m.id}
               href={`/faculty/m/meetings/${m.id}`}
-              className="block card p-4 bg-white hover:shadow-md transition-shadow"
+              className="block card p-4 bg-surface hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-slate-800 text-sm truncate">
+                  <p className="font-semibold text-primary text-sm truncate">
                     {getStudentName(m)}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">{m.date}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-tertiary mt-1">{m.date}</p>
+                  <p className="text-xs text-tertiary">
                     {m.startTime} &ndash; {m.endTime}
                   </p>
                   {m.title && (
-                    <p className="text-xs text-slate-400 mt-0.5 truncate">{m.title}</p>
+                    <p className="text-xs text-tertiary mt-0.5 truncate">{m.title}</p>
                   )}
                 </div>
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${statusStyles[m.status] || "bg-slate-100 text-slate-600"}`}
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${statusStyles[m.status] || "bg-surface text-secondary"}`}
                 >
                   {m.status}
                 </span>
@@ -167,7 +167,7 @@ export default async function MobileFacultyMeetings(props: {
       <div className="text-center pt-4">
         <Link
           href="/faculty/meetings?desktop=1"
-          className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
+          className="text-xs text-tertiary hover:text-secondary underline underline-offset-2"
         >
           Desktop view
         </Link>

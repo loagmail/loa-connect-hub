@@ -15,11 +15,11 @@ export default function MultiRoleDashboard({ role }: { role: string }) {
   const roles = getRoleList(role).filter((r) => r !== "GUEST")
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-surface flex items-center justify-center p-6">
       <div className="max-w-lg w-full space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Welcome</h1>
-          <p className="text-sm text-slate-500 mt-1">You have access to multiple dashboards. Choose one to continue.</p>
+          <h1 className="text-2xl font-bold text-primary">Welcome</h1>
+          <p className="text-sm text-tertiary mt-1">You have access to multiple dashboards. Choose one to continue.</p>
         </div>
 
         <div className="space-y-3">

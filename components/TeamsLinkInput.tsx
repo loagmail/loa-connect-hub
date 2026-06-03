@@ -52,7 +52,7 @@ export function TeamsLinkInput({ appointmentId, slotId, label }: TeamsLinkInputP
   return (
     <div className="space-y-1.5 w-full">
       {label && (
-        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{label}</p>
+        <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">{label}</p>
       )}
       <form onSubmit={handleSubmit} className="flex gap-1.5 w-full">
         <div className="relative flex-grow">

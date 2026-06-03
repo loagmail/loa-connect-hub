@@ -17,13 +17,13 @@ export function ReportsView({ stats, rawAppointments }: ReportsViewProps) {
   return (
     <div className="space-y-4">
       {/* Toggle */}
-      <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-fit transition-all duration-200">
+      <div className="flex items-center gap-1 p-1 bg-surface rounded-xl w-fit transition-all duration-200">
         <button
           onClick={() => setViewMode("summary")}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
             viewMode === "summary"
-              ? "bg-white text-slate-800 shadow-sm"
-              : "text-slate-500 hover:text-slate-700"
+              ? "bg-surface text-primary shadow-sm"
+              : "text-tertiary hover:text-secondary"
           }`}
         >
           By Faculty
@@ -32,8 +32,8 @@ export function ReportsView({ stats, rawAppointments }: ReportsViewProps) {
           onClick={() => setViewMode("timeline")}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
             viewMode === "timeline"
-              ? "bg-white text-slate-800 shadow-sm"
-              : "text-slate-500 hover:text-slate-700"
+              ? "bg-surface text-primary shadow-sm"
+              : "text-tertiary hover:text-secondary"
           }`}
         >
           Timeline
@@ -54,8 +54,8 @@ export function ReportsView({ stats, rawAppointments }: ReportsViewProps) {
 function TimelineView({ rawAppointments }: { rawAppointments: RawAppointmentData[] }) {
   if (rawAppointments.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200/70 bg-white p-8 shadow-sm text-center">
-        <p className="text-slate-400 text-sm">No appointment data available for the selected period.</p>
+      <div className="rounded-2xl border border-default/70 bg-surface p-8 shadow-sm text-center">
+        <p className="text-tertiary text-sm">No appointment data available for the selected period.</p>
       </div>
     )
   }
@@ -72,9 +72,9 @@ function TimelineView({ rawAppointments }: { rawAppointments: RawAppointmentData
   const sortedDates = Array.from(grouped.keys()).sort().reverse()
 
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
-      <div className="px-6 py-4 border-b border-slate-100">
-        <h3 className="text-sm font-bold text-slate-800">Consultation Timeline</h3>
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+      <div className="px-6 py-4 border-b border-default">
+        <h3 className="text-sm font-bold text-primary">Consultation Timeline</h3>
       </div>
 
       <div className="divide-y divide-slate-100">
@@ -92,13 +92,13 @@ function TimelineView({ rawAppointments }: { rawAppointments: RawAppointmentData
             <div key={date} className="px-6 py-4">
               {/* Date header */}
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-xs font-bold text-tertiary uppercase tracking-wider">
                   {dayName}
                 </span>
-                <span className="text-sm font-semibold text-slate-700">
+                <span className="text-sm font-semibold text-secondary">
                   {formattedDate}
                 </span>
-                <span className="text-xs text-slate-400 ml-auto">
+                <span className="text-xs text-tertiary ml-auto">
                   {dayAppointments.length} consultation{dayAppointments.length !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -108,12 +108,12 @@ function TimelineView({ rawAppointments }: { rawAppointments: RawAppointmentData
                 {dayAppointments.map((apt) => (
                   <div
                     key={apt.id}
-                    className="flex items-center gap-4 p-3 rounded-xl bg-slate-50/70 border border-slate-100 transition-all duration-150 hover:bg-slate-100/70"
+                    className="flex items-center gap-4 p-3 rounded-xl bg-surface/70 border border-default transition-all duration-150 hover:bg-surface/70"
                   >
                     {/* Time */}
                     <div className="text-center min-w-[56px]">
-                      <p className="text-xs font-semibold text-slate-700">{apt.startTime}</p>
-                      <p className="text-[10px] text-slate-400">{apt.endTime}</p>
+                      <p className="text-xs font-semibold text-secondary">{apt.startTime}</p>
+                      <p className="text-[10px] text-tertiary">{apt.endTime}</p>
                     </div>
 
                     {/* Divider */}
@@ -121,10 +121,10 @@ function TimelineView({ rawAppointments }: { rawAppointments: RawAppointmentData
 
                     {/* Details */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">
+                      <p className="text-sm font-medium text-primary truncate">
                         {apt.title || "Consultation"}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-tertiary">
                         {apt.facultyName} &middot; {apt.studentName}
                       </p>
                     </div>
@@ -147,7 +147,7 @@ function StatusBadge({ status }: { status: string }) {
     COMPLETED: "bg-emerald-100 text-emerald-700",
     PENDING: "bg-amber-100 text-amber-700",
     APPROVED: "bg-cyan-100 text-cyan-700",
-    CANCELLED: "bg-slate-100 text-slate-500",
+    CANCELLED: "bg-surface text-tertiary",
     REJECTED: "bg-red-100 text-red-700",
   }
 
@@ -161,8 +161,8 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-        styles[status] || "bg-slate-100 text-slate-500"
+      className={`px-2.5 py-1 rounded-full text-xs whitespace-nowrap ${
+        styles[status] || "bg-surface text-tertiary"
       }`}
     >
       {labels[status] || status}

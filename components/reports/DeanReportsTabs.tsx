@@ -138,7 +138,7 @@ export function DeanReportsTabs({
   return (
     <div className="space-y-8">
       {/* Tab Navigation */}
-      <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-fit transition-all duration-200">
+      <div className="flex items-center gap-1 p-1 bg-surface rounded-xl w-fit transition-all duration-200">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id
           return (
@@ -147,8 +147,8 @@ export function DeanReportsTabs({
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 isActive
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-surface text-primary shadow-sm"
+                  : "text-tertiary hover:text-secondary"
               }`}
             >
               {tab.label}
@@ -183,13 +183,13 @@ export function DeanReportsTabs({
       {activeTab === "summary" && (
         <>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-fit transition-all duration-200">
+            <div className="flex items-center gap-1 p-1 bg-surface rounded-xl w-fit transition-all duration-200">
               <button
                 onClick={() => setSummaryView("timeline")}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   summaryView === "timeline"
-                    ? "bg-white text-slate-800 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "bg-surface text-primary shadow-sm"
+                    : "text-tertiary hover:text-secondary"
                 }`}
               >
                 Timeline
@@ -198,8 +198,8 @@ export function DeanReportsTabs({
                 onClick={() => setSummaryView("details")}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   summaryView === "details"
-                    ? "bg-white text-slate-800 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "bg-surface text-primary shadow-sm"
+                    : "text-tertiary hover:text-secondary"
                 }`}
               >
                 Table
@@ -227,7 +227,7 @@ function ExportCsvButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-default text-xs font-semibold text-secondary hover:bg-surface-hover hover:border-strong transition-all duration-200"
     >
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -241,7 +241,7 @@ function PdfExportButton({ onClick, label = "PDF" }: { onClick: () => void; labe
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-default text-xs font-semibold text-secondary hover:bg-surface-hover hover:border-strong transition-all duration-200"
     >
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
