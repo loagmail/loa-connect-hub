@@ -182,11 +182,6 @@ export default function AppointmentDetail() {
       return
     }
 
-    // if (completeFiles.length === 0) {
-    //   setCompleteError("Please upload at least one screenshot as proof")
-    //   return
-    // }
-
     setActionLoading("complete")
 
     try {

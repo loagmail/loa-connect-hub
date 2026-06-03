@@ -43,7 +43,6 @@ const filterLabels: Record<string, string> = {
   this_week: "This Week",
   this_month: "This Month",
   created_by_me: "Created by Me",
-  // declined: "Declined",
 }
 
 const statusLabels: Record<string, string> = {
@@ -260,29 +259,9 @@ export default async function MeetingsPage(props: {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       {meeting.startTime} &ndash; {meeting.endTime}
-                    </span>
-                    {/* TODO: Add back participant status counts if needed */}
-                    {/* <span className="flex items-center gap-1.5 text-slate-400">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
-                      </svg>
-                      {acceptedCount}/{participantCount} accepted
-                    </span> */}
+                  </span>
                   </div>
                 </div>
-                {/* <div className="flex -space-x-2 shrink-0">
-                  {meeting.participants?.slice(0, 4).map((p: any) => (
-                    <div
-                      key={p.id}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ring-2 ring-white ${
-                        p.status === "ACCEPTED" ? "bg-emerald-500" : p.status === "DECLINED" ? "bg-red-400" : "bg-slate-400"
-                      }`}
-                      title={`${p.user?.name || "Unknown"} (${p.status})`}
-                    >
-                      {getInitial(p.user?.name || "")}
-                    </div>
-                  ))}
-                </div> */}
                 <div className="mt-4 pt-3 border-t border-slate-100">
                   <span className="text-xs font-semibold text-gold-600 inline-flex items-center gap-1 cursor-default">
                     View Details

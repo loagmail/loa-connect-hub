@@ -86,22 +86,6 @@ export async function requestAppointment(input: {
     meetingType = "CONSULTATION"
   }
 
-  // 5. Always Check Faculty Conflicts (Cannot double-book the target faculty)
-  // for (const slot of timeSlots) {
-  //   const conflictingFaculty = await appointmentRepository.listConflictingSlots(
-  //     input.facultyId,
-  //     slot.date,
-  //     slot.startTime,
-  //     slot.endTime
-  //   )
-  //   const actualConflicts = conflictingFaculty.filter(
-  //     (apt: any) => apt.sessionGroupId !== input.sessionGroupId
-  //   )
-  //   if (actualConflicts.length > 0) {
-  //     throw new Error("The faculty member is already booked at this time")
-  //   }
-  // }
-
   // 6. Collect all involved user IDs
   const attendeeIds = [...new Set([
     input.studentId,
