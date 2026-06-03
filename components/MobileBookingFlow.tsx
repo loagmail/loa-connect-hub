@@ -180,11 +180,8 @@ export default function MobileBookingFlow({ facultyWithRules, serverNow }: Props
       })
       const data = await res.json()
       if (res.ok) {
-        setResult({ success: 1 })
-        setSelectedFacultyId(null)
-        setSelectedDay(null)
-        setSelectedSlot(null)
-        setTimeout(() => router.push("/student/m/meetings"), 1500)
+        const appointmentId = data.appointment?.id
+        router.push(`/student/m/meetings/${appointmentId}`)
       } else {
         setResult({ success: 0, error: data.error || "Booking failed" })
       }

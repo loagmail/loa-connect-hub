@@ -736,7 +736,7 @@ export default function AppointmentDetail() {
         </div>
 
         {/* Back button — far right opposite actions */}
-        <SubmitButton onClick={() => router.back()} variant="secondary" className="w-full sm:w-auto py-3 sm:py-2">
+        <SubmitButton onClick={() => router.push(isStudent ? "/student/meetings" : "/faculty/meetings")} variant="secondary" className="w-full sm:w-auto py-3 sm:py-2">
           ← Back
         </SubmitButton>
       </div>

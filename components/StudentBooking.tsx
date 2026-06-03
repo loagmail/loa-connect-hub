@@ -344,18 +344,12 @@ export default function StudentBooking({ facultyList, userRole, students, server
 
       const data = await res.json()
       if (res.ok) {
-        setConflicts(data.conflicts || [])
-        setResult({
-          success: 1,
-          errors: [],
-          sessionGroupId: data.sessionGroupId,
-        })
-        setPrimaryFacultyId(null)
-        setAttendeeIds([])
-        setSelectedDay(null)
-        setSelectedSlots([])
-        setTitle("")
-        setDescription("")
+        const appointmentId = data.appointment?.id
+        if (userRole === "STUDENT") {
+          router.push(`/student/meetings/${appointmentId}`)
+        } else {
+          router.push(`/faculty/meetings/${appointmentId}`)
+        }
       } else {
         setConflicts(data.conflicts || [])
         setResult({ success: 0, errors: [data.error || "Booking failed"] })
@@ -367,11 +361,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
         errors: [(errObj.message as string) || "An unexpected error occurred. Check server logs."]
       });
     } finally {
-      if (userRole === "STUDENT") {
-        router.push("/student/meetings")
-      } else {
-        router.push("/faculty/meetings")
-      }
+      setSubmitting(false)
     }
   }
 

@@ -121,11 +121,30 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
 
   const getInitial = (name: string) => name?.charAt(0)?.toUpperCase() || "?"
 
+  const borderColor: Record<string, string> = {
+    PENDING: "border-l-amber-400",
+    APPROVED: "border-l-emerald-400",
+    REJECTED: "border-l-red-400",
+    COMPLETED: "border-l-violet-400",
+    CANCELLED: "border-l-slate-300",
+  }
+
+  const statusIcons: Record<string, string> = {
+    PENDING: "⏳",
+    APPROVED: "✅",
+    REJECTED: "❌",
+    COMPLETED: "🎓",
+    CANCELLED: "🗑️",
+  }
+
+  const statusIcon = statusIcons[effectiveStatus] || "📋"
+
   return (
-    <div className="card p-5 bg-white">
+    <div className={`card p-5 bg-white border-l-4 ${borderColor[effectiveStatus] || "border-l-transparent"} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
         <div className="space-y-3 flex-1">
           <div className="flex flex-wrap items-center gap-3">
+            <span className="text-base mr-1" title={effectiveStatus}>{statusIcon}</span>
             <StatusBadge status={effectiveStatus} />
             {appointment.meetingType && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
