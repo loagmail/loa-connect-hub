@@ -662,8 +662,8 @@ INSERT INTO group_access ("groupName", pages) VALUES
    '["/dean","/dean/upload","/dean/departments","/faculty/meetings","/faculty/availability","/faculty/reports","/faq"]'::JSONB),
   ('FACULTY',
    '["/faculty","/faculty/meetings","/faculty/availability","/faculty/upload","/faq"]'::JSONB),
-  ('STUDENT',
-   '["/student","/student/book","/student/meetings","/faq"]'::JSONB),
+   ('STUDENT',
+    '["/student","/student/book","/student/meetings","/student/history","/faq"]'::JSONB),
   ('GUEST',
    '[]'::JSONB)
 ON CONFLICT ("groupName") DO NOTHING;

@@ -15,7 +15,7 @@ const DEFAULT_CONFIG: Record<string, GroupAccessEntry> = {
     pages: ["/", "/faculty", "/faculty/meetings", "/faculty/availability", "/faculty/upload", "/faq"],
   },
   STUDENT: {
-    pages: ["/", "/student", "/student/book", "/student/meetings", "/faq"],
+    pages: ["/", "/student", "/student/book", "/student/meetings", "/student/history", "/faq"],
   },
   GUEST: {
     pages: [],
@@ -55,9 +55,9 @@ export async function loadAccessConfig(): Promise<Record<string, GroupAccessEntr
 
     const map: Record<string, GroupAccessEntry> = {}
     for (const row of data || []) {
-      map[row.groupName] = {
-        pages: row.pages || [],
-      }
+      const defaultPages = DEFAULT_CONFIG[row.groupName]?.pages || []
+      const merged = [...new Set([...defaultPages, ...(row.pages || [])])]
+      map[row.groupName] = { pages: merged }
     }
 
     setCache(map)
