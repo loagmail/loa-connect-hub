@@ -92,7 +92,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
   const isSelectedToday = selectedDateStr === todayStr
 
   // Fetch primary faculty's booked (APPROVED) appointments for the visible month
-  const bookedUrl = primaryFacultyId && userRole === "STUDENT"
+  const bookedUrl = primaryFacultyId
     ? `/api/appointments/faculty-booked?facultyId=${primaryFacultyId}&startDate=${fmtDate(currentYear, currentMonth, 1)}&endDate=${fmtDate(currentYear, currentMonth, getDaysInMonth(currentYear, currentMonth))}`
     : null
 
