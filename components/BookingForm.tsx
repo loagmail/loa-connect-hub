@@ -95,15 +95,14 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-surface rounded-t-2xl sm:rounded-xl shadow-2xl border border-default w-full sm:max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up sm:animate-fade-in">
-        <div className="sticky top-0 bg-surface z-10 flex items-center justify-between p-4 sm:p-5 border-b border-default rounded-t-2xl sm:rounded-t-xl">
-          {/* Drag handle for mobile */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-slate-300 sm:hidden" />
-          <h3 className="text-lg font-bold text-primary pt-1 sm:pt-0">
+      <div className="fixed inset-0 bg-black/30 ios-blur-light" onClick={onClose} />
+      <div className="relative bg-surface rounded-t-2xl sm:rounded-2xl shadow-ios-xl border border-default w-full sm:max-w-lg max-h-[90vh] overflow-y-auto animate-ios-slide-up sm:animate-ios-fade-in">
+        <div className="sticky top-0 bg-surface/90 ios-blur z-10 flex items-center justify-between p-4 sm:p-5 border-b border-default rounded-t-2xl sm:rounded-t-2xl">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-9 h-1 rounded-full bg-slate-300 sm:hidden" />
+          <h3 className="text-lg font-bold text-primary pt-2 sm:pt-0">
             {sessionGroupId ? "Add Time Block" : "Book Appointment"}
           </h3>
-          <button onClick={onClose} className="p-2 sm:p-1.5 rounded-lg hover:bg-surface-hover text-tertiary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+          <button onClick={onClose} className="p-2 sm:p-1.5 rounded-xl hover:bg-surface-hover text-tertiary transition-all active:scale-90 min-h-[44px] min-w-[44px] flex items-center justify-center">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -111,8 +110,7 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-5">
-          {/* Slot info (read-only) */}
-          <div className="p-3 rounded-lg bg-gold-50 border border-gold-100 text-sm">
+          <div className="p-3 rounded-xl bg-gold-50 border border-gold-100 text-sm">
             <div className="flex items-center gap-2 text-gold-700 font-semibold mb-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -130,7 +128,6 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
             </div>
           )}
 
-          {/* Title */}
           <div>
             <label className="input-label">Meeting Title <span className="text-red-500">*</span></label>
             <input
@@ -143,7 +140,6 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
             />
           </div>
 
-          {/* Description */}
           <div>
             <label className="input-label">Description / Agenda (optional)</label>
             <textarea
@@ -154,7 +150,6 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
             />
           </div>
 
-          {/* Additional Faculty Attendees */}
           <div>
             <label className="input-label">Invite Additional Faculty / Dean (optional)</label>
             <p className="text-[10px] text-tertiary mb-2">Only faculty and dean accounts can be invited. Students cannot invite other students.</p>
@@ -165,7 +160,7 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
                 facultyList.map((f) => (
                   <label
                     key={f.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all active:scale-[0.98] ${
                       selectedIds.includes(f.id)
                         ? "border-gold-300 bg-gold-50/50"
                         : "border-default hover:border-strong bg-surface"
@@ -195,8 +190,8 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
           </div>
 
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="rounded-xl bg-danger-bg border border-danger-border p-3">
+              <p className="text-sm font-medium text-danger-text">{error}</p>
             </div>
           )}
 
@@ -204,7 +199,7 @@ export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }
             <button
               type="button"
               onClick={onClose}
-              className="text-sm font-medium text-tertiary hover:text-secondary px-4 py-3 sm:py-2.5 rounded-lg border border-default sm:border-0"
+              className="text-sm font-semibold text-tertiary hover:text-secondary px-4 py-3 sm:py-2.5 rounded-xl border border-default sm:border-0 active:opacity-60 transition-all"
             >
               Cancel
             </button>

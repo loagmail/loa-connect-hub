@@ -121,14 +121,6 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
 
   const getInitial = (name: string) => name?.charAt(0)?.toUpperCase() || "?"
 
-  const borderColor: Record<string, string> = {
-    PENDING: "border-l-amber-400",
-    APPROVED: "border-l-emerald-400",
-    REJECTED: "border-l-red-400",
-    COMPLETED: "border-l-violet-400",
-    CANCELLED: "border-l-slate-300",
-  }
-
   const statusIcons: Record<string, string> = {
     PENDING: "⏳",
     APPROVED: "✅",
@@ -140,32 +132,33 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
   const statusIcon = statusIcons[effectiveStatus] || "📋"
 
   return (
-    <div className={`card p-5 bg-surface border-l-4 ${borderColor[effectiveStatus] || "border-l-transparent"} hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`}>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-        <div className="space-y-3 flex-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-base mr-1" title={effectiveStatus}>{statusIcon}</span>
-            <StatusBadge status={effectiveStatus} />
-            {appointment.meetingType && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
-                Consultation
-              </span>
-            )}
+    <div className="ios-card-group animate-ios-spring">
+      <div className="ios-card-group-item p-4 sm:p-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-3 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-base mr-1" title={effectiveStatus}>{statusIcon}</span>
+              <StatusBadge status={effectiveStatus} />
+              {appointment.meetingType && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
+                  Consultation
+                </span>
+              )}
 
-            {localTeamsLink && (
-              <a
-                href={localTeamsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Join Teams Meeting
-              </a>
-            )}
-          </div>
+              {localTeamsLink && (
+                <a
+                  href={localTeamsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Join Teams Meeting
+                </a>
+              )}
+            </div>
 
           {hasRole(role, "STUDENT") && appointment.faculty && (
             <div className="flex items-center gap-3">
@@ -387,8 +380,9 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
           {message}
         </p>
       )}
+    </div>
 
-      <div className="mt-4 pt-3 border-t border-default">
+      <div className="border-t border-default px-4 sm:px-5 py-3">
         <Link
           href={hasRole(role, "STUDENT") ? `/student/meetings/${appointment.id}` : `/appointments/${appointment.id}`}
           className="text-xs font-semibold text-gold-600 hover:text-gold-700 inline-flex items-center justify-center sm:justify-start gap-1 w-full sm:w-auto min-h-[44px] sm:min-h-0"
