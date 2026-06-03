@@ -65,7 +65,7 @@ export default function AdminAccessConfigPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-8 pb-12">
+      <div className="max-w-6xl mx-auto space-y-8 pb-12">
         <h1 className="text-2xl font-bold text-primary">Access Configuration</h1>
         <p className="text-xs text-tertiary">Loading access groups…</p>
         <div className="space-y-4">
@@ -78,7 +78,7 @@ export default function AdminAccessConfigPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+    <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-primary">Access Configuration</h1>
         <p className="text-xs text-tertiary mt-1">

@@ -284,7 +284,7 @@ export default function FacultyMobileMeetingDetail() {
               <div className="flex flex-col gap-3">
                 <SubmitButton
                   onClick={() => setShowAcceptForm(true)}
-                  variant="success"
+                  variant="ios-primary"
                   className="w-full py-3 min-h-[44px] text-sm"
                 >
                   Accept
@@ -292,7 +292,7 @@ export default function FacultyMobileMeetingDetail() {
                 <SubmitButton
                   onClick={() => handleAction("decline")}
                   loading={actionLoading === "decline"}
-                  variant="danger"
+                  variant="ios-destructive"
                   className="w-full py-3 min-h-[44px] text-sm"
                 >
                   {actionLoading === "decline" ? "Declining..." : "Decline"}
@@ -318,7 +318,7 @@ export default function FacultyMobileMeetingDetail() {
                   <SubmitButton
                     onClick={handleAcceptFlow}
                     loading={actionLoading === "accept"}
-                    variant="success"
+                    variant="ios-primary"
                     className="w-full py-3 min-h-[44px] text-sm"
                   >
                     {actionLoading === "accept" ? "Approving..." : "Confirm & Approve"}
@@ -329,7 +329,7 @@ export default function FacultyMobileMeetingDetail() {
                       setTeamsLink("")
                       setActionError("")
                     }}
-                    variant="secondary"
+                    variant="ios-plain"
                     className="w-full py-3 min-h-[44px] text-sm"
                   >
                     Cancel
@@ -343,7 +343,7 @@ export default function FacultyMobileMeetingDetail() {
                 <SubmitButton
                   onClick={() => handleAction("complete")}
                   loading={actionLoading === "complete"}
-                  variant="primary"
+                  variant="ios-primary"
                   className="w-full py-3 min-h-[44px] text-sm"
                 >
                   {actionLoading === "complete" ? "Completing..." : "Mark Complete"}
@@ -351,7 +351,7 @@ export default function FacultyMobileMeetingDetail() {
                 <SubmitButton
                   onClick={() => handleAction("cancel")}
                   loading={actionLoading === "cancel"}
-                  variant="danger"
+                  variant="ios-destructive"
                   className="w-full py-3 min-h-[44px] text-sm"
                 >
                   {actionLoading === "cancel" ? "Cancelling..." : "Cancel"}

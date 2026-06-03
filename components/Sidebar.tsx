@@ -11,6 +11,7 @@ interface NavItem {
   href?: string
   label: string
   icon?: string
+  badge?: boolean
   children?: NavItem[]
 }
 
@@ -176,23 +177,37 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* MOBILE: iOS Bottom Tab Bar */}
+      {/* MOBILE: iOS 18+ Tab Bar */}
       <div className="lg:hidden fixed inset-x-0 bottom-0 z-50 ios-blur bg-tab-bar border-t border-default pb-safe">
-        <nav className="flex items-center justify-around h-14 px-1">
+        <nav className="flex items-center justify-around h-14 px-1 max-w-lg mx-auto">
           {tabItems.map((item) => {
             const active = isActiveTab(item.href!)
             return (
               <Link
                 key={item.href}
                 href={item.href === "#reports" ? "/admin/reports/health" : item.href!}
-                className={`flex flex-col items-center justify-center gap-0.5 min-w-0 px-2 py-1 rounded-lg transition-all duration-150 ${
+                className={`relative flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 ios-tab-item ${
                   active ? "text-gold-600" : "text-tertiary"
                 }`}
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon!} />
-                </svg>
-                <span className={`text-[10px] font-semibold leading-none ${active ? "opacity-100" : "opacity-80"}`}>
+                <div className="relative flex items-center justify-center w-6 h-6">
+                  <svg
+                    className="w-6 h-6 ios-tab-icon"
+                    viewBox="0 0 24 24"
+                    fill={active ? "currentColor" : "none"}
+                    fillOpacity={active ? "0.2" : "1"}
+                    stroke="currentColor"
+                    strokeWidth={active ? 2 : 1.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon!} />
+                  </svg>
+                  {item.badge && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border-1.5 border-white dark:border-black" />
+                  )}
+                </div>
+                <span className={`text-[10px] leading-none transition-all duration-300 ${
+                  active ? "font-semibold scale-100" : "font-medium scale-95 opacity-70"
+                }`}>
                   {item.label}
                 </span>
               </Link>

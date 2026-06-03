@@ -4,7 +4,7 @@ import { useRef } from "react"
 
 interface SubmitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
-  variant?: "primary" | "secondary" | "success" | "danger"
+  variant?: "primary" | "secondary" | "success" | "danger" | "ios-primary" | "ios-tinted" | "ios-gray" | "ios-plain" | "ios-destructive"
 }
 
 const variantClasses = {
@@ -12,6 +12,11 @@ const variantClasses = {
   secondary: "btn-secondary",
   success: "btn-success",
   danger: "btn-danger",
+  "ios-primary": "btn-ios-primary",
+  "ios-tinted": "btn-ios-tinted",
+  "ios-gray": "btn-ios-gray",
+  "ios-plain": "btn-ios-plain",
+  "ios-destructive": "btn-ios-destructive",
 }
 
 export default function SubmitButton({

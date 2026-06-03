@@ -239,7 +239,7 @@ export default function AppointmentDetail() {
   if (loading) return <AppointmentDetailSkeleton />
 
   if (error || !appointment) return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto">
+    <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <p className="text-red-600">{error || "Appointment not found"}</p>
     </div>
   )
@@ -528,7 +528,7 @@ export default function AppointmentDetail() {
             <SubmitButton
               onClick={() => handleAction("student-cancel", `/api/appointments/${appointmentId}/student-cancel`)}
               loading={actionLoading === "student-cancel"}
-              variant="danger"
+              variant="ios-destructive"
               className="w-full sm:w-auto py-3 sm:py-2"
             >
               {actionLoading === "student-cancel" ? "Cancelling..." : "Cancel Request"}
@@ -540,7 +540,7 @@ export default function AppointmentDetail() {
             <div className="flex flex-col sm:flex-row gap-2">
               <SubmitButton
                 onClick={() => setShowTeamsLinkForm(true)}
-                variant="success"
+                variant="ios-primary"
                 className="w-full sm:w-auto py-3 sm:py-2"
               >
                 Accept
@@ -548,7 +548,7 @@ export default function AppointmentDetail() {
               <SubmitButton
                 onClick={() => handleAction("decline")}
                 loading={actionLoading === "decline"}
-                variant="danger"
+                variant="ios-destructive"
                 className="w-full sm:w-auto py-3 sm:py-2"
               >
                 {actionLoading === "decline" ? "Declining..." : "Decline"}
@@ -564,7 +564,7 @@ export default function AppointmentDetail() {
                 <SubmitButton
                   onClick={handleConfirmApprove}
                   loading={actionLoading === "accept"}
-                  variant="success"
+                  variant="ios-primary"
                   className="w-full sm:w-auto py-3 sm:py-2"
                 >
                   {actionLoading === "accept" ? "Approving..." : "Confirm & Approve"}
@@ -576,7 +576,7 @@ export default function AppointmentDetail() {
                     setSingleLink("")
                     setSlotLinks({})
                   }}
-                  variant="secondary"
+                  variant="ios-plain"
                   className="w-full sm:w-auto py-3 sm:py-2"
                 >
                   Cancel
@@ -590,7 +590,7 @@ export default function AppointmentDetail() {
             <div className="flex flex-col sm:flex-row gap-2">
               <SubmitButton
                 onClick={() => setShowCompleteForm(true)}
-                variant="primary"
+                variant="ios-primary"
                 className="w-full sm:w-auto py-3 sm:py-2"
               >
                 Mark Complete
@@ -598,7 +598,7 @@ export default function AppointmentDetail() {
               <SubmitButton
                 onClick={() => handleAction("cancel")}
                 loading={actionLoading === "cancel"}
-                variant="danger"
+                variant="ios-destructive"
                 className="w-full sm:w-auto py-3 sm:py-2"
               >
                 {actionLoading === "cancel" ? "Cancelling..." : "Cancel"}
@@ -666,7 +666,7 @@ export default function AppointmentDetail() {
                 <SubmitButton
                   onClick={handleCompleteSubmit}
                   loading={actionLoading === "complete"}
-                  variant="primary"
+                  variant="ios-primary"
                   className="w-full sm:w-auto py-3 sm:py-2"
                 >
                   {actionLoading === "complete" ? "Completing..." : "Submit & Complete"}
@@ -678,7 +678,7 @@ export default function AppointmentDetail() {
                     setCompleteFiles([])
                     setCompleteError("")
                   }}
-                  variant="secondary"
+                  variant="ios-plain"
                   className="w-full sm:w-auto py-3 sm:py-2"
                 >
                   Cancel
@@ -692,7 +692,7 @@ export default function AppointmentDetail() {
             <SubmitButton
               onClick={() => handleAction("retry-sync", `/api/appointments/${appointmentId}/retry-sync`)}
               loading={actionLoading === "retry-sync"}
-              variant="secondary"
+              variant="ios-gray"
             >
               {actionLoading === "retry-sync" ? "Retrying..." : "Retry Teams Sync"}
             </SubmitButton>
@@ -704,7 +704,7 @@ export default function AppointmentDetail() {
               <SubmitButton
                 onClick={() => handleAction("attendee-accept")}
                 loading={actionLoading === "accept"}
-                variant="success"
+                variant="ios-primary"
                 className="w-full sm:w-auto py-3 sm:py-2"
               >
                 Accept
@@ -712,7 +712,7 @@ export default function AppointmentDetail() {
               <SubmitButton
                 onClick={() => handleAction("attendee-decline")}
                 loading={actionLoading === "decline"}
-                variant="danger"
+                variant="ios-destructive"
                 className="w-full sm:w-auto py-3 sm:py-2"
               >
                 Decline
@@ -722,7 +722,7 @@ export default function AppointmentDetail() {
 
           {/* Organizer: resend (disabled, coming soon) */}
           {isOrganizer && effectiveStatus === "APPROVED" && (
-            <SubmitButton disabled variant="secondary">
+            <SubmitButton disabled variant="ios-gray">
               Resend Invitations — Coming Soon
             </SubmitButton>
           )}
@@ -736,7 +736,7 @@ export default function AppointmentDetail() {
         </div>
 
         {/* Back button — far right opposite actions */}
-        <SubmitButton onClick={() => router.push(isStudent ? "/student/meetings" : "/faculty/meetings")} variant="secondary" className="w-full sm:w-auto py-3 sm:py-2">
+        <SubmitButton onClick={() => router.push(isStudent ? "/student/meetings" : "/faculty/meetings")} variant="ios-plain" className="w-full sm:w-auto py-3 sm:py-2">
           ← Back
         </SubmitButton>
       </div>

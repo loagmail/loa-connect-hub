@@ -116,29 +116,29 @@ export default async function MobileStudentMeetings(props: {
           <p className="text-tertiary text-xs mt-1">Book a consultation to get started.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="ios-table-section">
           {sorted.map((a) => (
             <Link
               key={a.id}
               href={`/student/m/meetings/${a.id}`}
-              className="block card p-4 bg-surface hover:shadow-md transition-shadow"
+              className="ios-table-row"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-primary text-sm truncate">
-                    {a.faculty?.name || "Faculty"}
-                  </p>
-                  <p className="text-xs text-tertiary mt-1">{a.date}</p>
-                  <p className="text-xs text-tertiary">
-                    {a.startTime} &ndash; {a.endTime}
-                  </p>
-                </div>
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${statusStyles[a.status] || "bg-surface text-secondary"}`}
-                >
-                  {a.status}
-                </span>
+              <div className="ios-table-row-label">
+                <p className="text-sm font-semibold text-primary leading-tight truncate">
+                  {a.faculty?.name || "Faculty"}
+                </p>
+                <p className="text-xs text-tertiary mt-0.5">
+                  {a.date} &bull; {a.startTime} &ndash; {a.endTime}
+                </p>
               </div>
+              <span
+                className={`ios-table-row-detail text-[10px] font-bold uppercase tracking-wider ${statusStyles[a.status] || ""}`}
+              >
+                {a.status}
+              </span>
+              <svg className="ios-table-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           ))}
         </div>

@@ -195,7 +195,7 @@ export default function StudentMobileMeetingDetail() {
           <SubmitButton
             onClick={handleCancel}
             loading={actionLoading === "cancel"}
-            variant="danger"
+            variant="ios-destructive"
             className="w-full py-3 min-h-[44px] text-sm"
           >
             {actionLoading === "cancel" ? "Cancelling..." : "Cancel Request"}

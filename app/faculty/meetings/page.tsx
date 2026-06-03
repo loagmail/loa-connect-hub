@@ -235,12 +235,9 @@ export default async function MeetingsPage(props: {
           <p className="text-tertiary font-medium">No meetings found</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="ios-table-section">
           {sorted.map((meeting: MeetingData) => {
             const isOrganizer = meeting.organizerId === userId
-            let statusLabel = meeting.status === "APPROVED" && !isOrganizer
-              ? "YOU ACCEPTED"
-              : statusLabels[meeting.status] || meeting.status
 
             const getStatusLabel = () =>{
               if (isOrganizer) {
@@ -265,54 +262,26 @@ export default async function MeetingsPage(props: {
               }
             }
 
-            statusLabel = getStatusLabel()
+            const statusLabel = getStatusLabel()
 
             return (
               <Link
                 key={meeting.id}
                 href={`/faculty/meetings/${meeting.id}`}
-                className="card p-5 bg-surface flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:shadow-md transition-shadow"
+                className="ios-table-row"
               >
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-primary">{meeting.title}</h3>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColors[meeting.status] || "bg-slate-500/20 text-tertiary"}`}>
-                      {isOrganizer ? "SCHEDULED" : statusLabel}
-                    </span>
-                    {meeting.meetingType === "CONSULTATION" && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400">
-                        Consultation
-                      </span>
-                    )}
-                    {isOrganizer && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gold-500/20 text-gold-400">
-                        You organized this meeting
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-tertiary">
-                    <span className="flex items-center gap-1.5">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {meeting.date}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {meeting.startTime} &ndash; {meeting.endTime}
-                  </span>
-                  </div>
+                <div className="ios-table-row-label">
+                  <p className="text-sm font-semibold text-primary leading-tight truncate">{meeting.title}</p>
+                  <p className="text-xs text-tertiary mt-0.5">
+                    {meeting.date} &bull; {meeting.startTime} &ndash; {meeting.endTime}
+                  </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-default">
-                  <span className="text-xs font-semibold text-gold-600 inline-flex items-center gap-1 cursor-default">
-                    View Details
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColors[meeting.status] || "bg-slate-500/20 text-tertiary"}`}>
+                  {statusLabel}
+                </span>
+                <svg className="ios-table-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </Link>
             )
           })}

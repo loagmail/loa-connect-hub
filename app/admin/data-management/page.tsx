@@ -78,7 +78,7 @@ export default function DataManagementPage() {
   const isStudents = modalType === "students"
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 pb-12">
+    <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <h1 className="text-2xl font-bold text-primary">Data Management</h1>
 
       {result && (

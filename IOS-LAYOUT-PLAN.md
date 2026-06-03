@@ -8,100 +8,61 @@ Transform the web app from a sidebar-based dashboard layout into a native-feelin
 
 ## Phase 1: Navigation Architecture
 
-### 1.1 iOS NavigationStack (NavBar + Push/Pop)
+### 1.1 iOS NavigationStack (NavBar + Push/Pop) ✅
 
 **Current**: Desktop sidebar + breadcrumbs. Mobile has a static large title nav bar.
 **Target**: iOS `UINavigationController`-style push/pop navigation.
 
 **Changes:**
+- ✅ **AppShell.tsx**: Wraps content in `<NavigationStack>` context provider.
+- ✅ **NavigationStack.tsx**: Context provider tracking push/pop history via `useRef` + pathname comparison, exports `useNavigation()` and `AnimatedPage`.
+- ✅ **NavigationBar.tsx**: Large title (34pt) collapses to inline (17pt) on scroll via `IntersectionObserver`, back chevron button, right bar items, frosted glass background, bottom separator.
+- ✅ **AnimatedPage**: Wraps only `<main>` content with `ios-slide-in` (push-right) / `ios-pop-in` (pop-left) animations, keeping NavigationBar outside the animated container.
+- ✅ **globals.css**: Added `ios-slide-in`, `ios-pop-in` keyframes and `.ios-page` utility classes.
+- ✅ **Breadcrumbs.tsx**: Replaced with NavigationBar throughout app.
 
-- **AppShell.tsx**: Remove desktop sidebar wrapper on mobile. Wrap content in a `<NavigationStack>` context provider that tracks navigation history and provides push/pop transitions.
-
-- **NavigationBar.tsx** (new component):
-  - Large title (34pt) on root screens, collapses to inline title (17pt) on scroll (use `IntersectionObserver` or `scroll` event)
-  - Back button with native iOS chevron (‹ Title) for pushed screens
-  - Right bar button items (add, edit, etc.)
-  - Translucent frosted glass background (`ios-blur bg-nav-bar`)
-  - Bottom border/shadow separator
-  
-- **Page Transitions**:
-  - Push: slide from right (cubic-bezier spring)
-  - Pop: slide to right
-  - Modal presentation: slide up from bottom
-
-- **Files to modify**:
-  - `components/AppShell.tsx` — wrap content in NavigationStack
-  - `components/Breadcrumbs.tsx` → replace with `NavigationBar.tsx`
-  - New: `components/NavigationBar.tsx`
-  - New: `components/NavigationStack.tsx` (context provider)
-
-### 1.2 iOS Tab Bar Enhancement
+### 1.2 iOS Tab Bar Enhancement ✅
 
 **Current**: Bottom tab bar with basic icons + labels, frosted glass.
 **Target**: Full iOS `UITabBar` with proper styling.
 
 **Changes:**
-
-- **Tab bar items**: Use SF Symbols-equivalent filled icons for active state, outlined for inactive
-- **Active indicator**: No background shape — just tint color + filled icon (iOS 18+ style)
-- **Badge notifications**: Red badge dots on tab items when needed
-- **Animations**: Spring animation on tab switch, cross-fade content transition
-- **Safe area**: Respect home indicator (already done)
-
-- **Files to modify**:
-  - `components/Sidebar.tsx` — update tab bar rendering
-  - `app/globals.css` — update tab bar styles
+- ✅ **Tab bar items**: SF Symbols-equivalent SVG icons with `fill="currentColor"` + `fillOpacity="0.2"` for active state, `fill="none"` for inactive (iOS 18+ filled-vs-outlined style).
+- ✅ **Badge notifications**: Red badge dot support on tab items.
+- ✅ **Animations**: Spring transition on tab switch, press scale animation on icons.
+- ✅ **Safe area**: Respect home indicator (already done).
+- ✅ **Sidebar.tsx**: Updated tab bar rendering with `.ios-tab-item` and `.ios-tab-icon` CSS classes.
+- ✅ **globals.css**: Added `.ios-tab-item` and `.ios-tab-icon` styles.
 
 ---
 
 ## Phase 2: iOS-Style Content Layouts
 
-### 2.1 Grouped Table View (InsetGrouped)
+### 2.1 Grouped Table View (InsetGrouped) ✅
 
 **Current**: Cards with `rounded-xl`, border, shadow in a flex column layout.
 **Target**: iOS `UITableView` in `.insetGrouped` style (like Settings app).
 
 **Changes:**
+- ✅ **globals.css**: Added `.ios-table-section`, `.ios-table-row`, `.ios-table-row-label`, `.ios-table-row-detail`, `.ios-table-row-chevron` CSS classes.
+- ✅ **AppointmentCard.tsx**: Converted to iOS table row with avatar+name+date/status+chevron layout, action buttons in footer section.
+- ✅ **faculty/meetings/page.tsx**, **student/m/meetings/page.tsx**, **faculty/m/meetings/page.tsx**: Updated to use `ios-table-section`/`ios-table-row` lists.
+- ✅ **Desktop standardisation**: All pages standardised to `max-w-6xl mx-auto` (dean/upload, dean/departments, admin/data-management, admin/access-config, faq, admin/etl-upload, admin/departments, faculty/availability, ConsultationHistory, AppointmentDetail).
 
-- **`.ios-table-section`** (new CSS class):
-  - Rounded corners on first and last items (12pt radius)
-  - Consistent horizontal margins (16pt on mobile, wider on desktop)
-  - Section headers: uppercase styled text (13pt, system gray)
-  - Section footers: smaller text for explanations
-  
-- **`.ios-table-row`** (new CSS class):
-  - Full-width touch target (min 44pt height)
-  - Left-aligned icon + label
-  - Right-aligned detail + disclosure chevron
-  - Separator inset from left (first row no top separator, last row no bottom separator)
-  - `hover:` and `active:` states with gray highlight
-
-- **Files to modify**:
-  - `app/globals.css` — add iOS table styles
-  - `components/AppointmentCard.tsx` — convert to iOS table row style
-  - `app/student/meetings/page.tsx` — update list layouts
-  - `app/faculty/meetings/page.tsx` — update list layouts
-  - `app/student/m/meetings/page.tsx` — update mobile list
-  - `app/faculty/m/meetings/page.tsx` — update mobile list
-
-### 2.2 iOS Action Buttons
+### 2.2 iOS Action Buttons ✅
 
 **Current**: `btn-primary`, `btn-secondary`, `btn-success`, `btn-danger`.
 **Target**: iOS `UIButton` styles matching system buttons.
 
 **Changes:**
-
-- **Filled**: `.btn-ios-primary` — gold filled (for primary CTA)
-- **Tinted**: `.btn-ios-tinted` — gold tinted background with white text (for secondary actions)
-- **Gray**: `.btn-ios-gray` — gray filled (for tertiary actions)
-- **Plain**: `.btn-ios-plain` — text-only blue/gold button (like "Cancel", "View Details")
-- **Borderless**: `.btn-ios-borderless` — text-only with no background
-- **Destructive**: `.btn-ios-destructive` — red tinted like iOS "Delete"
-
-- **Files to modify**:
-  - `app/globals.css` — add iOS button styles
-  - `components/SubmitButton.tsx` — add new variants
-  - All pages using buttons — migrate to new variants
+- ✅ **Filled**: `.btn-ios-primary` — gold filled (for primary CTA)
+- ✅ **Tinted**: `.btn-ios-tinted` — gold tinted background with white text (for secondary actions)
+- ✅ **Gray**: `.btn-ios-gray` — gray filled (for tertiary actions)
+- ✅ **Plain**: `.btn-ios-plain` — text-only gold button (like "Cancel", "View Details")
+- ✅ **Destructive**: `.btn-ios-destructive` — red tinted like iOS "Delete"
+- ✅ **globals.css**: Added all 5 iOS button variant CSS classes.
+- ✅ **SubmitButton.tsx**: Extended `variant` prop with `ios-primary | ios-tinted | ios-gray | ios-plain | ios-destructive`.
+- ✅ **Migrated key pages**: AppointmentCard, AppointmentDetail, faculty/m/meetings/[id], student/m/meetings/[id].
 
 ### 2.3 iOS Search Bar
 
@@ -317,42 +278,48 @@ Transform the web app from a sidebar-based dashboard layout into a native-feelin
 
 ## Implementation Order
 
-1. **NavigationStack + NavigationBar** (foundation)
-2. **iOS table styles** in globals.css (visual foundation)
-3. **Tab bar enhancement** (UI polish)
-4. **iOS button variants** (component update)
-5. **SegmentedControl** (replace filter pills)
-6. **SearchBar** (replace search input)
-7. **ActionSheet + Alert** (modals)
-8. **SwipeableRow** (gesture)
-9. **Pull to refresh** (gesture)
-10. **Page-by-page migration** (content)
+1. ✅ **NavigationStack + NavigationBar** (foundation)
+2. ✅ **iOS table styles** in globals.css (visual foundation)
+3. ✅ **Tab bar enhancement** (UI polish)
+4. ✅ **iOS button variants** (component update)
+5. **SegmentedControl** (replace filter pills) — _pending_
+6. **SearchBar** (replace search input) — _pending_
+7. **ActionSheet + Alert** (modals) — _pending_
+8. **SwipeableRow** (gesture) — _pending_
+9. **Pull to refresh** (gesture) — _pending_
+10. **Page-by-page migration** (content) — _pending_
 
 ---
 
-## Files to Create
+## Files Created
 
-| File | Purpose |
-|------|---------|
-| `components/NavigationStack.tsx` | Navigation context + push/pop transitions |
-| `components/NavigationBar.tsx` | iOS-style nav bar with large titles |
-| `components/SearchBar.tsx` | iOS UISearchBar |
-| `components/SegmentedControl.tsx` | iOS UISegmentedControl |
-| `components/ActionSheet.tsx` | iOS action sheet |
-| `components/Alert.tsx` | iOS alert dialog |
-| `components/SwipeableRow.tsx` | Swipe-to-reveal actions |
-| `hooks/usePullToRefresh.ts` | Pull-to-refresh hook |
-| `hooks/useSwipeBack.ts` | Interactive pop gesture hook |
+| File | Purpose | Status |
+|------|---------|--------|
+| `components/NavigationStack.tsx` | Navigation context + push/pop transitions | ✅ |
+| `components/NavigationBar.tsx` | iOS-style nav bar with large titles | ✅ |
+| `components/SearchBar.tsx` | iOS UISearchBar | ⏳ |
+| `components/SegmentedControl.tsx` | iOS UISegmentedControl | ⏳ |
+| `components/ActionSheet.tsx` | iOS action sheet | ⏳ |
+| `components/Alert.tsx` | iOS alert dialog | ⏳ |
+| `components/SwipeableRow.tsx` | Swipe-to-reveal actions | ⏳ |
+| `hooks/usePullToRefresh.ts` | Pull-to-refresh hook | ⏳ |
+| `hooks/useSwipeBack.ts` | Interactive pop gesture hook | ⏳ |
 
-## Files to Modify
+## Files Modified
 
-| File | Changes |
-|------|---------|
-| `app/globals.css` | iOS table styles, button variants, search, segmented control, action sheet |
-| `components/AppShell.tsx` | Wrap in NavigationStack, remove sidebar on mobile |
-| `components/Breadcrumbs.tsx` | Replace with NavigationBar |
-| `components/SubmitButton.tsx` | Add iOS button variants |
-| `components/SearchInput.tsx` | Refactor or replace with SearchBar |
-| `components/AppointmentCard.tsx` | iOS table row style + SwipeableRow |
-| `components/Sidebar.tsx` | Enhanced tab bar |
-| All mobile route pages | Update to iOS content layouts |
+| File | Changes | Status |
+|------|---------|--------|
+| `app/globals.css` | iOS table styles, button variants, animation keyframes, tab bar styles | ✅ |
+| `components/AppShell.tsx` | Wrap in NavigationStack, NavigationBar integration | ✅ |
+| `components/Breadcrumbs.tsx` | Replaced with NavigationBar | ✅ |
+| `components/SubmitButton.tsx` | Added 5 iOS button variants | ✅ |
+| `components/SearchInput.tsx` | Refactor or replace with SearchBar | ⏳ |
+| `components/AppointmentCard.tsx` | iOS table row style | ✅ |
+| `components/Sidebar.tsx` | Enhanced tab bar with filled/outlined icons, badges | ✅ |
+| `components/AppointmentDetail.tsx` | Migrated buttons to iOS variants | ✅ |
+| `app/faculty/meetings/page.tsx` | iOS table layout | ✅ |
+| `app/faculty/m/meetings/page.tsx` | iOS table layout | ✅ |
+| `app/faculty/m/meetings/[id]/page.tsx` | iOS action buttons | ✅ |
+| `app/student/m/meetings/page.tsx` | iOS table layout | ✅ |
+| `app/student/m/meetings/[id]/page.tsx` | iOS action buttons | ✅ |
+| All mobile route pages | Update to iOS content layouts | ⏳ |

@@ -197,7 +197,7 @@ export default async function StudentMeetings(props: {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {sorted.map((appointment: StudentAppointment) => (
             <AppointmentCard
               key={appointment.id}

@@ -90,7 +90,7 @@ export default function DeanUploadPage() {
   const totalErrors = (result?.errors.length ?? 0) + (result?.parseErrors.length ?? 0)
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 pb-12">
+    <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-primary">Bulk User Import</h1>
         <p className="text-sm text-tertiary mt-1">Upload a CSV file to create users. Only emails ending with <code className="bg-surface px-1 rounded text-xs">@itmlyceumalabang.onmicrosoft.com</code> are accepted.</p>

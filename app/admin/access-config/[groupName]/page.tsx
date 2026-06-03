@@ -103,7 +103,7 @@ export default function EditAccessGroupPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-8 pb-12">
+      <div className="max-w-6xl mx-auto space-y-8 pb-12">
         <Skeleton variant="card" />
       </div>
     )
@@ -111,7 +111,7 @@ export default function EditAccessGroupPage() {
 
   if (!group) {
     return (
-      <div className="max-w-4xl mx-auto space-y-8 pb-12">
+      <div className="max-w-6xl mx-auto space-y-8 pb-12">
         <Link href="/admin/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
         <p className="text-sm text-tertiary text-center py-8">Group not found.</p>
       </div>
@@ -121,7 +121,7 @@ export default function EditAccessGroupPage() {
   const badgeColor = badgeColors[group.groupName] || "bg-surface text-secondary"
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+    <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
         <Link href="/admin/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
       </div>

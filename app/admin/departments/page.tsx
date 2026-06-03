@@ -217,7 +217,7 @@ export default function AdminDepartmentsPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-12">
+    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-primary">Academic Infrastructure</h1>

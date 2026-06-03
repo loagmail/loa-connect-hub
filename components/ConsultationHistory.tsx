@@ -49,7 +49,7 @@ export default function ConsultationHistory({ studentName, course, appointments 
   const timespan = firstDate && lastDate ? daysBetween(firstDate, lastDate) : 0
 
   return (
-    <div className="max-w-3xl mx-auto pb-16">
+    <div className="max-w-6xl mx-auto pb-16">
       {sorted.length === 0 ? (
         <div className="card p-12 sm:p-16 bg-surface text-center animate-fade-in mt-8">
           <div className="w-16 h-16 bg-surface border border-default rounded-2xl flex items-center justify-center mx-auto mb-5">

@@ -150,7 +150,7 @@ export default function EtlUploadPage() {
   const hasAllValid = rows.length > 0 && invalidCount === 0
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+    <div className="max-w-6xl mx-auto space-y-6 pb-12">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-primary">ETL User Upload</h1>
         {validationDone && (

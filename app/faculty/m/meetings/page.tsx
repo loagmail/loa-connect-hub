@@ -133,32 +133,32 @@ export default async function MobileFacultyMeetings(props: {
           <p className="text-tertiary text-xs mt-1">Schedule a meeting to get started.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="ios-table-section">
           {sorted.map((m) => (
             <Link
               key={m.id}
               href={`/faculty/m/meetings/${m.id}`}
-              className="block card p-4 bg-surface hover:shadow-md transition-shadow"
+              className="ios-table-row"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-primary text-sm truncate">
-                    {getStudentName(m)}
-                  </p>
-                  <p className="text-xs text-tertiary mt-1">{m.date}</p>
-                  <p className="text-xs text-tertiary">
-                    {m.startTime} &ndash; {m.endTime}
-                  </p>
-                  {m.title && (
-                    <p className="text-xs text-tertiary mt-0.5 truncate">{m.title}</p>
-                  )}
-                </div>
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${statusStyles[m.status] || "bg-surface text-secondary"}`}
-                >
-                  {m.status}
-                </span>
+              <div className="ios-table-row-label">
+                <p className="text-sm font-semibold text-primary leading-tight truncate">
+                  {getStudentName(m)}
+                </p>
+                <p className="text-xs text-tertiary mt-0.5">
+                  {m.date} &bull; {m.startTime} &ndash; {m.endTime}
+                </p>
+                {m.title && (
+                  <p className="text-xs text-tertiary mt-0.5 truncate">{m.title}</p>
+                )}
               </div>
+              <span
+                className={`ios-table-row-detail text-[10px] font-bold uppercase tracking-wider ${statusStyles[m.status] || ""}`}
+              >
+                {m.status}
+              </span>
+              <svg className="ios-table-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           ))}
         </div>

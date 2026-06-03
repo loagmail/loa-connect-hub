@@ -2,7 +2,8 @@
 
 import { usePathname } from "next/navigation"
 import Sidebar from "./Sidebar"
-import Breadcrumbs from "./Breadcrumbs"
+import NavigationStack, { AnimatedPage } from "./NavigationStack"
+import NavigationBar from "./NavigationBar"
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -21,12 +22,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex dvh-screen overflow-x-hidden bg-surface-muted">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0 lg:ml-64">
-        <Breadcrumbs />
-        <main className="flex-1 overflow-y-auto pb-24 lg:pb-6 px-4 sm:px-6 pt-4 sm:pt-6">
-          {children}
-        </main>
-      </div>
+      <NavigationStack>
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0 lg:ml-64">
+          <NavigationBar />
+          <AnimatedPage className="overflow-hidden">
+            <main className="flex-1 overflow-y-auto pb-24 lg:pb-6 px-4 sm:px-6 pt-4 sm:pt-6">
+              {children}
+            </main>
+          </AnimatedPage>
+        </div>
+      </NavigationStack>
     </div>
   )
 }

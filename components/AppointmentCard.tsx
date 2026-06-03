@@ -76,7 +76,6 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
   const [loading, setLoading] = useState("")
   const [message, setMessage] = useState("")
   const [localStatus, setLocalStatus] = useState<string | null>(null)
-  const [localTeamsLink, setLocalTeamsLink] = useState<string | null>(appointment.teamsLink)
   const [localSyncStatus, setLocalSyncStatus] = useState<string | undefined>(appointment.teamsSyncStatus)
 
   const effectiveStatus = localStatus || appointment.status
@@ -94,19 +93,15 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
       const data = await res.json()
 
       if (res.ok) {
-        if (action === "teams-link" && data.appointment?.teamsLink) {
-          setLocalTeamsLink(data.appointment.teamsLink)
-        } else {
-          const statusMap: Record<string, string> = {
-            accept: "APPROVED",
-            approve: "APPROVED",
-            decline: "REJECTED",
-            reject: "REJECTED",
-            complete: "COMPLETED",
-            cancel: "CANCELLED",
-          }
-          setLocalStatus(statusMap[action] || null)
+        const statusMap: Record<string, string> = {
+          accept: "APPROVED",
+          approve: "APPROVED",
+          decline: "REJECTED",
+          reject: "REJECTED",
+          complete: "COMPLETED",
+          cancel: "CANCELLED",
         }
+        setLocalStatus(statusMap[action] || null)
         setMessage(`Appointment ${action}d!`)
         setTimeout(() => setMessage(""), 3000)
       } else {
@@ -121,165 +116,121 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
 
   const getInitial = (name: string) => name?.charAt(0)?.toUpperCase() || "?"
 
-  const statusIcons: Record<string, string> = {
-    PENDING: "⏳",
-    APPROVED: "✅",
-    REJECTED: "❌",
-    COMPLETED: "🎓",
-    CANCELLED: "🗑️",
-  }
+  const personName = hasRole(role, "STUDENT")
+    ? appointment.faculty?.name || "Faculty"
+    : appointment.student?.name || "Student"
 
-  const statusIcon = statusIcons[effectiveStatus] || "📋"
+  const detailHref = hasRole(role, "STUDENT")
+    ? `/student/meetings/${appointment.id}`
+    : `/faculty/meetings/${appointment.id}`
 
   return (
-    <div className="ios-card-group animate-ios-spring">
-      <div className="ios-card-group-item p-4 sm:p-5">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-3 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-base mr-1" title={effectiveStatus}>{statusIcon}</span>
-              <StatusBadge status={effectiveStatus} />
-              {appointment.meetingType && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-200">
-                  Consultation
-                </span>
-              )}
-
-              {localTeamsLink && (
-                <a
-                  href={localTeamsLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-gold-700 bg-gold-50/50 border border-gold-100 hover:bg-gold-100 transition-colors shadow-sm"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Join Teams Meeting
-                </a>
-              )}
-            </div>
-
-          {hasRole(role, "STUDENT") && appointment.faculty && (
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarClass(appointment.faculty.name)} flex items-center justify-center text-sm font-bold shadow-sm shrink-0`}>
-                {getInitial(appointment.faculty.name)}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-primary leading-tight">{appointment.faculty.name}</p>
-                <p className="text-xs text-tertiary mt-0.5">Faculty / Professor</p>
-              </div>
-            </div>
-          )}
-          {hasRole(role, "FACULTY") && appointment.student && (
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarClass(appointment.student.name)} flex items-center justify-center text-sm font-bold shadow-sm shrink-0`}>
-                {getInitial(appointment.student.name)}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-primary leading-tight">{appointment.student.name}</p>
-                <p className="text-xs text-tertiary mt-0.5">{appointment.student.email}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Time slots */}
-          {appointment.timeSlots && appointment.timeSlots.length > 0 ? (
-            <div className="space-y-1.5">
-              {(() => {
-                const grouped: Record<string, typeof appointment.timeSlots> = {}
-                for (const slot of appointment.timeSlots) {
-                  if (!grouped[slot.date]) grouped[slot.date] = []
-                  grouped[slot.date].push(slot)
-                }
-                return Object.entries(grouped).map(([date, slots]) => (
-                  <div key={date}>
-                    <p className="text-xs font-semibold text-secondary mb-0.5">{date}</p>
-                    {slots.map((slot) => (
-                      <div key={slot.id} className="flex items-center gap-2 text-xs ml-2">
-                        <span className="text-slate-300">\u2022</span>
-                        <span className="text-secondary font-medium">{slot.startTime} &ndash; {slot.endTime}</span>
-                      </div>
-                    ))}
-                  </div>
-                ))
-              })()}
-            </div>
-          ) : appointment.date ? (
-            <div className="flex items-center gap-2 text-xs flex-wrap">
-              <span className="font-medium text-secondary">{appointment.date}</span>
-              <span className="text-slate-300">\u2022</span>
-              <span className="text-secondary font-medium">{appointment.startTime} &ndash; {appointment.endTime}</span>
-            </div>
-          ) : null}
-
-          {/* Title */}
-          {appointment.title && (
-            <p className="text-sm font-bold text-primary leading-snug">{appointment.title}</p>
-          )}
-
-          {/* Description (truncated) */}
-          {appointment.description && (
-            <p className="text-xs text-tertiary line-clamp-2 leading-relaxed">{appointment.description}</p>
-          )}
-
-          {/* Attendee badges */}
-          {appointment.attendees && appointment.attendees.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">Optional Attendee(s):</span>
-              {appointment.attendees.map((att) => (
-                <span
-                  key={att.id}
-                  className="inline-flex items-center gap-1"
-                  title={`${att.user?.name || "Unknown"} (${att.status})`}
-                >
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${
-                      att.status === "ACCEPTED"
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : att.status === "DECLINED"
-                        ? "bg-red-50 text-red-700 border-red-200"
-                        : "bg-amber-50 text-amber-700 border-amber-200"
-                    }`}
-                  >
-                    {att.user?.name || "Unknown"}
-                  </span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${
-                      att.isMandatory !== false
-                        ? "bg-gold-100 text-gold-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {att.status}
-                  </span>
-                </span>
-              ))}
-            </div>
-          )}
-
-          <p className="text-[11px] text-tertiary">
-            Requested {new Date(appointment.requestedAt).toLocaleDateString("en-US", {
-              month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit"
-            })}
+    <div className="ios-table-section">
+      <Link href={detailHref} className="ios-table-row !min-h-[60px]">
+        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarClass(personName)} flex items-center justify-center text-sm font-bold shadow-sm shrink-0`}>
+          {getInitial(personName)}
+        </div>
+        <div className="ios-table-row-label">
+          <p className="text-sm font-semibold text-primary leading-tight">{personName}</p>
+          <p className="text-xs text-tertiary mt-0.5">
+            {appointment.date} &bull; {appointment.startTime} &ndash; {appointment.endTime}
           </p>
         </div>
+        <span className="ios-table-row-detail text-xs">
+          <StatusBadge status={effectiveStatus} />
+        </span>
+        <svg className="ios-table-row-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
 
-        {hasRole(role, "STUDENT") && effectiveStatus === "PENDING" && (
-          <div className="shrink-0 self-stretch sm:self-center">
+      {hasRole(role, "STUDENT") && effectiveStatus === "PENDING" && (
+        <div className="px-4 py-3 border-t border-default">
+          <SubmitButton
+            onClick={async () => {
+              setLoading("cancel")
+              setMessage("")
+              try {
+                const res = await fetch(`/api/appointments/${appointment.id}/student-cancel`, { method: "POST" })
+                const data = await res.json()
+                if (res.ok) {
+                  setLocalStatus("CANCELLED")
+                  setMessage("Appointment cancelled!")
+                  setTimeout(() => setMessage(""), 3000)
+                } else {
+                  setMessage(data.error || "Failed to cancel")
+                }
+              } catch {
+                setMessage("An error occurred")
+              } finally {
+                setLoading("")
+              }
+            }}
+            loading={loading === "cancel"}
+            variant="ios-destructive"
+            className="text-xs font-semibold px-4 py-3 w-full"
+          >
+            {loading === "cancel" ? "Cancelling..." : "Cancel Request"}
+          </SubmitButton>
+        </div>
+      )}
+
+      {hasRole(role, "FACULTY") && effectiveStatus === "PENDING" && (
+        <div className="px-4 py-3 border-t border-default">
+          <div className="flex gap-2">
+            <SubmitButton
+              onClick={() => handleAction("accept")}
+              loading={loading === "accept"}
+              variant="ios-primary"
+              className="text-xs font-semibold py-2 flex-1"
+            >
+              {loading === "accept" ? "Processing" : "Accept"}
+            </SubmitButton>
+            <SubmitButton
+              onClick={() => handleAction("decline")}
+              loading={loading === "decline"}
+              variant="ios-destructive"
+              className="text-xs font-semibold py-2 flex-1"
+            >
+              {loading === "decline" ? "Declining..." : "Decline"}
+            </SubmitButton>
+          </div>
+        </div>
+      )}
+
+      {hasRole(role, "FACULTY") && effectiveStatus === "APPROVED" && (
+        <div className="px-4 py-3 border-t border-default space-y-3">
+          <div className="flex gap-2">
+            <SubmitButton
+              onClick={() => handleAction("complete")}
+              loading={loading === "complete"}
+              variant="ios-primary"
+              className="text-xs font-semibold py-2 flex-1"
+            >
+              {loading === "complete" ? "Completing" : "Mark Complete"}
+            </SubmitButton>
+            <SubmitButton
+              onClick={() => handleAction("cancel")}
+              loading={loading === "cancel"}
+              variant="ios-destructive"
+              className="text-xs font-semibold py-2 flex-1"
+            >
+              {loading === "cancel" ? "Cancelling..." : "Cancel"}
+            </SubmitButton>
+          </div>
+          {localSyncStatus === "FAILED" && (
             <SubmitButton
               onClick={async () => {
-                setLoading("cancel")
-                setMessage("")
+                setLoading("retry-sync")
                 try {
-                  const res = await fetch(`/api/appointments/${appointment.id}/student-cancel`, { method: "POST" })
+                  const res = await fetch(`/api/appointments/${appointment.id}/retry-sync`, { method: "POST" })
                   const data = await res.json()
                   if (res.ok) {
-                    setLocalStatus("CANCELLED")
-                    setMessage("Appointment cancelled!")
+                    setLocalSyncStatus("UNWRITTEN")
+                    setMessage("Sync retry queued!")
                     setTimeout(() => setMessage(""), 3000)
                   } else {
-                    setMessage(data.error || "Failed to cancel")
+                    setMessage(data.error || "Retry failed")
                   }
                 } catch {
                   setMessage("An error occurred")
@@ -287,112 +238,27 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                   setLoading("")
                 }
               }}
-              loading={loading === "cancel"}
-              variant="danger"
-              className="text-xs font-semibold px-4 py-3 sm:py-2 w-full sm:w-auto"
+              loading={loading === "retry-sync"}
+              variant="primary"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
             >
-              {loading === "cancel" ? "Cancelling..." : "Cancel Request"}
+              {loading === "retry-sync" ? "Retrying..." : "Retry Sync"}
             </SubmitButton>
+          )}
+          <div>
+            <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider mb-1.5">Microsoft Teams Link</p>
+            <TeamsLinkInput appointmentId={appointment.id} />
           </div>
-        )}
-
-        {hasRole(role, "FACULTY") && effectiveStatus === "PENDING" && (
-          <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2 shrink-0 self-stretch sm:self-center">
-            <SubmitButton
-              onClick={() => handleAction("accept")}
-              loading={loading === "accept"}
-              variant="success"
-              className="text-xs font-semibold px-4 py-3 sm:py-2 flex-1"
-            >
-              {loading === "accept" ? "Processing" : "Accept"}
-            </SubmitButton>
-            <SubmitButton
-              onClick={() => handleAction("decline")}
-              loading={loading === "decline"}
-              variant="danger"
-              className="text-xs font-semibold px-4 py-3 sm:py-2 flex-1"
-            >
-              {loading === "decline" ? "Declining..." : "Decline"}
-            </SubmitButton>
-          </div>
-        )}
-
-        {hasRole(role, "FACULTY") && effectiveStatus === "APPROVED" && (
-          <div className="flex flex-col gap-3 shrink-0 self-stretch md:self-center md:max-w-xs w-full">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <SubmitButton
-                onClick={() => handleAction("complete")}
-                loading={loading === "complete"}
-                variant="primary"
-                className="text-xs font-semibold py-3 sm:py-2 flex-1"
-              >
-                {loading === "complete" ? "Completing" : "Mark Complete"}
-              </SubmitButton>
-              <SubmitButton
-                onClick={() => handleAction("cancel")}
-                loading={loading === "cancel"}
-                variant="danger"
-                className="text-xs font-semibold py-3 sm:py-2 flex-1"
-              >
-                {loading === "cancel" ? "Cancelling..." : "Cancel"}
-              </SubmitButton>
-            </div>
-            {/* Retry sync for failed syncs */}
-            {localSyncStatus === "FAILED" && (
-              <SubmitButton
-                onClick={async () => {
-                  setLoading("retry-sync")
-                  try {
-                    const res = await fetch(`/api/appointments/${appointment.id}/retry-sync`, { method: "POST" })
-                    const data = await res.json()
-                    if (res.ok) {
-                      setLocalSyncStatus("UNWRITTEN")
-                      setMessage("Sync retry queued!")
-                      setTimeout(() => setMessage(""), 3000)
-                    } else {
-                      setMessage(data.error || "Retry failed")
-                    }
-                  } catch {
-                    setMessage("An error occurred")
-                  } finally {
-                    setLoading("")
-                  }
-                }}
-                loading={loading === "retry-sync"}
-                variant="primary"
-                className="text-xs font-semibold px-3 py-1.5 rounded-lg text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
-              >
-                {loading === "retry-sync" ? "Retrying..." : "Retry Sync"}
-              </SubmitButton>
-            )}
-            <div className="w-full">
-              <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider mb-1.5">Microsoft Teams Link</p>
-              <TeamsLinkInput appointmentId={appointment.id} />
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {message && (
-        <p className={`mt-4 text-sm font-semibold ${
+        <p className={`px-4 pb-3 text-sm font-semibold ${
           message.includes("successfully") || message.includes("queued") ? "text-emerald-600" : "text-rose-600"
         }`}>
           {message}
         </p>
       )}
-    </div>
-
-      <div className="border-t border-default px-4 sm:px-5 py-3">
-        <Link
-          href={hasRole(role, "STUDENT") ? `/student/meetings/${appointment.id}` : `/appointments/${appointment.id}`}
-          className="text-xs font-semibold text-gold-600 hover:text-gold-700 inline-flex items-center justify-center sm:justify-start gap-1 w-full sm:w-auto min-h-[44px] sm:min-h-0"
-        >
-          View Details
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
-      </div>
     </div>
   )
 }
