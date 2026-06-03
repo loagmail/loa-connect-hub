@@ -1026,6 +1026,7 @@ export async function getMeetingsForUser(userId: string) {
       date: appointment.date as string,
       startTime: appointment.startTime as string,
       endTime: appointment.endTime as string,
+      meetingType: (appointment.meetingType as string) || "MEETING",
       organizerId: (organizer?.id as string) || (appointment.facultyId as string) || (appointment.studentId as string),
       teamsEventId: null,
       teamsLink: appointment.teamsLink as string,
