@@ -22,14 +22,6 @@ interface Props {
   appointments: StudentAppointment[]
 }
 
-const statusConfig: Record<string, { color: string; bg: string; icon: string; label: string }> = {
-  PENDING: { color: "text-amber-600", bg: "bg-amber-50 border-amber-200", icon: "⏳", label: "Pending" },
-  APPROVED: { color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200", icon: "✅", label: "Approved" },
-  COMPLETED: { color: "text-violet-600", bg: "bg-violet-50 border-violet-200", icon: "🎓", label: "Completed" },
-  REJECTED: { color: "text-red-600", bg: "bg-red-50 border-red-200", icon: "❌", label: "Rejected" },
-  CANCELLED: { color: "text-slate-500", bg: "bg-slate-50 border-slate-200", icon: "🗑️", label: "Cancelled" },
-}
-
 function getGreeting() {
   const h = new Date().getHours()
   if (h < 12) return "Good morning"
