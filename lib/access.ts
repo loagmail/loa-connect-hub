@@ -53,11 +53,9 @@ export async function loadAccessConfig(): Promise<Record<string, GroupAccessEntr
     const { data, error } = await supabase.from("group_access").select("*")
     if (error) throw error
 
-    const map: Record<string, GroupAccessEntry> = {}
+    const map: Record<string, GroupAccessEntry> = { ...DEFAULT_CONFIG }
     for (const row of data || []) {
-      const defaultPages = DEFAULT_CONFIG[row.groupName]?.pages || []
-      const merged = [...new Set([...defaultPages, ...(row.pages || [])])]
-      map[row.groupName] = { pages: merged }
+      map[row.groupName] = { pages: row.pages || [] }
     }
 
     setCache(map)
