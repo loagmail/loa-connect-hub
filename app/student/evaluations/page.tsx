@@ -43,7 +43,7 @@ export default function StudentEvaluationsPage() {
           {pending.map((facultyId) => (
             <Link
               key={facultyId}
-              href={`/student/evaluation/${facultyId}`}
+              href={`/student/evaluations/${facultyId}`}
               className="block bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 transition-colors"
             >
               <div className="flex items-center justify-between">
@@ -69,7 +69,7 @@ export default function StudentEvaluationsPage() {
                 </div>
                 {ev.status === "DRAFT" && (
                   <Link
-                    href={`/student/evaluation/${ev.facultyId}`}
+                    href={`/student/evaluations/${ev.facultyId}`}
                     className="text-xs text-blue-600 font-medium"
                   >
                     Continue →

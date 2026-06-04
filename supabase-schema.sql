@@ -859,3 +859,12 @@ CREATE INDEX IF NOT EXISTS idx_eval_results_department ON evaluation_results("de
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "employeeNo" TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "evaluationEligible" BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- =========================================================
+-- Migration 15: Add evaluation page paths to group_access
+-- =========================================================
+
+UPDATE group_access SET pages = pages || '["/admin/evaluations","/admin/evaluations/periods","/admin/evaluations/periods/new","/admin/evaluations/results"]'::JSONB WHERE "groupName" = 'ADMIN';
+UPDATE group_access SET pages = pages || '["/dean/evaluations/results"]'::JSONB WHERE "groupName" = 'DEAN';
+UPDATE group_access SET pages = pages || '["/faculty/evaluations/results"]'::JSONB WHERE "groupName" = 'FACULTY';
+UPDATE group_access SET pages = pages || '["/student/evaluations"]'::JSONB WHERE "groupName" = 'STUDENT';

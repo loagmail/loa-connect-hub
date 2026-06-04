@@ -5,7 +5,7 @@ import SubmitButton from "@/components/SubmitButton"
 import { STUDENT_DOMAIN, FACULTY_DOMAIN } from "@/lib/constants"
 import type { ValidateRow } from "@/app/api/admin/etl-upload/validate/route"
 
-type Tab = "student" | "faculty"
+type Tab = "student" | "faculty" | "eval-faculty" | "eval-student"
 
 const STUDENT_CSV_EXAMPLE = [
   "name,email,course",
@@ -19,6 +19,18 @@ const FACULTY_CSV_EXAMPLE = [
   "Dean Maria,maria.dean@lyceumalabang.edu.ph,CCS,true",
 ].join("\n")
 
+const EVAL_FACULTY_CSV_EXAMPLE = [
+  "name,microsoft email,subject",
+  "Juan Dela Cruz,juan.delacruz@itmlyceumalabang.onmicrosoft.com,CCS 101",
+  "Maria Santos,maria.santos@itmlyceumalabang.onmicrosoft.com,CCS 102",
+].join("\n")
+
+const EVAL_STUDENT_CSV_EXAMPLE = [
+  "name,microsoft email,subject",
+  "Juan Dela Cruz,juan.delacruz@itmlyceumalabang.onmicrosoft.com,CCS 101",
+  "Maria Santos,maria.santos@itmlyceumalabang.onmicrosoft.com,CCS 102",
+].join("\n")
+
 export default function EtlUploadPage() {
   const [tab, setTab] = useState<Tab>("student")
   const [csvText, setCsvText] = useState("")
@@ -29,6 +41,8 @@ export default function EtlUploadPage() {
   const [result, setResult] = useState<{ created: number; failed: number } | null>(null)
   const [resultDetails, setResultDetails] = useState<{ name: string; email: string; role: string }[]>([])
   const [failedDetails, setFailedDetails] = useState<{ email: string; error: string }[]>([])
+  const [evalUploading, setEvalUploading] = useState(false)
+  const [evalResult, setEvalResult] = useState<{ matched: number; errors: { row: number; message: string }[]; subjectErrors: string[]; parseErrors: { row: number; message: string }[] } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = (text: string) => {
@@ -142,7 +156,28 @@ export default function EtlUploadPage() {
     setResult(null)
     setResultDetails([])
     setFailedDetails([])
+    setEvalResult(null)
     if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const isEvalTab = tab === "eval-faculty" || tab === "eval-student"
+
+  const handleEvalUpload = async (file: File) => {
+    setEvalUploading(true)
+    setEvalResult(null)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const endpoint = tab === "eval-faculty" ? "/api/import/evaluation-faculty" : "/api/import/evaluation-student"
+      const res = await fetch(endpoint, { method: "POST", body: formData })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Upload failed")
+      setEvalResult(data)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Upload failed")
+    } finally {
+      setEvalUploading(false)
+    }
   }
 
   const validCount = rows.filter((r) => r.isValid).length
@@ -161,10 +196,10 @@ export default function EtlUploadPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-default">
+      <div className="flex gap-1 border-b border-default overflow-x-auto">
         <button
           onClick={() => { setTab("student"); handleReset() }}
-          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors shrink-0 ${
             tab === "student"
               ? "border-blue-600 text-blue-700"
               : "border-transparent text-tertiary hover:text-secondary"
@@ -174,7 +209,7 @@ export default function EtlUploadPage() {
         </button>
         <button
           onClick={() => { setTab("faculty"); handleReset() }}
-          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors shrink-0 ${
             tab === "faculty"
               ? "border-blue-600 text-blue-700"
               : "border-transparent text-tertiary hover:text-secondary"
@@ -182,10 +217,30 @@ export default function EtlUploadPage() {
         >
           Faculty / Dean Upload
         </button>
+        <button
+          onClick={() => { setTab("eval-faculty"); handleReset() }}
+          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors shrink-0 ${
+            tab === "eval-faculty"
+              ? "border-blue-600 text-blue-700"
+              : "border-transparent text-tertiary hover:text-secondary"
+          }`}
+        >
+          Eval Faculty
+        </button>
+        <button
+          onClick={() => { setTab("eval-student"); handleReset() }}
+          className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors shrink-0 ${
+            tab === "eval-student"
+              ? "border-blue-600 text-blue-700"
+              : "border-transparent text-tertiary hover:text-secondary"
+          }`}
+        >
+          Eval Student
+        </button>
       </div>
 
       {/* Upload Area */}
-      {!validationDone && !result && (
+      {!validationDone && !result && !evalResult && !isEvalTab && (
         <div className="space-y-4">
           <div className="card p-6 bg-surface space-y-4">
             <h2 className="text-sm font-bold text-primary">CSV Format</h2>
@@ -219,6 +274,43 @@ export default function EtlUploadPage() {
             <SubmitButton onClick={handleValidate} loading={validating} disabled={!csvText.trim()}>
               Validate Rows
             </SubmitButton>
+          </div>
+        </div>
+      )}
+
+      {/* Evaluation Upload Area */}
+      {isEvalTab && !evalResult && (
+        <div className="space-y-4">
+          <div className="card p-6 bg-surface space-y-4">
+            <h2 className="text-sm font-bold text-primary">
+              {tab === "eval-faculty" ? "Faculty-Subject Mapping" : "Student Enrollment"} CSV Import
+            </h2>
+            <p className="text-xs text-tertiary">
+              Upload a CSV file with columns: <code className="text-[10px] bg-surface-hover px-1 py-0.5 rounded">name, microsoft email, subject</code>.
+              Multiple subjects per person can be added as additional columns.
+            </p>
+
+            <div className="bg-surface rounded-lg p-4 font-mono text-xs text-secondary whitespace-pre overflow-x-auto">
+              {tab === "eval-faculty" ? EVAL_FACULTY_CSV_EXAMPLE : EVAL_STUDENT_CSV_EXAMPLE}
+            </div>
+
+            <label className="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-default hover:bg-surface-hover self-start">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Upload CSV File
+              <input
+                type="file"
+                accept=".csv,.txt"
+                className="hidden"
+                disabled={evalUploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleEvalUpload(file)
+                }}
+              />
+            </label>
+            {evalUploading && <p className="text-xs text-tertiary">Uploading and processing...</p>}
           </div>
         </div>
       )}
@@ -412,8 +504,80 @@ export default function EtlUploadPage() {
         </div>
       )}
 
+      {/* Eval Result Summary */}
+      {evalResult && (
+        <div className="card p-6 bg-surface space-y-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              evalResult.errors.length === 0 && evalResult.parseErrors.length === 0 ? "bg-emerald-100" : "bg-amber-100"
+            }`}>
+              <svg className={`w-5 h-5 ${evalResult.errors.length === 0 && evalResult.parseErrors.length === 0 ? "text-emerald-600" : "text-amber-600"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {evalResult.errors.length === 0 && evalResult.parseErrors.length === 0 ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                )}
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-primary">
+                {evalResult.matched} {tab === "eval-faculty" ? "faculty-subject" : "student-enrollment"} record{evalResult.matched !== 1 ? "s" : ""} matched
+              </p>
+              {(evalResult.errors.length > 0 || evalResult.parseErrors.length > 0) && (
+                <p className="text-xs text-amber-600">
+                  {evalResult.errors.length + evalResult.parseErrors.length} error{(evalResult.errors.length + evalResult.parseErrors.length) !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {evalResult.parseErrors.length > 0 && (
+            <div className="bg-amber-50 rounded-lg p-4 max-h-48 overflow-y-auto">
+              <p className="text-xs font-semibold text-amber-700 mb-2">Parse Errors</p>
+              <div className="space-y-1">
+                {evalResult.parseErrors.map((e, i) => (
+                  <p key={i} className="text-xs text-amber-700">
+                    Row {e.row}: {e.message}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {evalResult.errors.length > 0 && (
+            <div className="bg-amber-50 rounded-lg p-4 max-h-48 overflow-y-auto">
+              <p className="text-xs font-semibold text-amber-700 mb-2">Import Errors</p>
+              <div className="space-y-1">
+                {evalResult.errors.map((e, i) => (
+                  <p key={i} className="text-xs text-amber-700">
+                    Row {e.row}: {e.message}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {evalResult.subjectErrors && evalResult.subjectErrors.length > 0 && (
+            <div className="bg-amber-50 rounded-lg p-4 max-h-48 overflow-y-auto">
+              <p className="text-xs font-semibold text-amber-700 mb-2">Subject Errors</p>
+              <div className="space-y-1">
+                {evalResult.subjectErrors.map((e, i) => (
+                  <p key={i} className="text-xs text-amber-700">{e}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <SubmitButton onClick={handleReset} variant="primary">
+              Upload Another
+            </SubmitButton>
+          </div>
+        </div>
+      )}
+
       {/* Empty state after validation with no rows */}
-      {validationDone && rows.length === 0 && !result && (
+      {!isEvalTab && validationDone && rows.length === 0 && !result && (
         <div className="card p-8 bg-surface text-center">
           <p className="text-sm text-tertiary">No rows found in the CSV.</p>
           <button onClick={handleReset} className="btn-primary text-sm mt-4 px-4 py-2 rounded-lg">

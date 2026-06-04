@@ -24,7 +24,7 @@ export default function NewEvaluationPeriodPage() {
         body: JSON.stringify(form),
       })
       if (!res.ok) throw new Error("Failed to create")
-      router.push("/admin/evaluation/periods")
+      router.push("/admin/evaluations/periods")
       router.refresh()
     } catch {
       alert("Failed to create evaluation period")

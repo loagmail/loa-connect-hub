@@ -259,3 +259,54 @@ Non-activated accounts must use the activation flow at `/activate`.
 | 16. Staggered & Multi-Faculty Booking | ✅ Done |
 | 17. Mobile Companion Pages | ✅ Done |
 | 18. Dark Mode | ✅ Done |
+
+## Faculty Evaluation Module
+
+### Status: 🟡 Implementation complete — needs realignment with plan
+
+Implementation branch: `eval`
+
+### Progress
+
+| # | Track | Status | Files |
+|---|-------|--------|-------|
+| 1.1 | Database schema (migrations 13–14) | ✅ Done | `supabase-schema.sql` |
+| 1.2 | Types (`lib/types/evaluation.ts`) | ✅ Done | 1 file |
+| 1.3 | Repositories (7 repos) | ✅ Done | `lib/repositories/supabase/{evaluation-period,subject,faculty-subject,student-enrollment,rubric,evaluation,evaluation-result}.ts` |
+| 1.4 | Controllers (5) | ✅ Done | `lib/controllers/{evaluation-periods,rubrics,evaluations,evaluation-results,sentiment-analysis}.ts` |
+| 1.5 | API routes (22) | ✅ Done | `app/api/{evaluation-periods,evaluations,evaluation-results,admin/evaluation-periods,admin/evaluation-results,dean/evaluation-results,faculty/evaluation-results,rubric-categories,rubric-items}/` |
+| 1.6 | Shared components (6) | ✅ Done | `components/evaluation/{RatingScale,CategoryProgressBar,FacultyResultCard,SentimentBadge,EvaluationFilters,EvaluationForm}.tsx` |
+| 1.7 | Role pages (9) | ✅ Done | `app/{admin,dean,faculty,student}/evaluation/` |
+| 2 | Constants (`EtlUploadType`) | ✅ Done | `lib/constants.ts` |
+| 3 | ETL service + routes | ✅ Done | `lib/services/etlEvaluation.ts`, `app/api/import/evaluation-{faculty,student}/` |
+| 4 | Wiring (sidebar + access) | ✅ Done | `components/Sidebar.tsx`, `lib/access.ts` |
+| — | Lint + build | ✅ Passes | — |
+
+### Deviations from plan
+
+| Plan says | Current impl |
+|-----------|-------------|
+| Paths under `/admin/evaluations/` (plural) | Uses `/admin/evaluation/` (singular) |
+| Collapsible "Evaluations" sidebar group with 6 children | Flat nav links |
+| ETL as tabs on existing `/admin/etl-upload` page | Separate API routes in `/app/api/import/` |
+| `group_access` DB seed (Migration 15) | Missing — needs `INSERT` for eval pages |
+
+### Next actions
+
+1. Rename `app/admin/evaluation/` → `app/admin/evaluations/`
+2. Rename `app/{dean,faculty,student}/evaluation/` → `app/{dean,faculty,student}/evaluations/`
+3. Add admin evaluations hub page at `/admin/evaluations/page.tsx`
+4. Create collapsible "Evaluations" sidebar section (admin only, 6 children)
+5. Add ETL upload tab page at `/admin/etl-upload/page.tsx`
+6. Add Migration 15 to `supabase-schema.sql` for `group_access` eval page paths
+7. Update `lib/access.ts` DEFAULT_CONFIG to use plural paths
+8. Update `lib/constants.ts` etl types if needed
+9. Lint + build verification
+
+### Plan docs
+
+- `FACULTY-EVALUATION-OVERVIEW.md` — architecture, classification, ETL strategy
+- `FACULTY-EVALUATION-DATABASE.md` — schema, ER, computation logic
+- `FACULTY-EVALUATION-API.md` — route specs, types, repository interfaces
+- `FACULTY-EVALUATION-UI.md` — page specs, component inventory
+- `FACULTY-EVALUATION-EFFORT.md` — 12-phase execution plan, blast-radius analysis

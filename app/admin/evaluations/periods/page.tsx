@@ -19,7 +19,7 @@ export default async function AdminEvaluationPeriodsPage() {
           <p className="text-sm text-tertiary mt-1">Manage evaluation cycles</p>
         </div>
         <Link
-          href="/admin/evaluation/periods/new"
+          href="/admin/evaluations/periods/new"
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
         >
           New Period
@@ -33,7 +33,7 @@ export default async function AdminEvaluationPeriodsPage() {
           periods.map((p) => (
             <Link
               key={p.id}
-              href={`/admin/evaluation/periods/${p.id}`}
+              href={`/admin/evaluations/periods/${p.id}`}
               className="block bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 transition-colors"
             >
               <div className="flex items-center justify-between">

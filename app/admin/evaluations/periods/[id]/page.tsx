@@ -79,7 +79,7 @@ export default function EditEvaluationPeriodPage() {
     try {
       const res = await fetch(`/api/admin/evaluation-periods/${params.id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete")
-      router.push("/admin/evaluation/periods")
+      router.push("/admin/evaluations/periods")
       router.refresh()
     } catch {
       alert("Failed to delete evaluation period")
@@ -169,7 +169,7 @@ export default function EditEvaluationPeriodPage() {
         <div className="flex items-center gap-3 pt-2">
           <button
             type="button"
-            onClick={() => router.push("/admin/evaluation/periods")}
+            onClick={() => router.push("/admin/evaluations/periods")}
             className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-secondary hover:bg-slate-50 transition-colors"
           >
             Back
