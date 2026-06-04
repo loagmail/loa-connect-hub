@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import SubmitButton from "@/components/SubmitButton"
+import ActionSheet from "@/components/ActionSheet"
 
 interface TimeSlot {
   date: string
@@ -46,7 +47,8 @@ export default function StudentMobileMeetingDetail() {
   const [appointment, setAppointment] = useState<AppointmentData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [actionLoading, setActionLoading] = useState("")
+  const [, setActionLoading] = useState("")
+  const [showCancelSheet, setShowCancelSheet] = useState(false)
 
   const appointmentId = params.id as string
 
@@ -192,14 +194,33 @@ export default function StudentMobileMeetingDetail() {
 
       <div className="bg-surface rounded-xl border border-default p-5">
         {appointment.status === "PENDING" && (
-          <SubmitButton
-            onClick={handleCancel}
-            loading={actionLoading === "cancel"}
-            variant="ios-destructive"
-            className="w-full py-3 min-h-[44px] text-sm"
-          >
-            {actionLoading === "cancel" ? "Cancelling..." : "Cancel Request"}
-          </SubmitButton>
+          <>
+            <SubmitButton
+              onClick={() => setShowCancelSheet(true)}
+              variant="ios-destructive"
+              className="w-full py-3 min-h-[44px] text-sm"
+            >
+              Cancel Request
+            </SubmitButton>
+            <ActionSheet
+              isOpen={showCancelSheet}
+              onClose={() => setShowCancelSheet(false)}
+              title="Cancel Request"
+              message="Are you sure you want to cancel this consultation request?"
+              actions={[
+                {
+                  label: "Cancel Request",
+                  role: "destructive",
+                  onClick: handleCancel,
+                },
+                {
+                  label: "Keep It",
+                  role: "cancel",
+                  onClick: () => {},
+                },
+              ]}
+            />
+          </>
         )}
         {(appointment.status === "APPROVED" || appointment.status === "COMPLETED" || appointment.status === "REJECTED" || appointment.status === "CANCELLED") && (
           <p className="text-sm text-tertiary italic text-center">No further actions</p>

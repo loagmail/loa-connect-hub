@@ -3,6 +3,8 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { getMeetingsForUser } from "@/lib/controllers/appointments"
 import { hasRole } from "@/lib/utils/roles"
+import SegmentedControl from "@/components/SegmentedControl"
+import PullToRefresh from "@/components/PullToRefresh"
 
 interface Meeting {
   id: string
@@ -30,13 +32,13 @@ const statusStyles: Record<string, string> = {
   CANCELLED: "bg-slate-200 text-secondary",
 }
 
-const statusLabels: Record<string, string> = {
-  all: "All",
-  pending: "Pending",
-  approved: "Approved",
-  completed: "Completed",
-  cancelled: "Cancelled",
-}
+const statusSegments = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "approved", label: "Approved" },
+  { key: "completed", label: "Completed" },
+  { key: "cancelled", label: "Cancelled" },
+]
 
 export default async function MobileFacultyMeetings(props: {
   searchParams?: Promise<{ filter?: string; sort?: string }>
@@ -75,6 +77,7 @@ export default async function MobileFacultyMeetings(props: {
   }
 
   return (
+    <PullToRefresh>
     <div className="px-4 py-6 max-w-lg mx-auto space-y-4 pb-24">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-primary">Meetings</h1>
@@ -90,21 +93,13 @@ export default async function MobileFacultyMeetings(props: {
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1.5">
-          {Object.entries(statusLabels).map(([key, label]) => (
-            <Link
-              key={key}
-              href={`/faculty/m/meetings?filter=${key}&sort=${activeSort}`}
-              className={`px-3 py-2 text-xs font-semibold rounded-full transition-colors border min-h-[36px] flex items-center ${
-                activeFilter === key
-                  ? "border-gold-500 bg-gold-500 text-white"
-                  : "border-default bg-surface text-secondary hover:bg-slate-200"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
+        <SegmentedControl
+          segments={statusSegments}
+          activeKey={activeFilter}
+          paramName="filter"
+          basePath="/faculty/m/meetings"
+          className="flex-1"
+        />
         <Link
           href={`/faculty/m/meetings?filter=${activeFilter}&sort=${activeSort === "asc" ? "desc" : "asc"}`}
           className="text-xs font-semibold text-tertiary hover:text-secondary transition-colors flex items-center gap-1 shrink-0 min-h-[36px]"
@@ -173,5 +168,6 @@ export default async function MobileFacultyMeetings(props: {
         </Link>
       </div>
     </div>
+    </PullToRefresh>
   )
 }

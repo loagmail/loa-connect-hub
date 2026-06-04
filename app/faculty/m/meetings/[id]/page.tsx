@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import SubmitButton from "@/components/SubmitButton"
+import ActionSheet from "@/components/ActionSheet"
 
 interface TimeSlot {
   date: string
@@ -58,6 +59,8 @@ export default function FacultyMobileMeetingDetail() {
   const [teamsLink, setTeamsLink] = useState("")
   const [showAcceptForm, setShowAcceptForm] = useState(false)
   const [actionError, setActionError] = useState("")
+  const [showDeclineSheet, setShowDeclineSheet] = useState(false)
+  const [showCancelSheet, setShowCancelSheet] = useState(false)
 
   const appointmentId = params.id as string
 
@@ -290,13 +293,30 @@ export default function FacultyMobileMeetingDetail() {
                   Accept
                 </SubmitButton>
                 <SubmitButton
-                  onClick={() => handleAction("decline")}
-                  loading={actionLoading === "decline"}
+                  onClick={() => setShowDeclineSheet(true)}
                   variant="ios-destructive"
                   className="w-full py-3 min-h-[44px] text-sm"
                 >
-                  {actionLoading === "decline" ? "Declining..." : "Decline"}
+                  Decline
                 </SubmitButton>
+                <ActionSheet
+                  isOpen={showDeclineSheet}
+                  onClose={() => setShowDeclineSheet(false)}
+                  title="Decline Request"
+                  message="Are you sure you want to decline this consultation request?"
+                  actions={[
+                    {
+                      label: "Decline",
+                      role: "destructive",
+                      onClick: () => handleAction("decline"),
+                    },
+                    {
+                      label: "Go Back",
+                      role: "cancel",
+                      onClick: () => {},
+                    },
+                  ]}
+                />
               </div>
             )}
 
@@ -349,13 +369,30 @@ export default function FacultyMobileMeetingDetail() {
                   {actionLoading === "complete" ? "Completing..." : "Mark Complete"}
                 </SubmitButton>
                 <SubmitButton
-                  onClick={() => handleAction("cancel")}
-                  loading={actionLoading === "cancel"}
+                  onClick={() => setShowCancelSheet(true)}
                   variant="ios-destructive"
                   className="w-full py-3 min-h-[44px] text-sm"
                 >
-                  {actionLoading === "cancel" ? "Cancelling..." : "Cancel"}
+                  Cancel
                 </SubmitButton>
+                <ActionSheet
+                  isOpen={showCancelSheet}
+                  onClose={() => setShowCancelSheet(false)}
+                  title="Cancel Meeting"
+                  message="Are you sure you want to cancel this meeting?"
+                  actions={[
+                    {
+                      label: "Cancel Meeting",
+                      role: "destructive",
+                      onClick: () => handleAction("cancel"),
+                    },
+                    {
+                      label: "Go Back",
+                      role: "cancel",
+                      onClick: () => {},
+                    },
+                  ]}
+                />
               </div>
             )}
 

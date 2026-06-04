@@ -2,10 +2,11 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { FacultyAppointmentTabs } from "@/components/FacultyAppointmentTabs"
-import SearchInput from "@/components/SearchInput"
+import SearchBar from "@/components/SearchBar"
 import { getMeetingsForUser } from "@/lib/controllers/appointments"
 import { getWeekRange, getMonthRange } from "@/lib/utils/date"
 import { hasRole } from "@/lib/utils/roles"
+import SegmentedControl from "@/components/SegmentedControl"
 
 interface ParticipantData {
   id: string
@@ -40,12 +41,12 @@ const statusColors: Record<string, string> = {
   CANCELLED: "bg-slate-500/20 text-tertiary",
 }
 
-const filterLabels: Record<string, string> = {
-  all: "All Meetings",
-  this_week: "This Week",
-  this_month: "This Month",
-  created_by_me: "Created by Me",
-}
+const filterSegments = [
+  { key: "all", label: "All" },
+  { key: "this_week", label: "This Week" },
+  { key: "this_month", label: "This Month" },
+  { key: "created_by_me", label: "My Meetings" },
+]
 
 const statusLabels: Record<string, string> = {
   all: "All Statuses",
@@ -173,20 +174,13 @@ export default async function MeetingsPage(props: {
       {/* Filters */}
       <div className="card p-4 bg-surface">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-1.5">
-            {Object.entries(filterLabels).map(([key, label]) => (
-              <Link
-                key={key}
-                href={`/faculty/meetings?filter=${key}&tab=${activeTab}&sort=${activeSort}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "&showInternal=1" : ""}`}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${activeFilter === key
-                    ? "border-gold-500 bg-gold-500 text-white"
-                    : "border-default bg-surface text-secondary hover:bg-slate-200"
-                  }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+          <SegmentedControl
+            segments={filterSegments}
+            activeKey={activeFilter}
+            paramName="filter"
+            basePath="/faculty/meetings"
+            className="flex-1"
+          />
           <div className="flex items-center gap-3">
             <Link
               href={`/faculty/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "" : "&showInternal=1"}`}
@@ -219,7 +213,7 @@ export default async function MeetingsPage(props: {
 
         <div className="mt-4 space-y-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <SearchInput key={searchQuery} query={searchQuery} />
+            <SearchBar query={searchQuery} placeholder="Search meetings..." basePath="/faculty/meetings" />
           </div>
           <FacultyAppointmentTabs
             counts={counts}

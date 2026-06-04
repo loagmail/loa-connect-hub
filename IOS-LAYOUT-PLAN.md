@@ -135,23 +135,21 @@ Transform the web app from a sidebar-based dashboard layout into a native-feelin
 
 ## Phase 3: iOS Gestures & Interactions
 
-### 3.1 Swipe Back Gesture
+### 3.1 Swipe Back Gesture ✅
 
 **Current**: Back button only.
 **Target**: iOS interactive pop gesture (swipe from left edge).
 
 **Changes:**
-
-- **NavigationStack** context tracks history
-- On touch start near left edge (< 20px), intercept and track finger horizontally
-- Drag indicator: shadow overlay on current page, peek of previous page
-- Release at < 50%: snap back to current page
-- Release at >= 50%: complete navigation pop
-- Spring animation on completion/cancellation
+- ✅ Touch start near left edge (< 25px) initiates swipe tracking
+- ✅ Page translates with finger (50% resistance), vertical swipe cancels
+- ✅ Shadow overlay on current page, surface-muted background peeks through
+- ✅ Release at < 35%: snap back with spring animation
+- ✅ Release at >= 35%: complete navigation pop
+- ✅ Uses refs to avoid stale closure issues in touch handlers
 
 - **Files to modify**:
-  - `components/NavigationStack.tsx` — add gesture handling
-  - `components/AppShell.tsx` — wrap content for gesture detection
+  - `components/NavigationStack.tsx` — added `SwipeBackHandler` component, wrapped in `NavigationStack`
 
 ### 3.2 Swipe Actions on List Rows
 
@@ -208,28 +206,33 @@ Transform the web app from a sidebar-based dashboard layout into a native-feelin
 
 ## Phase 4: iOS Visual Polish
 
-### 4.1 Status Bar & Safe Areas
+### 4.1 Status Bar & Safe Areas ✅
 
-- **Status bar**: Proper styling (light content on dark backgrounds, dark content on light)
-- **Dynamic island / notch**: Content avoids safe areas
-- **Home indicator**: Bottom content respects safe area (already done via `pb-safe`)
+- ✅ **Status bar**: Added `apple-mobile-web-app-status-bar-style: black-translucent` meta tag for transparent status bar overlay
+- ✅ **Dynamic island / notch**: Auth layout now uses `pt-safe` padding for status bar avoidance
+- ✅ **Home indicator**: Bottom content respects safe area (already done via `pb-safe` on tab bar)
+- ✅ **Safe area utilities**: `pt-safe`, `pb-safe`, `pl-safe`, `pr-safe` already defined in globals.css
 
-### 4.2 Loading States (iOS Skeleton)
+### 4.2 Loading States (iOS Skeleton) ✅
 
-- Replace the current `animate-pulse` pattern with iOS-style shimmer skeletons:
-  - Gray rounded rectangles for text lines
-  - Circular shimmer for avatars
-  - Proper sizing matching actual content dimensions
-  - Slower shimmer animation mimicking iOS loading
+- ✅ New `components/IosSkeleton.tsx` with iOS-style shimmer skeletons:
+  - `IosSkeleton` — generic shimmer blocks with configurable count
+  - `IosSkeletonText` — text line shimmers with variable widths
+  - `IosSkeletonAvatar` — circular avatar shimmer
+  - `IosSkeletonCard` — iOS table row skeleton (3 rows with avatar + text + badge)
+  - `IosSkeletonDetail` — detail view skeleton (info rows + participant rows + action buttons)
+- ✅ Uses existing `animate-shimmer` CSS class (gradient sweep, not opacity pulse)
+- ✅ Proper sizing matching iOS table row dimensions (44pt row height, 10pt avatar, etc.)
 
-### 4.3 Empty States
+### 4.3 Empty States ✅
 
-- Update empty states to match iOS style:
-  - Large SF Symbol icon in gray
-  - Title (17pt bold)
-  - Description (15pt regular, gray)
-  - Single primary action button
-  - Centered layout
+- ✅ New `components/EmptyState.tsx` component matching iOS style:
+  - Large SF Symbol–style icon (64px, gray, 1.2 stroke width, optional custom icon)
+  - Title (17pt bold / text-lg font-bold)
+  - Description (15pt regular, gray / text-base text-tertiary, max-w-xs)
+  - Single primary action button (btn-ios-primary) via href or onClick
+  - Centered layout with generous padding (py-16 px-8)
+- ✅ Reusable across all pages — import `<EmptyState title="..." description="..." action={{ label: "...", href: "..." }} />`
 
 ### 4.4 Keyboard Handling
 
@@ -270,9 +273,9 @@ Transform the web app from a sidebar-based dashboard layout into a native-feelin
 
 | Page | Current | Target |
 |------|---------|--------|
-| `/login` | Centered card | Full-screen iOS login |
-| `/activate` | Centered card | iOS form in grouped table |
-| `/forgot-password` | Centered card | iOS modal presentation |
+| `/login` | Centered card | Full-screen iOS login | ✅ |
+| `/activate` | Centered card | iOS form in grouped table | ✅ |
+| `/forgot-password` | Centered card | iOS modal presentation | ✅ |
 
 ---
 
@@ -282,12 +285,12 @@ Transform the web app from a sidebar-based dashboard layout into a native-feelin
 2. ✅ **iOS table styles** in globals.css (visual foundation)
 3. ✅ **Tab bar enhancement** (UI polish)
 4. ✅ **iOS button variants** (component update)
-5. **SegmentedControl** (replace filter pills) — _pending_
-6. **SearchBar** (replace search input) — _pending_
-7. **ActionSheet + Alert** (modals) — _pending_
-8. **SwipeableRow** (gesture) — _pending_
-9. **Pull to refresh** (gesture) — _pending_
-10. **Page-by-page migration** (content) — _pending_
+5. ✅ **SegmentedControl** (replace filter pills)
+6. ✅ **SearchBar** (replace search input)
+7. ✅ **ActionSheet + Alert** (modals)
+8. ✅ **SwipeableRow** (gesture)
+9. ✅ **Pull to refresh** (gesture)
+10. **Page-by-page migration** (content) — _in progress_
 
 ---
 
@@ -297,13 +300,15 @@ Transform the web app from a sidebar-based dashboard layout into a native-feelin
 |------|---------|--------|
 | `components/NavigationStack.tsx` | Navigation context + push/pop transitions | ✅ |
 | `components/NavigationBar.tsx` | iOS-style nav bar with large titles | ✅ |
-| `components/SearchBar.tsx` | iOS UISearchBar | ⏳ |
-| `components/SegmentedControl.tsx` | iOS UISegmentedControl | ⏳ |
-| `components/ActionSheet.tsx` | iOS action sheet | ⏳ |
-| `components/Alert.tsx` | iOS alert dialog | ⏳ |
-| `components/SwipeableRow.tsx` | Swipe-to-reveal actions | ⏳ |
-| `hooks/usePullToRefresh.ts` | Pull-to-refresh hook | ⏳ |
-| `hooks/useSwipeBack.ts` | Interactive pop gesture hook | ⏳ |
+| `components/SearchBar.tsx` | iOS UISearchBar | ✅ |
+| `components/SegmentedControl.tsx` | iOS UISegmentedControl | ✅ |
+| `components/ActionSheet.tsx` | iOS action sheet | ✅ |
+| `components/Alert.tsx` | iOS alert dialog | ✅ |
+| `components/SwipeableRow.tsx` | Swipe-to-reveal actions | ✅ |
+| `hooks/usePullToRefresh.ts` | Pull-to-refresh hook | ✅ |
+| `components/PullToRefresh.tsx` | Pull-to-refresh wrapper | ✅ |
+| `components/IosSkeleton.tsx` | iOS shimmer skeleton variants | ✅ |
+| `components/EmptyState.tsx` | iOS empty state with icon + action | ✅ |
 
 ## Files Modified
 
@@ -313,13 +318,19 @@ Transform the web app from a sidebar-based dashboard layout into a native-feelin
 | `components/AppShell.tsx` | Wrap in NavigationStack, NavigationBar integration | ✅ |
 | `components/Breadcrumbs.tsx` | Replaced with NavigationBar | ✅ |
 | `components/SubmitButton.tsx` | Added 5 iOS button variants | ✅ |
-| `components/SearchInput.tsx` | Refactor or replace with SearchBar | ⏳ |
-| `components/AppointmentCard.tsx` | iOS table row style | ✅ |
+| `components/SearchInput.tsx` | Refactor or replace with SearchBar | ✅ |
+| `components/AppointmentCard.tsx` | iOS table row style + SwipeableRow | ✅ |
 | `components/Sidebar.tsx` | Enhanced tab bar with filled/outlined icons, badges | ✅ |
 | `components/AppointmentDetail.tsx` | Migrated buttons to iOS variants | ✅ |
-| `app/faculty/meetings/page.tsx` | iOS table layout | ✅ |
-| `app/faculty/m/meetings/page.tsx` | iOS table layout | ✅ |
+| `app/faculty/meetings/page.tsx` | iOS table layout + SegmentedControl + SearchBar | ✅ |
+| `app/faculty/m/meetings/page.tsx` | iOS table layout + SegmentedControl + PullToRefresh | ✅ |
 | `app/faculty/m/meetings/[id]/page.tsx` | iOS action buttons | ✅ |
-| `app/student/m/meetings/page.tsx` | iOS table layout | ✅ |
-| `app/student/m/meetings/[id]/page.tsx` | iOS action buttons | ✅ |
+| `app/student/m/meetings/page.tsx` | iOS table layout + SegmentedControl + PullToRefresh | ✅ |
+| `app/student/m/meetings/[id]/page.tsx` | iOS action buttons + ActionSheet | ✅ |
+| `app/student/meetings/page.tsx` | SegmentedControl integration | ✅ |
+| `app/faculty/m/meetings/[id]/page.tsx` | iOS action buttons + ActionSheet | ✅ |
+| `app/(auth)/forgot-password/page.tsx` | Full-screen iOS layout, grouped table input, ios-primary button, success/error banners | ✅ |
+| `components/NavigationStack.tsx` | Added `SwipeBackHandler` component with touch edge-gesture + refs for stale closure safety | ✅ |
+| `app/layout.tsx` | Added `apple-mobile-web-app-status-bar-style: black-translucent` meta tag | ✅ |
+| `app/(auth)/layout.tsx` | Added `pt-safe` for status bar safe area | ✅ |
 | All mobile route pages | Update to iOS content layouts | ⏳ |

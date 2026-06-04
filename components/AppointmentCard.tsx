@@ -5,6 +5,7 @@ import { StatusBadge } from "./StatusBadge"
 import { TeamsLinkInput } from "./TeamsLinkInput"
 import Link from "next/link"
 import SubmitButton from "@/components/SubmitButton"
+import SwipeableRow from "@/components/SwipeableRow"
 import { hasRole } from "@/lib/utils/roles"
 
 interface TimeSlot {
@@ -124,9 +125,68 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
     ? `/student/meetings/${appointment.id}`
     : `/faculty/meetings/${appointment.id}`
 
+  const swipeActions: Array<{ label: string; onClick: () => void; bgColor: string }> = []
+
+  if (hasRole(role, "STUDENT") && effectiveStatus === "PENDING") {
+    swipeActions.push({
+      label: "Cancel",
+      onClick: async () => {
+        setLoading("cancel")
+        setMessage("")
+        try {
+          const res = await fetch(`/api/appointments/${appointment.id}/student-cancel`, { method: "POST" })
+          const data = await res.json()
+          if (res.ok) {
+            setLocalStatus("CANCELLED")
+            setMessage("Appointment cancelled!")
+            setTimeout(() => setMessage(""), 3000)
+          } else {
+            setMessage(data.error || "Failed to cancel")
+          }
+        } catch {
+          setMessage("An error occurred")
+        } finally {
+          setLoading("")
+        }
+      },
+      bgColor: "bg-red-600",
+    })
+  }
+
+  if (hasRole(role, "FACULTY") && effectiveStatus === "PENDING") {
+    swipeActions.push(
+      {
+        label: "Accept",
+        onClick: () => handleAction("accept"),
+        bgColor: "bg-emerald-600",
+      },
+      {
+        label: "Decline",
+        onClick: () => handleAction("decline"),
+        bgColor: "bg-red-600",
+      },
+    )
+  }
+
+  if (hasRole(role, "FACULTY") && effectiveStatus === "APPROVED") {
+    swipeActions.push(
+      {
+        label: "Complete",
+        onClick: () => handleAction("complete"),
+        bgColor: "bg-brand-600",
+      },
+      {
+        label: "Cancel",
+        onClick: () => handleAction("cancel"),
+        bgColor: "bg-red-600",
+      },
+    )
+  }
+
   return (
     <div className="ios-table-section">
-      <Link href={detailHref} className="ios-table-row !min-h-[60px]">
+      <SwipeableRow actions={swipeActions}>
+        <Link href={detailHref} className="ios-table-row !min-h-[60px]">
         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getAvatarClass(personName)} flex items-center justify-center text-sm font-bold shadow-sm shrink-0`}>
           {getInitial(personName)}
         </div>
@@ -143,6 +203,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </Link>
+      </SwipeableRow>
 
       {hasRole(role, "STUDENT") && effectiveStatus === "PENDING" && (
         <div className="px-4 py-3 border-t border-default">

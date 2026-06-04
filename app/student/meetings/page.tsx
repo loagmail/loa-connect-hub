@@ -6,6 +6,7 @@ import { FacultyAppointmentTabs } from "@/components/FacultyAppointmentTabs"
 import { listStudentAppointments } from "@/lib/controllers/appointments"
 import { getWeekRange, getMonthRange } from "@/lib/utils/date"
 import { hasRole } from "@/lib/utils/roles"
+import SegmentedControl from "@/components/SegmentedControl"
 
 interface StudentAppointment {
   id: string
@@ -20,11 +21,11 @@ interface StudentAppointment {
   faculty?: { name: string; email: string }
 }
 
-const filterLabels: Record<string, string> = {
-  all: "All Consultations",
-  this_week: "This Week",
-  this_month: "This Month",
-}
+const filterSegments = [
+  { key: "all", label: "All" },
+  { key: "this_week", label: "This Week" },
+  { key: "this_month", label: "This Month" },
+]
 
 export default async function StudentMeetings(props: {
   searchParams?: Promise<{ filter?: string; tab?: string; sort?: string }>
@@ -95,7 +96,7 @@ export default async function StudentMeetings(props: {
     cancelled: appointments.filter((a: StudentAppointment) => a.status === "CANCELLED").length,
   }
 
-  const filterLabel = filterLabels[activeFilter] || "All Consultations"
+  const filterLabel = filterSegments.find((s) => s.key === activeFilter)?.label || "All Consultations"
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -126,21 +127,13 @@ export default async function StudentMeetings(props: {
       {/* Filter Pills + Sort Toggle */}
       <div className="card p-4 bg-surface">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-1.5">
-            {Object.entries(filterLabels).map(([key, label]) => (
-              <Link
-                key={key}
-                href={`/student/meetings?filter=${key}&tab=${activeTab}&sort=${activeSort}`}
-                className={`px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-full transition-colors border ${
-                  activeFilter === key
-                    ? "border-gold-500 bg-gold-500 text-white"
-                    : "border-default bg-surface text-secondary hover:bg-slate-200"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+          <SegmentedControl
+            segments={filterSegments}
+            activeKey={activeFilter}
+            paramName="filter"
+            basePath="/student/meetings"
+            className="flex-1"
+          />
           <Link
             href={`/student/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort === "asc" ? "desc" : "asc"}`}
             className="text-xs font-semibold text-tertiary hover:text-secondary transition-colors flex items-center gap-1 shrink-0 py-2 sm:py-0"

@@ -23,75 +23,82 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-sm space-y-6">
-      <div className="text-center mb-8">
-        <div className="flex justify-center mb-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-blk.png"
-            alt="Lyceum of Alabang"
-            className="h-10 object-contain"
-          />
+    <div className="min-h-dvh flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <div className="flex justify-center mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-blk.png"
+              alt="Lyceum of Alabang"
+              className="h-12 object-contain"
+            />
+          </div>
+
+          <h1 className="text-[34px] font-bold text-primary text-center tracking-tight leading-tight">Sign In</h1>
+          <p className="text-base text-tertiary text-center mt-1">Academic e-Consultations</p>
+
+          {error && (
+            <div className="mt-6 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Invalid email or password
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="mt-8">
+            <div className="ios-table-section">
+              <div className="ios-table-row !min-h-[48px] !p-0">
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  placeholder="Email Address"
+                  inputMode="email"
+                  enterKeyHint="next"
+                  className="w-full h-full px-4 py-3 text-[16px] text-primary bg-transparent placeholder-tertiary outline-none border-none"
+                />
+              </div>
+              <div className="ios-table-row !min-h-[48px] !p-0">
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Password"
+                  enterKeyHint="done"
+                  className="w-full h-full px-4 py-3 text-[16px] text-primary bg-transparent placeholder-tertiary outline-none border-none"
+                />
+              </div>
+            </div>
+
+            <SubmitButton type="submit" loading={loading} variant="ios-primary" className="w-full py-3 mt-6 text-base font-semibold">
+              {loading ? "Signing in..." : "Sign In"}
+            </SubmitButton>
+          </form>
+
+          <div className="text-center mt-6 space-y-4">
+            <Link href="/forgot-password" className="btn-ios-plain text-sm font-semibold">
+              Forgot password?
+            </Link>
+            <p className="text-sm text-tertiary font-medium">
+              First time here?{" "}
+              <Link href="/activate" className="text-brand-600 font-semibold hover:text-brand-700 transition-colors">
+                Activate your account
+              </Link>
+            </p>
+          </div>
         </div>
-        <h1 className="text-xl font-bold text-primary font-display tracking-tight">Student Portal Sign In</h1>
-        <p className="text-tertiary mt-1 text-xs font-semibold uppercase tracking-wider">Academic e-Consultations</p>
       </div>
 
-      {error && (
-        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Invalid email or password
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-xs font-semibold text-secondary mb-1.5 uppercase tracking-wider">
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full px-3.5 py-2.5 rounded-lg border border-strong bg-surface text-sm text-primary placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gold-400/30 focus:border-gold-500 transition-all"
-            placeholder="you@itmlyceumalabang.onmicrosoft.com"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="block text-xs font-semibold text-secondary mb-1.5 uppercase tracking-wider">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-3.5 py-2.5 rounded-lg border border-strong bg-surface text-sm text-primary placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gold-400/30 focus:border-gold-500 transition-all"
-            placeholder="******"
-          />
-        </div>
-
-        <SubmitButton type="submit" loading={loading} variant="primary" className="w-full py-2.5">
-          {loading ? "Signing in..." : "Sign In"}
-        </SubmitButton>
-      </form>
-
-      <div className="text-center space-y-3">
-        <Link href="/forgot-password" className="text-xs hover:text-secondary text-tertiary font-medium transition-colors">
-          Forgot password?
-        </Link>
-        <p className="text-xs text-tertiary font-medium">
-          First time here?{" "}
-          <Link href="/activate" className="text-gold-600 hover:text-gold-700 font-semibold transition-colors">
-            Activate your account
-          </Link>
-        </p>
+      <div className="px-6 pb-8 text-center">
+        <p className="text-xs text-tertiary">Lyceum of Alabang</p>
       </div>
     </div>
   )

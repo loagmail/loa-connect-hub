@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   description: "Academic e-Consultation booking system",
   other: {
     "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
   },
 }
 
