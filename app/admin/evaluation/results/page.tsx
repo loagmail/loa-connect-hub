@@ -44,12 +44,10 @@ export default function AdminEvaluationResultsPage() {
 
   useEffect(() => {
     if (!selectedPeriod) return
-    setLoading(true)
     fetch(`/api/admin/evaluation-results?periodId=${selectedPeriod}`)
       .then((r) => r.json())
-      .then((data) => setResults(data.results || []))
-      .catch(() => alert("Failed to load results"))
-      .finally(() => setLoading(false))
+      .then((data) => { setResults(data.results || []); setLoading(false) })
+      .catch(() => { alert("Failed to load results"); setLoading(false) })
   }, [selectedPeriod])
 
   return (

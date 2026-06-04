@@ -43,15 +43,13 @@ export default function FacultyEvaluationResultsPage() {
 
   useEffect(() => {
     if (!selectedPeriod) return
-    setLoading(true)
     fetch(`/api/faculty/evaluation-results?periodId=${selectedPeriod}`)
       .then((r) => {
         if (!r.ok) return null
         return r.json()
       })
-      .then((data) => setResult(data?.result || null))
-      .catch(() => alert("Failed to load result"))
-      .finally(() => setLoading(false))
+      .then((data) => { setResult(data?.result || null); setLoading(false) })
+      .catch(() => { alert("Failed to load result"); setLoading(false) })
   }, [selectedPeriod])
 
   const categories = result

@@ -3,10 +3,6 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 
-interface PendingFaculty {
-  facultyId: string
-}
-
 interface ExistingEvaluation {
   id: string
   facultyId: string

@@ -1,17 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import type { EvaluationResultData, IEvaluationResultRepository } from "@/lib/types"
 
-const CATEGORY_COLUMNS = [
-  "professionalManner",
-  "communicationWithStudent",
-  "studentEngagement",
-  "learningMaterials",
-  "timeManagement",
-  "experientialLearning",
-  "respectUniqueness",
-  "assessmentAndFeedback",
-] as const
-
 export const evaluationResultRepository: IEvaluationResultRepository = {
   async list(periodId, filters) {
     let q = supabase.from("evaluation_results").select("*").eq("periodId", periodId)

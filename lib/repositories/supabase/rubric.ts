@@ -36,7 +36,7 @@ export const rubricRepository: IRubricRepository = {
         .single()
       if (catErr) throw catErr
 
-      const itemsToInsert = cat.items.map((item, idx) => ({
+      const itemsToInsert = cat.items.map((item) => ({
         categoryId: newCat.id,
         text: item.text,
         displayOrder: item.displayOrder,
