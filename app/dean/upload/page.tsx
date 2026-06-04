@@ -110,6 +110,7 @@ export default function DeanUploadPage() {
           </div>
           <div className="bg-surface rounded-lg p-3 text-[10px] font-mono text-secondary leading-relaxed">
             name, microsoft email, section, code, title
+            e.g. Jane Faculty, jane.faculty@lyceumalabang.edu.ph, BSIT-32A1, ELEC-323, Elective 3 - Fullstack Development
           </div>
           <a
             href="/api/import/users"

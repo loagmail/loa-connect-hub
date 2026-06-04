@@ -391,8 +391,7 @@ AND NOT EXISTS (SELECT 1 FROM department_courses WHERE "departmentId" = d.id AND
 
 -- =========================================================
 -- 8. SEED DATA
---    Uses fixed UUIDs for idempotent re-runs and to align
---    with prisma/seed-supabase.ts expectations.
+--    Uses fixed UUIDs for idempotent re-runs.
 -- =========================================================
 
 DO $$
@@ -401,13 +400,6 @@ DECLARE
   _dept_id TEXT    := 'b0000000-0000-0000-0000-000000000001';
   _dean_id TEXT    := 'c0000000-0000-0000-0000-000000000001';
   _faculty1_id TEXT := 'd0000000-0000-0000-0000-000000000001';
-  _faculty2_id TEXT := 'd0000000-0000-0000-0000-000000000002';
-  _faculty3_id TEXT := 'd0000000-0000-0000-0000-000000000003';
-  _student1_id TEXT := 'e0000000-0000-0000-0000-000000000001';
-  _student2_id TEXT := 'e0000000-0000-0000-0000-000000000002';
-  _student3_id TEXT := 'e0000000-0000-0000-0000-000000000003';
-  _student4_id TEXT := 'e0000000-0000-0000-0000-000000000004';
-  _student5_id TEXT := 'e0000000-0000-0000-0000-000000000005';
   _course_bsit_id TEXT := 'f0000000-0000-0000-0000-000000000001';
   _course_bscs_id TEXT := 'f0000000-0000-0000-0000-000000000002';
 
@@ -444,58 +436,13 @@ BEGIN
     (_course_bscs_id, _dept_id, 'Bachelor of Science in Computer Science', 'BSCS')
   ON CONFLICT ("departmentId", code) DO NOTHING;
 
-  -- ── FACULTY (3) ─────────────────────────────────────────
-  INSERT INTO users (id, name, email, "passwordHash", "departmentId") VALUES
-    (_faculty1_id, 'Nin Alamo',           'n.alamo@lyceumalabang.edu.ph
-', _hash, _dept_id),
-    (_faculty2_id, 'Maria Santos',        'maria.santos@lyceumalabang.edu.ph
-',           _hash, _dept_id),
-    (_faculty3_id, 'Juan Dela Cruz',      'juan.delacruz@lyceumalabang.edu.ph
-',         _hash, _dept_id)
+  -- ── FACULTY (1) ─────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash", "departmentId")
+  VALUES (_faculty1_id, 'Nin Alamo', 'n.alamo@lyceumalabang.edu.ph', _hash, _dept_id)
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO userrole ("userId", "roleName") VALUES
-    (_faculty1_id, 'FACULTY'),
-    (_faculty2_id, 'FACULTY'),
-    (_faculty3_id, 'FACULTY')
+  INSERT INTO userrole ("userId", "roleName") VALUES (_faculty1_id, 'FACULTY')
   ON CONFLICT DO NOTHING;
-
-  -- ── STUDENTS (5) ────────────────────────────────────────
-  INSERT INTO users (id, name, email, "passwordHash", "departmentId", course) VALUES
-    (_student1_id, 'Alice Reyes',       'alice.reyes@itmlyceumalabang.onmicrosoft.com
-',     _hash, _dept_id, 'BSIT'),
-    (_student2_id, 'Bob Martinez',      'bob.martinez@itmlyceumalabang.onmicrosoft.com
-',    _hash, _dept_id, 'BSIT'),
-    (_student3_id, 'Charlie Gomez',     'charlie.gomez@itmlyceumalabang.onmicrosoft.com
-',   _hash, _dept_id, 'BSCS'),
-    (_student4_id, 'Diana Lopez',       'diana.lopez@itmlyceumalabang.onmicrosoft.com
-',     _hash, _dept_id, 'BSCS'),
-    (_student5_id, 'Ethan Fernandez',   'ethan.fernandez@itmlyceumalabang.onmicrosoft.com
-', _hash, _dept_id, 'BSIT')
-  ON CONFLICT (id) DO NOTHING;
-
-  INSERT INTO userrole ("userId", "roleName") VALUES
-    (_student1_id, 'STUDENT'),
-    (_student2_id, 'STUDENT'),
-    (_student3_id, 'STUDENT'),
-    (_student4_id, 'STUDENT'),
-    (_student5_id, 'STUDENT')
-  ON CONFLICT DO NOTHING;
-
-  -- ── FACULTY AVAILABILITY ─────────────────────────────────
-  -- FOR i IN 0..6 LOOP
-  --   INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
-  --   VALUES (_faculty1_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
-  --   ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
-
-  --   INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
-  --   VALUES (_faculty2_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
-  --   ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
-
-  --   INSERT INTO faculty_availability_rules ("facultyId", "dayOfWeek", "isBlocked", "startTime", "endTime", "startDate")
-  --   VALUES (_faculty3_id, i, CASE WHEN i >= 5 THEN true ELSE false END, CASE WHEN i >= 5 THEN NULL ELSE '08:00' END, CASE WHEN i >= 5 THEN NULL ELSE '18:00' END, '2026-01-01')
-  --   ON CONFLICT ("facultyId", "dayOfWeek", "startDate") DO NOTHING;
-  -- END LOOP;
 
 END $$;
 

@@ -318,7 +318,7 @@ export default function AdminUsersPage() {
               </div>
               <div className="bg-slate-50 rounded-lg p-2.5 space-y-1">
                 <p className="text-[10px] font-mono text-slate-500">name, microsoft email, section, code, title</p>
-                <p className="text-[10px] font-mono text-slate-700">Jane Faculty, jane.faculty@lyceumalabang.edu.ph, A, CCS101, Intro to Programming</p>
+                <p className="text-[10px] font-mono text-slate-700">Jane Faculty, jane.faculty@lyceumalabang.edu.ph, BSIT-32A1, ELEC-323, Elective 3 - Fullstack Development</p>
               </div>
               <a
                 href="/api/import/users"
@@ -380,6 +380,11 @@ export default function AdminUsersPage() {
               const formData = new FormData()
               formData.append("file", file)
 
+              // ── IMPORTANT: Faculty CSV behaviour ──────────────────
+              // - If email exists, user is NOT duplicated — their info is read for subject linking
+              // - Subjects are upserted by code (section + title are parsed but not stored)
+              // - Users are NOT auto-assigned a department
+              // ─────────────────────────────────────────────────────
               const endpoint =
                 importType === "users" ? "/api/import/users" : "/api/import/students"
 

@@ -30,8 +30,8 @@ export function getCsvTemplate(type: CsvTemplateType): string {
   const headers = HEADERS[type].join(",")
   const samples: Record<CsvTemplateType, string[]> = {
     full: [
-      "Jane Faculty,jane.faculty@itmlyceumalabang.onmicrosoft.com,A,CCS101,Intro to Programming",
-      "Mike Dean,mike.dean@lyceumalabang.edu.ph,B,CCS102,Data Structures",
+      "Jane Faculty,jane.faculty@lyceumalabang.edu.ph,BSIT-32A1,ELEC-323,Elective 3 - Fullstack Development",
+      "Mike Dean,mike.dean@lyceumalabang.edu.ph,BSCS-41B2,CCS-412,Capstone Project 2",
     ],
     students: [
       "Alice Student,alice.student@lyceumalabang.edu.ph,BSIT",
