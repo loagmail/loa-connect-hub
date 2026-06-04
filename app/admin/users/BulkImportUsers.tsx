@@ -143,7 +143,12 @@ export default function BulkImportUsers({ departments }: BulkImportUsersProps) {
                     signal: controller.signal
                   })
                   const data = await res.json()
-                  if (!res.ok) { setPreviewError(data.error || "Preview failed"); return }
+                  if (!res.ok) { 
+                    setPreviewError(data.error || "Preview failed")
+                    setPreviewRows([])
+                    setPreviewPage(0)
+                    return 
+                  }
                   setPreviewRows(data.rows.map((r: PreviewRow, i: number) => ({ ...r, row: i + 2 })))
                   setPreviewPage(0)
                 } catch (e: unknown) {
@@ -151,6 +156,8 @@ export default function BulkImportUsers({ departments }: BulkImportUsersProps) {
                     setPreviewError("Preview cancelled")
                   } else {
                     setPreviewError("Network error")
+                    setPreviewRows([])
+                    setPreviewPage(0)
                   }
                 } finally {
                   setPreviewLoading(false)
@@ -193,7 +200,7 @@ export default function BulkImportUsers({ departments }: BulkImportUsersProps) {
               </button>
               <button
                 type="button"
-                disabled={importLoading}
+                disabled={importLoading || previewRows.length === 0}
                 onClick={async () => {
                   setImportLoading(true)
                   setImportError("")
@@ -235,9 +242,20 @@ export default function BulkImportUsers({ departments }: BulkImportUsersProps) {
             </div>
           </div>
 
-          {previewError && <p className="text-xs font-medium text-red-600">{previewError}</p>}
+          {previewError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-2 mt-3">
+              <p className="text-xs font-semibold text-red-700">{previewError}</p>
+              <div className="bg-white rounded p-2">
+                <p className="text-[10px] font-bold text-slate-500 mb-1">Reminder — Required Format for {importType === "users" ? "Faculty / Staff" : "Students"}:</p>
+                <p className="text-[10px] font-mono text-slate-700">
+                  {importType === "users" ? "name, microsoft email, section, code, title" : "name, microsoft email, section, code"}
+                </p>
+              </div>
+            </div>
+          )}
 
-          <div className="overflow-x-auto max-h-80 overflow-y-auto border border-slate-200 rounded-lg">
+          {previewRows.length > 0 && (
+            <div className="overflow-x-auto max-h-80 overflow-y-auto border border-slate-200 rounded-lg mt-3">
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="bg-slate-50 text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-slate-200 sticky top-0">
@@ -355,6 +373,7 @@ export default function BulkImportUsers({ departments }: BulkImportUsersProps) {
               </tbody>
             </table>
           </div>
+          )}
           
           {totalPreviewPages > 1 && (
             <div className="flex items-center justify-between pt-2">

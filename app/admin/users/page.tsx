@@ -194,7 +194,7 @@ export default function AdminUsersPage() {
         const data = await res.json()
         alert(data.error || "Failed to reset onboarding")
       }
-    } catch {}
+    } catch { }
   }
 
   const handleCreateUser = async () => {
@@ -317,7 +317,7 @@ export default function AdminUsersPage() {
             onClick={async () => {
               if (isResetting || resetDebounceRef.current) return
               if (!confirm("Reset all non-seeded data? This cannot be undone.")) return
-              
+
               setIsResetting(true)
               try {
                 const res = await fetch("/api/admin/reset-data", { method: "POST" })
@@ -413,7 +413,7 @@ export default function AdminUsersPage() {
                   const currentRoles = VALID_ROLES.filter((vr) => hasRole(u.role, vr))
                   const hasStudent = currentRoles.includes("STUDENT")
                   const hasNonStudent = currentRoles.some((r) => r !== "STUDENT" && r !== "GUEST" && STUDENT_BLOCKED.has(r))
-                  const isDefaultAdmin = u.email === "admin@lyceumalabang.ph"
+                  const isDefaultAdmin = u.email === "admin@lyceumalabang.edu.ph"
 
                   return (
                     <tr key={u.id} className="border-b border-default">
@@ -440,9 +440,8 @@ export default function AdminUsersPage() {
                               return (
                                 <label
                                   key={r}
-                                  className={`flex items-center gap-2 px-2 py-1 rounded text-xs ${
-                                    isConflicting ? "opacity-40 cursor-not-allowed" : "bg-surface-hover cursor-pointer"
-                                  }`}
+                                  className={`flex items-center gap-2 px-2 py-1 rounded text-xs ${isConflicting ? "opacity-40 cursor-not-allowed" : "bg-surface-hover cursor-pointer"
+                                    }`}
                                 >
                                   <input
                                     type="checkbox"
@@ -588,9 +587,8 @@ export default function AdminUsersPage() {
                               return (
                                 <label
                                   key={r}
-                                  className={`flex items-center gap-2 px-2 py-1 rounded text-xs ${
-                                    isConflicting ? "opacity-40 cursor-not-allowed" : "bg-surface-hover cursor-pointer"
-                                  }`}
+                                  className={`flex items-center gap-2 px-2 py-1 rounded text-xs ${isConflicting ? "opacity-40 cursor-not-allowed" : "bg-surface-hover cursor-pointer"
+                                    }`}
                                 >
                                   <input
                                     type="checkbox"
@@ -768,9 +766,8 @@ export default function AdminUsersPage() {
                 return (
                   <label
                     key={r}
-                    className={`flex items-center gap-1.5 text-xs ${
-                      isConflicting || isDefaultAdminEdit ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
-                    }`}
+                    className={`flex items-center gap-1.5 text-xs ${isConflicting || isDefaultAdminEdit ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
+                      }`}
                   >
                     <input
                       type="checkbox"
@@ -847,9 +844,8 @@ export default function AdminUsersPage() {
                 return (
                   <label
                     key={r}
-                    className={`flex items-center gap-1.5 text-xs ${
-                      isConflicting ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
-                    }`}
+                    className={`flex items-center gap-1.5 text-xs ${isConflicting ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
+                      }`}
                   >
                     <input
                       type="checkbox"
