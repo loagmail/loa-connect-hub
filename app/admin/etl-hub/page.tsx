@@ -12,14 +12,6 @@ interface CsvRow {
   section: string
 }
 
-interface ImportResult {
-  matched: number
-  errors: { row: number; email?: string; message: string }[]
-  parseErrors: { row: number; message: string }[]
-  createdSubjects?: number
-  createdSections?: number
-}
-
 const ENDPOINTS: Record<ImportType, string> = {
   "faculty-subject": "/api/import/evaluation-faculty",
   "student-enrollment": "/api/import/evaluation-student",
@@ -89,7 +81,6 @@ function UploadCard({ importType }: { importType: ImportType }) {
   const [previewRows, setPreviewRows] = useState<CsvRow[] | null>(null)
   const [previewPage, setPreviewPage] = useState(0)
   const [previewError, setPreviewError] = useState("")
-  const [result, setResult] = useState<ImportResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -102,11 +93,14 @@ function UploadCard({ importType }: { importType: ImportType }) {
     ? previewRows.slice(previewPage * PREVIEW_PAGE_SIZE, (previewPage + 1) * PREVIEW_PAGE_SIZE)
     : []
   const totalPreviewPages = previewRows ? Math.ceil(previewRows.length / PREVIEW_PAGE_SIZE) : 0
+  const columnHeaders =
+    importType === "faculty-subject"
+      ? ["Email", "Subject Code", "Section"]
+      : ["Email", "Section"]
 
   const handlePreview = async () => {
     setPreviewError("")
     setError("")
-    setResult(null)
 
     const file = fileRef.current?.files?.[0]
     if (!file) { setPreviewError("Please select a CSV file"); return }
@@ -123,7 +117,6 @@ function UploadCard({ importType }: { importType: ImportType }) {
   const handleConfirm = async () => {
     if (!previewRows || loading) return
     setError("")
-    setResult(null)
 
     const file = fileRef.current?.files?.[0]
     if (!file) { setPreviewError("Please select a CSV file"); return }
@@ -136,7 +129,6 @@ function UploadCard({ importType }: { importType: ImportType }) {
       const res = await fetch(ENDPOINTS[importType], { method: "POST", body: formData })
       const data = await res.json()
       if (!res.ok) { setError(data.error || "Import failed"); return }
-      setResult(data)
       setPreviewRows(null)
     } catch {
       setError("Network error")
