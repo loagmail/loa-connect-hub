@@ -1,131 +1,40 @@
-import { supabase } from "@/lib/supabase"
-import { userRepository, subjectRepository, facultySubjectRepository, studentEnrollmentRepository } from "@/lib/repositories/factory"
+import { userRepository, sectionRepository, subjectRepository, facultySubjectRepository, studentEnrollmentRepository } from "@/lib/repositories/factory"
 
-interface EvalCsvRow {
-  name: string
+function parseSectionIdentifier(raw: string): { name: string; program: string } {
+  const idx = raw.indexOf("-")
+  if (idx === -1) {
+    return { name: raw, program: "" }
+  }
+  return {
+    program: raw.slice(0, idx).trim(),
+    name: raw.slice(idx + 1).trim(),
+  }
+}
+
+// ── Faculty-Subject CSV ──────────────────────────────────
+// Columns: faculty email, subject code, section (e.g., "BSIT-32A3")
+
+interface FacultySubjectCsvRow {
   email: string
-  subject: string
+  subjectCode: string
+  sectionName: string
+  sectionProgram: string
 }
 
-export interface EtlEvaluationResult {
+export interface FacultySubjectImportResult {
   matched: number
-  skipped: { row: number; email: string; reason: string }[]
   errors: { row: number; email?: string; message: string }[]
-  subjectErrors: { row: number; subject: string; message: string }[]
   createdSubjects: number
+  createdSections: number
 }
 
-export async function importEvaluationFaculty(
-  rows: EvalCsvRow[],
-  periodId: string,
-): Promise<EtlEvaluationResult> {
-  const result: EtlEvaluationResult = {
-    matched: 0,
-    skipped: [],
-    errors: [],
-    subjectErrors: [],
-    createdSubjects: 0,
-  }
-
-  const subjectNames = [...new Set(rows.map((r) => r.subject.trim()))]
-  const subjects = await subjectRepository.upsertMany(periodId, subjectNames)
-  const createdSubjects = subjectNames.length - (subjectNames.filter((n) => subjects.has(n)).length ? 0 : 0)
-  result.createdSubjects = createdSubjects
-
-  const facultySubjectItems: { facultyId: string; subjectId: string }[] = []
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]
-    const rowNum = i + 1
-
-    try {
-      const user = await userRepository.findByEmail(row.email.trim())
-      if (!user) {
-        result.errors.push({ row: rowNum, email: row.email, message: "Faculty not found in system" })
-        continue
-      }
-
-      const subject = subjects.get(row.subject.trim())
-      if (!subject) {
-        result.subjectErrors.push({ row: rowNum, subject: row.subject, message: "Subject could not be created" })
-        continue
-      }
-
-      facultySubjectItems.push({ facultyId: user.id, subjectId: subject.id })
-      result.matched++
-    } catch (err) {
-      result.errors.push({ row: rowNum, email: row.email, message: `Error: ${(err as Error).message}` })
-    }
-  }
-
-  await facultySubjectRepository.replaceAll(periodId, facultySubjectItems)
-  return result
-}
-
-export async function importEvaluationStudents(
-  rows: EvalCsvRow[],
-  periodId: string,
-): Promise<EtlEvaluationResult> {
-  const result: EtlEvaluationResult = {
-    matched: 0,
-    skipped: [],
-    errors: [],
-    subjectErrors: [],
-    createdSubjects: 0,
-  }
-
-  const { data: existingSubjects, error: subjErr } = await supabase
-    .from("subjects")
-    .select("id, name")
-    .eq("periodId", periodId)
-  if (subjErr) throw subjErr
-
-  const subjectMap = new Map<string, string>()
-  for (const s of existingSubjects || []) {
-    subjectMap.set(s.name, s.id)
-  }
-
-  const enrollmentItems: { studentId: string; subjectId: string }[] = []
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]
-    const rowNum = i + 1
-
-    try {
-      const user = await userRepository.findByEmail(row.email.trim())
-      if (!user) {
-        result.errors.push({ row: rowNum, email: row.email, message: "Student not found in system" })
-        continue
-      }
-
-      const subjectId = subjectMap.get(row.subject.trim())
-      if (!subjectId) {
-        result.subjectErrors.push({
-          row: rowNum,
-          subject: row.subject,
-          message: "Subject not found — must be imported via Faculty CSV first",
-        })
-        continue
-      }
-
-      enrollmentItems.push({ studentId: user.id, subjectId })
-      result.matched++
-    } catch (err) {
-      result.errors.push({ row: rowNum, email: row.email, message: `Error: ${(err as Error).message}` })
-    }
-  }
-
-  await studentEnrollmentRepository.replaceAll(periodId, enrollmentItems)
-  return result
-}
-
-export function parseEvalCsv(text: string): {
-  rows: EvalCsvRow[]
+export function parseFacultySubjectCsv(text: string): {
+  rows: FacultySubjectCsvRow[]
   errors: { row: number; message: string }[]
   headerError?: string
 } {
   const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0)
-  const rows: EvalCsvRow[] = []
+  const rows: FacultySubjectCsvRow[] = []
   const errors: { row: number; message: string }[] = []
 
   if (lines.length === 0) {
@@ -139,15 +48,15 @@ export function parseEvalCsv(text: string): {
     return {
       rows,
       errors,
-      headerError: `Expected at least 3 columns (name, microsoft email, subject), got ${rawHeaders.length}.`,
+      headerError: `Expected at least 3 columns (faculty email, subject code, section), got ${rawHeaders.length}.`,
     }
   }
 
-  if (rawHeaders[0] !== "name" || rawHeaders[1] !== "microsoft email") {
+  if (rawHeaders[0] !== "faculty email" || rawHeaders[1] !== "subject code") {
     return {
       rows,
       errors,
-      headerError: `Expected headers: name, microsoft email, subject — got: ${rawHeaders.join(", ")}`,
+      headerError: `Expected headers: faculty email, subject code, section — got: ${rawHeaders.join(", ")}`,
     }
   }
 
@@ -160,27 +69,246 @@ export function parseEvalCsv(text: string): {
       continue
     }
 
-    const name = cols[0]
-    const email = cols[1].toLowerCase().trim()
-    const subject = cols.slice(2).join(", ").trim()
-
-    if (name.length === 0) {
-      errors.push({ row: i + 1, message: "Name is required" })
-      continue
-    }
+    const email = cols[0].toLowerCase().trim()
+    const subjectCode = cols[1].trim()
+    const sectionRaw = cols.slice(2).join(", ").trim()
+    const { program, name } = parseSectionIdentifier(sectionRaw)
 
     if (email.length === 0) {
-      errors.push({ row: i + 1, message: "Email is required" })
+      errors.push({ row: i + 1, message: "Faculty email is required" })
       continue
     }
 
-    if (subject.length === 0) {
-      errors.push({ row: i + 1, message: "Subject is required" })
+    if (subjectCode.length === 0) {
+      errors.push({ row: i + 1, message: "Subject code is required" })
       continue
     }
 
-    rows.push({ name, email, subject })
+    if (name.length === 0) {
+      errors.push({ row: i + 1, message: "Section is required" })
+      continue
+    }
+
+    rows.push({ email, subjectCode, sectionName: name, sectionProgram: program })
   }
 
   return { rows, errors }
+}
+
+export async function importFacultySubjects(
+  rows: FacultySubjectCsvRow[],
+): Promise<FacultySubjectImportResult> {
+  const result: FacultySubjectImportResult = {
+    matched: 0,
+    errors: [],
+    createdSubjects: 0,
+    createdSections: 0,
+  }
+
+  // Upsert subjects
+  const uniqueSubjectCodes = [...new Set(rows.map((r) => r.subjectCode))]
+  const existingAllSubjects = await subjectRepository.list()
+  const existingSubjectCodes = new Set(existingAllSubjects.map((s) => s.code))
+  const preExistingSubjectCount = uniqueSubjectCodes.filter((c) => existingSubjectCodes.has(c)).length
+  result.createdSubjects = uniqueSubjectCodes.length - preExistingSubjectCount
+  const subjectItems = uniqueSubjectCodes.map((code) => ({ code, name: code }))
+  const subjects = await subjectRepository.upsertMany(subjectItems)
+
+  // Upsert sections
+  const sectionKeys = new Set<string>()
+  const sectionItems: { name: string; program: string }[] = []
+  for (const r of rows) {
+    const key = `${r.sectionName}|${r.sectionProgram}`
+    if (!sectionKeys.has(key)) {
+      sectionKeys.add(key)
+      sectionItems.push({ name: r.sectionName, program: r.sectionProgram })
+    }
+  }
+  const existingAllSections = await sectionRepository.list()
+  const existingSectionKeys = new Set(existingAllSections.map((s) => `${s.name}|${s.program}`))
+  const preExistingSectionCount = sectionItems.filter((s) => existingSectionKeys.has(`${s.name}|${s.program}`)).length
+  result.createdSections = sectionItems.length - preExistingSectionCount
+  const sections = await sectionRepository.upsertMany(sectionItems)
+
+  // Build faculty-subject-section mappings
+  const fsItems: { facultyId: string; subjectId: string; sectionId: string }[] = []
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNum = i + 1
+
+    const user = await userRepository.findByEmail(row.email)
+    if (!user) {
+      result.errors.push({ row: rowNum, email: row.email, message: "Faculty not found in system" })
+      continue
+    }
+
+    const subject = subjects.get(row.subjectCode)
+    if (!subject) {
+      result.errors.push({ row: rowNum, message: `Subject "${row.subjectCode}" could not be created or found` })
+      continue
+    }
+
+    const sectionKey = `${row.sectionName}|${row.sectionProgram}`
+    const section = sections.get(sectionKey)
+    if (!section) {
+      result.errors.push({ row: rowNum, message: `Section "${row.sectionProgram}-${row.sectionName}" could not be created or found` })
+      continue
+    }
+
+    fsItems.push({ facultyId: user.id, subjectId: subject.id, sectionId: section.id })
+    result.matched++
+  }
+
+  // Group by section and replace
+  const bySection = new Map<string, { facultyId: string; subjectId: string }[]>()
+  for (const item of fsItems) {
+    if (!bySection.has(item.sectionId)) bySection.set(item.sectionId, [])
+    bySection.get(item.sectionId)!.push({ facultyId: item.facultyId, subjectId: item.subjectId })
+  }
+
+  for (const [sectionId, items] of bySection) {
+    await facultySubjectRepository.replaceBySection(sectionId, items)
+  }
+
+  return result
+}
+
+// ── Student Enrollment CSV ───────────────────────────────
+// Columns: student email, section (e.g., "BSIT-32A3")
+
+interface StudentEnrollmentCsvRow {
+  email: string
+  sectionName: string
+  sectionProgram: string
+}
+
+export interface StudentEnrollmentImportResult {
+  matched: number
+  errors: { row: number; email?: string; message: string }[]
+  createdSections: number
+}
+
+export function parseStudentEnrollmentCsv(text: string): {
+  rows: StudentEnrollmentCsvRow[]
+  errors: { row: number; message: string }[]
+  headerError?: string
+} {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0)
+  const rows: StudentEnrollmentCsvRow[] = []
+  const errors: { row: number; message: string }[] = []
+
+  if (lines.length === 0) {
+    return { rows, errors, headerError: "CSV file is empty" }
+  }
+
+  const headerLine = lines[0]
+  const rawHeaders = headerLine.split(",").map((h) => h.trim().toLowerCase())
+
+  if (rawHeaders.length < 2) {
+    return {
+      rows,
+      errors,
+      headerError: `Expected at least 2 columns (student email, section), got ${rawHeaders.length}.`,
+    }
+  }
+
+  if (rawHeaders[0] !== "student email") {
+    return {
+      rows,
+      errors,
+      headerError: `Expected headers: student email, section — got: ${rawHeaders.join(", ")}`,
+    }
+  }
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i]
+    const cols = line.split(",").map((c) => c.trim())
+
+    if (cols.length < 2) {
+      errors.push({ row: i + 1, message: `Expected at least 2 columns, got ${cols.length}` })
+      continue
+    }
+
+    const email = cols[0].toLowerCase().trim()
+    const sectionRaw = cols.slice(1).join(", ").trim()
+    const { program, name } = parseSectionIdentifier(sectionRaw)
+
+    if (email.length === 0) {
+      errors.push({ row: i + 1, message: "Student email is required" })
+      continue
+    }
+
+    if (name.length === 0) {
+      errors.push({ row: i + 1, message: "Section is required" })
+      continue
+    }
+
+    rows.push({ email, sectionName: name, sectionProgram: program })
+  }
+
+  return { rows, errors }
+}
+
+export async function importStudentEnrollments(
+  rows: StudentEnrollmentCsvRow[],
+): Promise<StudentEnrollmentImportResult> {
+  const result: StudentEnrollmentImportResult = {
+    matched: 0,
+    errors: [],
+    createdSections: 0,
+  }
+
+  // Upsert sections
+  const sectionKeys = new Set<string>()
+  const sectionItems: { name: string; program: string }[] = []
+  for (const r of rows) {
+    const key = `${r.sectionName}|${r.sectionProgram}`
+    if (!sectionKeys.has(key)) {
+      sectionKeys.add(key)
+      sectionItems.push({ name: r.sectionName, program: r.sectionProgram })
+    }
+  }
+  const existingAllSections = await sectionRepository.list()
+  const existingSectionKeys = new Set(existingAllSections.map((s) => `${s.name}|${s.program}`))
+  const preExistingSectionCount = sectionItems.filter((s) => existingSectionKeys.has(`${s.name}|${s.program}`)).length
+  result.createdSections = sectionItems.length - preExistingSectionCount
+  const sections = await sectionRepository.upsertMany(sectionItems)
+
+  // Build enrollment items
+  const enrollmentItems: { studentId: string; sectionId: string }[] = []
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNum = i + 1
+
+    const user = await userRepository.findByEmail(row.email)
+    if (!user) {
+      result.errors.push({ row: rowNum, email: row.email, message: "Student not found in system" })
+      continue
+    }
+
+    const sectionKey = `${row.sectionName}|${row.sectionProgram}`
+    const section = sections.get(sectionKey)
+    if (!section) {
+      result.errors.push({ row: rowNum, message: `Section "${row.sectionProgram}-${row.sectionName}" could not be created or found` })
+      continue
+    }
+
+    enrollmentItems.push({ studentId: user.id, sectionId: section.id })
+    result.matched++
+  }
+
+  // Group by section and replace
+  const bySection = new Map<string, { studentId: string }[]>()
+  for (const item of enrollmentItems) {
+    if (!bySection.has(item.sectionId)) bySection.set(item.sectionId, [])
+    bySection.get(item.sectionId)!.push({ studentId: item.studentId })
+  }
+
+  for (const [sectionId, items] of bySection) {
+    await studentEnrollmentRepository.replaceBySection(sectionId, items)
+  }
+
+  return result
 }

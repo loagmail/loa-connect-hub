@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { evaluationPeriodRepository } from "@/lib/repositories/factory"
-import { parseEvalCsv, importEvaluationStudents } from "@/lib/services/etlEvaluation"
-import { logAuditEvent } from "@/lib/services/audit"
 import { hasRole } from "@/lib/utils/roles"
+import { parseStudentEnrollmentCsv, importStudentEnrollments } from "@/lib/services/etlEvaluation"
+import { logAuditEvent } from "@/lib/services/audit"
 
 export async function POST(request: NextRequest) {
   const session = await auth()
@@ -18,13 +17,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "CSV file is required" }, { status: 400 })
   }
 
-  const activePeriod = await evaluationPeriodRepository.findActive()
-  if (!activePeriod) {
-    return NextResponse.json({ error: "No active evaluation period" }, { status: 400 })
-  }
-
   const text = await file.text()
-  const { rows, errors: parseErrors, headerError } = parseEvalCsv(text)
+  const { rows, errors: parseErrors, headerError } = parseStudentEnrollmentCsv(text)
   if (headerError) {
     return NextResponse.json({ error: `Header mismatch: ${headerError}` }, { status: 400 })
   }
@@ -32,12 +26,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "CSV parsing failed", details: parseErrors }, { status: 400 })
   }
 
-  const result = await importEvaluationStudents(rows, activePeriod.id)
+  const result = await importStudentEnrollments(rows)
 
   await logAuditEvent({
     userId: (session!.user as Record<string, unknown>).id as string,
-    action: "ETL_EVALUATION_STUDENT",
-    details: `Imported ${result.matched} student-enrollment mappings for period ${activePeriod.name} (${result.errors.length} errors, ${result.subjectErrors.length} subject errors)`,
+    action: "ETL_STUDENT_ENROLLMENT",
+    details: `Imported ${result.matched} student enrollments (${result.errors.length} errors)`,
   })
 
   return NextResponse.json({ ...result, parseErrors })

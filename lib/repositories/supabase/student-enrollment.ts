@@ -2,38 +2,37 @@ import { supabase } from "@/lib/supabase"
 import type { StudentEnrollmentData, IStudentEnrollmentRepository } from "@/lib/types"
 
 export const studentEnrollmentRepository: IStudentEnrollmentRepository = {
-  async list(periodId, studentId) {
-    let q = supabase.from("student_enrollments").select("*").eq("periodId", periodId)
-    if (studentId) q = q.eq("studentId", studentId)
+  async list(filters) {
+    let q = supabase.from("student_enrollments").select("*")
+    if (filters?.studentId) q = q.eq("studentId", filters.studentId)
+    if (filters?.sectionId) q = q.eq("sectionId", filters.sectionId)
     const { data, error } = await q
     if (error) throw error
     return data as StudentEnrollmentData[]
   },
 
-  async replaceAll(periodId, items) {
-    const { error: delErr } = await supabase.from("student_enrollments").delete().eq("periodId", periodId)
+  async replaceBySection(sectionId, items) {
+    const { error: delErr } = await supabase.from("student_enrollments").delete().eq("sectionId", sectionId)
     if (delErr) throw delErr
     if (items.length === 0) return
-    const rows = items.map((i) => ({ ...i, periodId }))
+    const rows = items.map((i) => ({ ...i, sectionId }))
     const { error: insErr } = await supabase.from("student_enrollments").insert(rows)
     if (insErr) throw insErr
   },
 
-  async getDistinctFaculty(studentId, periodId) {
-    const { data, error } = await supabase
+  async getDistinctFaculty(studentId) {
+    const { data: enrollments, error: enrollErr } = await supabase
       .from("student_enrollments")
-      .select("subjectId")
+      .select("sectionId")
       .eq("studentId", studentId)
-      .eq("periodId", periodId)
-    if (error) throw error
-    if (data.length === 0) return []
+    if (enrollErr) throw enrollErr
+    if (enrollments.length === 0) return []
 
-    const subjectIds = data.map((r) => r.subjectId)
+    const sectionIds = enrollments.map((r) => r.sectionId)
     const { data: fs, error: fsErr } = await supabase
       .from("faculty_subjects")
       .select("facultyId")
-      .eq("periodId", periodId)
-      .in("subjectId", subjectIds)
+      .in("sectionId", sectionIds)
     if (fsErr) throw fsErr
 
     return [...new Set(fs.map((r) => r.facultyId))]

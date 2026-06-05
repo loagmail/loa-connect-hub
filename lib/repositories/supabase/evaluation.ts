@@ -5,18 +5,16 @@ export const evaluationRepository: IEvaluationRepository = {
   async findPending(evaluatorId, periodId) {
     const { data: enrollments, error: enrollErr } = await supabase
       .from("student_enrollments")
-      .select("subjectId")
+      .select("sectionId")
       .eq("studentId", evaluatorId)
-      .eq("periodId", periodId)
     if (enrollErr) throw enrollErr
     if (enrollments.length === 0) return []
 
-    const subjectIds = enrollments.map((r) => r.subjectId)
+    const sectionIds = enrollments.map((r) => r.sectionId)
     const { data: facultySubjects, error: fsErr } = await supabase
       .from("faculty_subjects")
       .select("facultyId")
-      .eq("periodId", periodId)
-      .in("subjectId", subjectIds)
+      .in("sectionId", sectionIds)
     if (fsErr) throw fsErr
     const allFacultyIds = [...new Set(facultySubjects.map((r) => r.facultyId))]
 
