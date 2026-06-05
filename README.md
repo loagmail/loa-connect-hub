@@ -257,7 +257,7 @@ Non-activated accounts must use the activation flow at `/activate`.
 | `/admin/evaluations/periods/[id]/rubric` | ✅ Done |
 | `/admin/evaluations/results` | ✅ Done |
 | `/admin/evaluations/rubrics` (standalone editor) | ❌ Missing |
-| `/admin/evaluations/upload` (ETL status) | ✅ N/A — use `/admin/etl-upload` |
+| `/admin/evaluations/upload` (ETL status) | ✅ N/A — use `/admin/etl-hub` |
 | `/admin/evaluations/reports` (landing + sentiment) | ❌ Missing |
 | `/dean/evaluations` (dashboard) | ❌ Missing |
 | `/dean/evaluations/results` | ✅ Done |
@@ -347,7 +347,7 @@ Non-activated accounts must use the activation flow at `/activate`.
 | `faculty/evaluation-results` | ✅ Done |
 | `import/evaluation-faculty` | ✅ Done |
 | `import/evaluation-student` | ✅ Done |
-| ETL handler for eval types in `admin/etl-upload/validate` + `confirm` | ✅ N/A — eval tabs use direct import endpoints |
+| ETL handler for eval types | ✅ Done — `/admin/etl-hub` uses direct import endpoints |
 
 ### Shared Components
 

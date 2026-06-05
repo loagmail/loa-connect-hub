@@ -616,7 +616,7 @@ CREATE TABLE IF NOT EXISTS group_access (
 
 INSERT INTO group_access ("groupName", pages) VALUES
   ('ADMIN',
-   '["/admin","/admin/data-management","/admin/users","/admin/users/deleted","/admin/access-config","/admin/departments","/admin/reports","/faq"]'::JSONB),
+   '["/admin","/admin/data-management","/admin/users","/admin/users/deleted","/admin/access-config","/admin/departments","/admin/reports","/admin/etl-hub","/faq"]'::JSONB),
   ('DEAN',
    '["/dean","/dean/upload","/dean/departments","/faculty/meetings","/faculty/availability","/faculty/reports","/faq"]'::JSONB),
   ('FACULTY',
@@ -825,20 +825,32 @@ UPDATE group_access SET pages = pages || '["/student/evaluations"]'::JSONB WHERE
 -- Migration 16: Make evaluation periodId a plain text field
 -- =========================================================
 
-ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodid_fkey;
-ALTER TABLE subjects ALTER COLUMN "periodId" DROP NOT NULL;
-ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodId_name_key;
-DROP INDEX IF EXISTS idx_subjects_period;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='subjects' AND column_name='periodId') THEN
+    ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodid_fkey;
+    ALTER TABLE subjects ALTER COLUMN "periodId" DROP NOT NULL;
+    ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodId_name_key;
+    DROP INDEX IF EXISTS idx_subjects_period;
+  END IF;
+END $$;
 
-ALTER TABLE faculty_subjects DROP CONSTRAINT IF EXISTS faculty_subjects_periodid_fkey;
-ALTER TABLE faculty_subjects ALTER COLUMN "periodId" DROP NOT NULL;
-ALTER TABLE faculty_subjects DROP CONSTRAINT IF EXISTS faculty_subjects_subjectId_periodId_key;
-DROP INDEX IF EXISTS idx_faculty_subjects_period;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='faculty_subjects' AND column_name='periodId') THEN
+    ALTER TABLE faculty_subjects DROP CONSTRAINT IF EXISTS faculty_subjects_periodid_fkey;
+    ALTER TABLE faculty_subjects ALTER COLUMN "periodId" DROP NOT NULL;
+    ALTER TABLE faculty_subjects DROP CONSTRAINT IF EXISTS faculty_subjects_subjectId_periodId_key;
+    DROP INDEX IF EXISTS idx_faculty_subjects_period;
+  END IF;
+END $$;
 
-ALTER TABLE student_enrollments DROP CONSTRAINT IF EXISTS student_enrollments_periodid_fkey;
-ALTER TABLE student_enrollments ALTER COLUMN "periodId" DROP NOT NULL;
-ALTER TABLE student_enrollments DROP CONSTRAINT IF EXISTS student_enrollments_studentId_subjectId_periodId_key;
-DROP INDEX IF EXISTS idx_student_enrollments_period;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='student_enrollments' AND column_name='periodId') THEN
+    ALTER TABLE student_enrollments DROP CONSTRAINT IF EXISTS student_enrollments_periodid_fkey;
+    ALTER TABLE student_enrollments ALTER COLUMN "periodId" DROP NOT NULL;
+    ALTER TABLE student_enrollments DROP CONSTRAINT IF EXISTS student_enrollments_studentId_subjectId_periodId_key;
+    DROP INDEX IF EXISTS idx_student_enrollments_period;
+  END IF;
+END $$;
 
 ALTER TABLE evaluations DROP CONSTRAINT IF EXISTS evaluations_periodid_fkey;
 ALTER TABLE evaluations ALTER COLUMN "periodId" DROP NOT NULL;
@@ -877,7 +889,11 @@ ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodId_name_key;
 ALTER TABLE subjects ADD COLUMN IF NOT EXISTS code TEXT;
 UPDATE subjects SET code = name WHERE code IS NULL;
 ALTER TABLE subjects ALTER COLUMN code SET NOT NULL;
-ALTER TABLE subjects ADD CONSTRAINT subjects_code_key UNIQUE (code);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'subjects_code_key') THEN
+    ALTER TABLE subjects ADD CONSTRAINT subjects_code_key UNIQUE (code);
+  END IF;
+END $$;
 
 ALTER TABLE subjects DROP COLUMN IF EXISTS "periodId";
 DROP INDEX IF EXISTS idx_subjects_period;

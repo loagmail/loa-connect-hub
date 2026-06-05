@@ -123,7 +123,7 @@
 | `import/users` | ✅ Updated — accepts `multipart/form-data` (CSV) or `application/json` (preview confirm) |
 | `import/students` | ✅ Updated — same dual-accept |
 | `admin/reset-data` | ✅ Done — deletes all non-seed data (localhost only) |
-| ETL handler for eval types in `admin/etl-upload/validate` + `confirm` | ✅ N/A — eval tabs use direct import endpoints; `/admin/etl-upload` page deprecated in favor of `/admin/users` bulk import section |
+| ETL handler for eval types | ✅ N/A — eval hub uses direct import endpoints (`/admin/etl-hub`) |
 
 ### Shared Components
 
@@ -205,7 +205,7 @@
 | `repositories/factory.ts` | **Enhance** | Core |
 | `jspdf` / `html2canvas` export patterns | **Existing** | Core |
 | All existing admin/dean/faculty/student pages | **Existing** | Consultation |
-| **Existing ETL page** (`/admin/etl-upload`) | **Enhance** | Core — add Evaluation Faculty + Evaluation Student tabs |
+| **ETL hub** (`/admin/etl-hub`) | **Enhance** | Core — Faculty-Subject + Student Enrollment CSV imports |
 | `EtlUploadType` constants | **Enhance** | Core — add evaluation upload types |
 | `evaluation-periods` table + types + repo + controller + routes | **New** | Evaluation |
 | `rating-scales` table + types | **New** | Evaluation |
@@ -235,7 +235,7 @@ app/
 ├── admin/
 │   ├── page.tsx, error.tsx                     ← Core
 │   ├── users/, departments/, access-config/    ← Core
-│   ├── data-management/, etl-upload/           ← Core (ETL enhanced with eval tabs)
+│   ├── data-management/, etl-hub/              ← Core (ETL for evaluation data)
 │   ├── reports/                                ← Consultation Module
 │   │
 │   └── evaluations/                            ← Evaluation Module
@@ -310,7 +310,7 @@ ALTER TABLE users ADD COLUMN "evaluationEligible" BOOLEAN NOT NULL DEFAULT FALSE
 
 `evaluationEligible` is set to `TRUE` when a student is uploaded via the evaluation Student ETL.
 
-### ETL Strategy (Unified at `/admin/etl-upload`)
+### ETL Strategy (Unified at `/admin/etl-hub`)
 
 The bulk import in `/admin/users` supports two import types:
 
@@ -382,7 +382,7 @@ Student:
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **ETL** | Unified at existing `/admin/etl-upload` + 2 new tabs | All data entry in one place; reuses existing validate/confirm pattern |
+| **ETL** | Unified at `/admin/etl-hub` | Two CSV imports (Faculty-Subject, Student Enrollments) |
 | **Assignments** | Auto-derived from ETL data (subjects → faculty_subjects → enrollments) | No manual assignment UI needed; driven by real academic data |
 | **Subject Uniqueness** | `UNIQUE(periodId, name)` — one faculty per subject | Each section-subject-code-title combo is unique per period |
 | **Evaluation Dedup** | One evaluation per faculty per period per student | If student has 2 subjects with same faculty, only 1 evaluation needed |
@@ -733,8 +733,8 @@ All APIs follow existing e-Consultation conventions:
 | `GET /api/admin/users` | Include `employeeNo` in response | Spreadsheet output |
 | `POST /api/admin/users` | Accept `employeeNo` in request body | User creation |
 | `PATCH /api/admin/users/[id]` | Accept `employeeNo` | User editing |
-| `POST /api/admin/etl-upload/validate` | Handle `evaluation-faculty` and `evaluation-student` types | ETL for evaluation data |
-| `POST /api/admin/etl-upload/confirm` | Handle `evaluation-faculty` and `evaluation-student` types | ETL for evaluation data |
+| `POST /api/import/evaluation-faculty` | CSV upload for Faculty-Subject mappings | ETL for evaluation data |
+| `POST /api/import/evaluation-student` | CSV upload for Student Enrollments | ETL for evaluation data |
 
 ### New API Routes
 
@@ -1110,32 +1110,7 @@ export interface IStudentEnrollmentRepository {
 export type EtlUploadType = "student" | "faculty" | "evaluation-faculty" | "evaluation-student"
 ```
 
-#### Validate route enhancement (`app/api/admin/etl-upload/validate/route.ts`)
-
-For `evaluation-faculty` type:
-- Expected columns: `name, email, department, subject`
-- Validates: email domain, user existence (creates if not found), subject format
-- Returns preview rows with name, email, department, subject, status
-
-For `evaluation-student` type:
-- Expected columns: `name, email, subject`
-- Validates: email domain, user existence (creates if not found), subject exists in system
-- Skips rows where subject has no faculty assignment (flagged as error)
-- Returns preview rows with name, email, subject, inferred faculty, status
-
-#### Confirm route enhancement (`app/api/admin/etl-upload/confirm/route.ts`)
-
-For `evaluation-faculty`:
-1. Creates/updates user accounts (faculty role)
-2. Creates subjects (if new for this period)
-3. Clears and rebuilds faculty_subjects for the period
-4. Logs audit event
-
-For `evaluation-student`:
-1. Creates/updates user accounts (student role, evaluationEligible=true)
-2. Creates subjects (if new — but should already exist from faculty upload)
-3. Clears and rebuilds student_enrollments for the period
-4. Logs audit event
+<!-- etl-upload/validate and confirm routes were never built — superseded by direct import endpoints + etlEvaluation.ts service -->
 
 ### Sentiment Analysis Integration
 
@@ -1156,9 +1131,9 @@ API key stored in `.env`. Analysis runs:
 
 ### Redesign: `/admin/users` — Consolidated User Management + Bulk Import
 
-**Current**: `/admin/users` (table/manage) separate from `/admin/etl-upload` (bulk CSV). `/dean/upload` is more refined.
+**Current**: `/admin/users` (table/manage) separate from `/admin/etl-hub` (ETL CSV uploads). `/dean/upload` is more refined.
 
-**Decision**: Merge bulk CSV import into `/admin/users` as a toggleable section. This eliminates the separate `/admin/etl-upload` page and reuses the dean/upload card-selector pattern.
+**Decision**: Merge bulk CSV import into `/admin/users` as a toggleable section. The `/admin/etl-hub` page handles evaluation-specific ETL.
 
 **Page Layout**:
 
@@ -1201,7 +1176,7 @@ API key stored in `.env`. Analysis runs:
 **What changes**:
 - `app/admin/users/page.tsx` — add collapsible "Bulk Import" section above the filters
 - Existing user CRUD table stays unchanged below
-- Remove `app/admin/etl-upload/page.tsx` (replaced by this)
+- `/admin/etl-hub` handles evaluation-specific ETL (faculty-subject and student-enrollment imports)
 
 ---
 
@@ -1571,7 +1546,7 @@ Grouped by period, showing faculty name, rating, remarks, submission date.
 | Page | Status | Action |
 |------|--------|--------|
 | `/admin/users` | ✅ Done | Collapsible bulk import section with card selector, CSV preview with inline editing, confirm flow; localhost-only Reset Data button |
-| `/admin/etl-upload` | ❌ Deprecated | Replaced by `/admin/users` bulk import |
+| `/admin/etl-hub` | ✅ Done | Evaluation-specific ETL (Faculty-Subject, Student Enrollments) |
 | `/admin/evaluations` | ✅ Done | Add rubric + reports cards |
 | `/admin/evaluations/rubrics` | ❌ Missing | Build standalone rubric editor with period selector |
 | `/admin/evaluations/upload` | ❌ Missing | Build upload status dashboard |
@@ -1825,7 +1800,7 @@ Mobile views share the same data layer, using iOS-native patterns: full-width gr
 | 15 | Edit `app/admin/users/page.tsx` — add collapsible Bulk Import section with card selector, CSV preview with inline editing, confirm flow, localhost-only Reset Data button | 1 existing file | **Moderate** — must preserve existing CRUD functionality; bulk import is additive above the table |
 | 16 | Edit `app/api/import/users/route.ts` + `students/route.ts` — add JSON body support for preview confirm flow | 2 existing files | Low — additive branching on content-type |
 
-**Decision**: Use existing `app/api/import/evaluation-faculty` and `app/api/import/evaluation-student` endpoints directly (they're already built). No changes needed to the old `etl-upload/validate` and `etl-upload/confirm` routes. The `/admin/etl-upload` page can be deprecated.
+**Decision**: Use existing `app/api/import/evaluation-faculty` and `app/api/import/evaluation-student` endpoints directly (they're already built). The `/admin/etl-hub` page serves as the import UI.
 
 **Blast radius**: The `/admin/users` page must preserve its existing user CRUD table, modals, search, filter, and pagination. The bulk import section is a collapsible area added above the table — visible only when expanded.
 
