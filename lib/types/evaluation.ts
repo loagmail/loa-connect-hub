@@ -239,13 +239,13 @@ export interface IEvaluationPeriodRepository {
 
 export interface ISubjectRepository {
   list(): Promise<SubjectData[]>
-  upsertMany(items: { code: string; name: string }[]): Promise<Map<string, SubjectData>>
+  upsertMany(items: { code: string; name: string }[]): Promise<{ data: Map<string, SubjectData>; created: number }>
   findByCode(code: string): Promise<SubjectData | null>
 }
 
 export interface ISectionRepository {
   list(): Promise<SectionData[]>
-  upsertMany(items: { name: string; program: string }[]): Promise<Map<string, SectionData>>
+  upsertMany(items: { name: string; program: string }[]): Promise<{ data: Map<string, SectionData>; created: number }>
   findByNameAndProgram(name: string, program: string): Promise<SectionData | null>
 }
 

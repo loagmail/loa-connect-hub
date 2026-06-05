@@ -105,16 +105,15 @@ export async function importFacultySubjects(
     createdSections: 0,
   }
 
-  // Upsert subjects
-  const uniqueSubjectCodes = [...new Set(rows.map((r) => r.subjectCode))]
-  const existingAllSubjects = await subjectRepository.list()
-  const existingSubjectCodes = new Set(existingAllSubjects.map((s) => s.code))
-  const preExistingSubjectCount = uniqueSubjectCodes.filter((c) => existingSubjectCodes.has(c)).length
-  result.createdSubjects = uniqueSubjectCodes.length - preExistingSubjectCount
-  const subjectItems = uniqueSubjectCodes.map((code) => ({ code, name: code }))
-  const subjects = await subjectRepository.upsertMany(subjectItems)
+  if (rows.length === 0) return result
 
-  // Upsert sections
+  // ── Upsert subjects ──
+  const uniqueSubjectCodes = [...new Set(rows.map((r) => r.subjectCode))]
+  const subjectItems = uniqueSubjectCodes.map((code) => ({ code, name: code }))
+  const { data: subjects, created: createdSubjects } = await subjectRepository.upsertMany(subjectItems)
+  result.createdSubjects = createdSubjects
+
+  // ── Upsert sections ──
   const sectionKeys = new Set<string>()
   const sectionItems: { name: string; program: string }[] = []
   for (const r of rows) {
@@ -124,20 +123,29 @@ export async function importFacultySubjects(
       sectionItems.push({ name: r.sectionName, program: r.sectionProgram })
     }
   }
-  const existingAllSections = await sectionRepository.list()
-  const existingSectionKeys = new Set(existingAllSections.map((s) => `${s.name}|${s.program}`))
-  const preExistingSectionCount = sectionItems.filter((s) => existingSectionKeys.has(`${s.name}|${s.program}`)).length
-  result.createdSections = sectionItems.length - preExistingSectionCount
-  const sections = await sectionRepository.upsertMany(sectionItems)
+  const { data: sections, created: createdSections } = await sectionRepository.upsertMany(sectionItems)
+  result.createdSections = createdSections
 
-  // Build faculty-subject-section mappings
+  // ── Resolve users (batch lookup + batch create) ──
+  const uniqueEmails = [...new Set(rows.map((r) => r.email.toLowerCase().trim()))]
+  const userMap = await userRepository.findManyByEmail(uniqueEmails)
+  const missingEmails = uniqueEmails.filter((e) => !userMap.has(e))
+  if (missingEmails.length > 0) {
+    const createdUsers = await userRepository.createMany(
+      missingEmails.map((email) => ({ email, name: email.split("@")[0] || email, role: "FACULTY" })),
+    )
+    for (const [email, user] of createdUsers) {
+      userMap.set(email, user)
+    }
+  }
+
+  // ── Build mappings ──
   const fsItems: { facultyId: string; subjectId: string; sectionId: string }[] = []
-
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
     const rowNum = i + 1
 
-    const user = await userRepository.findByEmail(row.email)
+    const user = userMap.get(row.email.toLowerCase().trim())
     if (!user) {
       result.errors.push({ row: rowNum, email: row.email, message: "Faculty not found in system" })
       continue
@@ -160,7 +168,7 @@ export async function importFacultySubjects(
     result.matched++
   }
 
-  // Group by section and replace
+  // ── Group by section and replace ──
   const bySection = new Map<string, { facultyId: string; subjectId: string }[]>()
   for (const item of fsItems) {
     if (!bySection.has(item.sectionId)) bySection.set(item.sectionId, [])
@@ -259,7 +267,9 @@ export async function importStudentEnrollments(
     createdSections: 0,
   }
 
-  // Upsert sections
+  if (rows.length === 0) return result
+
+  // ── Upsert sections ──
   const sectionKeys = new Set<string>()
   const sectionItems: { name: string; program: string }[] = []
   for (const r of rows) {
@@ -269,20 +279,29 @@ export async function importStudentEnrollments(
       sectionItems.push({ name: r.sectionName, program: r.sectionProgram })
     }
   }
-  const existingAllSections = await sectionRepository.list()
-  const existingSectionKeys = new Set(existingAllSections.map((s) => `${s.name}|${s.program}`))
-  const preExistingSectionCount = sectionItems.filter((s) => existingSectionKeys.has(`${s.name}|${s.program}`)).length
-  result.createdSections = sectionItems.length - preExistingSectionCount
-  const sections = await sectionRepository.upsertMany(sectionItems)
+  const { data: sections, created: createdSections } = await sectionRepository.upsertMany(sectionItems)
+  result.createdSections = createdSections
 
-  // Build enrollment items
+  // ── Resolve users (batch lookup + batch create) ──
+  const uniqueEmails = [...new Set(rows.map((r) => r.email.toLowerCase().trim()))]
+  const userMap = await userRepository.findManyByEmail(uniqueEmails)
+  const missingEmails = uniqueEmails.filter((e) => !userMap.has(e))
+  if (missingEmails.length > 0) {
+    const createdUsers = await userRepository.createMany(
+      missingEmails.map((email) => ({ email, name: email.split("@")[0] || email, role: "STUDENT" })),
+    )
+    for (const [email, user] of createdUsers) {
+      userMap.set(email, user)
+    }
+  }
+
+  // ── Build enrollment items ──
   const enrollmentItems: { studentId: string; sectionId: string }[] = []
-
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
     const rowNum = i + 1
 
-    const user = await userRepository.findByEmail(row.email)
+    const user = userMap.get(row.email.toLowerCase().trim())
     if (!user) {
       result.errors.push({ row: rowNum, email: row.email, message: "Student not found in system" })
       continue
@@ -299,7 +318,7 @@ export async function importStudentEnrollments(
     result.matched++
   }
 
-  // Group by section and replace
+  // ── Group by section and replace ──
   const bySection = new Map<string, { studentId: string }[]>()
   for (const item of enrollmentItems) {
     if (!bySection.has(item.sectionId)) bySection.set(item.sectionId, [])

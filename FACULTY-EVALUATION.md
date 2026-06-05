@@ -390,10 +390,10 @@ Example row: `regie.ellana@lyceumalabang.edu.ph, ELEC-323, BSIT-32A1`
 
 | Step | CSV Column | Database Table | Column(s) | Operation |
 |------|-----------|---------------|-----------|-----------|
-| 1 | `faculty email` | `users` | `id` (lookup) | `findByEmail()` — must exist or row is skipped with error |
-| 2 | `subject code` | `subjects` | `code`, `name` | Upsert: `name` defaults to `code`; if `code` exists, reuse row |
-| 3 | `section` → parsed `program`+`name` | `sections` | `program`, `name` | Upsert: splits on first `-`; unique key = `(name, program)` |
-| 4 | resolved UUIDs | `faculty_subjects` | `facultyId`, `subjectId`, `sectionId` | Grouped by `sectionId` → delete-then-insert (atomic replace) |
+| 1 | `faculty email` | `users` | `id` (lookup) | Batch `findManyByEmail()` — missing emails auto-created via `createMany()` with `role: "FACULTY"` |
+| 2 | `subject code` | `subjects` | `code`, `name` | Batch `upsertMany()` by `code`; `name` defaults to `code`; if exists, reuse row |
+| 3 | `section` → parsed `program`+`name` | `sections` | `program`, `name` | Batch `upsertMany()` by unique `(name, program)`; splits on first `-` |
+| 4 | resolved UUIDs | `faculty_subjects` | `facultyId`, `subjectId`, `sectionId` | Grouped by `sectionId` → delete-then-insert (atomic replace per section) |
 
 #### Student Enrollment CSV → Table Mapping
 
@@ -434,17 +434,18 @@ Example row: `rachel.lucban@itmlyceumalabang.onmicrosoft.com, BSIT-32A1`
 
 | Step | CSV Column | Database Table | Column(s) | Operation |
 |------|-----------|---------------|-----------|-----------|
-| 1 | `student email` | `users` | `id` (lookup) | `findByEmail()` — must exist or row is skipped |
-| 2 | `section` → parsed `program`+`name` | `sections` | `program`, `name` | Upsert: splits on first `-`; unique key = `(name, program)` |
-| 3 | resolved UUIDs | `student_enrollments` | `studentId`, `sectionId` | Grouped by `sectionId` → delete-then-insert (atomic replace) |
+| 1 | `student email` | `users` | `id` (lookup) | Batch `findManyByEmail()` — missing emails auto-created via `createMany()` with `role: "STUDENT"` |
+| 2 | `section` → parsed `program`+`name` | `sections` | `program`, `name` | Batch `upsertMany()` by unique `(name, program)`; splits on first `-` |
+| 3 | resolved UUIDs | `student_enrollments` | `studentId`, `sectionId` | Grouped by `sectionId` → delete-then-insert (atomic replace per section) |
 
 #### Key Behaviors
 
-- **Users must pre-exist** — the ETL matches emails against the `users` table and errors if not found
+- **Users auto-created** — the ETL batch-looks up emails via `findManyByEmail()`. Missing emails are batch-created with role `FACULTY` or `STUDENT` and name derived from email prefix
 - **Subjects** are upserted by `code`; `name` defaults to `code` (a separate subject naming flow can update names later)
 - **Sections** are parsed from the format `PROGRAM-NAME` (e.g., `BSIT-32A1` → program=`BSIT`, name=`32A1`) and upserted by unique `(name, program)`
 - **Replace strategy**: faculty_subjects and student_enrollments are grouped by section and replaced atomically — all existing entries for a section are deleted before inserting new ones
 - **No period linkage**: ETL data is independent of evaluation periods. Period-scoping happens only at the evaluation level
+- **Batch DB trips**: Subjects/sections are batched via `upsertMany()`, users via `findManyByEmail()` + `createMany()`. Total trips ≈ 5–6 regardless of row count (eliminated N+1 per-row `findByEmail` loop from previous implementation)
 
 #### User Creation
 
@@ -1213,13 +1214,13 @@ export interface EnrollmentStats {
 ```typescript
 export interface ISubjectRepository {
   list(): Promise<SubjectData[]>
-  upsertMany(items: { code: string; name: string }[]): Promise<Map<string, SubjectData>>
+  upsertMany(items: { code: string; name: string }[]): Promise<{ data: Map<string, SubjectData>; created: number }>
   findByCode(code: string): Promise<SubjectData | null>
 }
 
 export interface ISectionRepository {
   list(): Promise<SectionData[]>
-  upsertMany(items: { name: string; program: string }[]): Promise<Map<string, SectionData>>
+  upsertMany(items: { name: string; program: string }[]): Promise<{ data: Map<string, SectionData>; created: number }>
   findByNameAndProgram(name: string, program: string): Promise<SectionData | null>
 }
 
@@ -1234,6 +1235,14 @@ export interface IStudentEnrollmentRepository {
   replaceBySection(sectionId: string, items: { studentId: string }[]): Promise<void>
   getDistinctFaculty(studentId: string): Promise<string[]>
 }
+```
+
+#### User Repository Additions (`lib/types/repository.ts`)
+
+```typescript
+// Added to IUserRepository:
+findManyByEmail(emails: string[]): Promise<Map<string, UserData>>
+createMany(inputs: CreateUserInput[]): Promise<Map<string, UserData>>
 ```
 
 ### Controllers (`lib/controllers/`)
@@ -1252,10 +1261,16 @@ export interface IStudentEnrollmentRepository {
 
 The evaluation ETL uses direct import endpoints (no validate/confirm separation):
 
-- **`/api/import/evaluation-faculty`** — accepts CSV file (`multipart/form-data`), parses via `parseFacultySubjectCsv()`, imports via `importFacultySubjects()` in `lib/services/etlEvaluation.ts`
-- **`/api/import/evaluation-student`** — accepts CSV file (`multipart/form-data`), parses via `parseStudentEnrollmentCsv()`, imports via `importStudentEnrollments()` in `lib/services/etlEvaluation.ts`
+- **`/api/import/evaluation-faculty`** — accepts CSV (`multipart/form-data`) or JSON (`application/json`) body. CSV parsed via `parseFacultySubjectCsv()`, JSON parsed from `{ rows: [...] }`. Both call `importFacultySubjects()` in `lib/services/etlEvaluation.ts`
+- **`/api/import/evaluation-student`** — same dual-accept pattern. Calls `importStudentEnrollments()` in `lib/services/etlEvaluation.ts`
 
-Both endpoints perform immediate import (no separate preview-then-confirm flow for evaluation data).
+**Batch optimization**: Previously made N+4 DB trips (one `findByEmail` per row + extra `list()` scans). Now uses batch lookup/creation reducing trips to ≈5–6:
+
+1. `upsertMany` for subjects (1 trip: `SELECT IN` + `INSERT` missing)
+2. `upsertMany` for sections (1 trip: `SELECT *` + `INSERT` missing)
+3. `findManyByEmail` for users (1 trip: `SELECT IN`)
+4. `createMany` for missing users (1 trip: `INSERT users` + `INSERT roles` + `SELECT`)
+5. `replaceBySection` per unique section (1 trip each: `DELETE` + `INSERT`)
 
 Upload types defined in `lib/constants.ts`:
 ```typescript

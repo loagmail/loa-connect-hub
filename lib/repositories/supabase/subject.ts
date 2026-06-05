@@ -29,7 +29,7 @@ export const subjectRepository: ISubjectRepository = {
       }
     }
 
-    return result
+    return { data: result, created: missing.length }
   },
 
   async findByCode(code) {

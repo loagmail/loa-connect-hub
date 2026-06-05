@@ -35,7 +35,7 @@ export const sectionRepository: ISectionRepository = {
       }
     }
 
-    return result
+    return { data: result, created: inserts.length }
   },
 
   async findByNameAndProgram(name, program) {
