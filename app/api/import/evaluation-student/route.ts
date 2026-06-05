@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     if (!rawRows || !Array.isArray(rawRows) || rawRows.length === 0) {
       return NextResponse.json({ error: "Rows array is required" }, { status: 400 })
     }
-    importRows = rawRows.map((r, i) => {
+    importRows = rawRows.map((r, _i) => {
       const { program, name } = parseSectionIdentifier(r.section || "")
       return { email: r.email.toLowerCase().trim(), sectionName: name, sectionProgram: program }
     })
