@@ -15,17 +15,28 @@
 -- =========================================================
 -- Step 1: Create semesters table
 -- =========================================================
+-- =========================================================
+-- Step 1: Create semesters table
+-- =========================================================
 
 CREATE TABLE IF NOT EXISTS semesters (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   title TEXT NOT NULL,
-  "evalStartDate" DATE NOT NULL,
+  "evalStartDate" DATE,
   "evalEndDate" DATE,
   "isActive" BOOLEAN NOT NULL DEFAULT FALSE,
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_semesters_active ON semesters("isActive");
+-- Normalize existing deployments
+ALTER TABLE semesters
+  ALTER COLUMN "evalStartDate" DROP NOT NULL;
+
+ALTER TABLE semesters
+  ALTER COLUMN "evalEndDate" DROP NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_semesters_active
+ON semesters("isActive");
 
 -- =========================================================
 -- Step 2: Migrate existing evaluation_periods → semesters
@@ -45,6 +56,33 @@ BEGIN
 END $$;
 
 -- =========================================================
+-- Step 2A: Seed default semester
+-- =========================================================
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM semesters
+  ) THEN
+    INSERT INTO semesters (
+      id,
+      title,
+      "evalStartDate",
+      "evalEndDate",
+      "isActive"
+    )
+    VALUES (
+      gen_random_uuid()::TEXT,
+      'System Default Semester',
+      CURRENT_DATE,
+      CURRENT_DATE + INTERVAL '180 days',
+      TRUE
+    );
+  END IF;
+END $$;
+
+-- =========================================================
 -- Step 3: Add semesterId to faculty_subjects
 -- =========================================================
 
@@ -55,6 +93,18 @@ DO $$ BEGIN
   ) THEN
     ALTER TABLE faculty_subjects ADD COLUMN "semesterId" TEXT REFERENCES semesters(id) ON DELETE CASCADE;
     CREATE INDEX IF NOT EXISTS idx_faculty_subjects_semester ON faculty_subjects("semesterId");
+  END IF;
+
+  -- Update UNIQUE constraint to include semesterId
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'faculty_subjects_subject_id_section_id_key'
+  ) THEN
+    ALTER TABLE faculty_subjects DROP CONSTRAINT faculty_subjects_subject_id_section_id_key;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'faculty_subjects_subject_id_section_id_semesterId_key'
+  ) THEN
+    ALTER TABLE faculty_subjects ADD CONSTRAINT faculty_subjects_subject_id_section_id_semesterId_key UNIQUE(subject_id, section_id, "semesterId");
   END IF;
 END $$;
 
@@ -69,6 +119,18 @@ DO $$ BEGIN
   ) THEN
     ALTER TABLE student_enrollments ADD COLUMN "semesterId" TEXT REFERENCES semesters(id) ON DELETE CASCADE;
     CREATE INDEX IF NOT EXISTS idx_student_enrollments_semester ON student_enrollments("semesterId");
+  END IF;
+
+  -- Update UNIQUE constraint to include semesterId
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'student_enrollments_student_id_section_id_key'
+  ) THEN
+    ALTER TABLE student_enrollments DROP CONSTRAINT student_enrollments_student_id_section_id_key;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'student_enrollments_student_id_section_id_semesterId_key'
+  ) THEN
+    ALTER TABLE student_enrollments ADD CONSTRAINT student_enrollments_student_id_section_id_semesterId_key UNIQUE(student_id, section_id, "semesterId");
   END IF;
 END $$;
 
