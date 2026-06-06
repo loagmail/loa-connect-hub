@@ -1,39 +1,50 @@
-# Backlog: Access-Config Enforcement
+# Active Backlogs
 
-## Goal
+> Working file for tracking issues, bugs, and improvements across the project.
+> Data may be stale — verify before acting.
+
+---
+
+## 1. Access-Config Enforcement
+
+### Goal
 
 Enforce the `group_access` system so that page access is controlled by the database-driven access config, not by scattered `hasRole()` checks in individual pages.
 
-## Current State
+### Current State
 
-### What exists
+#### What exists
 - `lib/access.ts` — `loadAccessConfig()`, `hasPageAccess(role, path)`, `clearAccessConfigCache()`
 - `supabase` table `group_access` with pages JSONB per role group
 - `/api/auth/access` — returns allowed pages for the current user (used by sidebar)
 - `/api/admin/access-config` — CRUD for group_access (admin UI at `/admin/access-config`)
-- `components/Sidebar.tsx` — fetches `allowedPages` and filters nav items
+- `components/Sidebar.tsx` — fetches `allowedPages` and filters nav items; has collapsible Data Management + Evaluations groups
 - `app/403/page.tsx` — static 403 page exists but is **never triggered**
 
-### What's missing
+#### What's missing
 1. **No middleware or layout-level enforcement** — pages check `hasRole()` independently, and some don't check at all
 2. **`hasPageAccess()` is never called** in page components
 3. **No redirect to `/403`** — denied access goes to `/login` instead
-4. **Client component pages** (`admin/users`, `admin/data-management`, `student/evaluations`) have no server-side access check
+4. **DB `group_access` table overrides `DEFAULT_CONFIG`** — new `/admin/data/*` paths added to `DEFAULT_CONFIG` in code but may not be in the DB table, causing sidebar links to not appear
 5. **`admin/reports/*` pages** only check `session?.user`, not ADMIN role
 6. **Sidebar filtering is cosmetic** — doesn't prevent URL-based navigation
 
-## Plan
+#### Stale items (removed from backlog)
+- `/admin/users` client component — now moved to `/admin/data/users` (server component)
+- `admin/data-management` — no longer an active path
 
-### Part A: Navigation Hiding (Sidebar)
+### Plan
+
+#### Part A: Navigation Hiding (Sidebar)
 
 **Status: Mostly done.** The sidebar already calls `/api/auth/access` and filters `ALL_NAV_ITEMS` against `allowedPages`.
 
 Needs:
 - [ ] Ensure all page routes are registered in the `group_access` seed data + admin page catalog
 - [ ] Add `/admin/reports/*` child paths to the scanned page catalog in `/api/admin/access-config` so admins can toggle them individually
-- [ ] Add new evaluation ETL page paths to `group_access` when they're built
+- [ ] Sync `/admin/data/*` and other new paths into the DB `group_access` table
 
-### Part B: Server-Side Enforcement (403 Redirect)
+#### Part B: Server-Side Enforcement (403 Redirect)
 
 Create a **middleware** or **layout-level guard** that enforces `hasPageAccess()` on every request:
 
@@ -62,7 +73,7 @@ Each calls hasPageAccess() and redirects to /403 on failure.
 
 **Recommendation:** Option 1 (middleware) is simpler and covers all pages, including client components that currently have no checks.
 
-### Implementation Steps
+#### Implementation Steps
 
 1. **Create `middleware.ts`**
    - Use NextAuth's `getToken()` or `auth()` to read the session
@@ -80,10 +91,10 @@ Each calls hasPageAccess() and redirects to /403 on failure.
    - Add any missing evaluation/report page paths
 
 4. **Client component pages**
-   - `/admin/users` — after middleware, no change needed
+   - `/admin/data/users` — after middleware, no change needed
    - `/student/evaluations` — after middleware, no change needed
 
-### Files to Modify
+#### Files to Modify
 
 | File | Change |
 |------|--------|
@@ -93,21 +104,86 @@ Each calls hasPageAccess() and redirects to /403 on failure.
 | Individual server pages | Remove redundant `hasRole()` + `redirect("/login")` (optional cleanup) |
 | `app/api/admin/access-config/route.ts` | Add missing paths to page catalog |
 
-### Risks
+#### Risks
 
 - **Middleware + NextAuth compatibility**: `auth()` in middleware has some constraints. Need to verify `getToken()` from `next-auth/jwt` works.
 - **API routes excluded**: Middleware should NOT block API routes — their own auth logic handles it
 - **Middleware matcher**: Use `config.matcher` in middleware to exclude api, static files, and auth pages
 - **Performance**: `hasPageAccess()` has a 60s cache, so DB lookups aren't per-request
 
-### Dependencies
+#### Dependencies
 
 - Existing `lib/access.ts` `hasPageAccess()` function — already works
 - Existing NextAuth session — already set up
 - Existing `app/403/page.tsx` — already exists
 
-### Out of Scope
+#### Out of Scope
 
 - API-level access config enforcement (API routes check roles internally)
 - Dynamically hiding UI elements beyond sidebar navigation
 - Per-user (vs per-role) access configuration
+
+---
+
+## 2. `GET /api/data/evaluation-mappings` Returns 500
+
+### Symptom
+
+Calling `GET /api/data/evaluation-mappings?type=faculty` (or `type=student`) returns a 500 error.
+
+### Root Cause
+
+The query uses Supabase embedded join syntax:
+
+```typescript
+.select(`
+  id,
+  faculty:facultyId (id, name, email),
+  subject:subjectId (id, code, name),
+  section:sectionId (id, name, program)
+`)
+```
+
+PostgREST requires foreign key relationships to be recognized for the `foreignTable:foreignColumn()` join syntax. Despite the FK constraints being defined in the SQL schema (`REFERENCES users(id) ON DELETE CASCADE`), PostgREST may not have picked them up. This can happen when:
+- The schema cache hasn't been refreshed after migration
+- Quoted column names interfere with FK detection
+- The FK exists in the database but PostgREST's schema cache is stale
+
+### Possible Fixes
+
+- **Refresh schema cache**: Run `NOTIFY pgrst, 'reload schema'` in Supabase SQL Editor or go to API Settings → Schema Cache → Refresh
+- **Drop quoted column names**: Unquote `"facultyId"` → `facultyId` in the CREATE TABLE (requires migration)
+- **Rewrite without joins**: Use separate queries and manual resolution (e.g., fetch mappings first, then batch-lookup related rows)
+
+### Notes
+
+- `type=subjects` and `type=sections` work fine (they're simple table selects with no joins)
+- The same join pattern was previously used in the "ViewMappings" component on `/admin/etl-hub` (now replaced by separate `/admin/data/*` pages)
+- No urgency since the dedicated `/admin/data/faculty-mappings` and `/admin/data/student-enrollments` pages use their own working queries
+
+---
+
+## 3. DB `group_access` Overrides `DEFAULT_CONFIG`
+
+### Symptom
+
+New `/admin/data/*` sidebar links don't appear despite being added to `DEFAULT_CONFIG` in `lib/access.ts`.
+
+### Root Cause
+
+The `loadAccessConfig()` function in `lib/access.ts` loads from the DB `group_access` table first, and that table's rows **completely override** (not merge with) the `DEFAULT_CONFIG`. If the DB rows don't include the new paths, they won't appear regardless of the code config.
+
+### Possible Fix
+
+- Update the `group_access` rows in the DB (via `/admin/access-config` UI or SQL seed data) to include all new `/admin/data/*` paths
+- Or change `loadAccessConfig()` to merge DB config with DEFAULT_CONFIG instead of replacing
+
+---
+
+## 4. Pre-existing TS Errors
+
+### `lib/__tests__/import-preview.test.ts`
+
+- `NextRequest` type mismatch — test file was written for an older Next.js version
+- Unrelated to evaluation work
+- Low priority

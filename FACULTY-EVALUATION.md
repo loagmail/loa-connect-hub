@@ -153,22 +153,22 @@
 | `EtlUploadType` constants | ✅ Done |
 | `lib/access.ts` DEFAULT_CONFIG | ✅ Done |
 | `components/Sidebar.tsx` collapsible Evaluations group | ✅ Done |
-| `lib/types/index.ts` evaluation export | ❌ Missing |
+| `lib/types/index.ts` evaluation export | ✅ Done |
 
 ### Summary
 
 | Category | Done | Missing |
 |----------|------|---------|
 | Pages | 10 | 8 |
-| Database | 3 | 0 |
+| Database | 5 | 0 |
 | Types | 1 | 0 |
-| Repositories | 7 | 2 |
+| Repositories | 8 | 2 |
 | Controllers | 6 | 0 |
 | API Routes | 27 | 8 |
 | Components | 6 | 0 |
 | Services | 2 | 0 |
-| Wiring | 3 | 1 |
-| **Total** | **65** | **19** |
+| Wiring | 4 | 0 |
+| **Total** | **69** | **18** |
 
 ---
 
@@ -238,7 +238,7 @@ app/
 ├── admin/
 │   ├── page.tsx, error.tsx                     ← Core
 │   ├── users/, departments/, access-config/    ← Core
-│   ├── data-management/, etl-hub/              ← Core (ETL for evaluation data)
+│   ├── data/, etl-hub/                         ← Core (ETL at etl-hub, data views at /admin/data/)
 │   ├── reports/                                ← Consultation Module
 │   │
 │   └── evaluations/                            ← Evaluation Module
@@ -339,7 +339,7 @@ ALTER TABLE users ADD COLUMN "evaluationPeriodId" TEXT REFERENCES evaluation_per
 
 ### Evaluation ETL (at `/admin/etl-hub`)
 
-The `/admin/etl-hub` page handles **evaluation-specific** imports. Users **must already exist** in the system (created individually via `/admin/users` CRUD). The ETL data is **global** — not scoped to evaluation periods.
+The `/admin/etl-hub` page handles **evaluation-specific** imports. Users are **auto-created** when missing (emails batch-looked up via `findManyByEmail()`, missing ones created with role `FACULTY`/`STUDENT` and name from email prefix). Individual user creation is also available via `/admin/users` CRUD. The ETL data is **global** — not scoped to evaluation periods.
 
 #### Faculty-Subject CSV → Table Mapping
 
@@ -449,11 +449,14 @@ Example row: `rachel.lucban@itmlyceumalabang.onmicrosoft.com, BSIT-32A1`
 
 #### User Creation
 
-Users must be created individually via the `/admin/users` CRUD UI (Create User button + form). The bulk import feature was decommissioned — there is no CSV import for creating users.
+Users can be created two ways:
+1. **Individually** via `/admin/data/users` CRUD UI (Create User button + form)
+2. **Auto-created during ETL import** — when faculty/student emails don't exist in the DB, the ETL service batch-creates them with role `FACULTY`/`STUDENT` and name derived from the email prefix
 
 | Method | What It Does |
 |--------|-------------|
-| `/admin/users` CRUD | Admin creates users one-by-one with name, email, role, department |
+| `/admin/data/users` CRUD | Admin creates users one-by-one with name, email, role, department |
+| ETL auto-creation | Batch-creates missing users during faculty-subject or student-enrollment import |
 
 **Department**: Users are NOT auto-assigned a department. The admin assigns it later via user management UI.
 
@@ -492,6 +495,16 @@ STUDENT: { pages: [
 ### Navigation Items (Sidebar.tsx)
 
 ```
+Admin collapsible "Data Management":
+  ├── Users                    (/admin/data/users)
+  ├── Deleted Users            (/admin/data/users/deleted)
+  ├── Departments              (/admin/data/departments)
+  ├── Subjects                 (/admin/data/subjects)
+  ├── Sections                 (/admin/data/sections)
+  ├── Faculty-Subject Mappings (/admin/data/faculty-mappings)
+  ├── Student Enrollments      (/admin/data/student-enrollments)
+  └── Export & Delete Data     (existing page)
+
 Admin collapsible "Evaluations":
   ├── Evaluation Dashboard     (/admin/evaluations)
   ├── Periods                  (/admin/evaluations/periods)
@@ -1683,11 +1696,16 @@ Grouped by period, showing faculty name, rating, remarks, submission date.
 
 | Page | Status | Action |
 |------|--------|--------|
-| `/admin/users` | ✅ Done | Individual CRUD only — bulk import decommissioned; users created via Create User modal |
-| `/admin/etl-hub` | ✅ Done | Evaluation-specific ETL (Faculty-Subject, Student Enrollments) |
+| `/admin/data/users` | ✅ Done | Moved from `/admin/users` — CRUD only, bulk import decommissioned |
+| `/admin/data/departments` | ✅ Done | Moved from `/admin/departments` |
+| `/admin/data/subjects` | ✅ Done | Searchable table of subjects (new) |
+| `/admin/data/sections` | ✅ Done | Searchable table of sections (new) |
+| `/admin/data/faculty-mappings` | ✅ Done | Joined faculty-subject view (new) |
+| `/admin/data/student-enrollments` | ✅ Done | Joined student enrollment view (new) |
+| `/admin/etl-hub` | ✅ Done | ETL upload UI with editable preview, JSON confirm, result card, ViewMappings |
 | `/admin/evaluations` | ✅ Done | Add rubric + reports cards |
 | `/admin/evaluations/rubrics` | ❌ Missing | Build standalone rubric editor with period selector |
-| `/admin/evaluations/upload` | ❌ Missing | Build upload status dashboard |
+| `/admin/evaluations/upload` | ✅ N/A | Use `/admin/etl-hub` + `/admin/data/*` instead |
 | `/admin/evaluations/results` | ✅ Done | Enhance with spreadsheet table + exports |
 | `/admin/evaluations/reports` | ❌ Missing | Build report card grid |
 | `/admin/evaluations/reports/sentiment` | ❌ Missing | Build sentiment dashboard |
@@ -1759,29 +1777,21 @@ Grouped by period, showing faculty name, rating, remarks, submission date.
 - **Props**: `rubric: RubricCategory[]`, `facultyName`, `periodName`, `onSubmit`
 - **Used by**: Student evaluation page
 
-### Bulk Import in `/admin/users`
+### Data Management Pages (`/admin/data/*`)
 
-The `/admin/users` page has a collapsible **Bulk Import** section above the user table. The flow:
+Six dedicated pages for viewing and managing evaluation data:
 
-1. **Select type**: Faculty/Staff (3-column CSV) or Students
-2. **Preview**: Upload CSV → `/api/import/preview` parses it and checks each email against the `users` table
-3. **Edit**: Preview table shows all rows with inline-editable fields (name, email, section, code, title). Existing users are flagged with an orange **EXISTS** badge; new rows show **NEW**
-4. **Confirm**: Sends the edited rows as JSON to the import endpoint
+| Route | Content | Features |
+|-------|---------|----------|
+| `/admin/data/users` | User list with roles, departments | Searchable table, CRUD modals |
+| `/admin/data/users/deleted` | Soft-deleted users | Searchable table |
+| `/admin/data/departments` | Department/course list | Searchable table |
+| `/admin/data/subjects` | All subjects (code + name) | Searchable table |
+| `/admin/data/sections` | All sections (program + name) | Searchable table |
+| `/admin/data/faculty-mappings` | Faculty name/email, subject code/name, section | Joined read-only view |
+| `/admin/data/student-enrollments` | Student name/email, section | Joined read-only view |
 
-#### Faculty CSV Format
-
-```
-name, microsoft email, section, code, title
-Jane Faculty, jane.faculty@lyceumalabang.edu.ph, BSIT-32A1, ELEC-323, Elective 3 - Fullstack Development
-Mike Dean, mike.dean@lyceumalabang.edu.ph, BSCS-41B2, CCS-412, Capstone Project 2
-```
-
-#### Student CSV Format (unchanged)
-
-```
-name, microsoft email, course
-Alice Student, alice.student@lyceumalabang.edu.ph, BSIT
-```
+All pages follow the same pattern: server-side searchable table with Supabase query, showing a max of rows. Access is controlled via `group_access` DB table for the `/admin/data/*` paths.
 
 ### STUDENT PAGES
 
@@ -1930,17 +1940,17 @@ Mobile views share the same data layer, using iOS-native patterns: full-width gr
 
 **Blast radius**: None. All new files in `components/`.
 
-### Phase 5: Consolidated Bulk Import in `/admin/users` (3 prompts — risk: moderate)
+### Phase 5: Consolidated Evaluation ETL (3 prompts — risk: moderate)
 
 | # | Prompt | What It Touches | Existing Risk |
 |---|--------|----------------|---------------|
 | 14 | Edit `lib/constants.ts` — add `evaluation-faculty` and `evaluation-student` to `EtlUploadType` | 1 existing file | Low — adds enum values |
-| 15 | Edit `app/admin/users/page.tsx` — add collapsible Bulk Import section with card selector, CSV preview with inline editing, confirm flow, localhost-only Reset Data button | 1 existing file | **Moderate** — must preserve existing CRUD functionality; bulk import is additive above the table |
-| 16 | Edit `app/api/import/users/route.ts` + `students/route.ts` — add JSON body support for preview confirm flow | 2 existing files | Low — additive branching on content-type |
+| 15 | Create `/admin/etl-hub` — evaluation-specific ETL page with editable preview, JSON confirm, result card, ViewMappings | 1 new file | None |
+| 16 | Edit `app/api/import/evaluation-faculty/route.ts` + `evaluation-student/route.ts` — add JSON body support for preview confirm flow | 2 existing files | Low — additive branching on content-type |
 
-**Decision**: Use existing `app/api/import/evaluation-faculty` and `app/api/import/evaluation-student` endpoints directly (they're already built). The `/admin/etl-hub` page serves as the import UI.
+**Decision**: Use dedicated `/admin/etl-hub` for evaluation imports (separate from user CRUD). The bulk import feature in `/admin/users` was decommissioned — users are created individually via CRUD or auto-created during ETL.
 
-**Blast radius**: The `/admin/users` page must preserve its existing user CRUD table, modals, search, filter, and pagination. The bulk import section is a collapsible area added above the table — visible only when expanded.
+**Blast radius**: Low. The etl-hub is an entirely new page. API routes add a JSON branch alongside existing multipart handling.
 
 ### Additional: CSV Format Change + Seed Cleanup
 

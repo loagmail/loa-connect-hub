@@ -250,6 +250,14 @@ Non-activated accounts must use the activation flow at `/activate`.
 
 | Route | Status |
 |-------|--------|
+| `/admin/data/users` | ✅ Done — Moved from `/admin/users`, CRUD only |
+| `/admin/data/users/deleted` | ✅ Done — Moved from `/admin/users/deleted` |
+| `/admin/data/departments` | ✅ Done — Moved from `/admin/departments` |
+| `/admin/data/subjects` | ✅ Done — Searchable subject table |
+| `/admin/data/sections` | ✅ Done — Searchable section table |
+| `/admin/data/faculty-mappings` | ✅ Done — Joined faculty-subject view |
+| `/admin/data/student-enrollments` | ✅ Done — Joined enrollment view |
+| `/admin/etl-hub` | ✅ Done — ETL upload with editable preview |
 | `/admin/evaluations` (hub) | ✅ Done |
 | `/admin/evaluations/periods` | ✅ Done |
 | `/admin/evaluations/periods/new` | ✅ Done |
@@ -276,6 +284,8 @@ Non-activated accounts must use the activation flow at `/activate`.
 | Migration 13: 11 new eval tables | ✅ Done (`supabase-schema.sql`) |
 | Migration 14: ALTER users (`employeeNo`, `evaluationEligible`) | ✅ Done |
 | Migration 15: `group_access` eval paths | ✅ Done |
+| Migration 16: Drop periodId FKs, make nullable — decouple ETL from periods | ✅ Done |
+| Migration 17: Introduce `sections` table, rewrite `faculty_subjects` + `student_enrollments` to section-based, add `code` to `subjects` | ✅ Done |
 
 ### Types
 
@@ -289,6 +299,7 @@ Non-activated accounts must use the activation flow at `/activate`.
 |------------|--------|
 | `evaluation-period` | ✅ Done |
 | `subject` | ✅ Done |
+| `section` | ✅ Done |
 | `faculty-subject` | ✅ Done |
 | `student-enrollment` | ✅ Done |
 | `rubric` | ✅ Done |
@@ -374,19 +385,19 @@ Non-activated accounts must use the activation flow at `/activate`.
 | `EtlUploadType` constants | ✅ Done |
 | `lib/access.ts` DEFAULT_CONFIG | ✅ Done |
 | `components/Sidebar.tsx` collapsible Evaluations group | ✅ Done |
-| `lib/types/index.ts` evaluation export | ❌ Missing |
+| `lib/types/index.ts` evaluation export | ✅ Done |
 
 ### Summary
 
 | Category | Done | Missing |
 |----------|------|---------|
-| Pages | 10 | 7 |
-| Database | 3 | 0 |
+| Pages | 18 | 8 |
+| Database | 5 | 0 |
 | Types | 1 | 0 |
-| Repositories | 7 | 2 |
+| Repositories | 8 | 2 |
 | Controllers | 6 | 0 |
 | API Routes | 27 | 8 |
 | Components | 6 | 0 |
 | Services | 2 | 0 |
-| Wiring | 3 | 1 |
-| **Total** | **65** | **18** |
+| Wiring | 4 | 0 |
+| **Total** | **77** | **18** |
