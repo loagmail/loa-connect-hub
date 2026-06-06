@@ -327,3 +327,77 @@ alice.student@lyceumalabang.edu.ph, Alice Student, ELEC-323, BSIT-32A1
 - UI lives in `app/admin/etl-hub/page.tsx` (Student Import tab) — faculty and dean upload pages were left untouched
 - No tests yet for the service layer
 - Design doc: `STUDENT-CSV-UPLOAD.md`
+
+---
+
+## 7. Evaluation Module — Semester Rearchitecture
+
+### Goal
+
+Replace `evaluation_periods` with `semesters` as the central scoping entity. Add `semesterId` FK to all child tables. Wire semester dropdown into ETL imports, gate student access via `user.semesterId`, and seed rubrics via ETL.
+
+### Current State
+
+- `evaluation_periods` table has separate `name`, `semester`, `schoolYear` columns and `startDate`, `endDate`, `isActive`
+- `periodId` FK exists on `evaluations`, `evaluation_results`, `rating_scales`, `rubric_categories`
+- `users` has `evaluationPeriodId` (DB schema only — missing from TS `User` type)
+- Student evaluation flow fetches global active period (no per-user gate)
+- `student_enrollments` and `faculty_subjects` have no period/semester scoping
+
+### Design
+
+```
+semesters (new, replaces evaluation_periods)
+├── id, title ("2026 - 2027 - First Semester")
+├── evalStartDate, evalEndDate (nullable), isActive
+│
+├── student_enrollments.semesterId  (nullable FK → semesters, for soft-disable)
+├── faculty_subjects.semesterId     (nullable FK → semesters)
+├── evaluations.semesterId          (renamed from periodId)
+├── evaluation_results.semesterId   (renamed from periodId)
+├── rating_scales.semesterId        (renamed from periodId)
+├── rubric_categories.semesterId    (renamed from periodId)
+└── users.semesterId               (renamed from evaluationPeriodId)
+```
+
+### CSV Import Format
+
+```
+name, email, subject code, section
+```
+
+(same as before — semester comes from the ETL dropdown, not the CSV)
+
+### Key Behaviors
+
+- **Semester required** in ETL dropdown before imports (like department)
+- **ETL** nulls out old `semesterId` on reimport with a different semester (soft-disable)
+- **Student gate** checks `user.semesterId` → `semesters.isActive` + date range
+- **End date nullable** — no end means evaluations stay open indefinitely
+- **Rubric seeding** — ETL button inserts 8 categories / 34 items
+
+### Implementation Plan
+
+Full breakdown in `PLAN-evaluation-module.md` (9 phases, ~40+ files).
+
+| Phase | Scope | Files |
+|-------|-------|-------|
+| 1 | DB schema — create `semesters`, add FK columns, drop `evaluation_periods` | `supabase-schema.sql`, `reset-data.sql` |
+| 2 | Types — `Semester` replaces `EvaluationPeriod`, `semesterId` everywhere | `entity.ts`, `evaluation.ts`, `repository.ts` |
+| 3 | Repos — rename/update all queries | 7 files in `lib/repositories/supabase/`, `factory.ts` |
+| 4 | Controllers — rename/update | 4 files in `lib/controllers/` |
+| 5 | Services — ETL + student import accept `semesterId`, new `seedRubric()` | `etlEvaluation.ts`, `studentImport.ts` |
+| 6 | API routes — rename folders (`evaluation-periods` → `semesters`), add rubric seed route | ~16 files under `app/api/` |
+| 7 | Pages — admin semesters, ETL hub dropdown, results pages, student gate | ~10 files in `app/` |
+| 8 | Components — pass `semesterId` to bulk import components | `BulkStudentImport.tsx`, `BulkFacultyImport.tsx` |
+
+### Completion Criteria
+
+- [ ] `semesters` table replaces `evaluation_periods` in DB (data migrated if any)
+- [ ] All downstream FK columns renamed to `semesterId`
+- [ ] TypeScript types, repositories, controllers updated (no stale `periodId` refs)
+- [ ] ETL hub has required semester dropdown for faculty + student imports
+- [ ] Rubric seed button in ETL hub inserts the 8 categories
+- [ ] Student evaluation page gates on `user.semesterId`
+- [ ] Old API routes (`/api/evaluation-periods/*`) removed or redirected
+- [ ] Build passes (`npm run build`)
