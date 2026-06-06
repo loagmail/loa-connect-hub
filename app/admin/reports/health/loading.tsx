@@ -1,4 +1,4 @@
-import { ReportSkeleton } from "@/components/reports/ReportSkeleton"
+import { ReportSkeleton } from "@/features/reports/components/reports/ReportSkeleton"
 
 export default function Loading() {
   return <ReportSkeleton />

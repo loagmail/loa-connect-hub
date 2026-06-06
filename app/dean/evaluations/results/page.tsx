@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FacultyResultCard } from "@/components/evaluation/FacultyResultCard"
+import { FacultyResultCard } from "@/features/evaluations/components/evaluation/FacultyResultCard"
 
 interface Result {
   id: string

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import BulkStudentImport from "@/components/bulk-import/BulkStudentImport"
-import BulkFacultyImport from "@/components/bulk-import/BulkFacultyImport"
+import BulkStudentImport from "@/features/users/components/bulk-import/BulkStudentImport"
+import BulkFacultyImport from "@/features/users/components/bulk-import/BulkFacultyImport"
 
 interface MappedFaculty {
   id: string

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { EvaluationForm } from "@/components/evaluation/EvaluationForm"
+import { EvaluationForm } from "@/features/evaluations/components/evaluation/EvaluationForm"
 
 interface RubricItem {
   id: string
