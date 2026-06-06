@@ -21,6 +21,7 @@ type ImportType = "faculty-subject" | "student-enrollment"
 interface CsvRow {
   row: number
   email: string
+  name: string
   subjectCode: string
   section: string
 }
@@ -40,12 +41,12 @@ const ENDPOINTS: Record<ImportType, string> = {
 
 const TEMPLATES: Record<ImportType, { headers: string; sample: string }> = {
   "faculty-subject": {
-    headers: "faculty email, subject code, section",
-    sample: "juan.delacruz@example.com, CS101, BSIT-32A3\nmaria.santos@example.com, MATH201, BSCS-21B",
+    headers: "faculty email, name, subject code, section",
+    sample: "juan.delacruz@example.com, Juan Dela Cruz, CS101, BSIT-32A3\nmaria.santos@example.com, Maria Santos, MATH201, BSCS-21B",
   },
   "student-enrollment": {
-    headers: "student email, section",
-    sample: "ana.reyes@example.com, BSIT-32A3\npedro.cruz@example.com, BSCS-21B",
+    headers: "student email, name, section",
+    sample: "ana.reyes@example.com, Ana Reyes, BSIT-32A3\npedro.cruz@example.com, Pedro Cruz, BSCS-21B",
   },
 }
 
@@ -66,11 +67,39 @@ function parseClientCsv(text: string, importType: ImportType): { rows: CsvRow[];
   if (lines.length < 2) return { rows: [], error: "CSV file is empty" }
 
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
-  const expected =
-    importType === "faculty-subject"
-      ? ["faculty email", "subject code", "section"]
-      : ["student email", "section"]
+  const hasName = headers.length > 1 && headers[1] === "name"
 
+  if (importType === "faculty-subject") {
+    const expected = hasName
+      ? ["faculty email", "name", "subject code", "section"]
+      : ["faculty email", "subject code", "section"]
+    if (headers.length < expected.length) {
+      return { rows: [], error: `Expected headers: ${expected.join(", ")}` }
+    }
+    for (let i = 0; i < expected.length; i++) {
+      if (headers[i] !== expected[i]) {
+        return { rows: [], error: `Expected header "${expected[i]}" at column ${i + 1}, got "${headers[i]}"` }
+      }
+    }
+    const rows: CsvRow[] = []
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(",").map((c) => c.trim())
+      if (cols.length < expected.length) continue
+      rows.push({
+        row: i + 1,
+        email: cols[0],
+        name: hasName ? cols[1] : "",
+        subjectCode: hasName ? cols[2] : cols[1],
+        section: cols.slice(hasName ? 3 : 2).join(", "),
+      })
+    }
+    return { rows }
+  }
+
+  // student-enrollment
+  const expected = hasName
+    ? ["student email", "name", "section"]
+    : ["student email", "section"]
   if (headers.length < expected.length) {
     return { rows: [], error: `Expected headers: ${expected.join(", ")}` }
   }
@@ -79,19 +108,18 @@ function parseClientCsv(text: string, importType: ImportType): { rows: CsvRow[];
       return { rows: [], error: `Expected header "${expected[i]}" at column ${i + 1}, got "${headers[i]}"` }
     }
   }
-
   const rows: CsvRow[] = []
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(",").map((c) => c.trim())
     if (cols.length < expected.length) continue
-
-    if (importType === "faculty-subject") {
-      rows.push({ row: i + 1, email: cols[0], subjectCode: cols[1], section: cols.slice(2).join(", ") })
-    } else {
-      rows.push({ row: i + 1, email: cols[0], subjectCode: "", section: cols[1] })
-    }
+    rows.push({
+      row: i + 1,
+      email: cols[0],
+      name: hasName ? cols[1] : "",
+      subjectCode: "",
+      section: cols.slice(hasName ? 2 : 1).join(", "),
+    })
   }
-
   return { rows }
 }
 
@@ -165,8 +193,8 @@ function UploadCard({ importType }: { importType: ImportType }) {
 
   const info =
     importType === "faculty-subject"
-      ? { title: "Import Faculty-Subject Mappings", description: "Upload a CSV linking faculty members to the subjects and sections they teach.", headers: "faculty email, subject code, section" }
-      : { title: "Import Student Enrollments", description: "Upload a CSV listing which students belong to which sections.", headers: "student email, section" }
+      ? { title: "Import Faculty-Subject Mappings", description: "Upload a CSV linking faculty members to the subjects and sections they teach.", headers: "faculty email, name, subject code, section" }
+      : { title: "Import Student Enrollments", description: "Upload a CSV listing which students belong to which sections.", headers: "student email, name, section" }
 
   const paginatedRows = previewRows
     ? previewRows.slice(previewPage * PREVIEW_PAGE_SIZE, (previewPage + 1) * PREVIEW_PAGE_SIZE)
@@ -174,8 +202,8 @@ function UploadCard({ importType }: { importType: ImportType }) {
   const totalPreviewPages = previewRows ? Math.ceil(previewRows.length / PREVIEW_PAGE_SIZE) : 0
   const columnHeaders =
     importType === "faculty-subject"
-      ? ["Email", "Subject Code", "Section"]
-      : ["Email", "Section"]
+      ? ["Email", "Name", "Subject Code", "Section"]
+      : ["Email", "Name", "Section"]
 
   const handlePreview = async () => {
     setPreviewError("")
@@ -202,7 +230,7 @@ function UploadCard({ importType }: { importType: ImportType }) {
     }
   }
 
-  const handleFieldChange = (index: number, field: "subjectCode" | "section", value: string) => {
+  const handleFieldChange = (index: number, field: "name" | "subjectCode" | "section", value: string) => {
     if (!previewRows) return
     const next = [...previewRows]
     next[index] = { ...next[index], [field]: value }
@@ -216,6 +244,7 @@ function UploadCard({ importType }: { importType: ImportType }) {
     const body = {
       rows: previewRows.map((r) => ({
         email: r.email,
+        name: r.name,
         subjectCode: r.subjectCode,
         section: r.section,
       })),
@@ -333,6 +362,13 @@ function UploadCard({ importType }: { importType: ImportType }) {
                     <tr key={`${previewPage}-${i}`} className="border-b border-default hover:bg-surface-hover">
                       <td className="p-2 text-tertiary">{r.row}</td>
                       <td className="p-2 text-secondary text-[11px]">{r.email}</td>
+                      <td className="p-2">
+                        <input
+                          value={r.name}
+                          onChange={(e) => handleFieldChange(absoluteIndex, "name", e.target.value)}
+                          className="w-full bg-transparent border border-transparent hover:border-default focus:border-gold-500 rounded px-1 py-0.5 outline-none text-[11px]"
+                        />
+                      </td>
                       {importType === "faculty-subject" && (
                         <td className="p-2">
                           <input

@@ -16,6 +16,7 @@ function parseSectionIdentifier(raw: string): { name: string; program: string } 
 
 interface FacultySubjectCsvRow {
   email: string
+  name: string
   subjectCode: string
   sectionName: string
   sectionProgram: string
@@ -44,15 +45,34 @@ export function parseFacultySubjectCsv(text: string): {
   const headerLine = lines[0]
   const rawHeaders = headerLine.split(",").map((h) => h.trim().toLowerCase())
 
-  if (rawHeaders.length < 3) {
+  const hasName = rawHeaders.length > 1 && rawHeaders[1] === "name"
+  const minCols = hasName ? 4 : 3
+
+  if (rawHeaders.length < minCols) {
     return {
       rows,
       errors,
-      headerError: `Expected at least 3 columns (faculty email, subject code, section), got ${rawHeaders.length}.`,
+      headerError: `Expected at least ${minCols} columns (faculty email${hasName ? ", name" : ""}, subject code, section), got ${rawHeaders.length}.`,
     }
   }
 
-  if (rawHeaders[0] !== "faculty email" || rawHeaders[1] !== "subject code") {
+  if (rawHeaders[0] !== "faculty email") {
+    return {
+      rows,
+      errors,
+      headerError: `Expected headers: faculty email${hasName ? ", name" : ""}, subject code, section — got: ${rawHeaders.join(", ")}`,
+    }
+  }
+
+  if (hasName && rawHeaders[2] !== "subject code") {
+    return {
+      rows,
+      errors,
+      headerError: `Expected headers: faculty email, name, subject code, section — got: ${rawHeaders.join(", ")}`,
+    }
+  }
+
+  if (!hasName && rawHeaders[1] !== "subject code") {
     return {
       rows,
       errors,
@@ -64,15 +84,16 @@ export function parseFacultySubjectCsv(text: string): {
     const line = lines[i]
     const cols = line.split(",").map((c) => c.trim())
 
-    if (cols.length < 3) {
-      errors.push({ row: i + 1, message: `Expected at least 3 columns, got ${cols.length}` })
+    if (cols.length < minCols) {
+      errors.push({ row: i + 1, message: `Expected at least ${minCols} columns, got ${cols.length}` })
       continue
     }
 
     const email = cols[0].toLowerCase().trim()
-    const subjectCode = cols[1].trim()
-    const sectionRaw = cols.slice(2).join(", ").trim()
-    const { program, name } = parseSectionIdentifier(sectionRaw)
+    const displayName = hasName ? cols[1].trim() : ""
+    const subjectCode = hasName ? cols[2].trim() : cols[1].trim()
+    const sectionRaw = cols.slice(hasName ? 3 : 2).join(", ").trim()
+    const { program, name: sectionName } = parseSectionIdentifier(sectionRaw)
 
     if (email.length === 0) {
       errors.push({ row: i + 1, message: "Faculty email is required" })
@@ -84,12 +105,12 @@ export function parseFacultySubjectCsv(text: string): {
       continue
     }
 
-    if (name.length === 0) {
+    if (sectionName.length === 0) {
       errors.push({ row: i + 1, message: "Section is required" })
       continue
     }
 
-    rows.push({ email, subjectCode, sectionName: name, sectionProgram: program })
+    rows.push({ email, name: displayName, subjectCode, sectionName, sectionProgram: program })
   }
 
   return { rows, errors }
@@ -131,8 +152,13 @@ export async function importFacultySubjects(
   const userMap = await userRepository.findManyByEmail(uniqueEmails)
   const missingEmails = uniqueEmails.filter((e) => !userMap.has(e))
   if (missingEmails.length > 0) {
+    const nameByEmail = new Map(rows.map((r) => [r.email.toLowerCase().trim(), r.name]))
     const createdUsers = await userRepository.createMany(
-      missingEmails.map((email) => ({ email, name: email.split("@")[0] || email, role: "FACULTY" })),
+      missingEmails.map((email) => ({
+        email,
+        name: nameByEmail.get(email) || email.split("@")[0] || email,
+        role: "FACULTY",
+      })),
     )
     for (const [email, user] of createdUsers) {
       userMap.set(email, user)
@@ -187,6 +213,7 @@ export async function importFacultySubjects(
 
 interface StudentEnrollmentCsvRow {
   email: string
+  name: string
   sectionName: string
   sectionProgram: string
 }
@@ -213,11 +240,14 @@ export function parseStudentEnrollmentCsv(text: string): {
   const headerLine = lines[0]
   const rawHeaders = headerLine.split(",").map((h) => h.trim().toLowerCase())
 
-  if (rawHeaders.length < 2) {
+  const hasName = rawHeaders.length > 1 && rawHeaders[1] === "name"
+  const minCols = hasName ? 3 : 2
+
+  if (rawHeaders.length < minCols) {
     return {
       rows,
       errors,
-      headerError: `Expected at least 2 columns (student email, section), got ${rawHeaders.length}.`,
+      headerError: `Expected at least ${minCols} columns (student email${hasName ? ", name" : ""}, section), got ${rawHeaders.length}.`,
     }
   }
 
@@ -225,7 +255,7 @@ export function parseStudentEnrollmentCsv(text: string): {
     return {
       rows,
       errors,
-      headerError: `Expected headers: student email, section — got: ${rawHeaders.join(", ")}`,
+      headerError: `Expected headers: student email${hasName ? ", name" : ""}, section — got: ${rawHeaders.join(", ")}`,
     }
   }
 
@@ -233,26 +263,27 @@ export function parseStudentEnrollmentCsv(text: string): {
     const line = lines[i]
     const cols = line.split(",").map((c) => c.trim())
 
-    if (cols.length < 2) {
-      errors.push({ row: i + 1, message: `Expected at least 2 columns, got ${cols.length}` })
+    if (cols.length < minCols) {
+      errors.push({ row: i + 1, message: `Expected at least ${minCols} columns, got ${cols.length}` })
       continue
     }
 
     const email = cols[0].toLowerCase().trim()
-    const sectionRaw = cols.slice(1).join(", ").trim()
-    const { program, name } = parseSectionIdentifier(sectionRaw)
+    const displayName = hasName ? cols[1].trim() : ""
+    const sectionRaw = cols.slice(hasName ? 2 : 1).join(", ").trim()
+    const { program, name: sectionName } = parseSectionIdentifier(sectionRaw)
 
     if (email.length === 0) {
       errors.push({ row: i + 1, message: "Student email is required" })
       continue
     }
 
-    if (name.length === 0) {
+    if (sectionName.length === 0) {
       errors.push({ row: i + 1, message: "Section is required" })
       continue
     }
 
-    rows.push({ email, sectionName: name, sectionProgram: program })
+    rows.push({ email, name: displayName, sectionName, sectionProgram: program })
   }
 
   return { rows, errors }
@@ -287,8 +318,13 @@ export async function importStudentEnrollments(
   const userMap = await userRepository.findManyByEmail(uniqueEmails)
   const missingEmails = uniqueEmails.filter((e) => !userMap.has(e))
   if (missingEmails.length > 0) {
+    const nameByEmail = new Map(rows.map((r) => [r.email.toLowerCase().trim(), r.name]))
     const createdUsers = await userRepository.createMany(
-      missingEmails.map((email) => ({ email, name: email.split("@")[0] || email, role: "STUDENT" })),
+      missingEmails.map((email) => ({
+        email,
+        name: nameByEmail.get(email) || email.split("@")[0] || email,
+        role: "STUDENT",
+      })),
     )
     for (const [email, user] of createdUsers) {
       userMap.set(email, user)

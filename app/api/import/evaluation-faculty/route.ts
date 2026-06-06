@@ -17,20 +17,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden — Admin only" }, { status: 403 })
   }
 
-  let importRows: { email: string; subjectCode: string; sectionName: string; sectionProgram: string }[]
+  let importRows: { email: string; name: string; subjectCode: string; sectionName: string; sectionProgram: string }[]
   let parseErrors: { row: number; message: string }[] = []
 
   const contentType = request.headers.get("content-type") || ""
 
   if (contentType.includes("application/json")) {
     const body = await request.json()
-    const rawRows = body.rows as { email: string; subjectCode: string; section: string }[] | undefined
+    const rawRows = body.rows as { email: string; name?: string; subjectCode: string; section: string }[] | undefined
     if (!rawRows || !Array.isArray(rawRows) || rawRows.length === 0) {
       return NextResponse.json({ error: "Rows array is required" }, { status: 400 })
     }
     importRows = rawRows.map((r, _i) => {
-      const { program, name } = parseSectionIdentifier(r.section || "")
-      return { email: r.email.toLowerCase().trim(), subjectCode: r.subjectCode.trim(), sectionName: name, sectionProgram: program }
+      const { program, name: sectionName } = parseSectionIdentifier(r.section || "")
+      return { email: r.email.toLowerCase().trim(), name: r.name || "", subjectCode: r.subjectCode.trim(), sectionName, sectionProgram: program }
     })
   } else {
     const formData = await request.formData()

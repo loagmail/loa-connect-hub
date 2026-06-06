@@ -128,7 +128,14 @@ Renaming DB columns cascade through the full TypeScript stack:
   Or avoid useEffect for data fetching entirely (derive loading state or use a library).
 - **Related:** Changing a function's signature (e.g. adding `isRefresh` param) breaks `onClick={fetchData}` because `MouseEventHandler<T>` no longer matches. Always wrap: `onClick={() => fetchData(true)}`.
 
-### 5. Unused Variable Naming Convention
+### 5. Vitest: `clearAllMocks` vs `resetAllMocks` with Shared Mocks
+
+- **Symptom:** `vi.clearAllMocks()` in `beforeEach` causes tests to fail when run in suite but pass in isolation. Mock functions retain consumed `mockResolvedValueOnce` implementations across tests/describe blocks.
+- **Root cause:** `clearAllMocks` clears calls/results but **not** the `_mockImplementationQueue`. `mockResolvedValueOnce` additions from previous tests persist even after clear.
+- **Fix:** Use `vi.resetAllMocks()` instead — it clears the implementation queue too. Or use `mockResolvedValue` (persistent) over `mockResolvedValueOnce`.
+- **Corollary:** Use static `import` + helper functions (not dynamic `await import()` in test bodies) when the module is already `vi.mock`'d at the top level. Delete unused helper constants after refactoring.
+
+### 6. Unused Variable Naming Convention
 
 - **Symptom:** ESLint `@typescript-eslint/no-unused-vars` on destructured params like `({ role, ...fields })`
 - **Fix:** Prefix with underscore: `({ role: _role, ...fields })` — the config allows unused args matching `/^_/u`.
