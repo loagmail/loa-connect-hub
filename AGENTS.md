@@ -35,6 +35,40 @@ proxy.ts (NextAuth middleware) — JWT validation + role-based page access
 - Mobile companion pages under `app/{role}/m/` (book, meetings, departments, upload)
 - Path alias `@/*` → project root (tsconfig paths)
 
+*** UPDATE ***
+my-next-app/
+├── app/                    # 1. Next.js Routing & Pages (The Entry Points)
+│   ├── (auth)/             
+│   │   └── login/page.tsx
+│   ├── api/                # The BFF layer / REST endpoints
+│   ├── globals.css
+│   └── layout.tsx
+│
+├── features/               # 2. Vertical Slices (Your Domain & Business Logic)
+│   ├── users/
+│   │   ├── components/     # UI specific to users
+│   │   ├── actions.ts      # Server Actions (Controller)
+│   │   ├── users.service.ts    # Business Logic (Service)
+│   │   ├── users.repository.ts # Database Access (Repository)
+│   │   └── types.ts
+│   └── products/
+│
+├── components/             # 3. Global Reusable UI ("Dumb" Components)
+│   ├── ui/                 # Buttons, Inputs, Cards
+│   └── layouts/            # Navbars, Sidebars
+│
+├── lib/                    # 4. Global Utilities & Infrastructure
+│   ├── db.ts               # Database instantiation
+│   └── utils.ts            
+│
+├── public/                 # Static assets (images, icons)
+│
+├── .eslintrc.json          # Configuration Files
+├── next.config.mjs         
+├── package.json            
+├── tailwind.config.ts      
+└── tsconfig.json
+
 ## Role System
 
 - `user.role` is pipe-delimited string (e.g. `"ADMIN|FACULTY"`)

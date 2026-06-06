@@ -26,7 +26,7 @@ interface AllowedCourse {
   code: string
   name: string
 }
-
+//TODO: Remove this but keep now for design preference
 export default function DeanUploadPage() {
   const { data: session } = useSession()
   const fileRef = useRef<HTMLInputElement>(null)

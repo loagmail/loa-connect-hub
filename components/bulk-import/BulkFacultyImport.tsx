@@ -117,7 +117,8 @@ export default function BulkFacultyImport({ departmentId }: { departmentId?: str
     setImporting(true)
     setLoading(true)
     try {
-      const res = await fetch("/api/import/evaluation-faculty", {
+      console.log("Importing rows:", previewRows, "/api/import/faculties with departmentId:", departmentId)
+      const res = await fetch("/api/import/faculties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
