@@ -315,13 +315,15 @@ alice.student@lyceumalabang.edu.ph, Alice Student, ELEC-323, BSIT-32A1
 
 | File | Status |
 |------|--------|
-| `lib/services/studentImport.ts` | ❌ Not started |
-| `app/api/import/students/route.ts` | ❌ Not started |
-| `app/faculty/upload/page.tsx` | ❌ Not started |
-| `app/dean/upload/page.tsx` | ❌ Not started |
-| `lib/__tests__/studentImport.test.ts` | ❌ Not started |
+| `lib/services/studentImport.ts` | ✅ Complete — `parseStudentCsv()`, `importStudents()`, `getStudentCsvTemplate()` |
+| `app/api/import/students/route.ts` | ✅ Complete — rewritten to use `importStudents()`; accepts JSON or multipart |
+| `components/bulk-import/BulkStudentImport.tsx` | ✅ Complete — file selection, editable preview, blocking modal, results + download |
+| `lib/repositories/supabase/student-enrollment.ts` | ✅ Complete — `addEnrollments()` additive batch insert with dedup |
+| `lib/types/evaluation.ts` | ✅ Complete — `addEnrollments` added to `IStudentEnrollmentRepository` interface |
+| `lib/__tests__/studentImport.test.ts` | ❌ Not started — unit tests for service missing |
 
-### Dependencies
+### Notes
 
-- Faculty CSV upload must be complete (creates `faculty_subjects` entries)
-- Sections and subjects must exist in DB
+- UI lives in `app/admin/etl-hub/page.tsx` (Student Import tab) — faculty and dean upload pages were left untouched
+- No tests yet for the service layer
+- Design doc: `STUDENT-CSV-UPLOAD.md`

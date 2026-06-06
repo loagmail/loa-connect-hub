@@ -2,6 +2,7 @@
 
 > Design document for the student CSV bulk import feature.
 > Pre-requisite: Faculty CSV upload (establishes Faculty-Subject-Section mappings).
+> **Status: Implemented** — see ACTIVE-BACKLOGS.md §6 for current state. Design reflects spec; minor differences noted inline.
 
 ---
 
@@ -117,32 +118,38 @@ FACULTY, DEAN, or ADMIN.
 
 ## Files
 
-### New
+### New / Created
 
 | File | Purpose |
 |------|---------|
 | `lib/services/studentImport.ts` | `parseStudentCsv()`, `importStudents()`, `getStudentCsvTemplate()` |
+| `components/bulk-import/BulkStudentImport.tsx` | Full UI: file selection, editable preview grid, blocking progress modal, results with download buttons |
 
 ### Modified
 
 | File | Changes |
 |------|---------|
-| `app/api/import/students/route.ts` | Replace `importUsers()` with new `importStudents()`. Return `successCsv` + `failureCsv`. Keep GET for template download. |
-| `app/faculty/upload/page.tsx` | Update template display to new 4-col format. Add blocking progress modal. Add summary + two download buttons. |
-| `app/dean/upload/page.tsx` | Same UI updates for student toggle. |
+| `app/api/import/students/route.ts` | Replaced `importUsers()` with new `importStudents()`. Returns `successCsv` + `failureCsv`. Keeps GET for template download. |
+| `lib/repositories/supabase/student-enrollment.ts` | Added `addEnrollments()` — additive batch insert with dedup |
+| `lib/types/evaluation.ts` | Added `addEnrollments` to `IStudentEnrollmentRepository` |
+| `app/admin/etl-hub/page.tsx` | Student Import tab renders `<BulkStudentImport />` |
+
+### Not Modified (intentionally)
+
+| File | Reason |
+|------|--------|
+| `app/faculty/upload/page.tsx` | UI placed in admin ETL hub instead |
+| `app/dean/upload/page.tsx` | UI placed in admin ETL hub instead |
+| `csvParser.ts` | New parser lives in `studentImport.ts` |
+| `userImport.ts` | No longer called for students |
+| `package.json` | No new dependencies |
+| DB schema | All tables already exist |
 
 ### Tests
 
-| File | Purpose |
-|------|---------|
-| `lib/__tests__/studentImport.test.ts` | Tests for parse + import + validation paths + edge cases |
-
-### No changes to
-
-- `csvParser.ts` — new parser lives in `studentImport.ts`
-- `userImport.ts` — no longer called for students
-- `package.json` — no new dependencies
-- DB schema — all tables already exist
+| File | Purpose | Status |
+|------|---------|--------|
+| `lib/__tests__/studentImport.test.ts` | Tests for parse + import + validation paths + edge cases | ❌ Not started |
 
 ---
 
