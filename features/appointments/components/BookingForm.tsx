@@ -1,0 +1,214 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import SubmitButton from "@/components/ui/SubmitButton"
+import { hasRole } from "@/lib/utils/roles"
+
+interface SlotInfo {
+  id: string
+  facultyId: string
+  facultyName: string
+  facultyEmail: string
+  date: string
+  startTime: string
+  endTime: string
+}
+
+interface FacultyUser {
+  id: string
+  name: string
+  email: string
+  hasLoggedInBefore?: boolean
+}
+
+interface BookingFormProps {
+  slot: SlotInfo
+  sessionGroupId?: string
+  onClose: () => void
+  onSuccess: (appointmentId: string, groupId: string) => void
+}
+
+export default function BookingForm({ slot, sessionGroupId, onClose, onSuccess }: BookingFormProps) {
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [facultyList, setFacultyList] = useState<FacultyUser[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    fetch("/api/auth/users")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.users) {
+          setFacultyList(
+            data.users
+              .filter((u: Record<string, unknown>) => hasRole(u.role as string, "FACULTY") && u.id !== slot.facultyId && !u.isDisabled)
+          )
+        }
+      })
+      .catch(() => {})
+  }, [slot.facultyId])
+
+  const toggleAttendee = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (submitting) return
+    if (!title.trim()) return
+
+    setSubmitting(true)
+    setError("")
+
+    try {
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          facultyId: slot.facultyId,
+          sessionGroupId: sessionGroupId || undefined,
+          date: slot.date,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          title: title.trim(),
+          description: description.trim() || undefined,
+          attendeeIds: selectedIds,
+        }),
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        onSuccess(data.appointment.id, data.appointment.sessionGroupId || data.appointment.id)
+      } else {
+        setError(data.error || "Failed to book")
+      }
+    } catch {
+      setError("An error occurred")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="fixed inset-0 bg-black/30 ios-blur-light" onClick={onClose} />
+      <div className="relative bg-surface rounded-t-2xl sm:rounded-2xl shadow-ios-xl border border-default w-full sm:max-w-lg max-h-[90vh] overflow-y-auto animate-ios-slide-up sm:animate-ios-fade-in">
+        <div className="sticky top-0 bg-surface/90 ios-blur z-10 flex items-center justify-between p-4 sm:p-5 border-b border-default rounded-t-2xl sm:rounded-t-2xl">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-9 h-1 rounded-full bg-slate-300 sm:hidden" />
+          <h3 className="text-lg font-bold text-primary pt-2 sm:pt-0">
+            {sessionGroupId ? "Add Time Block" : "Book Appointment"}
+          </h3>
+          <button onClick={onClose} className="p-2 sm:p-1.5 rounded-xl hover:bg-surface-hover text-tertiary transition-all active:scale-90 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-5">
+          <div className="p-3 rounded-xl bg-gold-50 border border-gold-100 text-sm">
+            <div className="flex items-center gap-2 text-gold-700 font-semibold mb-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {slot.date} &middot; {slot.startTime} &ndash; {slot.endTime}
+            </div>
+            <p className="text-gold-600 text-xs">
+              with <span className="font-semibold">{slot.facultyName}</span>
+            </p>
+          </div>
+
+          {sessionGroupId && (
+            <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+              This block will be added to your existing consultation session.
+            </div>
+          )}
+
+          <div>
+            <label className="input-label">Meeting Title <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="input"
+              placeholder="e.g. Thesis Consultation"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="input-label">Description / Agenda (optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="input min-h-[80px]"
+              placeholder="Topics to discuss, questions, materials to review..."
+            />
+          </div>
+
+          <div>
+            <label className="input-label">Invite Additional Faculty / Dean (optional)</label>
+            <p className="text-[10px] text-tertiary mb-2">Only faculty and dean accounts can be invited. Students cannot invite other students.</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {facultyList.length === 0 ? (
+                <p className="text-xs text-tertiary italic">No other faculty available</p>
+              ) : (
+                facultyList.map((f) => (
+                  <label
+                    key={f.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all active:scale-[0.98] ${
+                      selectedIds.includes(f.id)
+                        ? "border-gold-300 bg-gold-50/50"
+                        : "border-default hover:border-strong bg-surface"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(f.id)}
+                      onChange={() => toggleAttendee(f.id)}
+                      className="w-4 h-4 rounded border-strong text-gold-600 focus:ring-gold-500"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-primary">{f.name}</p>
+                        {f.hasLoggedInBefore === false && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] bg-surface text-tertiary leading-none">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-tertiary">{f.email}</p>
+                    </div>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-xl bg-danger-bg border border-danger-border p-3">
+              <p className="text-sm font-medium text-danger-text">{error}</p>
+            </div>
+          )}
+
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-sm font-semibold text-tertiary hover:text-secondary px-4 py-3 sm:py-2.5 rounded-xl border border-default sm:border-0 active:opacity-60 transition-all"
+            >
+              Cancel
+            </button>
+            <SubmitButton type="submit" loading={submitting} variant="primary" className="w-full">
+              {submitting ? "Booking..." : sessionGroupId ? "Add Block" : "Book Consultation"}
+            </SubmitButton>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}

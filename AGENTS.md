@@ -26,48 +26,45 @@
 
 ```
 proxy.ts (NextAuth middleware) — JWT validation + role-based page access
-  → API routes (thin)  →  Controllers (lib/controllers/)  →  Repositories (lib/repositories/supabase/)
-  → Server Components fetch via controllers directly, pass props to Client Components
+  → app/api/ (thin BFF)  →  features/*/*.service.ts  →  features/*/*.repository.ts
+  → Server Components fetch via services directly, pass props to Client Components
+```
+
+```
+app/                    # Next.js routing & pages (entry points)
+├── (auth)/             # login, activate, forgot-password, change-password
+├── api/                # Thin REST/BFF endpoints
+├── admin|dean|faculty|student/  # Role dashboards
+├── globals.css
+└── layout.tsx
+
+features/               # Vertical slices (domain + business logic)
+├── users/              # users.service, auth.service, users.repository, bulk-import/
+├── appointments/       # appointments.service, booking UI, calendar
+├── evaluations/        # evaluations.service, evaluation form UI
+├── evaluation-results/
+├── rubrics/
+├── reports/            # backlog, coverage, demand, distribution, responsiveness services
+├── admin-data/         # departments, semesters, subjects, sections, enrollments
+└── audit/
+
+components/             # Global reusable UI
+├── ui/                 # SubmitButton, Skeleton, StatusBadge, SearchInput, …
+└── layouts/            # AppShell, Sidebar, Navbar, Providers, …
+
+lib/                    # Global utilities & infrastructure
+├── db.ts               # Supabase client + repository factory
+├── db/common.ts        # Shared query helpers (USER_SELECT, appointmentSelect, …)
+├── utils.ts            # Barrel: roles, date, semester, report-helpers, …
+├── auth.ts, supabase.ts, types/, services/, workflows/, …
+└── controllers/        # Deprecated shims → re-export from features/
 ```
 
 - Middleware at `proxy.ts` (exported as `proxy`, matched via `config.matcher` excluding `api/`, `_next/`, static files)
 - Route groups: `app/(auth)/`, `app/admin/`, `app/dean/`, `app/faculty/`, `app/student/`
 - Mobile companion pages under `app/{role}/m/` (book, meetings, departments, upload)
 - Path alias `@/*` → project root (tsconfig paths)
-
-*** UPDATE ***
-my-next-app/
-├── app/                    # 1. Next.js Routing & Pages (The Entry Points)
-│   ├── (auth)/             
-│   │   └── login/page.tsx
-│   ├── api/                # The BFF layer / REST endpoints
-│   ├── globals.css
-│   └── layout.tsx
-│
-├── features/               # 2. Vertical Slices (Your Domain & Business Logic)
-│   ├── users/
-│   │   ├── components/     # UI specific to users
-│   │   ├── actions.ts      # Server Actions (Controller)
-│   │   ├── users.service.ts    # Business Logic (Service)
-│   │   ├── users.repository.ts # Database Access (Repository)
-│   │   └── types.ts
-│   └── products/
-│
-├── components/             # 3. Global Reusable UI ("Dumb" Components)
-│   ├── ui/                 # Buttons, Inputs, Cards
-│   └── layouts/            # Navbars, Sidebars
-│
-├── lib/                    # 4. Global Utilities & Infrastructure
-│   ├── db.ts               # Database instantiation
-│   └── utils.ts            
-│
-├── public/                 # Static assets (images, icons)
-│
-├── .eslintrc.json          # Configuration Files
-├── next.config.mjs         
-├── package.json            
-├── tailwind.config.ts      
-└── tsconfig.json
+- **New code** goes in `features/` and `components/ui|layouts/`; `lib/controllers/` and `components/*.tsx` shims exist for backward compatibility
 
 ## Role System
 
@@ -78,9 +75,9 @@ my-next-app/
 
 ## Data Layer
 
-- **Repositories** in `lib/repositories/supabase/`, implement interfaces from `lib/types/repository.ts`, wired via `lib/repositories/factory.ts`
-- **Controllers** in `lib/controllers/` — business logic + validation
-- **Types** in `lib/types/` — entity, dto, repository interfaces
+- **Repositories** in `features/*/*.repository.ts`, implement interfaces from `lib/types/repository.ts`, wired via `lib/repositories/factory.ts` (also exported from `lib/db.ts`)
+- **Services** in `features/*/*.service.ts` — business logic + validation (formerly `lib/controllers/`)
+- **Types** in `lib/types/` (shared) + `features/*/types.ts` (per-slice re-exports)
 - DB schema in `supabase-schema.sql` (run manually in Supabase SQL Editor)
 - Supabase client in `lib/supabase.ts` (uses `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`)
 
