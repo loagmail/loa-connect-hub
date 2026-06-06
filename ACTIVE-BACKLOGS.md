@@ -275,3 +275,53 @@ Search user → checkbox grid per resource with 3 states:
 - Wildcard matching — `hasPermission` stays O(n) includes
 - Migration for existing users — `NULL` means role default
 - SSO sync — permissions set manually via admin editor
+
+---
+
+## 6. Student CSV Upload Flow
+
+### Goal
+
+Build a student CSV bulk import flow that validates against existing faculty-subject-section mappings (from faculty upload). Students are enrolled into sections via `student_enrollments` for the evaluation system. No auto-creation of sections or subjects — they must pre-exist.
+
+### Design Doc
+
+`STUDENT-CSV-UPLOAD.md`
+
+### CSV Format
+
+```
+student email, name, subject code, section
+alice.student@lyceumalabang.edu.ph, Alice Student, ELEC-323, BSIT-32A1
+```
+
+### Per-Row Validation
+
+1. Parse & validate columns (email domain, required fields)
+2. Create user if not exists (STUDENT role)
+3. Validate section exists in DB → fail row if not
+4. Validate subject exists in DB → fail row if not
+5. Validate `faculty_subject` mapping exists for (subject, section) → fail row if not
+6. Create `student_enrollment` (additive, skip if exists)
+
+### Key Behaviors
+
+- **No auto-create** for sections, subjects, or faculty-subject mappings
+- **Two downloadable CSVs** after upload: successes + failures (with remarks column)
+- **Blocking progress modal** during upload
+- No new dependencies (CSVs generated as strings, blobs client-side)
+
+### Files
+
+| File | Status |
+|------|--------|
+| `lib/services/studentImport.ts` | ❌ Not started |
+| `app/api/import/students/route.ts` | ❌ Not started |
+| `app/faculty/upload/page.tsx` | ❌ Not started |
+| `app/dean/upload/page.tsx` | ❌ Not started |
+| `lib/__tests__/studentImport.test.ts` | ❌ Not started |
+
+### Dependencies
+
+- Faculty CSV upload must be complete (creates `faculty_subjects` entries)
+- Sections and subjects must exist in DB
