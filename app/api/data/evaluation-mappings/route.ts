@@ -38,5 +38,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data })
   }
 
-  return NextResponse.json({ error: 'Invalid type — use "faculty" or "student"' }, { status: 400 })
+  if (type === "subjects") {
+    const { data, error } = await supabase.from("subjects").select("*").order("code", { ascending: true })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ data })
+  }
+
+  if (type === "sections") {
+    const { data, error } = await supabase.from("sections").select("*").order("program", { ascending: true }).order("name", { ascending: true })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ data })
+  }
+
+  return NextResponse.json({ error: 'Invalid type — use "faculty", "student", "subjects", or "sections"' }, { status: 400 })
 }
