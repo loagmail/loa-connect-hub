@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { saveRatings, getEvaluationRatings } from "@/lib/controllers/evaluations"
+import { saveRatings, getEvaluationRatings } from "@/features/evaluations/evaluations.service"
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

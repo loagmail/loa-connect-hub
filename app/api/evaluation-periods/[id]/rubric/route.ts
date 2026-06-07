@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { getRubric, replaceRubric } from "@/lib/controllers/rubrics"
+import { getRubric, replaceRubric } from "@/features/rubrics/rubrics.service"
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

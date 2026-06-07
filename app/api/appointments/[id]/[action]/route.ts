@@ -9,7 +9,7 @@ import {
   attendeeAcceptAppointment,
   attendeeDeclineAppointment,
   getAppointmentDetail,
-} from "@/lib/controllers/appointments"
+} from "@/features/appointments/appointments.service"
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string; action: string }> }) {
   const session = await auth()

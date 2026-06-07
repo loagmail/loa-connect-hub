@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { listStudentAppointments } from "@/lib/controllers/appointments"
+import { listStudentAppointments } from "@/features/appointments/appointments.service"
 import { userRepository } from "@/lib/repositories/factory"
 import { OnboardingWalkthrough } from "@/components/OnboardingWalkthrough"
 import StudentDashboard from "@/components/StudentDashboard"

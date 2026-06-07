@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { permanentDeleteUser } from "@/lib/controllers/admin-users"
+import { permanentDeleteUser } from "@/features/users/users.service"
 import { logAuditEvent } from "@/lib/services/audit"
 import { userRepository } from "@/lib/repositories/factory"
 

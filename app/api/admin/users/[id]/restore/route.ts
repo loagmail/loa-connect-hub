@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { restoreUser } from "@/lib/controllers/admin-users"
+import { restoreUser } from "@/features/users/users.service"
 import { logAuditEvent } from "@/lib/services/audit"
 import { userRepository } from "@/lib/repositories/factory"
 

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { getMyEvaluations } from "@/lib/controllers/evaluations"
-import { getActiveSemester, createSemester } from "@/lib/controllers/semesters"
+import { getMyEvaluations } from "@/features/evaluations/evaluations.service"
+import { getActiveSemester, createSemester } from "@/features/admin-data/semesters.service"
 // import { evaluationPeriodRepository, evaluationRepository } from "@/lib/repositories/factory"
 
 export async function GET() {

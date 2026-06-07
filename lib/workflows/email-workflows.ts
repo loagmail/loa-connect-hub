@@ -92,7 +92,7 @@ export async function sendForgotPasswordWorkflow(
   }
 }
 
-import type { ApptWithJoins } from "@/lib/controllers/appointments"
+import type { ApptWithJoins } from "@/features/appointments/appointments.service"
 
 export async function sendAppointmentCreatedWorkflow(
   appointment: Record<string, unknown>,
@@ -101,7 +101,7 @@ export async function sendAppointmentCreatedWorkflow(
   "use workflow"
 
   const { sendAppointmentCreatedEmail } = await import(
-    "@/lib/controllers/appointments"
+    "@/features/appointments/appointments.service"
   )
   await sendAppointmentCreatedEmail(appointment as unknown as ApptWithJoins, creatorId)
 }
@@ -112,7 +112,7 @@ export async function sendConsultationApprovedWorkflow(
   "use workflow"
 
   const { sendConsultationApprovedEmail } = await import(
-    "@/lib/controllers/appointments"
+    "@/features/appointments/appointments.service"
   )
   await sendConsultationApprovedEmail(appointment as unknown as ApptWithJoins)
 }

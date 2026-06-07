@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { requestAppointment, listStudentAppointments, listFacultyAppointments } from "@/lib/controllers/appointments"
+import { requestAppointment, listStudentAppointments, listFacultyAppointments } from "@/features/appointments/appointments.service"
 import { hasRole } from "@/lib/utils/roles"
 
 export async function GET(request: Request) {

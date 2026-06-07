@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { copyRubricFromPeriod } from "@/lib/controllers/rubrics"
+import { copyRubricFromPeriod } from "@/features/rubrics/rubrics.service"
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

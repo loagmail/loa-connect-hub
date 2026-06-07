@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { retryTeamsSync } from "@/lib/controllers/appointments"
+import { retryTeamsSync } from "@/features/appointments/appointments.service"
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

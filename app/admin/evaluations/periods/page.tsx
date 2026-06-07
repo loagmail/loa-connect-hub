@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { hasRole } from "@/lib/utils/roles"
-import { getSemesters } from "@/lib/controllers/semesters"
+import { getSemesters } from "@/features/admin-data/semesters.service"
 import Link from "next/link"
 
 export default async function AdminEvaluationPeriodsPage() {

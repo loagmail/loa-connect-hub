@@ -32,7 +32,7 @@ vi.mock("@/lib/services/ical", () => ({
   generateICal: vi.fn().mockReturnValue(""),
 }))
 
-import { requestAppointment } from "@/lib/controllers/appointments"
+import { requestAppointment } from "@/features/appointments/appointments.service"
 import type { UserData, AppointmentData } from "@/lib/types"
 
 const BASE_INPUT = {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { listDeletedUsers } from "@/lib/controllers/admin-users"
+import { listDeletedUsers } from "@/features/users/users.service"
 
 export async function GET() {
   const session = await auth()

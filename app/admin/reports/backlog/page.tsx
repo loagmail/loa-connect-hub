@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { getBacklogReportData } from "@/lib/controllers/backlog-reports"
+import { getBacklogReportData } from "@/features/reports/backlog.service"
 import { BacklogReport } from "@/features/reports/components/reports/BacklogReport"
 import { ReportFiltersWithDept } from "@/features/reports/components/reports/ReportFiltersWithDept"
 import { resolveReportDepartment } from "@/lib/utils/report-helpers"

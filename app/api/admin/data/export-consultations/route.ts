@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { exportAndClearConsultations } from "@/lib/controllers/admin-data"
+import { exportAndClearConsultations } from "@/features/admin-data/admin-data.service"
 import { logAuditEvent } from "@/lib/services/audit"
 
 export async function POST() {

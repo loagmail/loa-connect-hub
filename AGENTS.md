@@ -57,14 +57,13 @@ lib/                    # Global utilities & infrastructure
 ├── db/common.ts        # Shared query helpers (USER_SELECT, appointmentSelect, …)
 ├── utils.ts            # Barrel: roles, date, semester, report-helpers, …
 ├── auth.ts, supabase.ts, types/, services/, workflows/, …
-└── controllers/        # Deprecated shims → re-export from features/
 ```
 
 - Middleware at `proxy.ts` (exported as `proxy`, matched via `config.matcher` excluding `api/`, `_next/`, static files)
 - Route groups: `app/(auth)/`, `app/admin/`, `app/dean/`, `app/faculty/`, `app/student/`
 - Mobile companion pages under `app/{role}/m/` (book, meetings, departments, upload)
 - Path alias `@/*` → project root (tsconfig paths)
-- **New code** goes in `features/` and `components/ui|layouts/`; `lib/controllers/` and `components/*.tsx` shims exist for backward compatibility
+- **New code** goes in `features/` and `components/ui|layouts/`; `components/*.tsx` shims exist for backward compatibility
 
 ## Role System
 
@@ -76,7 +75,7 @@ lib/                    # Global utilities & infrastructure
 ## Data Layer
 
 - **Repositories** in `features/*/*.repository.ts`, implement interfaces from `lib/types/repository.ts`, wired via `lib/repositories/factory.ts` (also exported from `lib/db.ts`)
-- **Services** in `features/*/*.service.ts` — business logic + validation (formerly `lib/controllers/`)
+- **Services** in `features/*/*.service.ts` — business logic + validation
 - **Types** in `lib/types/` (shared) + `features/*/types.ts` (per-slice re-exports)
 - DB schema in `supabase-schema.sql` (run manually in Supabase SQL Editor)
 - Supabase client in `lib/supabase.ts` (uses `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`)

@@ -31,7 +31,7 @@ vi.mock("@/lib/supabase", () => ({
   },
 }))
 
-import { getAdminReportData } from "@/lib/controllers/admin-reports"
+import { getAdminReportData } from "@/features/reports/admin-reports.service"
 import type { FacultyStatsData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData } from "@/lib/types"
 
 beforeEach(() => {

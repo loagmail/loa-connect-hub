@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { getSemester  , updateSemester, deleteSemester } from "@/lib/controllers/semesters"
+import { getSemester  , updateSemester, deleteSemester } from "@/features/admin-data/semesters.service"
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()

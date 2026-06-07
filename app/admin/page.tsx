@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { auditLogRepository } from "@/lib/repositories/factory"
 import { hasRole } from "@/lib/utils/roles"
-import { getDatabaseSize, formatBytes, getStoragePercentage, getStorageColor } from "@/lib/controllers/database-size"
+import { getDatabaseSize, formatBytes, getStoragePercentage, getStorageColor } from "@/features/admin-data/database-size.service"
 import type { AuditLogData } from "@/lib/types"
 import Link from "next/link"
 

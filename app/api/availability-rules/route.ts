@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { listAvailabilityRules, upsertAvailabilityRule } from "@/lib/controllers/availabilityRules"
+import { listAvailabilityRules, upsertAvailabilityRule } from "@/features/appointments/availability.service"
 import { hasRole } from "@/lib/utils/roles"
 
 export async function GET(request: NextRequest) {

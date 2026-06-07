@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
-import { deleteRubricItem } from "@/lib/controllers/rubrics"
+import { deleteRubricItem } from "@/features/rubrics/rubrics.service"
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
