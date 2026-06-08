@@ -36,7 +36,7 @@ export default function FillEvaluationPage() {
         const activePeriod = (periodData.periods || []).find((p: { isActive: boolean }) => p.isActive)
         if (!activePeriod) {
           alert("No active evaluation period")
-          router.push("/student/evaluation")
+          router.push("/student/evaluations")
           return
         }
 
@@ -92,7 +92,7 @@ export default function FillEvaluationPage() {
           body: JSON.stringify({ comment }),
         })
       }
-      router.push("/student/evaluation")
+      router.push("/student/evaluations")
     } catch {
       alert("Failed to save draft")
     }
@@ -116,7 +116,7 @@ export default function FillEvaluationPage() {
         })
       }
       await fetch(`/api/evaluations/${evaluationId}/submit`, { method: "POST" })
-      router.push("/student/evaluation")
+      router.push("/student/evaluations")
     } catch {
       alert("Failed to submit evaluation")
     } finally {
