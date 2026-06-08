@@ -24,7 +24,7 @@ interface AllowedCourse {
 }
 
 export default function FacultyUploadPage() {
-  const { data: session } = useSession()
+  const { data: session } = useSession() ?? {};
   const fileRef = useRef<HTMLInputElement>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
   const [loading, setLoading] = useState(false)

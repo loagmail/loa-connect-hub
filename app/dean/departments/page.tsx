@@ -1,4 +1,5 @@
-"use client"
+"use client";
+export const dynamic = 'force-dynamic';
 
 import { useState } from "react"
 import { useSession } from "next-auth/react"
@@ -21,7 +22,7 @@ interface Department {
 }
 
 export default function DeanDepartmentsPage() {
-  const { data: session } = useSession()
+  const { data: session } = useSession() ?? {};
   const [error, setError] = useState("")
   const [newName, setNewName] = useState("")
   const [newCode, setNewCode] = useState("")

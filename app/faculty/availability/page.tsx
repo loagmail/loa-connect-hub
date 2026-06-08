@@ -25,7 +25,7 @@ function todayStr() {
 }
 
 export default function AvailabilityPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status } = useSession() ?? {};
   const [rules, setRules] = useState<Rule[]>([])
   const [isSavingAll, setIsSavingAll] = useState(false)
   const [startDate, setStartDate] = useState(todayStr())
