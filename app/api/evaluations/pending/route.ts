@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
+import { getActiveSemester } from "@/features/admin-data/semesters.service"
 import { getPendingEvaluations } from "@/features/evaluations/evaluations.service"
 
 export async function GET() {
@@ -15,7 +16,11 @@ export async function GET() {
   }
 
   try {
-    const pending = await getPendingEvaluations(userId, "semester_id")
+    const activeSemester = await getActiveSemester()
+    if (!activeSemester) {
+      return NextResponse.json({ error: "No active semester" }, { status: 400 })
+    }
+    const pending = await getPendingEvaluations(userId, activeSemester.id)
     const facultyIds = pending.map((p) => p.evaluateeId)
     return NextResponse.json({ pending: facultyIds })
   } catch {

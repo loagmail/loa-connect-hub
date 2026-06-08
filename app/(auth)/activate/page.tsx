@@ -36,7 +36,8 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
     if (loading) return
     setError("")
 
-    if (!email.toLowerCase().endsWith(REQUIRED_STUDENT_DOMAIN) && !email.toLowerCase().endsWith(REQUIRED_FACULTY_DOMAIN)) {
+    const trimmed = email.trim()
+    if (!trimmed.toLowerCase().endsWith(REQUIRED_STUDENT_DOMAIN) && !trimmed.toLowerCase().endsWith(REQUIRED_FACULTY_DOMAIN)) {
       setError(`Email must end with ${REQUIRED_STUDENT_DOMAIN} or ${REQUIRED_FACULTY_DOMAIN}`)
       return
     }
@@ -47,7 +48,7 @@ export default function ActivatePage(props: { searchParams?: Promise<{ callbackU
       const res = await fetch("/api/auth/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, callbackUrl }),
+        body: JSON.stringify({ email: trimmed, callbackUrl }),
       })
 
       const data = await res.json()
