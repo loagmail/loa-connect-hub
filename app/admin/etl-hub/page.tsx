@@ -132,18 +132,16 @@ function ViewMappings() {
             <button
               type="button"
               onClick={() => setTab("faculty")}
-              className={`text-xs font-semibold px-3 py-2 border-b-2 transition-colors ${
-                tab === "faculty" ? "border-gold-600 text-gold-700" : "border-transparent text-tertiary hover:text-secondary"
-              }`}
+              className={`text-xs font-semibold px-3 py-2 border-b-2 transition-colors ${tab === "faculty" ? "border-gold-600 text-gold-700" : "border-transparent text-tertiary hover:text-secondary"
+                }`}
             >
               Faculty-Subject ({facultyData?.length ?? "..."})
             </button>
             <button
               type="button"
               onClick={() => setTab("student")}
-              className={`text-xs font-semibold px-3 py-2 border-b-2 transition-colors ${
-                tab === "student" ? "border-gold-600 text-gold-700" : "border-transparent text-tertiary hover:text-secondary"
-              }`}
+              className={`text-xs font-semibold px-3 py-2 border-b-2 transition-colors ${tab === "student" ? "border-gold-600 text-gold-700" : "border-transparent text-tertiary hover:text-secondary"
+                }`}
             >
               Student Enrollments ({studentData?.length ?? "..."})
             </button>
@@ -347,35 +345,35 @@ export default function EtlHubPage() {
   const [semLoading, setSemLoading] = useState(true);
   const [semesters, setSemesters] = useState<SemesterData[]>([]);
 
-    useEffect(() => {
-      Promise.resolve().then(() => {
-        setDeptLoading(true)
-        fetch("/api/admin/departments")
-          .then((r) => r.json())
-          .then((data) => {
-            const list: Department[] = Array.isArray(data) ? data : (data?.data as Department[] ?? []);
-            setDepartments(list);
-          })
-          .catch(() => {})
-          .finally(() => setDeptLoading(false))
-      })
-    }, [])
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      setDeptLoading(true)
+      fetch("/api/admin/departments")
+        .then((r) => r.json())
+        .then((data) => {
+          const list: Department[] = Array.isArray(data) ? data : (data?.data as Department[] ?? []);
+          setDepartments(list);
+        })
+        .catch(() => { })
+        .finally(() => setDeptLoading(false))
+    })
+  }, [])
 
-    useEffect(() => {
-      Promise.resolve().then(() => {
-        setSemLoading(true)
-        fetch("/api/semesters")
-          .then((r) => r.json())
-          .then((data) => {
-            const list: SemesterData[] = Array.isArray(data) ? data : (data?.data as SemesterData[] ?? []);
-            setSemesters(list);
-            const active = list.find((s) => s.isActive);
-            if (active) setSemesterId(active.id)
-          })
-          .catch(() => {})
-          .finally(() => setSemLoading(false))
-      })
-    }, [])
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      setSemLoading(true)
+      fetch("/api/semesters")
+        .then((r) => r.json())
+        .then((data) => {
+          const list: SemesterData[] = Array.isArray(data) ? data : (data?.data as SemesterData[] ?? []);
+          setSemesters(list);
+          const active = list.find((s) => s.isActive);
+          if (active) setSemesterId(active.id)
+        })
+        .catch(() => { })
+        .finally(() => setSemLoading(false))
+    })
+  }, [])
 
   async function handleReset() {
     if (!window.confirm("This will permanently delete ALL imported data (evaluations, enrollments, faculty-subject mappings, sections, subjects, appointments, etc.) except seed records. Are you sure?")) return
@@ -416,8 +414,8 @@ export default function EtlHubPage() {
 
         <div className="mt-4 mb-4 flex items-center gap-3">
           <label className="text-xs font-semibold text-secondary shrink-0">Department</label>
-{deptLoading ? (
-              <Skeleton variant="text" className="w-48 h-9 rounded-lg" />
+          {deptLoading ? (
+            <Skeleton variant="text" className="w-48 h-9 rounded-lg" />
           ) : (
             <select
               value={deptId}
@@ -434,16 +432,16 @@ export default function EtlHubPage() {
           {semLoading ? (
             <Skeleton variant="text" className="w-48 h-9 rounded-lg" />
           ) : (
-            <select
-              value={semesterId}
-              onChange={(e) => setSemesterId(e.target.value)}
-              className="w-full max-w-xs text-xs px-3 py-2 rounded-lg border border-default bg-surface-hover focus:border-gold-500 outline-none transition-colors"
-            >
-              <option value="">Select semester...</option>
-              {semesters.map((s) => (
-                <option key={s.id} value={s.id}>{s.title}</option>
-              ))}
-            </select>
+              <><select
+                value={semesterId}
+                onChange={(e) => setSemesterId(e.target.value)}
+                className="w-full max-w-xs text-xs px-3 py-2 rounded-lg border border-default bg-surface-hover focus:border-gold-500 outline-none transition-colors"
+              >
+                <option value="">Select semester...</option>
+                {semesters.map((s) => (
+                  <option key={s.id} value={s.id}>{s.title}</option>
+                ))}
+              </select><p className="text-xs text-tertiary ml-2">Reminder: selecting the semester defines the evaluation period for imports.</p></>
           )}
 
         </div>

@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import SubmitButton from "@/components/SubmitButton"
+import { useState, useEffect, useRef } from "react"
 import { useApiGet, invalidate } from "@/lib/api/client"
-
+import SubmitButton from "@/components/ui/SubmitButton"
+// Removed isSemesterActive import
 // Type definitions (inlined for local use)
 interface SemesterData {
   id: string
@@ -23,47 +23,37 @@ export default function AdminSemestersPage() {
     setTimeout(() => setSuccess(""), 4000)
   }
 
-  // Form States
   const [newTitle, setNewTitle] = useState("")
-  const [newEvalStartDate, setNewEvalStartDate] = useState("")
-  const [newEvalEndDate, setNewEvalEndDate] = useState("")
-  
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
-  const [editEvalStartDate, setEditEvalStartDate] = useState("")
-  const [editEvalEndDate, setEditEvalEndDate] = useState("")
-
-  // Activation State
-  const [activatingId, setActivatingId] = useState<string | null>(null)
+  const [editIsActive, setEditIsActive] = useState(false)
+  const [editStartDate, setEditStartDate] = useState("")
+  const [editEndDate, setEditEndDate] = useState("")
   const [saving, setSaving] = useState(false)
 
   // Data fetching: Fetch semesters
   const { data: semestersData, isLoading: semestersLoading, error: semestersErr } = useApiGet<{ data: SemesterData[] }>("/api/semesters")
-  
+
   const semesters = semestersData?.data ?? []
   const loading = semestersLoading
   const fetchError = semestersErr
 
   // --- Handlers ---
 
-  // Create handler — POST to /api/semesters
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTitle || !newEvalStartDate) return
+    if (!newTitle) return
     setSaving(true)
     setError("")
     try {
       const res = await fetch("/api/semesters", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: newTitle,
-          evalStartDate: newEvalStartDate,
-          evalEndDate: newEvalEndDate || null,
-        }),
+        body: JSON.stringify({ title: newTitle }),
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
-      setNewTitle(""); setNewEvalStartDate(""); setNewEvalEndDate("")
+      setNewTitle("")
       showSuccessMessage("Semester created!")
       invalidate("/api/semesters")
     } catch (err) {
@@ -73,15 +63,15 @@ export default function AdminSemestersPage() {
     }
   }
 
-  // Update handler — PATCH to /api/semesters/[id]
   const handleUpdate = async (id: string) => {
-    if (!editTitle || !editEvalStartDate) return
+    if (!editTitle || !editStartDate) return
     setSaving(true); setError("")
     try {
+      console.log({ id, editTitle, editIsActive, editStartDate, editEndDate })
       const res = await fetch(`/api/semesters/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: editTitle, evalStartDate: editEvalStartDate, evalEndDate: editEvalEndDate || null }),
+        body: JSON.stringify({ title: editTitle, isActive: editIsActive, evalStartDate: editStartDate, evalEndDate: editEndDate || null }),
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       setEditingId(null)
@@ -94,45 +84,36 @@ export default function AdminSemestersPage() {
     }
   }
 
-  // Delete handler — DELETE to /api/semesters/[id]
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this semester? This cannot be undone.")) return
-    try {
-      const res = await fetch(`/api/semesters/${id}`, { method: "DELETE" })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
-      showSuccessMessage("Semester deleted.")
-      invalidate("/api/semesters")
-    } catch (err) {
-      setError((err as Error).message)
-    }
-  }
-
-  // Activate handler — POST to /api/semesters/[id]/activate
-  const handleActivate = async (id: string) => {
-    setActivatingId(id)
-    try {
-      const res = await fetch(`/api/semesters/${id}/activate`, { method: "POST" })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
-      showSuccessMessage("Semester activated!")
-      invalidate("/api/semesters")
-    } catch (err) {
-      setError((err as Error).message)
-    } finally {
-      setActivatingId(null)
-    }
-  }
-
-  // State/UI helpers
-  const isSemesterActive = (semester: SemesterData) => semester.isActive
   const isEditing = editingId !== null
-  
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isEditing) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEditingId(null)
+    }
+    document.addEventListener("keydown", handler)
+    return () => document.removeEventListener("keydown", handler)
+  }, [isEditing])
+
+  useEffect(() => {
+    if (!isEditing) return
+    const handler = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        setEditingId(null)
+      }
+    }
+    document.addEventListener("mousedown", handler, true)
+    return () => document.removeEventListener("mousedown", handler, true)
+  }, [isEditing])
+
   if (loading) {
     return <div className="text-sm text-tertiary p-8">Loading semesters...</div>
   }
-  
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
-      
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-primary">Academic Semesters</h1>
@@ -142,103 +123,78 @@ export default function AdminSemestersPage() {
         </div>
       </div>
 
-      {(fetchError || error) && <p className="text-xs font-medium text-red-600 bg-red-50 p-3 rounded-lg">{fetchError || error}</p>}
+      {(fetchError || error) && <p className="text-xs font-medium text-red-600 bg-red-50 p-3 rounded-lg">{(fetchError || error)?.message || (fetchError || error)}</p>}
       {success && <p className="text-xs font-medium text-green-600 bg-green-50 p-3 rounded-lg">{success}</p>}
-      
-      {/* Form Card: Create or Edit */}
-      {isEditing ? (
-        <div className="card p-6 bg-surface space-y-4 border border-amber-300">
-          <div className="flex justify-between items-center">
-            <h2 className="text-sm font-bold text-amber-700">Edit Semester Details</h2>
-            <button
-              type="button"
-              onClick={() => setEditingId(null)}
-              className="text-xs text-tertiary hover:text-secondary font-semibold"
-            >
-              Cancel Edit
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-tertiary mb-1">Title</label>
-              <input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="e.g. Fall 2025"
-                required
-              />
+
+      <form onSubmit={handleCreate} className="card p-6 bg-surface space-y-4">
+        <h2 className="text-sm font-bold text-secondary">Add New Academic Semester</h2>
+        <div>
+          <label className="block text-xs font-semibold text-tertiary mb-1">Semester Name</label>
+          <input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            placeholder="e.g. 1st Semester A.Y. 2025-2026"
+            required
+          />
+        </div>
+        <p className="text-[11px] text-tertiary">
+          Dates and activation are configured on the <strong>Evaluation Periods</strong> page. New semesters start as inactive.
+        </p>
+        <div>
+          <button type="submit" disabled={saving} className="inline-flex items-center px-4 py-2 bg-amber-400 text-white rounded" >
+            Create Semester
+          </button>
+        </div>
+      </form>
+
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div ref={modalRef} className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-bold text-primary">Edit Semester</h2>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-tertiary mb-1">Start Date</label>
-              <input
-                type="date"
-                value={editEvalStartDate}
-                onChange={(e) => setEditEvalStartDate(e.target.value)}
-                className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                required
-              />
+
+            \n
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-tertiary mb-1">Semester Name</label>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  required
+                />
+              </div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editIsActive}
+                  onChange={(e) => setEditIsActive(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                />
+                <span className="text-sm font-medium text-primary">Active</span>
+              </label>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-tertiary mb-1">End Date (Optional)</label>
-              <input
-                type="date"
-                value={editEvalEndDate}
-                onChange={(e) => setEditEvalEndDate(e.target.value)}
-                className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="Evaluation End Date"
-              />
+
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingId(null)}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-secondary hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+
+              <SubmitButton type="button" loading={saving} variant="primary" onClick={() => handleUpdate(editingId!)}>
+                Save Changes
+              </SubmitButton>
             </div>
-          </div>
-          <div>
-            <SubmitButton type="button" loading={saving} variant="primary" onClick={() => handleUpdate(editingId!)}>
-              Save Changes
-            </SubmitButton>
           </div>
         </div>
-      ) : (
-        <form onSubmit={handleCreate} className="card p-6 bg-surface space-y-4">
-          <h2 className="text-sm font-bold text-secondary">Add New Academic Semester</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-tertiary mb-1">Title</label>
-              <input
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="e.g. Spring 2025"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-tertiary mb-1">Start Date</label>
-              <input
-                type="date"
-                value={newEvalStartDate}
-                onChange={(e) => setNewEvalStartDate(e.target.value)}
-                className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-tertiary mb-1">End Date (Optional)</label>
-              <input
-                type="date"
-                value={newEvalEndDate}
-                onChange={(e) => setNewEvalEndDate(e.target.value)}
-                className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder="Evaluation End Date"
-              />
-            </div>
-          </div>
-          <div>
-            <SubmitButton type="submit" loading={saving} variant="primary">
-              Create Semester
-            </SubmitButton>
-          </div>
-        </form>
       )}
-      
+
       {/* Directory */}
       <div className="card bg-surface overflow-hidden">
         <div className="px-6 py-4 border-b border-default bg-surface">
@@ -268,50 +224,32 @@ export default function AdminSemestersPage() {
                       <td className="px-6 py-4">{semester.evalEndDate || <span className='text-tertiary'>N/A</span>}</td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${
-                            isSemesterActive(semester)
-                              ? "bg-green-50 text-green-600 border border-green-200"
-                              : "bg-red-50 text-red-600 border border-red-200"
-                          }`}
+                          className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${semester.isActive ? "bg-green-50 text-green-600 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}
                         >
                           {semester.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
+
                       <td className="px-6 py-4 space-x-3">
-                        <button
-                          onClick={() => setEditingId(semester.id)}
-                          className="text-xs font-bold text-amber-500 hover:text-amber-700"
+
+                        <SubmitButton
+                          onClick={() => {
+                            setEditTitle(semester.title)
+                            setEditIsActive(semester.isActive)
+                            setEditingId(semester.id)
+                          }}
+                          variant="primary"
+                          className="text-[10px] font-semibold px-2 py-1 rounded-lg"
                         >
                           Edit
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (!isSemesterActive(semester)) {
-                              handleActivate(semester.id)
-                            } else {
-                              // For simplicity on this page, we only guarantee activation. Deactivation logic should be handled by a dedicated endpoint if needed.
-                            }
-                          }}
-                          className={`text-xs font-bold ${
-                            !isSemesterActive(semester) ? "text-green-600 hover:text-green-800" : "text-gray-400 cursor-default"
-                          }`}
-                          disabled={isSemesterActive(semester) && activatingId !== semester.id}
-                        >
-                          {isSemesterActive(semester) ? "Active" : "Activate"}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(semester.id)}
-                          className="text-xs font-bold text-red-500 hover:text-red-700"
-                        >
-                          Delete
-                        </button>
+                        </SubmitButton>
                       </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
-            
+
             {/* Mobile cards */}
             <div className="mobile-only space-y-2 p-3">
               {semesters.map((semester) => {
@@ -323,42 +261,24 @@ export default function AdminSemestersPage() {
                         <p className="text-sm font-bold text-primary">{semester.title}</p>
                         <p className="text-xs font-mono font-semibold text-tertiary">{semester.id}</p>
                       </div>
-                      <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${
-                        isActive ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"
-                      }`}>
+                      <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${isActive ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"
+                        }`}>
                         {isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
                     <div className="text-xs space-y-1 mt-2">
                       <p className="text-tertiary">Period: {semester.evalStartDate} to {semester.evalEndDate || 'N/A'}</p>
                     </div>
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        onClick={() => setEditingId(semester.id)}
-                        className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
-                      >
-                        Edit
-                      </button>
+                    <div className="pt-2">
                       <button
                         onClick={() => {
-                          if (!isActive) {
-                            handleActivate(semester.id)
-                          }
+                          setEditTitle(semester.title)
+                          setEditIsActive(semester.isActive)
+                          setEditingId(semester.id)
                         }}
-                        className={`flex-1 text-xs font-semibold px-3 py-2 rounded-lg border transition-colors ${
-                          !isActive ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : "bg-gray-100 text-gray-500 cursor-not-allowed"
-                        }`}
-                        disabled={isActive && activatingId !== semester.id}
+                        className="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
                       >
-                        {isActive ? "Active" : "Activate"}
-                      </button>
-                    </div>
-                    <div className="mt-2">
-                      <button
-                        onClick={() => handleDelete(semester.id)}
-                        className="w-full text-xs font-semibold text-red-500 hover:text-red-700 flex items-center justify-center gap-1"
-                      >
-                        Delete
+                        Edit
                       </button>
                     </div>
                   </div>
