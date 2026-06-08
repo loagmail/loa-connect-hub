@@ -44,7 +44,7 @@ export default function SubjectsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-primary">Subjects</h1>
-          <p className="text-sm text-tertiary mt-1">All subjects in the system.</p>
+          <p className="text-xs text-tertiary mt-1">Subjects are populated through the ETL process and are primarily used to map faculties and students.</p>
         </div>
         <button
           type="button"
