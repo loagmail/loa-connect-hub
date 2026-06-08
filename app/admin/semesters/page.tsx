@@ -142,9 +142,10 @@ export default function AdminSemestersPage() {
           Dates and activation are configured on the <strong>Evaluation Periods</strong> page. New semesters start as inactive.
         </p>
         <div>
-          <button type="submit" disabled={saving} className="inline-flex items-center px-4 py-2 bg-amber-400 text-white rounded" >
-            Create Semester
-          </button>
+
+          <SubmitButton type="submit" loading={saving} variant="primary">
+            Create Department
+          </SubmitButton>
         </div>
       </form>
 
@@ -154,8 +155,6 @@ export default function AdminSemestersPage() {
             <div className="flex justify-between items-center">
               <h2 className="text-sm font-bold text-primary">Edit Semester</h2>
             </div>
-
-            \n
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-tertiary mb-1">Semester Name</label>

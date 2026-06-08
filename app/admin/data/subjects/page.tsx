@@ -46,14 +46,14 @@ export default function SubjectsPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-primary">Subjects</h1>
           <p className="text-xs text-tertiary mt-1">Subjects are populated through the ETL process and are primarily used to map faculties and students.</p>
         </div>
-        <button
+        {/* <button
           type="button"
           onClick={() => fetchData(true)}
           disabled={loading}
           className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-default bg-surface-hover hover:bg-surface-dim transition-colors"
         >
           {loading ? "Loading..." : "Refresh"}
-        </button>
+        </button> */}
       </div>
 
       {error && <p className="text-xs font-medium text-red-600">{error}</p>}
