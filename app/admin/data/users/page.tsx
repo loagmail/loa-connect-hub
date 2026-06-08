@@ -46,7 +46,8 @@ export default function AdminUsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [excludeStudents, setExcludeStudents] = useState(false)
+  const [deptFilter, setDeptFilter] = useState("all")
+  const [excludeStudents, setExcludeStudents] = useState(true)
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0])
   const [changingRole, setChangingRole] = useState<string | null>(null)
@@ -235,7 +236,7 @@ export default function AdminUsersPage() {
   const filtered = useMemo(() => {
     return users.filter((u) => {
       if (roleFilter !== "all" && !hasRole(u.role, roleFilter)) return false
-  if (excludeStudents && hasRole(u.role, "STUDENT")) return false
+      if (excludeStudents && hasRole(u.role, "STUDENT")) return false
       if (statusFilter === "active" && u.isDisabled) return false
       if (statusFilter === "disabled" && !u.isDisabled) return false
       if (statusFilter === "activated" && !u.hasLoggedInBefore) return false
@@ -244,9 +245,11 @@ export default function AdminUsersPage() {
         const q = debouncedSearch.toLowerCase()
         return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
       }
+
+      
       return true
     })
-  }, [users, roleFilter, deptFilter, statusFilter, debouncedSearch])
+  }, [users, roleFilter, deptFilter, statusFilter, debouncedSearch,excludeStudents])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages - 1)
@@ -313,10 +316,18 @@ export default function AdminUsersPage() {
             <option key={d.id} value={d.id}>{d.name}</option>
           ))}
         </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="input text-xs py-1.5 w-full sm:w-auto">
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="disabled">Disabled</option>
+          <option value="activated">Activated</option>
+          <option value="pending">Pending</option>
+        </select>
         <label className="flex items-center gap-2 text-xs" title="Exclude students from view">
           <input type="checkbox" checked={excludeStudents} onChange={(e) => setExcludeStudents(e.target.checked)} className="checkbox" />
           Exclude Students
         </label>
+        
       </div>
 
       {/* Empty state */}
