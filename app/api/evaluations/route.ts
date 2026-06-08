@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
+import { supabase } from "@/lib/supabase"
 import { getMyEvaluations } from "@/features/evaluations/evaluations.service"
 import { getActiveSemester } from "@/features/admin-data/semesters.service"
 import { getOrCreateEvaluation } from "@/features/evaluations/evaluations.service"
@@ -18,7 +19,17 @@ export async function GET() {
 
   try {
     const evaluations = await getMyEvaluations(userId)
-    return NextResponse.json({ evaluations })
+    const facultyIds = [...new Set(evaluations.map((e) => e.evaluateeId))]
+    const { data: facultyUsers } = await supabase
+      .from("users")
+      .select("id, name")
+      .in("id", facultyIds)
+    const nameMap = new Map((facultyUsers || []).map((u) => [u.id, u.name]))
+    const result = evaluations.map((e) => ({
+      ...e,
+      evaluateeName: nameMap.get(e.evaluateeId) || "Unknown",
+    }))
+    return NextResponse.json({ evaluations: result })
   } catch {
     return NextResponse.json({ error: "Failed to fetch evaluations" }, { status: 500 })
   }
@@ -42,7 +53,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No active evaluation period" }, { status: 400 })
     }
     const evaluation = await getOrCreateEvaluation(activeSemesterId, userId, evaluateeId)
-    return NextResponse.json({ evaluation }, { status: 200 })
+
+    const { data: facultyUser } = await supabase
+      .from("users")
+      .select("name")
+      .eq("id", evaluateeId)
+      .single()
+    const evaluateeName = (facultyUser as { name: string } | null)?.name || "Unknown"
+
+    return NextResponse.json({ evaluation: { ...evaluation, evaluateeName } }, { status: 200 })
   } catch {
     return NextResponse.json({ error: "Failed to create evaluation" }, { status: 500 })
   }

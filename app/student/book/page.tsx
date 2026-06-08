@@ -20,7 +20,8 @@ export default async function StudentBookPage() {
   if (!hasRole((session.user as Record<string, unknown>).role as string, "STUDENT")) redirect("/login")
 
   const facultyUsers = await userRepository.listByRole("FACULTY")
-  const allFaculty = facultyUsers.filter((f) => !f.isDisabled)
+const deanUsers = await userRepository.listByRole("DEAN")
+  const allFaculty = [...facultyUsers, ...deanUsers].filter((f) => !f.isDisabled && f.email.trim().toLowerCase().includes("lyceumalabang.edu.ph"))
   const departments = await departmentRepository.listAll()
   const deptMap = new Map(departments.map((d) => [d.id, d.name]))
 

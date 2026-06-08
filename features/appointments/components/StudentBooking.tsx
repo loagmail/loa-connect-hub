@@ -403,6 +403,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
 
           <div className="flex flex-col sm:flex-row gap-2">
             <UserSearchSelect
+              userRole={userRole}
               users={primaryUsers}
               excludeIds={primaryFacultyId ? [primaryFacultyId] : []}
               onSelect={(user) => selectPrimary(user.id)}
@@ -487,6 +488,7 @@ export default function StudentBooking({ facultyList, userRole, students, server
 
           <div className="flex flex-col sm:flex-row gap-2">
             <UserSearchSelect
+              userRole={userRole}
               users={attendeeUsers}
               excludeIds={[primaryFacultyId, ...attendeeIds].filter(Boolean) as string[]}
               onSelect={(user) => toggleAttendee(user.id)}

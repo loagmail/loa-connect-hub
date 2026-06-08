@@ -9,6 +9,7 @@ interface UserItem {
 }
 
 interface UserSearchSelectProps {
+  userRole: string
   users: UserItem[]
   excludeIds: string[]
   onSelect: (user: UserItem) => void
@@ -37,6 +38,7 @@ function highlightMatch(text: string, query: string) {
 }
 
 export default function UserSearchSelect({
+  userRole,
   users,
   excludeIds,
   onSelect,
@@ -59,11 +61,15 @@ export default function UserSearchSelect({
   const results = useMemo(() => {
     if (!search.trim()) return []
     const q = search.toLowerCase()
-    const filtered = users.filter(
+    let filtered = users.filter(
       (u) =>
         !excludeIds.includes(u.id) &&
         (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
     )
+
+    if (userRole === "STUDENT") {
+      filtered = filtered.filter((u) => u.email.trim().endsWith("@lyceumalabang.edu.ph"))
+    }
     return filtered.sort((a, b) => {
       const aNameStarts = a.name.toLowerCase().startsWith(q)
       const bNameStarts = b.name.toLowerCase().startsWith(q)

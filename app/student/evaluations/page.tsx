@@ -3,15 +3,21 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 
+interface PendingItem {
+  evaluateeId: string
+  evaluateeName: string
+}
+
 interface ExistingEvaluation {
   id: string
   evaluateeId: string
+  evaluateeName: string
   status: string
   submittedAt: string | null
 }
 
 export default function StudentEvaluationsPage() {
-  const [pending, setPending] = useState<string[]>([])
+  const [pending, setPending] = useState<PendingItem[]>([])
   const [evaluations, setEvaluations] = useState<ExistingEvaluation[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -40,14 +46,14 @@ export default function StudentEvaluationsPage() {
       {pending.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-bold text-primary">Pending Evaluations</h2>
-          {pending.map((evaluateeId) => (
+          {pending.map((item) => (
             <Link
-              key={evaluateeId}
-              href={`/student/evaluations/${evaluateeId}`}
+              key={item.evaluateeId}
+              href={`/student/evaluations/${item.evaluateeId}`}
               className="block bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-200 transition-colors"
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-primary">{evaluateeId}</span>
+                <span className="text-sm font-semibold text-primary">{item.evaluateeName}</span>
                 <span className="text-xs text-blue-600 font-medium">Start Evaluation →</span>
               </div>
             </Link>
@@ -62,7 +68,7 @@ export default function StudentEvaluationsPage() {
             <div key={ev.id} className="bg-white rounded-xl border border-slate-200 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-semibold text-primary">{ev.evaluateeId}</span>
+                  <span className="text-sm font-semibold text-primary">{ev.evaluateeName}</span>
                   <p className="text-xs text-tertiary mt-0.5">
                     {ev.status === "SUBMITTED" ? "Submitted" : "Draft"} {ev.submittedAt ? `· ${new Date(ev.submittedAt).toLocaleDateString()}` : ""}
                   </p>

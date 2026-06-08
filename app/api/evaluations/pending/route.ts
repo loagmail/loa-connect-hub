@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
+import { supabase } from "@/lib/supabase"
 import { getActiveSemester } from "@/features/admin-data/semesters.service"
 import { getPendingEvaluations } from "@/features/evaluations/evaluations.service"
 
@@ -22,7 +23,19 @@ export async function GET() {
     }
     const pending = await getPendingEvaluations(userId, activeSemester.id)
     const facultyIds = pending.map((p) => p.evaluateeId)
-    return NextResponse.json({ pending: facultyIds })
+
+    const { data: facultyUsers } = await supabase
+      .from("users")
+      .select("id, name")
+      .in("id", facultyIds)
+    const nameMap = new Map((facultyUsers || []).map((u) => [u.id, u.name]))
+
+    const result = pending.map((p) => ({
+      evaluateeId: p.evaluateeId,
+      evaluateeName: nameMap.get(p.evaluateeId) || "Unknown",
+    }))
+
+    return NextResponse.json({ pending: result })
   } catch {
     return NextResponse.json({ error: "Failed to fetch pending evaluations" }, { status: 500 })
   }

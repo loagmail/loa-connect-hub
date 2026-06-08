@@ -23,6 +23,7 @@ export default function FillEvaluationPage() {
   const router = useRouter()
   const [categories, setCategories] = useState<RubricCategory[]>([])
   const [evaluationId, setEvaluationId] = useState<string | null>(null)
+  const [evaluateeName, setEvaluateeName] = useState("")
   const [ratings, setRatings] = useState<Record<string, number>>({})
   const [comment, setComment] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -50,6 +51,7 @@ export default function FillEvaluationPage() {
           body: JSON.stringify({ evaluateeId: params.id }),
         })
         const evalData = await evalRes.json()
+        setEvaluateeName(evalData.evaluation?.evaluateeName || "Unknown")
         const evId = evalData.evaluation?.id
         if (evId) {
           setEvaluationId(evId)
@@ -131,7 +133,7 @@ export default function FillEvaluationPage() {
       <div>
         <h1 className="text-xl font-bold text-primary">Faculty Evaluation</h1>
         <p className="text-sm text-tertiary mt-1">
-          Evaluate faculty member #{params.id}
+          Evaluating {evaluateeName || "..."}
         </p>
       </div>
 
