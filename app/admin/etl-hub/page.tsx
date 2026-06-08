@@ -327,26 +327,55 @@ interface Department {
   code: string
 }
 
+interface SemesterData {
+  id: string
+  title: string
+  evalStartDate: string
+  evalEndDate: string
+  isActive: boolean
+  createdAt: Date
+}
+
 export default function EtlHubPage() {
   const [importTab, setImportTab] = useState<"student" | "faculty">("student")
   const [departments, setDepartments] = useState<Department[]>([])
   const [deptId, setDeptId] = useState("")
   const [resetState, setResetState] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [resetMessage, setResetMessage] = useState("")
-  const [deptLoading, setDeptLoading] = useState(true)
+  const [semesterId, setSemesterId] = useState("");
+  const [deptLoading, setDeptLoading] = useState(true);
+  const [semLoading, setSemLoading] = useState(true);
+  const [semesters, setSemesters] = useState<SemesterData[]>([]);
 
-  useEffect(() => {
-    setDeptLoading(true)
-    fetch("/api/admin/departments")
-      .then((r) => r.json())
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data?.departments ?? []
-        setDepartments(list)
-        if (list.length === 1) setDeptId(list[0].id)
+    useEffect(() => {
+      Promise.resolve().then(() => {
+        setDeptLoading(true)
+        fetch("/api/admin/departments")
+          .then((r) => r.json())
+          .then((data) => {
+            const list: Department[] = Array.isArray(data) ? data : (data?.data as Department[] ?? []);
+            setDepartments(list);
+          })
+          .catch(() => {})
+          .finally(() => setDeptLoading(false))
       })
-      .catch(() => {})
-      .finally(() => setDeptLoading(false))
-  }, [])
+    }, [])
+
+    useEffect(() => {
+      Promise.resolve().then(() => {
+        setSemLoading(true)
+        fetch("/api/semesters")
+          .then((r) => r.json())
+          .then((data) => {
+            const list: SemesterData[] = Array.isArray(data) ? data : (data?.data as SemesterData[] ?? []);
+            setSemesters(list);
+            const active = list.find((s) => s.isActive);
+            if (active) setSemesterId(active.id)
+          })
+          .catch(() => {})
+          .finally(() => setSemLoading(false))
+      })
+    }, [])
 
   async function handleReset() {
     if (!window.confirm("This will permanently delete ALL imported data (evaluations, enrollments, faculty-subject mappings, sections, subjects, appointments, etc.) except seed records. Are you sure?")) return
@@ -387,8 +416,8 @@ export default function EtlHubPage() {
 
         <div className="mt-4 mb-4 flex items-center gap-3">
           <label className="text-xs font-semibold text-secondary shrink-0">Department</label>
-          {deptLoading ? (
-            <Skeleton variant="text" className="w-48 h-9 rounded-lg" />
+{deptLoading ? (
+              <Skeleton variant="text" className="w-48 h-9 rounded-lg" />
           ) : (
             <select
               value={deptId}
@@ -401,6 +430,22 @@ export default function EtlHubPage() {
               ))}
             </select>
           )}
+          <label className="text-xs font-semibold text-secondary shrink-0">Semester</label>
+          {semLoading ? (
+            <Skeleton variant="text" className="w-48 h-9 rounded-lg" />
+          ) : (
+            <select
+              value={semesterId}
+              onChange={(e) => setSemesterId(e.target.value)}
+              className="w-full max-w-xs text-xs px-3 py-2 rounded-lg border border-default bg-surface-hover focus:border-gold-500 outline-none transition-colors"
+            >
+              <option value="">Select semester...</option>
+              {semesters.map((s) => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+            </select>
+          )}
+
         </div>
 
         {deptId ? (
@@ -427,7 +472,7 @@ export default function EtlHubPage() {
                 <span className="text-xs font-medium text-secondary">Faculty Upload</span>
               </label>
             </div>
-            {importTab === "student" ? <BulkStudentImport departmentId={deptId} /> : <BulkFacultyImport departmentId={deptId} />}
+            {importTab === "student" ? <BulkStudentImport departmentId={deptId} semesterId={semesterId} /> : <BulkFacultyImport departmentId={deptId} semesterId={semesterId} />}
           </>
         ) : (
           <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3">
