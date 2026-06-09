@@ -280,6 +280,38 @@ export interface IEvaluationRepository {
   addComment(evaluationId: string, comment: string): Promise<EvaluationComment>
 }
 
+// ── Dean Report Types ──────────────────────────────────────
+
+export interface StudentBreakdownItem {
+  professionalManner: number | null
+  communicationWithStudent: number | null
+  studentEngagement: number | null
+  learningMaterials: number | null
+  timeManagement: number | null
+  experientialLearning: number | null
+  respectUniqueness: number | null
+  assessmentAndFeedback: number | null
+  generalRating: number | null
+  comment: string | null
+}
+
+export interface FacultyEvalDetail {
+  facultyId: string
+  facultyName: string
+  totalRespondents: number
+  generalRating: number | null
+  remarks: string | null
+  professionalManner: number | null
+  communicationWithStudent: number | null
+  studentEngagement: number | null
+  learningMaterials: number | null
+  timeManagement: number | null
+  experientialLearning: number | null
+  respectUniqueness: number | null
+  assessmentAndFeedback: number | null
+  students: StudentBreakdownItem[]
+}
+
 export interface IEvaluationResultRepository {
   list(semesterId: string, filters?: { departmentId?: string; facultyId?: string }): Promise<EvaluationResultData[]>
   findByFaculty(semesterId: string, facultyId: string): Promise<EvaluationResultData | null>

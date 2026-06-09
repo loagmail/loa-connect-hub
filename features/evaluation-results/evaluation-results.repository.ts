@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/db"
-import type { EvaluationResultData, IEvaluationResultRepository } from "@/lib/types"
+import type { EvaluationResultData, IEvaluationResultRepository, StudentBreakdownItem, FacultyEvalDetail } from "@/lib/types"
 
 export const evaluationResultRepository: IEvaluationResultRepository = {
   async list(semesterId, filters) {
@@ -132,4 +132,128 @@ export const evaluationResultRepository: IEvaluationResultRepository = {
   async computeAll(semesterId) {
     await this.compute(semesterId)
   },
+}
+
+const nameToColumn: Record<string, keyof StudentBreakdownItem> = {
+  "Professional Manner": "professionalManner",
+  "Communication with Students": "communicationWithStudent",
+  "Student Engagement": "studentEngagement",
+  "Learning Materials": "learningMaterials",
+  "Time Management": "timeManagement",
+  "Experiential Learning": "experientialLearning",
+  "Respect for Uniqueness": "respectUniqueness",
+  "Assessment and Feedback": "assessmentAndFeedback",
+}
+
+export async function getStudentBreakdownsForFaculty(
+  semesterId: string,
+  facultyId: string,
+): Promise<StudentBreakdownItem[]> {
+  const { data: evals, error: evErr } = await supabase
+    .from("evaluations")
+    .select(`
+      id,
+      evaluation_ratings(
+        rating,
+        rubric_items!inner(
+          categoryId,
+          rubric_categories!inner(name)
+        )
+      ),
+      evaluation_comments(comment)
+    `)
+    .eq("semesterId", semesterId)
+    .eq("evaluateeId", facultyId)
+    .eq("status", "SUBMITTED")
+  if (evErr) throw evErr
+  if (!evals || evals.length === 0) return []
+
+  return evals.map((ev: Record<string, unknown>) => {
+    const ratings = (ev.evaluation_ratings || []) as Array<{
+      rating: number
+      rubric_items: { categoryId: string; rubric_categories: { name: string } }
+    }>
+    const comments = (ev.evaluation_comments || []) as Array<{ comment: string }>
+
+    const catScores: Record<string, number[]> = {}
+    for (const r of ratings) {
+      const catName = r.rubric_items.rubric_categories.name
+      if (!catScores[catName]) catScores[catName] = []
+      catScores[catName].push(r.rating)
+    }
+
+    const item: StudentBreakdownItem = {
+      professionalManner: null,
+      communicationWithStudent: null,
+      studentEngagement: null,
+      learningMaterials: null,
+      timeManagement: null,
+      experientialLearning: null,
+      respectUniqueness: null,
+      assessmentAndFeedback: null,
+      generalRating: null,
+      comment: comments.length > 0 ? comments[0].comment : null,
+    }
+
+    let catAvgSum = 0
+    let catCount = 0
+    for (const [catName, vals] of Object.entries(catScores)) {
+      const avg = vals.reduce((a, b) => a + b, 0) / vals.length
+      const col = nameToColumn[catName]
+      if (col) {
+        ;(item as unknown as Record<string, unknown>)[col] = Math.round(avg * 100) / 100
+        catAvgSum += avg
+        catCount++
+      }
+    }
+    if (catCount > 0) {
+      item.generalRating = Math.round((catAvgSum / catCount) * 100) / 100
+    }
+
+    return item
+  })
+}
+
+export async function getDeanDetails(
+  semesterId: string,
+  departmentId: string,
+): Promise<FacultyEvalDetail[]> {
+  const { data: results, error: resErr } = await supabase
+    .from("evaluation_results")
+    .select("*")
+    .eq("semesterId", semesterId)
+    .eq("departmentId", departmentId)
+  if (resErr) throw resErr
+  if (!results || results.length === 0) return []
+
+  const facultyIds = results.map((r) => r.facultyId)
+
+  const { data: users, error: uErr } = await supabase
+    .from("users")
+    .select("id, name")
+    .in("id", facultyIds)
+  if (uErr) throw uErr
+  const nameMap = new Map((users || []).map((u) => [u.id, u.name]))
+
+  const details: FacultyEvalDetail[] = []
+  for (const r of results) {
+    const students = await getStudentBreakdownsForFaculty(semesterId, r.facultyId)
+    details.push({
+      facultyId: r.facultyId,
+      facultyName: nameMap.get(r.facultyId) || r.facultyId,
+      totalRespondents: r.totalRespondents,
+      generalRating: r.generalRating,
+      remarks: r.remarks,
+      professionalManner: r.professionalManner,
+      communicationWithStudent: r.communicationWithStudent,
+      studentEngagement: r.studentEngagement,
+      learningMaterials: r.learningMaterials,
+      timeManagement: r.timeManagement,
+      experientialLearning: r.experientialLearning,
+      respectUniqueness: r.respectUniqueness,
+      assessmentAndFeedback: r.assessmentAndFeedback,
+      students,
+    })
+  }
+  return details
 }
