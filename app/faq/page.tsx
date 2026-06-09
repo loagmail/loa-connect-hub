@@ -52,7 +52,7 @@ export default async function FaqPage() {
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-primary">Frequently Asked Questions</h1>
-        <p className="text-sm text-tertiary mt-1">Everything you need to know about the e-Consult platform.</p>
+        <p className="text-sm text-tertiary mt-1">Everything you need to know about the LOA Connect Hub platform.</p>
       </div>
 
       <div className="space-y-3">

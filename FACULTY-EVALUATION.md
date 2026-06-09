@@ -180,7 +180,7 @@
 |-------|---------|
 | **Existing** | Already exists, reused without changes |
 | **Enhance** | Existing component requiring modification |
-| **Shared** | New component usable by both e-Consultation and Faculty Evaluation |
+| **Shared** | New component usable by both LOA Connect Hub and Faculty Evaluation |
 | **New** | Developed specifically for Faculty Evaluation |
 
 | Component | Classification | Module |
@@ -561,7 +561,7 @@ Student:
 
 ### Conventions
 
-All naming follows existing e-Consultation conventions:
+All naming follows existing LOA Connect Hub conventions:
 - Snake_case table names
 - CamelCase column names (quoted in SQL)
 - `TEXT` primary keys with `gen_random_uuid()::TEXT`
@@ -875,7 +875,7 @@ INSERT INTO rating_scales ("periodId", name, value, "displayOrder") VALUES
 
 ### Conventions
 
-All APIs follow existing e-Consultation conventions:
+All APIs follow existing LOA Connect Hub conventions:
 
 | Convention | Pattern |
 |-----------|---------|

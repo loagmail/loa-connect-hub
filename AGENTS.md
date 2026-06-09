@@ -1,4 +1,4 @@
-# AGENTS.md — e-consultation
+# AGENTS.md — LOA Connect Hub
 
 ## Stack
 

@@ -1,4 +1,4 @@
-# E-Consultation
+# LOA Connect Hub
 
 Academic consultation management system built with **Next.js 16**, **Supabase**, and **Tailwind CSS 4**.
 

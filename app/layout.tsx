@@ -5,7 +5,7 @@ import AppShell from "@/components/AppShell"
 
 export const metadata: Metadata = {
   title: "LOA Connect Hub",
-  description: "Academic e-Consultation booking system",
+  description: "Academic LOA Connect Hub booking system",
   other: {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",

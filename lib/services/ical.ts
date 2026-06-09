@@ -58,7 +58,7 @@ export function generateICal(event: ICalEvent): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//E-Consultation//EN",
+    "PRODID:-//LOA Connect Hub//EN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
     `UID:${event.uid}`,

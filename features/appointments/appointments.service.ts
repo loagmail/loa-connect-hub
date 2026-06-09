@@ -412,7 +412,7 @@ export async function sendAppointmentCreatedEmail(appointment: ApptWithJoins, cr
   const allParticipants = allRecipients.map(r => ({ name: r.name, email: r.email }))
 
   const icalString = generateICal({
-    uid: `appt-${appointment.id}@e-consultation`,
+    uid: `appt-${appointment.id}@LOA Connect Hub`,
     summary: eventSummary,
     description: descriptionLines,
     date: appointment.date,
@@ -948,7 +948,7 @@ export async function sendConsultationApprovedEmail(appointment: ApptWithJoins) 
   const allParticipants = recipients.map(r => ({ name: r.name, email: r.email }))
 
   const icalString = generateICal({
-    uid: `appt-${appointment.id}@e-consultation`,
+    uid: `appt-${appointment.id}@LOA Connect Hub`,
     summary: `Consultation with ${faculty.name}`,
     description: [
       "Academic Consultation — Accepted",
