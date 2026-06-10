@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { getToken } from "next-auth/jwt"
+import { getToken } from "next-auth/jwt";
+import { supabase } from "@/lib/supabase"
 
 const ROLE_PRIORITY = ["ADMIN", "DEAN", "FACULTY", "STUDENT", "GUEST"]
 
@@ -39,6 +40,24 @@ const PAGE_ACCESS: Record<string, string[]> = {
   GUEST: [],
 }
 
+async function userHasPermission(userId: string, resource: string): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from('user_permissions')
+      .select('grants, denies')
+      .eq('user_id', userId)
+      .eq('resource_path', resource);
+    if (!data || data.length === 0) return false;
+    for (const row of data as any[]) {
+      const grants = row.grants ?? [];
+      const denies = row.denies ?? [];
+      if (denies.includes('access')) return false;
+      if (grants.includes('access')) return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
 const PUBLIC_PATHS = new Set([
   "/login", "/activate", "/forgot-password", "/change-password",
   "/setup-password", "/403",
@@ -72,9 +91,13 @@ export async function proxy(request: NextRequest) {
   const allowed = PAGE_ACCESS[group]
   const hasAccess = allowed?.some((p) => pathname === p || pathname.startsWith(p + "/"))
 
-  if (!hasAccess) {
-    return NextResponse.redirect(new URL("/403", request.url))
-  }
+if (!hasAccess) {
+    const userId = (token as any).id;
+    const allowedByUser = await userHasPermission(userId, pathname);
+    if (allowedByUser) return NextResponse.next();
+    return NextResponse.redirect(new URL("/403", request.url));
+}
+
 
   return NextResponse.next()
 }
