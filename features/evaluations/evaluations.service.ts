@@ -33,3 +33,7 @@ export async function getEvaluationRatings(evaluationId: string) {
 export async function addEvaluationComment(evaluationId: string, comment: string) {
   return evaluationRepository.addComment(evaluationId, comment)
 }
+
+export async function getEvaluationComment(evaluationId: string) {
+  return evaluationRepository.getComment(evaluationId)
+}

@@ -278,6 +278,7 @@ export interface IEvaluationRepository {
   submit(evaluationId: string): Promise<EvaluationData>
   getRatings(evaluationId: string): Promise<{ itemId: string; rating: number }[]>
   addComment(evaluationId: string, comment: string): Promise<EvaluationComment>
+  getComment(evaluationId: string): Promise<EvaluationComment | null>
 }
 
 // ── Dean Report Types ──────────────────────────────────────

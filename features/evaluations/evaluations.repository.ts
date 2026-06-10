@@ -108,4 +108,14 @@ export const evaluationRepository: IEvaluationRepository = {
     if (error) throw error
     return data as EvaluationComment
   },
+
+  async getComment(evaluationId) {
+    const { data, error } = await supabase
+      .from("evaluation_comments")
+      .select("*")
+      .eq("evaluationId", evaluationId)
+      .maybeSingle()
+    if (error) throw error
+    return data as EvaluationComment | null
+  },
 }

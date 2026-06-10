@@ -29,6 +29,9 @@ export default function FillEvaluationPage() {
   const [loading, setLoading] = useState(true)
   const [step, setStep] = useState(0)
   const [pledgeAgreed, setPledgeAgreed] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submittedAt, setSubmittedAt] = useState<string | null>(null)
+  const [existingComment, setExistingComment] = useState<string | null>(null)
 
   useEffect(() => {
     async function init() {
@@ -54,8 +57,16 @@ export default function FillEvaluationPage() {
         const evalData = await evalRes.json()
         setEvaluateeName(evalData.evaluation?.evaluateeName || "Unknown")
         const evId = evalData.evaluation?.id
+        const evStatus = evalData.evaluation?.status
+
         if (evId) {
           setEvaluationId(evId)
+
+          if (evStatus === "SUBMITTED") {
+            setIsSubmitted(true)
+            setSubmittedAt(evalData.evaluation?.submittedAt || null)
+          }
+
           const ratingsRes = await fetch(`/api/evaluations/${evId}/ratings`)
           const ratingsData = await ratingsRes.json()
           if (ratingsData.ratings?.length > 0) {
@@ -64,6 +75,14 @@ export default function FillEvaluationPage() {
               map[r.itemId] = r.rating
             }
             setRatings(map)
+          }
+
+          if (evStatus === "SUBMITTED") {
+            const commentRes = await fetch(`/api/evaluations/${evId}/comments`)
+            const commentData = await commentRes.json()
+            if (commentData.comment) {
+              setExistingComment(commentData.comment.comment || null)
+            }
           }
         }
       } catch {
@@ -140,7 +159,7 @@ export default function FillEvaluationPage() {
         })
       }
       await fetch(`/api/evaluations/${evaluationId}/submit`, { method: "POST" })
-      router.push("/student/evaluations")
+      router.replace("/student/evaluations")
     } catch {
       alert("Failed to submit evaluation")
     } finally {
@@ -149,6 +168,74 @@ export default function FillEvaluationPage() {
   }
 
   if (loading) return <p className="text-sm text-tertiary text-center py-12">Loading...</p>
+
+  if (isSubmitted) {
+    const labelMap = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"]
+    return (
+      <div className="pb-8">
+        <div className="px-5 pt-8 pb-4">
+          <button
+            type="button"
+            onClick={() => router.push("/student/evaluations")}
+            className="text-sm text-gold-600 font-semibold mb-2"
+          >
+            ← Back to Evaluations
+          </button>
+          <h1 className="text-[28px] font-bold text-primary tracking-tight">Evaluation Results</h1>
+          <p className="text-sm text-tertiary mt-1">{evaluateeName}</p>
+          {submittedAt && (
+            <p className="text-xs text-tertiary mt-0.5">
+              Submitted {new Date(submittedAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+
+        <div className="px-5 space-y-4">
+          {categories.map((category) => (
+            <div key={category.id} className="bg-white dark:bg-surface-dim rounded-2xl p-5 shadow-sm">
+              <h3 className="text-base font-bold text-primary mb-4">{category.name}</h3>
+              <div className="space-y-4">
+                {category.items.map((item) => {
+                  const rating = ratings[item.id]
+                  return (
+                    <div key={item.id}>
+                      <p className="text-sm text-secondary leading-relaxed mb-2">{item.text}</p>
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((v) => (
+                          <span
+                            key={v}
+                            className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-xs font-semibold ${
+                              rating === v
+                                ? "bg-gold-500 text-white ring-2 ring-gold-300 ring-offset-2 ring-offset-white dark:ring-offset-surface-dim"
+                                : "bg-slate-100 dark:bg-slate-800 text-tertiary"
+                            }`}
+                          >
+                            {v}
+                          </span>
+                        ))}
+                        {rating && (
+                          <span className="text-xs font-semibold text-gold-600 ml-1">
+                            {labelMap[rating]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+
+          {existingComment && (
+            <div className="bg-white dark:bg-surface-dim rounded-2xl p-5 shadow-sm">
+              <h3 className="text-base font-bold text-primary mb-2">Feedback</h3>
+              <p className="text-sm text-secondary leading-relaxed whitespace-pre-wrap">{existingComment}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="pb-8">
