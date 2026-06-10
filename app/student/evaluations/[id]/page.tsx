@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSidebar } from "@/lib/contexts/sidebar"
 
@@ -103,32 +103,6 @@ export default function FillEvaluationPage() {
     return () => setExclusive(false)
   }, [setExclusive])
 
-  const fullscreenRef = useRef(false)
-
-  useEffect(() => {
-    if (loading || isSubmitted) return
-
-    function enterFullscreen() {
-      if (document.fullscreenElement) return
-      fullscreenRef.current = true
-      document.documentElement.requestFullscreen?.().catch(() => {})
-    }
-    enterFullscreen()
-    document.addEventListener("click", enterFullscreen, { once: true })
-    return () => document.removeEventListener("click", enterFullscreen)
-  }, [loading, isSubmitted])
-
-  useEffect(() => {
-    if (loading || isSubmitted) return
-
-    function onFSChange() {
-      if (!document.fullscreenElement && fullscreenRef.current) {
-        document.documentElement.requestFullscreen?.().catch(() => {})
-      }
-    }
-    document.addEventListener("fullscreenchange", onFSChange)
-    return () => document.removeEventListener("fullscreenchange", onFSChange)
-  }, [loading, isSubmitted])
 
   useEffect(() => {
     async function init() {
@@ -185,9 +159,9 @@ export default function FillEvaluationPage() {
           }
         }
 
-        const subjRes = await fetch(`/api/evaluations/faculty-subjects?facultyId=${params.id}&semesterId=${activePeriod.id}`)
-        const subjData = await subjRes.json()
-        if (subjData.subjects) setSubjects(subjData.subjects)
+        // const subjRes = await fetch(`/api/evaluations/faculty-subjects?facultyId=${params.id}&semesterId=${activePeriod.id}`)
+        // const subjData = await subjRes.json()
+        // if (subjData.subjects) setSubjects(subjData.subjects)
       } catch {
         alert("Failed to initialize evaluation")
       } finally {
@@ -288,8 +262,7 @@ export default function FillEvaluationPage() {
     if (!isSubmitted && (step > 0 || comment || Object.keys(ratings).length > 0)) {
       if (!window.confirm("Exit evaluation? Your progress will be lost and you will need to start from the beginning.")) return
     }
-    fullscreenRef.current = false
-    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
+   
     router.push("/student/evaluations")
   }
 
