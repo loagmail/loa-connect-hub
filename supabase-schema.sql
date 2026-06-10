@@ -18,7 +18,6 @@ DROP TABLE IF EXISTS subjects CASCADE;
 DROP TABLE IF EXISTS rubric_items CASCADE;
 DROP TABLE IF EXISTS rubric_categories CASCADE;
 DROP TABLE IF EXISTS rating_scales CASCADE;
-DROP TABLE IF EXISTS evaluation_periods CASCADE;
 DROP TABLE IF EXISTS semesters CASCADE;
 DROP TABLE IF EXISTS userrole CASCADE;
 DROP TABLE IF EXISTS appointment_time_slots CASCADE;
@@ -398,7 +397,8 @@ CREATE TABLE IF NOT EXISTS user_permissions (
 
   resource_path VARCHAR(255),
   grants TEXT[],
-  denies TEXT[]
+  denies TEXT[],
+  UNIQUE(user_id, resource_path)
 );
 
 -- =========================================================
@@ -416,152 +416,7 @@ CREATE TABLE IF NOT EXISTS semesters (
 
 CREATE INDEX IF NOT EXISTS idx_semesters_active ON semesters("isActive");
 
--- =========================================================
--- 8. SEED DATA
---    Uses fixed UUIDs for idempotent re-runs.
--- =========================================================
 
-DO $$
-DECLARE
-  _admin_id TEXT    := 'a0000000-0000-0000-0000-000000000001';
-  _dept_id TEXT    := 'b0000000-0000-0000-0000-000000000001';
-  _dean_id TEXT    := 'c0000000-0000-0000-0000-000000000001';
-  _faculty1_id TEXT := 'd0000000-0000-0000-0000-000000000001';
-  _course_bsit_id TEXT := 'f0000000-0000-0000-0000-000000000001';
-  _course_bscs_id TEXT := 'f0000000-0000-0000-0000-000000000002';
-
-  _hash TEXT := '$2b$12$GvU25kxpeLdvzSUmiZNm9edIlzresvMlzb2cT1PLdsQYjPAqRyYNW';
-BEGIN
-
-  -- ── ADMIN ──────────────────────────────────────────────────
-  INSERT INTO users (id, name, email, "passwordHash", "hasLoggedInBefore")
-  VALUES (_admin_id, 'Mr. Admin', 'admin@lyceumalabang.edu.ph', _hash, true)
-  ON CONFLICT (id) DO NOTHING;
-
-  INSERT INTO userrole ("userId", "roleName") VALUES (_admin_id, 'ADMIN')
-  ON CONFLICT DO NOTHING;
-
-  -- ── DEAN ──────────────────────────────────────────────────
-  INSERT INTO users (id, name, email, "passwordHash")
-  VALUES (_dean_id, 'Regie Ellana', 'r.ellana@lyceumalabang.edu.ph
-', _hash)
-  ON CONFLICT (id) DO NOTHING;
-
-  INSERT INTO userrole ("userId", "roleName") VALUES (_dean_id, 'DEAN')
-  ON CONFLICT DO NOTHING;
-
-  -- ── DEPARTMENT (College of Computer Studies) ────────────
-  INSERT INTO departments (id, name, code, "deanId")
-  VALUES (_dept_id, 'College of Computer Studies', 'CCS', _dean_id)
-  ON CONFLICT (id) DO NOTHING;
-
-  UPDATE users SET "departmentId" = _dept_id WHERE id = _dean_id AND "departmentId" IS NULL;
-
-  -- ── DEPARTMENT COURSES ───────────────────────────────────
-  INSERT INTO department_courses (id, "departmentId", name, code) VALUES
-    (_course_bsit_id, _dept_id, 'Bachelor of Science in Information Technology', 'BSIT'),
-    (_course_bscs_id, _dept_id, 'Bachelor of Science in Computer Science', 'BSCS')
-  ON CONFLICT ("departmentId", code) DO NOTHING;
-
-  -- ── FACULTY (1) ─────────────────────────────────────────
-  INSERT INTO users (id, name, email, "passwordHash", "departmentId")
-  VALUES (_faculty1_id, 'Nin Alamo', 'n.alamo@lyceumalabang.edu.ph', _hash, _dept_id)
-  ON CONFLICT (id) DO NOTHING;
-
-  INSERT INTO userrole ("userId", "roleName") VALUES (_faculty1_id, 'FACULTY')
-  ON CONFLICT DO NOTHING;
-
-  -- ── ADDITIONAL SEED VARIABLES ──────────────────────────
-  DECLARE
-    _student_id TEXT   := 'd0000000-0000-0000-0000-000000000002';
-    _sem_id TEXT       := 'e0000000-0000-0000-0000-000000000000';
-    _subject_id TEXT   := 'f0000000-0000-0000-0000-000000000003';
-    _section_id TEXT   := 'g0000000-0000-0000-0000-000000000001';
-  BEGIN
-
-  -- ── DEFAULT SEMESTER ─────────────────────────────────────
-  INSERT INTO semesters (id, title, "evalStartDate", "evalEndDate", "isActive")
-  VALUES (_sem_id, 'System Default Semester', CURRENT_DATE, CURRENT_DATE + INTERVAL '180 days', TRUE)
-  ON CONFLICT (id) DO NOTHING;
-
-  -- ── RUBRIC CATEGORIES ──────────────────────────────────
-  INSERT INTO rubric_categories (id, "semesterId", name, "displayOrder") VALUES
-    ('e0000000-0000-0000-0000-000000000001', _sem_id, 'Professional Manner',             1),
-    ('e0000000-0000-0000-0000-000000000002', _sem_id, 'Communication with Students',      2),
-    ('e0000000-0000-0000-0000-000000000003', _sem_id, 'Student Engagement',               3),
-    ('e0000000-0000-0000-0000-000000000004', _sem_id, 'Learning Materials',               4),
-    ('e0000000-0000-0000-0000-000000000005', _sem_id, 'Time Management',                  5),
-    ('e0000000-0000-0000-0000-000000000006', _sem_id, 'Experiential Learning',            6),
-    ('e0000000-0000-0000-0000-000000000007', _sem_id, 'Respect for Uniqueness',           7),
-    ('e0000000-0000-0000-0000-000000000008', _sem_id, 'Assessment and Feedback',          8)
-  ON CONFLICT (id) DO NOTHING;
-
-  -- ── RUBRIC ITEMS (24 total, 3 per category) ────────────
-  INSERT INTO rubric_items (id, "categoryId", text, "displayOrder", weight) VALUES
-    -- Professional Manner
-    ('e0000001-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Demonstrates professionalism in conduct and appearance', 1, 1.00),
-    ('e0000001-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'Shows enthusiasm and dedication to teaching', 2, 1.00),
-    ('e0000001-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000001', 'Maintains ethical standards in dealing with students', 3, 1.00),
-    -- Communication with Students
-    ('e0000002-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000002', 'Communicates course expectations and requirements clearly', 1, 1.00),
-    ('e0000002-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000002', 'Provides clear explanations of lessons and concepts', 2, 1.00),
-    ('e0000002-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000002', 'Is approachable and responsive to student concerns', 3, 1.00),
-    -- Student Engagement
-    ('e0000003-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000003', 'Encourages student participation and classroom interaction', 1, 1.00),
-    ('e0000003-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000003', 'Uses teaching methods that promote active learning', 2, 1.00),
-    ('e0000003-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'Motivates students to think critically and ask questions', 3, 1.00),
-    -- Learning Materials
-    ('e0000004-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000004', 'Provides relevant and up-to-date learning materials', 1, 1.00),
-    ('e0000004-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000004', 'Uses instructional materials that enhance understanding', 2, 1.00),
-    ('e0000004-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000004', 'Makes learning resources accessible to students', 3, 1.00),
-    -- Time Management
-    ('e0000005-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000005', 'Starts and ends classes on time', 1, 1.00),
-    ('e0000005-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000005', 'Covers prescribed course content within the term', 2, 1.00),
-    ('e0000005-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000005', 'Manages class time effectively', 3, 1.00),
-    -- Experiential Learning
-    ('e0000006-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000006', 'Connects lessons to real-world applications', 1, 1.00),
-    ('e0000006-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000006', 'Provides practical activities and exercises', 2, 1.00),
-    ('e0000006-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000006', 'Encourages hands-on learning experiences', 3, 1.00),
-    -- Respect for Uniqueness
-    ('e0000007-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000007', 'Respects diverse student backgrounds and perspectives', 1, 1.00),
-    ('e0000007-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000007', 'Accommodates different learning needs and styles', 2, 1.00),
-    ('e0000007-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000007', 'Creates an inclusive and welcoming learning environment', 3, 1.00),
-    -- Assessment and Feedback
-    ('e0000008-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000008', 'Provides fair and transparent assessments', 1, 1.00),
-    ('e0000008-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000008', 'Returns graded work in a timely manner', 2, 1.00),
-    ('e0000008-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000008', 'Gives constructive feedback to help students improve', 3, 1.00)
-  ON CONFLICT (id) DO NOTHING;
-
-  -- ── STUDENT ─────────────────────────────────────────────
-  INSERT INTO users (id, name, email, "passwordHash")
-  VALUES (_student_id, 'Nino Francisco Alamo', 'nino_francisco_alamo@itmlyceumalabang.onmicrosoft.com', _hash)
-  ON CONFLICT (id) DO NOTHING;
-
-  INSERT INTO userrole ("userId", "roleName") VALUES (_student_id, 'STUDENT')
-  ON CONFLICT DO NOTHING;
-
-  -- ── SUBJECT ─────────────────────────────────────────────
-  INSERT INTO subjects (id, code, name)
-  VALUES (_subject_id, '1815-ITELEC009', 'IT ELECTIVE 2 - Web Systems and Technologies')
-  ON CONFLICT (id) DO NOTHING;
-
-  -- ── SECTION ─────────────────────────────────────────────
-  INSERT INTO sections (id, name, program)
-  VALUES (_section_id, '31E1', 'BSIT')
-  ON CONFLICT (id) DO NOTHING;
-
-  -- ── FACULTY-SUBJECT LINK ────────────────────────────────
-  INSERT INTO faculty_subjects (faculty_id, subject_id, section_id, "semesterId")
-  VALUES (_faculty1_id, _subject_id, _section_id, _sem_id)
-  ON CONFLICT (subject_id, section_id, "semesterId") DO NOTHING;
-
-  -- ── STUDENT ENROLLMENT ─────────────────────────────────
-  INSERT INTO student_enrollments (student_id, section_id, "semesterId")
-  VALUES (_student_id, _section_id, _sem_id)
-  ON CONFLICT (student_id, section_id, "semesterId") DO NOTHING;
-
-  END;
-END $$;
 
 -- =========================================================
 -- 9. POST-SCHEMA MIGRATIONS
@@ -776,40 +631,26 @@ ALTER TABLE departments ADD COLUMN IF NOT EXISTS "isDisabled" BOOLEAN NOT NULL D
 -- Migration 13: Faculty Evaluation — new tables
 -- =========================================================
 
-CREATE TABLE IF NOT EXISTS evaluation_periods (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  name TEXT NOT NULL,
-  semester TEXT NOT NULL,
-  "schoolYear" TEXT NOT NULL,
-  "startDate" DATE NOT NULL,
-  "endDate" DATE NOT NULL,
-  "isActive" BOOLEAN NOT NULL DEFAULT FALSE,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_eval_periods_active ON evaluation_periods("isActive");
-CREATE INDEX IF NOT EXISTS idx_eval_periods_school_year ON evaluation_periods("schoolYear");
-
 CREATE TABLE IF NOT EXISTS rating_scales (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "periodId" TEXT NOT NULL REFERENCES evaluation_periods(id) ON DELETE CASCADE,
+  "semesterId" TEXT NOT NULL REFERENCES semesters(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   value INTEGER NOT NULL CHECK (value >= 1),
   "displayOrder" INTEGER NOT NULL,
-  UNIQUE("periodId", value)
+  UNIQUE("semesterId", value)
 );
 
-CREATE INDEX IF NOT EXISTS idx_rating_scales_period ON rating_scales("periodId");
+CREATE INDEX IF NOT EXISTS idx_rating_scales_semester ON rating_scales("semesterId");
 
 CREATE TABLE IF NOT EXISTS rubric_categories (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "periodId" TEXT NOT NULL REFERENCES evaluation_periods(id) ON DELETE CASCADE,
+  "semesterId" TEXT NOT NULL REFERENCES semesters(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   "displayOrder" INTEGER NOT NULL,
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_rubric_categories_period ON rubric_categories("periodId");
+CREATE INDEX IF NOT EXISTS idx_rubric_categories_semester ON rubric_categories("semesterId");
 
 CREATE TABLE IF NOT EXISTS rubric_items (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
@@ -858,21 +699,21 @@ CREATE INDEX IF NOT EXISTS idx_student_enrollments_student ON student_enrollment
 
 CREATE TABLE IF NOT EXISTS evaluations (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "periodId" TEXT NOT NULL REFERENCES evaluation_periods(id) ON DELETE CASCADE,
+  "semesterId" TEXT NOT NULL REFERENCES semesters(id) ON DELETE CASCADE,
   "evaluatorId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   "evaluateeId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'SUBMITTED')),
   "submittedAt" TIMESTAMPTZ,
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE("periodId", "evaluatorId", "evaluateeId")
+  UNIQUE("semesterId", "evaluatorId", "evaluateeId")
 );
 
-CREATE INDEX IF NOT EXISTS idx_evaluations_period ON evaluations("periodId");
+CREATE INDEX IF NOT EXISTS idx_evaluations_semester ON evaluations("semesterId");
 CREATE INDEX IF NOT EXISTS idx_evaluations_evaluator ON evaluations("evaluatorId");
 CREATE INDEX IF NOT EXISTS idx_evaluations_evaluatee ON evaluations("evaluateeId");
 CREATE INDEX IF NOT EXISTS idx_evaluations_status ON evaluations(status);
-CREATE INDEX IF NOT EXISTS idx_evaluations_period_evaluator ON evaluations("periodId", "evaluatorId");
+CREATE INDEX IF NOT EXISTS idx_evaluations_semester_evaluator ON evaluations("semesterId", "evaluatorId");
 
 CREATE TABLE IF NOT EXISTS evaluation_ratings (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
@@ -899,7 +740,7 @@ CREATE INDEX IF NOT EXISTS idx_eval_comments_sentiment ON evaluation_comments("s
 
 CREATE TABLE IF NOT EXISTS evaluation_results (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "periodId" TEXT NOT NULL REFERENCES evaluation_periods(id) ON DELETE CASCADE,
+  "semesterId" TEXT NOT NULL REFERENCES semesters(id) ON DELETE CASCADE,
   "facultyId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   "departmentId" TEXT REFERENCES departments(id) ON DELETE SET NULL,
   "totalRespondents" INTEGER NOT NULL DEFAULT 0,
@@ -914,10 +755,10 @@ CREATE TABLE IF NOT EXISTS evaluation_results (
   "generalRating" DECIMAL(5,2),
   remarks TEXT,
   "computedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE("periodId", "facultyId")
+  UNIQUE("semesterId", "facultyId")
 );
 
-CREATE INDEX IF NOT EXISTS idx_eval_results_period ON evaluation_results("periodId");
+CREATE INDEX IF NOT EXISTS idx_eval_results_semester ON evaluation_results("semesterId");
 CREATE INDEX IF NOT EXISTS idx_eval_results_faculty ON evaluation_results("facultyId");
 CREATE INDEX IF NOT EXISTS idx_eval_results_department ON evaluation_results("departmentId");
 
@@ -926,7 +767,7 @@ CREATE INDEX IF NOT EXISTS idx_eval_results_department ON evaluation_results("de
 -- =========================================================
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS "employeeNo" TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS "evaluationPeriodId" TEXT REFERENCES evaluation_periods(id) ON DELETE SET NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS "evaluationPeriodId" TEXT REFERENCES semesters(id) ON DELETE SET NULL;
 
 -- =========================================================
 -- Migration 15: Add evaluation page paths to group_access
@@ -944,50 +785,59 @@ UPDATE group_access SET pages = pages || '["/student/evaluations"]'::JSONB WHERE
 -- Migration 16: Make evaluation periodId a plain text field
 -- =========================================================
 
+-- Only needed for legacy databases that still use periodId.
+-- Fresh DBs create tables with semesterId directly.
 DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='subjects' AND column_name='periodId') THEN
-    ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodid_fkey;
-    ALTER TABLE subjects ALTER COLUMN "periodId" DROP NOT NULL;
-    ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodId_name_key;
-    DROP INDEX IF EXISTS idx_subjects_period;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'evaluation_periods') THEN
+    -- subjects
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='subjects' AND column_name='periodId') THEN
+      ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodid_fkey;
+      ALTER TABLE subjects ALTER COLUMN "periodId" DROP NOT NULL;
+      ALTER TABLE subjects DROP CONSTRAINT IF EXISTS subjects_periodId_name_key;
+      DROP INDEX IF EXISTS idx_subjects_period;
+    END IF;
+    -- faculty_subjects
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='faculty_subjects' AND column_name='periodId') THEN
+      ALTER TABLE faculty_subjects DROP CONSTRAINT IF EXISTS faculty_subjects_periodid_fkey;
+      ALTER TABLE faculty_subjects ALTER COLUMN "periodId" DROP NOT NULL;
+      ALTER TABLE faculty_subjects DROP CONSTRAINT IF EXISTS faculty_subjects_subjectId_periodId_key;
+      DROP INDEX IF EXISTS idx_faculty_subjects_period;
+    END IF;
+    -- student_enrollments
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='student_enrollments' AND column_name='periodId') THEN
+      ALTER TABLE student_enrollments DROP CONSTRAINT IF EXISTS student_enrollments_periodid_fkey;
+      ALTER TABLE student_enrollments ALTER COLUMN "periodId" DROP NOT NULL;
+      ALTER TABLE student_enrollments DROP CONSTRAINT IF EXISTS student_enrollments_studentId_subjectId_periodId_key;
+      DROP INDEX IF EXISTS idx_student_enrollments_period;
+    END IF;
+    -- evaluations
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='evaluations' AND column_name='periodId') THEN
+      ALTER TABLE evaluations DROP CONSTRAINT IF EXISTS evaluations_periodid_fkey;
+      ALTER TABLE evaluations ALTER COLUMN "periodId" DROP NOT NULL;
+      ALTER TABLE evaluations DROP CONSTRAINT IF EXISTS evaluations_periodId_studentId_facultyId_key;
+    END IF;
+    DROP INDEX IF EXISTS idx_evaluations_period;
+    DROP INDEX IF EXISTS idx_evaluations_period_student;
+    DROP INDEX IF EXISTS idx_evaluations_student;
+    DROP INDEX IF EXISTS idx_evaluations_faculty;
+    -- evaluation_results
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='evaluation_results' AND column_name='periodId') THEN
+      ALTER TABLE evaluation_results DROP CONSTRAINT IF EXISTS evaluation_results_periodid_fkey;
+      ALTER TABLE evaluation_results ALTER COLUMN "periodId" DROP NOT NULL;
+      ALTER TABLE evaluation_results DROP CONSTRAINT IF EXISTS evaluation_results_periodId_facultyId_key;
+    END IF;
+    -- rating_scales
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='rating_scales' AND column_name='periodId') THEN
+      ALTER TABLE rating_scales DROP CONSTRAINT IF EXISTS rating_scales_periodid_fkey;
+      ALTER TABLE rating_scales ALTER COLUMN "periodId" DROP NOT NULL;
+    END IF;
+    -- rubric_categories
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='rubric_categories' AND column_name='periodId') THEN
+      ALTER TABLE rubric_categories DROP CONSTRAINT IF EXISTS rubric_categories_periodid_fkey;
+      ALTER TABLE rubric_categories ALTER COLUMN "periodId" DROP NOT NULL;
+    END IF;
   END IF;
 END $$;
-
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='faculty_subjects' AND column_name='periodId') THEN
-    ALTER TABLE faculty_subjects DROP CONSTRAINT IF EXISTS faculty_subjects_periodid_fkey;
-    ALTER TABLE faculty_subjects ALTER COLUMN "periodId" DROP NOT NULL;
-    ALTER TABLE faculty_subjects DROP CONSTRAINT IF EXISTS faculty_subjects_subjectId_periodId_key;
-    DROP INDEX IF EXISTS idx_faculty_subjects_period;
-  END IF;
-END $$;
-
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='student_enrollments' AND column_name='periodId') THEN
-    ALTER TABLE student_enrollments DROP CONSTRAINT IF EXISTS student_enrollments_periodid_fkey;
-    ALTER TABLE student_enrollments ALTER COLUMN "periodId" DROP NOT NULL;
-    ALTER TABLE student_enrollments DROP CONSTRAINT IF EXISTS student_enrollments_studentId_subjectId_periodId_key;
-    DROP INDEX IF EXISTS idx_student_enrollments_period;
-  END IF;
-END $$;
-
-ALTER TABLE evaluations DROP CONSTRAINT IF EXISTS evaluations_periodid_fkey;
-ALTER TABLE evaluations ALTER COLUMN "periodId" DROP NOT NULL;
-ALTER TABLE evaluations DROP CONSTRAINT IF EXISTS evaluations_periodId_studentId_facultyId_key;
-DROP INDEX IF EXISTS idx_evaluations_period;
-DROP INDEX IF EXISTS idx_evaluations_period_student;
-DROP INDEX IF EXISTS idx_evaluations_student;
-DROP INDEX IF EXISTS idx_evaluations_faculty;
-
-ALTER TABLE evaluation_results DROP CONSTRAINT IF EXISTS evaluation_results_periodid_fkey;
-ALTER TABLE evaluation_results ALTER COLUMN "periodId" DROP NOT NULL;
-ALTER TABLE evaluation_results DROP CONSTRAINT IF EXISTS evaluation_results_periodId_facultyId_key;
-
-ALTER TABLE rating_scales DROP CONSTRAINT IF EXISTS rating_scales_periodid_fkey;
-ALTER TABLE rating_scales ALTER COLUMN "periodId" DROP NOT NULL;
-
-ALTER TABLE rubric_categories DROP CONSTRAINT IF EXISTS rubric_categories_periodid_fkey;
-ALTER TABLE rubric_categories ALTER COLUMN "periodId" DROP NOT NULL;
 
 -- =========================================================
 -- Migration 18: Unquote column names in faculty_subjects
@@ -1281,3 +1131,171 @@ UPDATE group_access
 SET pages = pages || '["/admin/evaluations/semesters","/admin/evaluations/semesters/new"]'::JSONB
 WHERE "groupName" = 'ADMIN'
   AND NOT pages @> '["/admin/evaluations/semesters"]'::JSONB;
+
+-- =========================================================
+-- SEED DATA
+--    Uses fixed UUIDs for idempotent re-runs.
+--    Placed here after all migrations so all tables and
+--    renamed columns exist.
+-- =========================================================
+
+DO $$
+DECLARE
+  _admin_id TEXT    := 'a0000000-0000-0000-0000-000000000001';
+  _dept_id TEXT    := 'b0000000-0000-0000-0000-000000000001';
+  _dean_id TEXT    := 'c0000000-0000-0000-0000-000000000001';
+  _faculty1_id TEXT := 'd0000000-0000-0000-0000-000000000001';
+  _course_bsit_id TEXT := 'f0000000-0000-0000-0000-000000000001';
+  _course_bscs_id TEXT := 'f0000000-0000-0000-0000-000000000002';
+
+  _hash TEXT := '$2b$12$GvU25kxpeLdvzSUmiZNm9edIlzresvMlzb2cT1PLdsQYjPAqRyYNW';
+BEGIN
+
+  -- ── ADMIN ──────────────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash", "hasLoggedInBefore")
+  VALUES (_admin_id, 'Mr. Admin', 'admin@lyceumalabang.edu.ph', _hash, true)
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO userrole ("userId", "roleName") VALUES (_admin_id, 'ADMIN')
+  ON CONFLICT DO NOTHING;
+
+  -- ── DEAN ──────────────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash")
+  VALUES (_dean_id, 'Regie Ellana', 'r.ellana@lyceumalabang.edu.ph
+', _hash)
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO userrole ("userId", "roleName") VALUES (_dean_id, 'DEAN')
+  ON CONFLICT DO NOTHING;
+
+  -- ── DEPARTMENT (College of Computer Studies) ────────────
+  INSERT INTO departments (id, name, code, "deanId")
+  VALUES (_dept_id, 'College of Computer Studies', 'CCS', _dean_id)
+  ON CONFLICT (id) DO NOTHING;
+
+  UPDATE users SET "departmentId" = _dept_id WHERE id = _dean_id AND "departmentId" IS NULL;
+
+  -- ── DEPARTMENT COURSES ───────────────────────────────────
+  INSERT INTO department_courses (id, "departmentId", name, code) VALUES
+    (_course_bsit_id, _dept_id, 'Bachelor of Science in Information Technology', 'BSIT'),
+    (_course_bscs_id, _dept_id, 'Bachelor of Science in Computer Science', 'BSCS')
+  ON CONFLICT ("departmentId", code) DO NOTHING;
+
+  -- ── FACULTY (1) ─────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash", "departmentId")
+  VALUES (_faculty1_id, 'Nin Alamo', 'n.alamo@lyceumalabang.edu.ph', _hash, _dept_id)
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO userrole ("userId", "roleName") VALUES (_faculty1_id, 'FACULTY')
+  ON CONFLICT DO NOTHING;
+
+  -- ── ADDITIONAL SEED VARIABLES ──────────────────────────
+  DECLARE
+    _student_id TEXT   := 'd0000000-0000-0000-0000-000000000002';
+    _sem_id TEXT       := 'e0000000-0000-0000-0000-000000000000';
+    _subject_id TEXT   := 'f0000000-0000-0000-0000-000000000003';
+    _section_id TEXT   := 'g0000000-0000-0000-0000-000000000001';
+  BEGIN
+
+  -- ── DEFAULT SEMESTER ─────────────────────────────────────
+  INSERT INTO semesters (id, title, "evalStartDate", "evalEndDate", "isActive")
+  VALUES (_sem_id, 'System Default Semester', CURRENT_DATE, CURRENT_DATE + INTERVAL '180 days', TRUE)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- ── RUBRIC CATEGORIES ──────────────────────────────────
+  INSERT INTO rubric_categories (id, "semesterId", name, "displayOrder") VALUES
+    ('e0000000-0000-0000-0000-000000000001', _sem_id, 'Professional Manner',             1),
+    ('e0000000-0000-0000-0000-000000000002', _sem_id, 'Communication with Students',      2),
+    ('e0000000-0000-0000-0000-000000000003', _sem_id, 'Student Engagement',               3),
+    ('e0000000-0000-0000-0000-000000000004', _sem_id, 'Learning Materials',               4),
+    ('e0000000-0000-0000-0000-000000000005', _sem_id, 'Time Management',                  5),
+    ('e0000000-0000-0000-0000-000000000006', _sem_id, 'Experiential Learning',            6),
+    ('e0000000-0000-0000-0000-000000000007', _sem_id, 'Respect for Uniqueness',           7),
+    ('e0000000-0000-0000-0000-000000000008', _sem_id, 'Assessment and Feedback',          8)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- ── RUBRIC ITEMS (24 total, 3 per category) ────────────
+  INSERT INTO rubric_items (id, "categoryId", text, "displayOrder", weight) VALUES
+    -- Professional Manner
+    ('e0000001-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Demonstrates professionalism in conduct and appearance', 1, 1.00),
+    ('e0000001-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'Shows enthusiasm and dedication to teaching', 2, 1.00),
+    ('e0000001-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000001', 'Maintains ethical standards in dealing with students', 3, 1.00),
+    -- Communication with Students
+    ('e0000002-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000002', 'Communicates course expectations and requirements clearly', 1, 1.00),
+    ('e0000002-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000002', 'Provides clear explanations of lessons and concepts', 2, 1.00),
+    ('e0000002-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000002', 'Is approachable and responsive to student concerns', 3, 1.00),
+    -- Student Engagement
+    ('e0000003-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000003', 'Encourages student participation and classroom interaction', 1, 1.00),
+    ('e0000003-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000003', 'Uses teaching methods that promote active learning', 2, 1.00),
+    ('e0000003-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'Motivates students to think critically and ask questions', 3, 1.00),
+    -- Learning Materials
+    ('e0000004-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000004', 'Provides relevant and up-to-date learning materials', 1, 1.00),
+    ('e0000004-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000004', 'Uses instructional materials that enhance understanding', 2, 1.00),
+    ('e0000004-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000004', 'Makes learning resources accessible to students', 3, 1.00),
+    -- Time Management
+    ('e0000005-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000005', 'Starts and ends classes on time', 1, 1.00),
+    ('e0000005-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000005', 'Covers prescribed course content within the term', 2, 1.00),
+    ('e0000005-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000005', 'Manages class time effectively', 3, 1.00),
+    -- Experiential Learning
+    ('e0000006-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000006', 'Connects lessons to real-world applications', 1, 1.00),
+    ('e0000006-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000006', 'Provides practical activities and exercises', 2, 1.00),
+    ('e0000006-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000006', 'Encourages hands-on learning experiences', 3, 1.00),
+    -- Respect for Uniqueness
+    ('e0000007-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000007', 'Respects diverse student backgrounds and perspectives', 1, 1.00),
+    ('e0000007-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000007', 'Accommodates different learning needs and styles', 2, 1.00),
+    ('e0000007-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000007', 'Creates an inclusive and welcoming learning environment', 3, 1.00),
+    -- Assessment and Feedback
+    ('e0000008-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000008', 'Provides fair and transparent assessments', 1, 1.00),
+    ('e0000008-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000008', 'Returns graded work in a timely manner', 2, 1.00),
+    ('e0000008-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000008', 'Gives constructive feedback to help students improve', 3, 1.00)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- ── STUDENT ─────────────────────────────────────────────
+  INSERT INTO users (id, name, email, "passwordHash")
+  VALUES (_student_id, 'Nino Francisco Alamo', 'nino_francisco_alamo@itmlyceumalabang.onmicrosoft.com', _hash)
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO userrole ("userId", "roleName") VALUES (_student_id, 'STUDENT')
+  ON CONFLICT DO NOTHING;
+
+  -- ── SUBJECT ─────────────────────────────────────────────
+  INSERT INTO subjects (id, code, name)
+  VALUES (_subject_id, '1815-ITELEC009', 'IT ELECTIVE 2 - Web Systems and Technologies')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- ── SECTION ─────────────────────────────────────────────
+  INSERT INTO sections (id, name, program)
+  VALUES (_section_id, '31E1', 'BSIT')
+  ON CONFLICT (id) DO NOTHING;
+
+  -- ── FACULTY-SUBJECT LINK ────────────────────────────────
+  INSERT INTO faculty_subjects (faculty_id, subject_id, section_id, "semesterId")
+  VALUES (_faculty1_id, _subject_id, _section_id, _sem_id)
+  ON CONFLICT (subject_id, section_id, "semesterId") DO NOTHING;
+
+  -- ── STUDENT ENROLLMENT ─────────────────────────────────
+  INSERT INTO student_enrollments (student_id, section_id, "semesterId")
+  VALUES (_student_id, _section_id, _sem_id)
+  ON CONFLICT (student_id, section_id, "semesterId") DO NOTHING;
+
+  END;
+END $$;
+
+-- =========================================================
+-- Migration 20: Add unique constraint to user_permissions
+-- =========================================================
+--
+-- Required for upsert operations via onConflict: 'user_id,resource_path'.
+-- Idempotent — safe to re-run.
+-- =========================================================
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'user_permissions_user_id_resource_path_key'
+  ) THEN
+    ALTER TABLE user_permissions
+    ADD CONSTRAINT user_permissions_user_id_resource_path_key
+    UNIQUE(user_id, resource_path);
+  END IF;
+END $$;

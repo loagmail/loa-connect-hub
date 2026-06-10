@@ -74,5 +74,11 @@ export async function PUT(
     )
   )
 
+  if (upsertResults.some((r) => r === null)) {
+    return new NextResponse(JSON.stringify({ error: 'One or more upserts failed' }), {
+      status: 500,
+    })
+  }
+
   return NextResponse.json(upsertResults)
 }
