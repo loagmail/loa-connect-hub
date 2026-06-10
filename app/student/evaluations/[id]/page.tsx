@@ -105,8 +105,8 @@ export default function FillEvaluationPage() {
 
 
   useEffect(() => {
+    setExclusive(true)
     async function init() {
-      let submitted = false
       try {
         const periodRes = await fetch("/api/evaluation-periods")
         const periodData = await periodRes.json()
@@ -135,7 +135,7 @@ export default function FillEvaluationPage() {
           setEvaluationId(evId)
 
           if (evStatus === "SUBMITTED") {
-            submitted = true
+            setExclusive(false)
             setIsSubmitted(true)
             setSubmittedAt(evalData.evaluation?.submittedAt || null)
           }
@@ -165,12 +165,11 @@ export default function FillEvaluationPage() {
       } catch {
         alert("Failed to initialize evaluation")
       } finally {
-        if (!submitted) setExclusive(true)
         setLoading(false)
       }
     }
     init()
-  }, [params.id, router])
+  }, [params.id, router, setExclusive])
 
   const handleRatingChange = useCallback((itemId: string, value: number) => {
     setRatings((prev) => ({ ...prev, [itemId]: value }))
