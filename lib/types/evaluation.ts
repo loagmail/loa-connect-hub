@@ -140,6 +140,7 @@ export interface StudentEnrollmentData {
   id: string
   student_id: string
   section_id: string
+  faculty_subject_id: string | null
   semesterId: string | null
 }
 

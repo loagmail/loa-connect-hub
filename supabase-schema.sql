@@ -1299,3 +1299,33 @@ DO $$ BEGIN
     UNIQUE(user_id, resource_path);
   END IF;
 END $$;
+
+-- =========================================================
+-- Migration 21: Add faculty_subject_id to student_enrollments
+-- =========================================================
+--
+-- Links each enrollment to a specific faculty-subject-section combo.
+-- Idempotent — safe to re-run.
+-- =========================================================
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'student_enrollments' AND column_name = 'faculty_subject_id'
+  ) THEN
+    ALTER TABLE student_enrollments ADD COLUMN faculty_subject_id TEXT REFERENCES faculty_subjects(id) ON DELETE CASCADE;
+    CREATE INDEX IF NOT EXISTS idx_student_enrollments_faculty_subject ON student_enrollments(faculty_subject_id);
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'student_enrollments_student_id_section_id_semesterId_key'
+  ) THEN
+    ALTER TABLE student_enrollments DROP CONSTRAINT student_enrollments_student_id_section_id_semesterId_key;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'student_enrollments_student_id_faculty_subject_id_key'
+  ) THEN
+    ALTER TABLE student_enrollments ADD CONSTRAINT student_enrollments_student_id_faculty_subject_id_key UNIQUE(student_id, faculty_subject_id, "semesterId");
+  END IF;
+END $$;
