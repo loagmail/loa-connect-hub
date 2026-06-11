@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/route-guard'
+import { userRepository } from '@/lib/repositories/factory'
 
 export async function GET(
-  request: NextRequest
+  _request: NextRequest
 ) {
   const { data: users, error } = await supabase
     .from('users')
@@ -44,4 +46,23 @@ export async function GET(
     .select('id, name, code')
 
   return NextResponse.json({ users: enriched, departments: departments || [] })
+}
+
+export async function PATCH(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
+
+  try {
+    const body = await request.json()
+    const { userId, ...fields } = body
+    if (!userId) {
+      return NextResponse.json({ error: "userId is required" }, { status: 400 })
+    }
+
+    const user = await userRepository.update(userId, fields)
+    return NextResponse.json({ user })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error"
+    return NextResponse.json({ error: message }, { status: 400 })
+  }
 }

@@ -161,8 +161,13 @@ export default function AdminUsersPage() {
         }
         setEditUser(null)
       } else {
-        const data = await res.json()
-        alert(data.error || "Failed to update user")
+        const text = await res.text()
+        try {
+          const data = JSON.parse(text)
+          alert(data.error || "Failed to update user")
+        } catch {
+          alert("Failed to update user")
+        }
       }
     } finally {
       setEditSaving(false)
@@ -183,8 +188,13 @@ export default function AdminUsersPage() {
           setUsers((prev) => prev.map((u) => (u.id === userId ? data.user : u)))
         }
       } else {
-        const data = await res.json()
-        alert(data.error || "Failed to reset onboarding")
+        const text = await res.text()
+        try {
+          const data = JSON.parse(text)
+          alert(data.error || "Failed to reset onboarding")
+        } catch {
+          alert("Failed to reset onboarding")
+        }
       }
     } catch { }
   }
