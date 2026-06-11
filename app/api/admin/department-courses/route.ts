@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
-import { hasRole } from "@/lib/utils/roles"
+import { requireAdminOrDean } from "@/lib/route-guard"
 
-export async function GET() {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || (!hasRole(role, "ADMIN") && !hasRole(role, "DEAN"))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+export async function GET(request: NextRequest) {
+  const authErr = await requireAdminOrDean(request)
+  if (authErr) return authErr
 
   const [coursesRes, deptsRes] = await Promise.all([
     supabase
@@ -34,11 +30,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || (!hasRole(role, "ADMIN") && !hasRole(role, "DEAN"))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const authErr = await requireAdminOrDean(request)
+  if (authErr) return authErr
 
   const body = await request.json()
   const { departmentId, name, code } = body

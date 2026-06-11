@@ -1,14 +1,10 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/utils/roles"
+import { NextRequest, NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/route-guard"
 import { listDeletedUsers } from "@/features/users/users.service"
 
-export async function GET() {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || !hasRole(role, "ADMIN")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+export async function GET(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   try {
     const users = await listDeletedUsers()

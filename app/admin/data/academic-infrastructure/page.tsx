@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useApiGet, invalidate } from "@/lib/api/client"
 import SubmitButton from "@/components/ui/SubmitButton"
 import { SkeletonTable } from "@/components/ui/Skeleton"
+import LockedTab from "@/components/ui/LockedTab"
 
 // ── Shared Types ───────────────────────────────────────────────────────────
 
@@ -217,6 +218,9 @@ function DepartmentsCoursesTab({ infraTab, setInfraTab }: {
   const users = usersData?.users ?? []
   const loading = coursesLoading || usersLoading || deptsLoading
   const fetchError = coursesErr || usersErr || deptsErr
+  const locked = fetchError?.message?.includes("Forbidden") || fetchError?.message?.includes("API endpoint requires")
+    ? "/api/admin/department-courses"
+    : ""
 
   const refresh = () => {
     invalidate("/api/admin/department-courses", "/api/admin/users", "/api/admin/departments")
@@ -321,7 +325,8 @@ function DepartmentsCoursesTab({ infraTab, setInfraTab }: {
   return (
     <div className="space-y-6">
       {/* Messages */}
-      {(fetchError?.message || error) && (
+      {locked && <LockedTab endpoint={locked} />}
+      {!locked && (fetchError?.message || error) && (
         <p className="text-xs font-medium text-red-600 bg-red-50 p-3 rounded-lg">{fetchError?.message || error}</p>
       )}
       {success && <p className="text-xs font-medium text-green-600 bg-green-50 p-3 rounded-lg">{success}</p>}
@@ -550,12 +555,14 @@ function SubjectsTab() {
   const [data, setData] = useState<Subject[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
 
   const fetchData = useCallback(async (isRefresh?: boolean) => {
     if (isRefresh) { setLoading(true); setError("") }
     try {
       const res = await fetch("/api/data/evaluation-mappings?type=subjects")
+      if (res.status === 403) { setLocked("/api/data/evaluation-mappings?type=subjects"); return }
       if (!res.ok) throw new Error("Failed to load subjects")
       const json = await res.json()
       setData(json.data)
@@ -573,7 +580,8 @@ function SubjectsTab() {
 
   return (
     <div className="space-y-6">
-      {error && <p className="text-xs font-medium text-red-600">{error}</p>}
+      {locked && <LockedTab endpoint={locked} />}
+      {!locked && error && <p className="text-xs font-medium text-red-600">{error}</p>}
       <div className="card p-6 space-y-4">
         <SearchInput value={search} onChange={setSearch} placeholder="Search by code or name..." />
         <div className="overflow-x-auto border border-default rounded-lg">
@@ -614,12 +622,14 @@ function SectionsTab() {
   const [data, setData] = useState<Section[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
 
   const fetchData = useCallback(async (isRefresh?: boolean) => {
     if (isRefresh) { setLoading(true); setError("") }
     try {
       const res = await fetch("/api/data/evaluation-mappings?type=sections")
+      if (res.status === 403) { setLocked("/api/data/evaluation-mappings?type=sections"); return }
       if (!res.ok) throw new Error("Failed to load sections")
       const json = await res.json()
       setData(json.data)
@@ -637,7 +647,8 @@ function SectionsTab() {
 
   return (
     <div className="space-y-6">
-      {error && <p className="text-xs font-medium text-red-600">{error}</p>}
+      {locked && <LockedTab endpoint={locked} />}
+      {!locked && error && <p className="text-xs font-medium text-red-600">{error}</p>}
       <div className="card p-6 space-y-4">
         <SearchInput value={search} onChange={setSearch} placeholder="Search by program or name..." />
         <div className="overflow-x-auto border border-default rounded-lg">
@@ -678,6 +689,7 @@ function FacultyTab() {
   const [data, setData] = useState<FacultyMapping[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
 
   const [formFaculty, setFormFaculty] = useState("")
@@ -698,6 +710,7 @@ function FacultyTab() {
     if (isRefresh) { setLoading(true); setError("") }
     try {
       const res = await fetch("/api/data/evaluation-mappings?type=faculty")
+      if (res.status === 403) { setLocked("/api/data/evaluation-mappings?type=faculty"); return }
       if (!res.ok) throw new Error("Failed to load faculty-subject mappings")
       const json = await res.json()
       setData(json.data)
@@ -787,7 +800,8 @@ function FacultyTab() {
 
   return (
     <div className="space-y-6">
-      {error && <p className="text-xs font-medium text-red-600">{error}</p>}
+      {locked && <LockedTab endpoint={locked} />}
+      {!locked && error && <p className="text-xs font-medium text-red-600">{error}</p>}
 
       {/* Add Form */}
       <form onSubmit={handleAdd} className="card p-4 sm:p-6 bg-surface space-y-4">
@@ -901,6 +915,7 @@ function EnrollmentsTab() {
   const [data, setData] = useState<Enrollment[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
 
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -925,6 +940,7 @@ function EnrollmentsTab() {
     if (isRefresh) { setLoading(true); setError("") }
     try {
       const res = await fetch("/api/data/evaluation-mappings?type=student")
+      if (res.status === 403) { setLocked("/api/data/evaluation-mappings?type=student"); return }
       if (!res.ok) throw new Error("Failed to load student enrollments")
       const json = await res.json()
       setData(json.data)
@@ -1043,7 +1059,8 @@ function EnrollmentsTab() {
 
   return (
     <div className="space-y-6">
-      {error && <p className="text-xs font-medium text-red-600">{error}</p>}
+      {locked && <LockedTab endpoint={locked} />}
+      {!locked && error && <p className="text-xs font-medium text-red-600">{error}</p>}
 
       {/* ═══════════════════════════════════════════════════
           CSV BULK IMPORT
@@ -1263,6 +1280,7 @@ function SemestersTab() {
   const semesters = semestersData?.data ?? []
   const loading = semestersLoading
   const fetchError = semestersErr
+  const locked = (fetchError?.message?.includes("Forbidden") || fetchError?.message?.includes("API endpoint requires")) ? "/api/semesters" : ""
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1322,7 +1340,8 @@ function SemestersTab() {
 
   return (
     <div className="space-y-6">
-      {(fetchError || error) && <p className="text-xs font-medium text-red-600 bg-red-50 p-3 rounded-lg">{(fetchError || error)?.message || (fetchError || error)}</p>}
+      {locked && <LockedTab endpoint={locked} />}
+      {!locked && (fetchError || error) && <p className="text-xs font-medium text-red-600 bg-red-50 p-3 rounded-lg">{(fetchError || error)?.message || (fetchError || error)}</p>}
       {success && <p className="text-xs font-medium text-green-600 bg-green-50 p-3 rounded-lg">{success}</p>}
 
       <form onSubmit={handleCreate} className="card p-6 bg-surface space-y-4">

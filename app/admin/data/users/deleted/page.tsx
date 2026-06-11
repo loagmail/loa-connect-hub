@@ -43,7 +43,7 @@ export default function DeletedUsersPage() {
           <div className="text-4xl text-tertiary">&#x1f512;</div>
           <h1 className="text-xl font-bold text-primary">Access Restricted</h1>
           <p className="text-sm text-tertiary max-w-md mx-auto">
-            Deleted Users is restricted to Administrators only.
+            You need the <strong>ADMIN role</strong> or an explicit user-permissions grant for <code className="px-1 py-0.5 rounded bg-surface-hover text-xs">/admin/data/users/deleted</code> to access this page.
           </p>
         </div>
       </div>

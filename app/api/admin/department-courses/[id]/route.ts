@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
-import { hasRole } from "@/lib/utils/roles"
+import { requireAdminOrDean } from "@/lib/route-guard"
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || (!hasRole(role, "ADMIN") && !hasRole(role, "DEAN"))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const authErr = await requireAdminOrDean(request)
+  if (authErr) return authErr
 
   const { id } = await params
 

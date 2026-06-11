@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 const mockAuth = vi.hoisted(() => vi.fn())
 
+import type { NextRequest } from "next/server"
+const mockRequest = { headers: new Map() as unknown as Headers } as unknown as NextRequest
+
 function buildMockSupabase() {
   const deleteFn = vi.fn()
   const neqFn = vi.fn()
@@ -30,13 +33,13 @@ beforeEach(() => {
 describe("POST /api/admin/reset-data", () => {
   it("returns 403 when not authenticated", async () => {
     mockAuth.mockResolvedValue(null)
-    const res = await POST()
+    const res = await POST(mockRequest)
     expect(res.status).toBe(403)
   })
 
   it("returns 403 when not ADMIN", async () => {
     mockAuth.mockResolvedValue({ user: { role: "FACULTY" } })
-    const res = await POST()
+    const res = await POST(mockRequest)
     expect(res.status).toBe(403)
   })
 
@@ -49,7 +52,7 @@ describe("POST /api/admin/reset-data", () => {
       not: mockSupabase.notFn,
     })
 
-    const res = await POST()
+    const res = await POST(mockRequest)
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -64,7 +67,7 @@ describe("POST /api/admin/reset-data", () => {
       not: mockSupabase.notFn,
     })
 
-    const res = await POST()
+    const res = await POST(mockRequest)
     expect(res.status).toBe(500)
     const body = await res.json()
     expect(body.error).toContain("DB error")

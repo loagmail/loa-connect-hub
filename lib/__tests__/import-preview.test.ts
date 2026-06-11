@@ -10,17 +10,23 @@ vi.mock("@/lib/repositories/factory", () => ({
   userRepository: { findByEmail: mockFindByEmail },
 }))
 
+import type { NextRequest } from "next/server"
 import { POST } from "@/app/api/import/preview/route"
 
-function mockRequest(formData: Record<string, unknown>): Request {
+function mockRequest(formData: Record<string, unknown>): NextRequest {
   return {
+    headers: new Map() as unknown as Headers,
+    cookies: {} as unknown as Request['credentials'],
+    nextUrl: new URL('http://localhost'),
+    page: {} as unknown as NextRequest['page'],
+    ua: {} as unknown as NextRequest['ua'],
     formData: () =>
       Promise.resolve({
         get: (key: string) => formData[key] ?? null,
         append: vi.fn(),
         has: (key: string) => key in formData,
       } as unknown as FormData),
-  } as unknown as Request
+  } as unknown as NextRequest
 }
 
 beforeEach(() => {

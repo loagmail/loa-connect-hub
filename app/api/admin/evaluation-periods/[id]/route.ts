@@ -1,13 +1,10 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/utils/roles"
+import { NextRequest, NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/route-guard"
 import { getSemester  , updateSemester, deleteSemester } from "@/features/admin-data/semesters.service"
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth()
-  if (!session?.user || !hasRole((session.user as Record<string, unknown>).role as string, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   const { id } = await params
   try {
@@ -19,11 +16,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth()
-  if (!session?.user || !hasRole((session.user as Record<string, unknown>).role as string, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   const { id } = await params
   try {
@@ -35,11 +30,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth()
-  if (!session?.user || !hasRole((session.user as Record<string, unknown>).role as string, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   const { id } = await params
   try {

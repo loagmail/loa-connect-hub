@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/utils/roles"
+import { requireRole } from "@/lib/route-guard"
 import { parseStudentCsv, importStudents, getStudentCsvTemplate } from "@/lib/services/studentImport"
 import { logAuditEvent } from "@/lib/services/audit"
 import { departmentRepository } from "@/lib/repositories/factory"
@@ -16,11 +16,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authErr = await requireRole(request, ["ADMIN", "DEAN", "FACULTY"])
+  if (authErr) return authErr
+
   const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || (!hasRole(role, "FACULTY") && !hasRole(role, "DEAN") && !hasRole(role, "ADMIN"))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
 
   let importRows: { email: string; name: string; subjectCode: string; sectionName: string; sectionProgram: string }[]
   let parseErrors: { row: number; message: string }[] = []

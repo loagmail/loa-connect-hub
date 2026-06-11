@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/utils/roles"
+import { requireAdmin } from "@/lib/route-guard"
 import { exportAndDeleteStudents } from "@/features/admin-data/admin-data.service"
 import { logAuditEvent } from "@/lib/services/audit"
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
+
   const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || !hasRole(role, "ADMIN")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
 
   const currentUserId = (session!.user as Record<string, unknown>).id as string
 

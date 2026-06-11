@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { departmentRepository } from "@/lib/repositories/factory"
-import { hasRole } from "@/lib/utils/roles"
+import { requireAdmin, requireAdminOrDean } from "@/lib/route-guard"
 import { logAuditEvent } from "@/lib/services/audit"
 
-export async function GET() {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || (!hasRole(role, "ADMIN") && !hasRole(role, "DEAN"))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+export async function GET(request: NextRequest) {
+  const authErr = await requireAdminOrDean(request)
+  if (authErr) return authErr
 
   try {
     const departments = await departmentRepository.listAll()
@@ -21,11 +18,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
+
   const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || !hasRole(role, "ADMIN")) {
-    return NextResponse.json({ error: "Unauthorized — Admin only" }, { status: 403 })
-  }
 
   try {
     const body = await request.json()

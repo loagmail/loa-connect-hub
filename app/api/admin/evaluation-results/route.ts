@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/utils/roles"
+import { NextRequest, NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/route-guard"
 import { supabase } from "@/lib/db"
 
 const CATEGORY_NAMES: Record<string, string> = {
@@ -23,11 +22,9 @@ function getRemark(general: number | null): string | null {
   return "Poor"
 }
 
-export async function GET(request: Request) {
-  const session = await auth()
-  if (!session?.user || !hasRole((session.user as Record<string, unknown>).role as string, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden", session: session }, { status: 403 })
-  }
+export async function GET(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   try {
     const { searchParams } = new URL(request.url)

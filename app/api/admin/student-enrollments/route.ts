@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
-import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/utils/roles"
+import { requireAdmin } from "@/lib/route-guard"
 
 export async function POST(request: NextRequest) {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || !hasRole(role, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   try {
     const { student_id, name, email, faculty_subject_id, section_id, semesterId } = await request.json()

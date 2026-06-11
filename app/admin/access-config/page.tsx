@@ -300,13 +300,6 @@ function UserPermissionsTab() {
         for (const pages of Object.values(PAGE_ACCESS)) {
           for (const p of pages) s.add(p)
         }
-        const api = [
-          "/api/import/students", "/api/import/faculties", "/api/import/preview",
-          "/api/admin/users", "/api/admin/departments", "/api/admin/faculty-subjects",
-          "/api/admin/student-enrollments", "/api/admin/student-enrollments/csv",
-          "/api/data/evaluation-mappings", "/api/admin/access-config", "/api/admin/user-permissions",
-        ]
-        for (const a of api) s.add(a)
         for (const p of (pathsData.paths ?? [])) s.add(p)
         setAllPaths(Array.from(s).sort())
       })
@@ -394,7 +387,7 @@ function UserPermissionsTab() {
                           disabled={!selectedUser} className="rounded border-strong text-gold-600 focus:ring-gold-500 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <span className="block truncate">{lab(path)}</span>
-                          <span className="block text-[10px] text-tertiary font-mono truncate">{path}</span>
+                          <span className="block text-[10px] text-tertiary font-mono truncate" title={path}>{path}</span>
                         </div>
                         {selectedUser && (
                           <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-px rounded-full ${effective === "granted" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" : effective === "denied" ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400" : "bg-surface text-tertiary"}`}>
@@ -505,7 +498,7 @@ export default function AdminAccessConfigPage() {
           <div className="text-4xl text-tertiary">&#x1f512;</div>
           <h1 className="text-xl font-bold text-primary">Access Restricted</h1>
           <p className="text-sm text-tertiary max-w-md mx-auto">
-            Access Configuration is restricted to Administrators only.
+            You need the <strong>ADMIN role</strong> or an explicit user-permissions grant for <code className="px-1 py-0.5 rounded bg-surface-hover text-xs">/admin/access-config</code> to access this page.
           </p>
         </div>
       </div>

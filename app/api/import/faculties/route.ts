@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/utils/roles"
+import { requireAdmin } from "@/lib/route-guard"
 import { parseFacultySubjectCsv, importFacultySubjects } from "@/lib/services/etlEvaluation"
 import { logAuditEvent } from "@/lib/services/audit"
 
@@ -11,11 +11,10 @@ function parseSectionIdentifier(raw: string): { name: string; program: string } 
 }
 
 export async function POST(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
+
   const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || !hasRole(role, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden — Admin only" }, { status: 403 })
-  }
 
   let importRows: { email: string; name: string; subjectCode: string; sectionName: string; sectionProgram: string }[]
   let parseErrors: { row: number; message: string }[] = []

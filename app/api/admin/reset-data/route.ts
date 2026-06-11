@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
-import { hasRole } from "@/lib/utils/roles"
+import { requireAdmin } from "@/lib/route-guard"
 
 const SEED_USER_IDS = [
   "a0000000-0000-0000-0000-000000000001", // Admin
@@ -18,12 +17,9 @@ function idList(ids: string[]) {
   return `(${ids.join(",")})`
 }
 
-export async function POST() {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || !hasRole(role, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export async function POST(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   for (const table of [
     "evaluation_ratings",

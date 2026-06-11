@@ -1,14 +1,10 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server"
 import { auditLogRepository } from "@/lib/repositories/factory"
-import { hasRole } from "@/lib/utils/roles"
+import { requireAdmin } from "@/lib/route-guard"
 
-export async function GET(req: Request) {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!hasRole(role, "ADMIN")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+export async function GET(req: NextRequest) {
+  const authErr = await requireAdmin(req)
+  if (authErr) return authErr
 
   const { searchParams } = new URL(req.url)
   const page = Number(searchParams.get("page")) || 1

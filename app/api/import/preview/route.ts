@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import { parseCsv } from "@/lib/services/csvParser"
 import { userRepository } from "@/lib/repositories/factory"
-import { hasRole } from "@/lib/utils/roles"
+import { requireRole } from "@/lib/route-guard"
 
 export async function POST(request: NextRequest) {
-  const session = await auth()
-  const role = (session?.user as Record<string, unknown>)?.role as string
-  if (!role || (!hasRole(role, "ADMIN") && !hasRole(role, "DEAN") && !hasRole(role, "FACULTY"))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-  }
+  const authErr = await requireRole(request, ["ADMIN", "DEAN", "FACULTY"])
+  if (authErr) return authErr
 
   const formData = await request.formData()
   const file = formData.get("file") as File | null

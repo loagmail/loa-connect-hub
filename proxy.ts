@@ -15,18 +15,21 @@ function getPrimaryRole(roles: string): string {
   return "GUEST"
 }
 
-/// Returns true (allow), false (deny), or null (no explicit entry — fall through)
+/// Returns true (allow), false (deny), or null (no explicit entry — fall through).
+/// Matches exact resource_path or prefix (e.g. grant for /api/admin/departments
+/// also covers /api/admin/departments/123).
 async function checkUserPermission(userId: string, resource: string): Promise<boolean | null> {
   try {
     const { data } = await supabase
       .from('user_permissions')
-      .select('grants, denies')
-      .eq('user_id', userId)
-      .eq('resource_path', resource);
+      .select('grants, denies, resource_path')
+      .eq('user_id', userId);
     if (!data || data.length === 0) return null;
     for (const row of data as any[]) {
-      const grants = row.grants ?? [];
-      const denies = row.denies ?? [];
+      const rp: string = row.resource_path ?? '';
+      if (resource !== rp && !resource.startsWith(rp + '/')) continue;
+      const grants: string[] = row.grants ?? [];
+      const denies: string[] = row.denies ?? [];
       if (denies.includes('access')) return false;
       if (grants.includes('access')) return true;
     }
@@ -66,12 +69,40 @@ export async function proxy(request: NextRequest) {
   const group = getPrimaryRole(rawRole ?? "GUEST")
   const userId = (token as any).id
 
+  const isAdmin = rawRole?.includes('ADMIN')
+
   // Layer 1: User-level permission override (highest priority)
   const userPerm = await checkUserPermission(userId, pathname);
-  if (userPerm === true) return NextResponse.next();
-  if (userPerm === false) return NextResponse.redirect(new URL("/403", request.url));
+  if (userPerm === true) {
+    if (!isAdmin) {
+      const h = new Headers(request.headers);
+      h.set('x-auth-by', 'user_permissions');
+      return NextResponse.next({ request: { headers: h } });
+    }
+    return NextResponse.next();
+  }
+  if (userPerm === false) {
+    if (pathname.startsWith('/api/')) {
+      return new NextResponse(JSON.stringify({
+        error: 'Forbidden',
+        message: 'Access denied by user-permissions configuration.',
+        path: pathname,
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    }
+    return NextResponse.redirect(new URL("/403", request.url));
+  }
 
-  // Authenticated API requests are allowed by default unless explicitly denied above
+  // Admin API routes require ADMIN role or Layer 1 grant above
+  if (pathname.startsWith('/api/admin/')) {
+    if (isAdmin) return NextResponse.next();
+    return new NextResponse(JSON.stringify({
+      error: 'Forbidden',
+      message: 'This API endpoint requires the ADMIN role or a user-permissions grant for this path.',
+      path: pathname,
+    }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Authenticated non-admin API requests are allowed by default
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
   // Layer 2: DB access-config merged with defaults

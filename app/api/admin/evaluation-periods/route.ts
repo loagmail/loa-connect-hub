@@ -1,13 +1,10 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/utils/roles"
+import { NextRequest, NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/route-guard"
 import { getSemesters, createSemester } from "@/features/admin-data/semesters.service"
 
-export async function GET() {
-  const session = await auth()
-  if (!session?.user || !hasRole((session.user as Record<string, unknown>).role as string, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export async function GET(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   try {
     const periods = await getSemesters()
@@ -17,11 +14,9 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
-  const session = await auth()
-  if (!session?.user || !hasRole((session.user as Record<string, unknown>).role as string, "ADMIN")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+export async function POST(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
 
   try {
     const body = await request.json()
