@@ -52,6 +52,25 @@ export async function POST(request: Request) {
     if (!activeSemesterId) {
       return NextResponse.json({ error: "No active evaluation period" }, { status: 400 })
     }
+    const { data: enrollment } = await supabase
+      .from("student_enrollments")
+      .select("section_id")
+      .eq("student_id", userId)
+      .eq("semesterId", activeSemesterId)
+      .limit(1)
+      .single()
+    if (enrollment) {
+      const { data: facultyLink } = await supabase
+        .from("faculty_subjects")
+        .select("faculty_id")
+        .eq("section_id", enrollment.section_id)
+        .eq("faculty_id", evaluateeId)
+        .eq("semesterId", activeSemesterId)
+        .maybeSingle()
+      if (!facultyLink) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    } else {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
     const evaluation = await getOrCreateEvaluation(activeSemesterId, userId, evaluateeId)
 
     const { data: facultyUser } = await supabase

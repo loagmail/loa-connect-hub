@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
 import { SkeletonCard } from "@/components/ui/Skeleton"
 
@@ -22,9 +22,11 @@ interface ExistingEvaluation {
 }
 
 export default function StudentEvaluationsPage() {
+  const router = useRouter()
   const [pending, setPending] = useState<PendingItem[]>([])
   const [evaluations, setEvaluations] = useState<ExistingEvaluation[]>([])
   const [loading, setLoading] = useState(true)
+  const [navigatingId, setNavigatingId] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.resolve().then(async () => {
@@ -84,10 +86,24 @@ export default function StudentEvaluationsPage() {
           </h2>
           <div className="bg-white dark:bg-surface-dim rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 shadow-sm">
             {pending.map((item) => (
-              <Link
+              <button
                 key={item.evaluateeId}
-                href={`/student/evaluations/${item.evaluateeId}`}
-                className="flex items-center justify-between pl-4 pr-4 py-4 active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
+                onClick={async () => {
+                  setNavigatingId(item.evaluateeId)
+                  try {
+                    const res = await fetch("/api/evaluations", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ evaluateeId: item.evaluateeId }),
+                    })
+                    const data = await res.json()
+                    if (data.evaluation?.id) router.push(`/student/evaluations/${data.evaluation.id}`)
+                  } catch {
+                    setNavigatingId(null)
+                  }
+                }}
+                disabled={navigatingId === item.evaluateeId}
+                className="flex items-center justify-between w-full pl-4 pr-4 py-4 active:bg-slate-50 dark:active:bg-slate-800 transition-colors text-left"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-primary">{item.evaluateeName}</p>
@@ -96,14 +112,22 @@ export default function StudentEvaluationsPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
-                  <span className="text-[10px] font-semibold text-gold-600 bg-gold-50 dark:bg-gold-900/30 px-2 py-1 rounded-full">
-                    Start
-                  </span>
-                  <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
+                  {navigatingId === item.evaluateeId ? (
+                    <svg className="animate-spin ios-spinner w-4 h-4 text-gold-600" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    <>
+                      <span className="text-[10px] font-semibold text-gold-600 bg-gold-50 dark:bg-gold-900/30 px-2 py-1 rounded-full">
+                        Start
+                      </span>
+                      <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </>
+                  )}
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         </div>
@@ -116,10 +140,24 @@ export default function StudentEvaluationsPage() {
           </h2>
           <div className="bg-white dark:bg-surface-dim rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 shadow-sm">
             {evaluations.map((ev) => (
-              <Link
+              <button
                 key={ev.id}
-                href={`/student/evaluations/${ev.evaluateeId}`}
-                className="flex items-center justify-between pl-4 pr-4 py-4 active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
+                onClick={async () => {
+                  setNavigatingId(ev.id)
+                  try {
+                    const res = await fetch("/api/evaluations", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ evaluateeId: ev.evaluateeId }),
+                    })
+                    const data = await res.json()
+                    if (data.evaluation?.id) router.push(`/student/evaluations/${data.evaluation.id}`)
+                  } catch {
+                    setNavigatingId(null)
+                  }
+                }}
+                disabled={navigatingId === ev.id}
+                className="flex items-center justify-between w-full pl-4 pr-4 py-4 active:bg-slate-50 dark:active:bg-slate-800 transition-colors text-left"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-primary">{ev.evaluateeName}</p>
@@ -129,20 +167,30 @@ export default function StudentEvaluationsPage() {
                       : `Last saved · ${new Date(ev.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`}
                   </p>
                 </div>
-                {ev.status === "DRAFT" && (
-                  <span className="text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full shrink-0 ml-3">
-                    Continue
-                  </span>
-                )}
-                {ev.status === "SUBMITTED" && (
-                  <div className="flex items-center gap-1 shrink-0 ml-3">
-                    <span className="text-[10px] font-semibold text-green-700 dark:text-green-400">View</span>
-                    <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                  {navigatingId === ev.id ? (
+                    <svg className="animate-spin ios-spinner w-4 h-4 text-gold-600" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
                     </svg>
-                  </div>
-                )}
-              </Link>
+                  ) : (
+                    <>
+                      {ev.status === "DRAFT" && (
+                        <span className="text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full shrink-0 ml-3">
+                          Continue
+                        </span>
+                      )}
+                      {ev.status === "SUBMITTED" && (
+                        <div className="flex items-center gap-1 shrink-0 ml-3">
+                          <span className="text-[10px] font-semibold text-green-700 dark:text-green-400">View</span>
+                          <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </button>
             ))}
           </div>
         </div>

@@ -12,6 +12,13 @@ export async function getEvaluation(id: string) {
   return evaluationRepository.findById(id)
 }
 
+export async function getEvaluationIfOwner(evaluationId: string, userId: string) {
+  const evaluation = await evaluationRepository.findById(evaluationId)
+  if (!evaluation) return null
+  if (evaluation.evaluatorId !== userId) return null
+  return evaluation
+}
+
 export async function getOrCreateEvaluation(semesterId: string, evaluatorId: string, evaluateeId: string) {
   const existing = await evaluationRepository.findByComposite(semesterId, evaluatorId, evaluateeId)
   if (existing) return existing

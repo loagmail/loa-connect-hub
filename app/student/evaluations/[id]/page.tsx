@@ -91,7 +91,6 @@ export default function FillEvaluationPage() {
   const [ratings, setRatings] = useState<Record<string, number>>({})
   const [comment, setComment] = useState("")
   const [submitting, setSubmitting] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [step, setStep] = useState(0)
   const [pledgeAgreed, setPledgeAgreed] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -106,69 +105,51 @@ export default function FillEvaluationPage() {
 
   useEffect(() => {
     setExclusive(true)
-    async function init() {
+    async function load() {
       try {
+        const evalRes = await fetch(`/api/evaluations/${params.id}`)
+        if (!evalRes.ok) { router.push("/student/evaluations"); return }
+        const evalData = await evalRes.json()
+        const ev = evalData.evaluation
+        if (!ev) { router.push("/student/evaluations"); return }
+
+        setEvaluateeName(ev.evaluateeName || "Unknown")
+        setEvaluationId(ev.id)
+
+        if (ev.status === "SUBMITTED") {
+          setExclusive(false)
+          setIsSubmitted(true)
+          setSubmittedAt(ev.submittedAt || null)
+        }
+
+        const ratingsRes = await fetch(`/api/evaluations/${ev.id}/ratings`)
+        const ratingsData = await ratingsRes.json()
+        if (ratingsData.ratings?.length > 0) {
+          const map: Record<string, number> = {}
+          for (const r of ratingsData.ratings) map[r.itemId] = r.rating
+          setRatings(map)
+        }
+
+        if (ev.status === "SUBMITTED") {
+          const commentRes = await fetch(`/api/evaluations/${ev.id}/comments`)
+          const commentData = await commentRes.json()
+          if (commentData.comment) setExistingComment(commentData.comment.comment || null)
+        }
+
         const periodRes = await fetch("/api/evaluation-periods")
         const periodData = await periodRes.json()
         const activePeriod = (periodData.periods || []).find((p: { isActive: boolean }) => p.isActive)
-        if (!activePeriod) {
-          alert("No active evaluation period")
-          router.push("/student/evaluations")
-          return
+        if (activePeriod) {
+          const rubricRes = await fetch(`/api/evaluation-periods/${activePeriod.id}/rubric`)
+          const rubricData = await rubricRes.json()
+          setCategories(rubricData.rubric || [])
         }
-
-        const rubricRes = await fetch(`/api/evaluation-periods/${activePeriod.id}/rubric`)
-        const rubricData = await rubricRes.json()
-        setCategories(rubricData.rubric || [])
-
-        const evalRes = await fetch("/api/evaluations", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ evaluateeId: params.id }),
-        })
-        const evalData = await evalRes.json()
-        setEvaluateeName(evalData.evaluation?.evaluateeName || "Unknown")
-        const evId = evalData.evaluation?.id
-        const evStatus = evalData.evaluation?.status
-
-        if (evId) {
-          setEvaluationId(evId)
-
-          if (evStatus === "SUBMITTED") {
-            setExclusive(false)
-            setIsSubmitted(true)
-            setSubmittedAt(evalData.evaluation?.submittedAt || null)
-          }
-
-          const ratingsRes = await fetch(`/api/evaluations/${evId}/ratings`)
-          const ratingsData = await ratingsRes.json()
-          if (ratingsData.ratings?.length > 0) {
-            const map: Record<string, number> = {}
-            for (const r of ratingsData.ratings) {
-              map[r.itemId] = r.rating
-            }
-            setRatings(map)
-          }
-
-          if (evStatus === "SUBMITTED") {
-            const commentRes = await fetch(`/api/evaluations/${evId}/comments`)
-            const commentData = await commentRes.json()
-            if (commentData.comment) {
-              setExistingComment(commentData.comment.comment || null)
-            }
-          }
-        }
-
-        // const subjRes = await fetch(`/api/evaluations/faculty-subjects?facultyId=${params.id}&semesterId=${activePeriod.id}`)
-        // const subjData = await subjRes.json()
-        // if (subjData.subjects) setSubjects(subjData.subjects)
       } catch {
-        alert("Failed to initialize evaluation")
-      } finally {
-        setLoading(false)
+        alert("Failed to load evaluation")
+        router.push("/student/evaluations")
       }
     }
-    init()
+    load()
   }, [params.id, router, setExclusive])
 
   const handleRatingChange = useCallback((itemId: string, value: number) => {
@@ -265,102 +246,67 @@ export default function FillEvaluationPage() {
     router.push("/student/evaluations")
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-dvh bg-surface-muted">
-        <FacultyHeader evaluateeName={evaluateeName} subjects={subjects} onExit={handleExit} isSubmitted={isSubmitted} />
-        <div className="pt-20 sm:pt-22 pb-12 px-4 sm:px-8 md:px-12 lg:px-16 animate-pulse">
-          <div className="mb-8 h-2.5 bg-surface-tertiary rounded-full" />
-          <div className="space-y-5">
-            {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-surface rounded-2xl overflow-hidden shadow-sm border border-default">
-                <div className="h-1.5 bg-surface-tertiary" />
-                <div className="p-5 sm:p-7 space-y-4">
-                  <div className="h-5 bg-surface-tertiary rounded w-1/3" />
-                  {[1, 2].map((i) => (
-                    <div key={i} className="space-y-3 pt-2">
-                      <div className="h-4 bg-surface-tertiary rounded w-full" />
-                      <div className="h-4 bg-surface-tertiary rounded w-3/4" />
-                      <div className="grid grid-cols-5 gap-2">
-                        {[1, 2, 3, 4, 5].map((j) => (
-                          <div key={j} className="h-12 sm:h-14 bg-surface-tertiary rounded-2xl" />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   // ── Results view (already submitted) ──
   if (isSubmitted) {
     const labelMap = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"]
     return (
-      <div className="min-h-dvh bg-surface-muted">
-        <FacultyHeader evaluateeName={evaluateeName} subjects={subjects} onExit={handleExit} isSubmitted={isSubmitted} />
-        <div className="pt-20 sm:pt-22 pb-12 px-4 sm:px-8 md:px-12 lg:px-16">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-primary tracking-tight">Evaluation Results</h1>
-            {submittedAt && (
-              <p className="text-sm text-tertiary mt-1">
-                Submitted {new Date(submittedAt).toLocaleDateString()}
-              </p>
-            )}
-          </div>
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-primary tracking-tight">Evaluation Results</h1>
+          {submittedAt && (
+            <p className="text-sm text-tertiary mt-1">
+              Submitted {new Date(submittedAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
 
-          <div className="space-y-5">
-            {categories.map((category) => (
-              <div key={category.id} className="bg-surface rounded-2xl overflow-hidden shadow-sm border border-default">
-                <div className="h-1.5 bg-brand-500" />
-                <div className="p-5 sm:p-6">
-                  <h3 className="text-base font-bold text-primary mb-4">{category.name}</h3>
-                  <div className="space-y-4">
-                    {category.items.map((item) => {
-                      const rating = ratings[item.id]
-                      return (
-                        <div key={item.id}>
-                          <p className="text-sm text-secondary leading-relaxed mb-2">{item.text}</p>
-                          <div className="flex items-center gap-2">
-                            {[1, 2, 3, 4, 5].map((v) => (
-                              <span
-                                key={v}
-                                className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-semibold transition-all ${
-                                  rating === v
-                                    ? "bg-brand-500 text-white shadow-sm ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-surface scale-110"
-                                    : "bg-surface-tertiary text-tertiary"
-                                }`}
-                              >
-                                {v}
-                              </span>
-                            ))}
-                            {rating && (
-                              <span className="text-xs font-semibold text-brand-600 ml-1.5">
-                                {labelMap[rating]}
-                              </span>
-                            )}
-                          </div>
+        <div className="space-y-5">
+          {categories.map((category) => (
+            <div key={category.id} className="bg-surface rounded-2xl overflow-hidden shadow-sm border border-default">
+              <div className="h-1.5 bg-brand-500" />
+              <div className="p-5 sm:p-6">
+                <h3 className="text-base font-bold text-primary mb-4">{category.name}</h3>
+                <div className="space-y-4">
+                  {category.items.map((item) => {
+                    const rating = ratings[item.id]
+                    return (
+                      <div key={item.id}>
+                        <p className="text-sm text-secondary leading-relaxed mb-2">{item.text}</p>
+                        <div className="flex items-center gap-2">
+                          {[1, 2, 3, 4, 5].map((v) => (
+                            <span
+                              key={v}
+                              className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-xs font-semibold transition-all ${
+                                rating === v
+                                  ? "bg-brand-500 text-white shadow-sm ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-surface scale-110"
+                                  : "bg-surface-tertiary text-tertiary"
+                              }`}
+                            >
+                              {v}
+                            </span>
+                          ))}
+                          {rating && (
+                            <span className="text-xs font-semibold text-brand-600 ml-1.5">
+                              {labelMap[rating]}
+                            </span>
+                          )}
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
 
-            {existingComment && (
-              <div className="bg-surface rounded-2xl overflow-hidden shadow-sm border border-default">
-                <div className="p-5 sm:p-6">
-                  <h3 className="text-base font-bold text-primary mb-2">Feedback</h3>
-                  <p className="text-sm text-secondary leading-relaxed whitespace-pre-wrap">{existingComment}</p>
-                </div>
+          {existingComment && (
+            <div className="bg-surface rounded-2xl overflow-hidden shadow-sm border border-default">
+              <div className="p-5 sm:p-6">
+                <h3 className="text-base font-bold text-primary mb-2">Feedback</h3>
+                <p className="text-sm text-secondary leading-relaxed whitespace-pre-wrap">{existingComment}</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -372,7 +318,7 @@ export default function FillEvaluationPage() {
       <FacultyHeader evaluateeName={evaluateeName} subjects={subjects} onExit={handleExit} isSubmitted={isSubmitted} />
 
       <div className="pt-20 sm:pt-22 pb-12">
-        <div className="flex gap-0 px-4 sm:px-8 md:px-12 lg:px-16">
+        <div className="mx-auto max-w-5xl flex gap-0 px-4 sm:px-8">
           {/* ── Sidebar Stepper (desktop) ── */}
           <div className="hidden md:block w-52 lg:w-60 shrink-0 -ml-4">
             <div className="sticky top-24 pl-4 pr-6 lg:pr-8 border-r border-default min-h-[calc(100dvh-10rem)]">
@@ -665,7 +611,7 @@ export default function FillEvaluationPage() {
           </div>
         </div>
       </div>
+      </div>
     </div>
-  </div>
   )
 }
