@@ -27,7 +27,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
       </div>
       <NavigationStack>
-        <div className={`flex-1 flex flex-col overflow-hidden min-w-0 transition-all duration-200 ${collapsed ? "lg:ml-16" : "lg:ml-64"} ${hidden ? "lg:ml-0 duration-0" : ""}`}>
+        <div className={`flex-1 flex flex-col overflow-hidden min-w-0 transition-all duration-200 ${hidden ? "lg:ml-0 duration-0" : collapsed ? "lg:ml-16" : "lg:ml-64"}`}>
           <div className={hidden ? "hidden" : ""}>
             <NavigationBar title={title} />
           </div>

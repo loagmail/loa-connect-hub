@@ -27,10 +27,40 @@ export default function StudentEvaluationsPage() {
   const [evaluations, setEvaluations] = useState<ExistingEvaluation[]>([])
   const [loading, setLoading] = useState(true)
   const [navigatingId, setNavigatingId] = useState<string | null>(null)
+  const [outOfRange, setOutOfRange] = useState(false)
 
   useEffect(() => {
     Promise.resolve().then(async () => {
       try {
+        const periodRes = await fetch("/api/evaluation-periods")
+        const periodData = await periodRes.json()
+        const active = (periodData.periods || []).find((p: { isActive: boolean }) => p.isActive)
+        if (active?.evalStartDate && active?.evalEndDate) {
+          const now = Date.now()
+          const start = new Date(active.evalStartDate).getTime()
+          const end = new Date(active.evalEndDate).getTime() + 86_399_999
+          if (now < start || now > end) {
+            setOutOfRange(true)
+            setLoading(false)
+            return
+          }
+        } else {
+          setOutOfRange(true)
+          setLoading(false)
+          return
+        }
+
+        if (active) {
+          fetch(`/api/evaluation-periods/${active.id}/rubric`)
+            .then((r) => r.json())
+            .then((rubricData) => {
+              if (rubricData.rubric) {
+                sessionStorage.setItem("eval_rubric_cache", JSON.stringify({ categories: rubricData.rubric, fetchedAt: Date.now() }))
+              }
+            })
+            .catch(() => {})
+        }
+
         const [pendingRes, evalRes] = await Promise.all([
           fetch("/api/evaluations/pending"),
           fetch("/api/evaluations"),
@@ -38,23 +68,6 @@ export default function StudentEvaluationsPage() {
         const [pendingData, evalData] = await Promise.all([pendingRes.json(), evalRes.json()])
         setPending(pendingData.pending || [])
         setEvaluations(evalData.evaluations || [])
-
-        fetch("/api/evaluation-periods")
-          .then((r) => r.json())
-          .then((periodData) => {
-            const active = (periodData.periods || []).find((p: { isActive: boolean }) => p.isActive)
-            if (active) {
-              fetch(`/api/evaluation-periods/${active.id}/rubric`)
-                .then((r) => r.json())
-                .then((rubricData) => {
-                  if (rubricData.rubric) {
-                    sessionStorage.setItem("eval_rubric_cache", JSON.stringify({ categories: rubricData.rubric, fetchedAt: Date.now() }))
-                  }
-                })
-                .catch(() => {})
-            }
-          })
-          .catch(() => {})
       } catch {
         alert("Failed to load evaluations")
       } finally {
@@ -214,7 +227,9 @@ export default function StudentEvaluationsPage() {
       )}
 
       {total === 0 && (
-        <p className="text-sm text-tertiary text-center py-20">No evaluations available.</p>
+        <p className="text-sm text-tertiary text-center py-20">
+          {outOfRange ? "Evaluation period is not currently open." : "No evaluations available."}
+        </p>
       )}
     </div>
   )

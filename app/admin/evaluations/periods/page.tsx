@@ -58,11 +58,10 @@ export default function AdminEvaluationPeriodsPage() {
   const handleEndPeriod = async (id: string) => {
     setSaving(true); setError("")
     try {
-      const today = new Date().toISOString().split("T")[0]
       const res = await fetch(`/api/admin/evaluation-periods/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ evalEndDate: today }),
+        body: JSON.stringify({ evalStartDate: null, evalEndDate: null }),
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       showSuccessMessage("Period ended!")
