@@ -48,6 +48,7 @@ export default function Sidebar() {
   const { collapsed, toggle } = useSidebar()
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set())
   const [popoverGroup, setPopoverGroup] = useState<string | null>(null)
+  const [evalAvailable, setEvalAvailable] = useState<boolean | null>(null)
 
   const { data: accessData } = useApiGet<{ pages: string[] }>(
     session ? "/api/auth/access" : null
@@ -80,6 +81,26 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handler, true)
   }, [popoverGroup])
 
+  useEffect(() => {
+    Promise.resolve().then(async () => {
+      try {
+        const res = await fetch("/api/semesters")
+        const { data: semesters } = await res.json()
+        const active = Array.isArray(semesters) ? semesters.find((s: { isActive: boolean }) => s.isActive) : null
+        if (!active?.evalStartDate || !active?.evalEndDate) {
+          setEvalAvailable(false)
+          return
+        }
+        const now = Date.now()
+        const start = new Date(active.evalStartDate).getTime()
+        const end = new Date(active.evalEndDate).getTime() + 86_399_999
+        setEvalAvailable(now >= start && now <= end)
+      } catch {
+        setEvalAvailable(false)
+      }
+    })
+  }, [])
+
   const role = session ? (session.user as Record<string, unknown>)?.role as string : null
   const primaryRole = role ? getPrimaryRole(role) : null
   const dashHref = primaryRole ? `/${primaryRole.toLowerCase()}` : "/"
@@ -110,7 +131,13 @@ export default function Sidebar() {
   const reportsOpen = expandedGroups.has("reports") || isInReports
 
   const isInEvaluations = pathname.startsWith("/admin/evaluations") || pathname.startsWith("/faculty/evaluations") || pathname.startsWith("/student/evaluations")
-  const evaluationsVisible = evaluationChildren.some((c) => c.href === dashHref || (allowedPages && allowedPages.includes(c.href!)))
+  const evaluationsVisible = evaluationChildren.some((c) => {
+    if (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) {
+      if (c.href === "/student/evaluations" && evalAvailable === false) return false
+      return !hiddenHrefs.has(c.href!)
+    }
+    return false
+  })
   const evaluationsOpen = expandedGroups.has("evaluations") || isInEvaluations
 
   const isInData = pathname.startsWith("/admin/data")
@@ -206,11 +233,19 @@ export default function Sidebar() {
                   {item.badge && (
                     <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border-1.5 border-white dark:border-black" />
                   )}
+                  {item.href === "#evaluations" && evalAvailable === true && primaryRole === "STUDENT" && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-gold-400 rounded-full animate-pulse border-1.5 border-white dark:border-black" />
+                  )}
                 </div>
-                <span className={`text-[10px] leading-none transition-all duration-300 ${
+                <span className={`flex items-center gap-1 text-[10px] leading-none transition-all duration-300 ${
                   active ? "font-semibold scale-100" : "font-medium scale-95 opacity-70"
                 }`}>
                   {item.label}
+                  {item.href === "#evaluations" && evalAvailable === true && primaryRole === "STUDENT" && (
+                    <svg className="w-2.5 h-2.5 text-gold-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    </svg>
+                  )}
                 </span>
               </Link>
             )
@@ -410,7 +445,7 @@ export default function Sidebar() {
               {evaluationsOpen && (
                 <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
                   {evaluationChildren
-                    .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
+                    .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!) && !(c.href === "/student/evaluations" && evalAvailable === false))
                     .map((child) => (
                       <Link
                         key={child.href}
@@ -424,7 +459,14 @@ export default function Sidebar() {
                         <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d={child.icon!} />
                         </svg>
-                        {child.label}
+                        <span className="flex items-center gap-1.5">
+                          {child.label}
+                          {child.href === "/student/evaluations" && evalAvailable === true && primaryRole === "STUDENT" && (
+                            <svg className="w-3 h-3 text-gold-400 animate-pulse shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                            </svg>
+                          )}
+                        </span>
                       </Link>
                     ))}
                 </div>
@@ -459,7 +501,7 @@ export default function Sidebar() {
               {popoverGroup === "data" ? "Data Management" : popoverGroup === "reports" ? "Reports" : "Evaluations"}
             </p>
             {(popoverGroup === "data" ? dataChildren : popoverGroup === "reports" ? reportChildren : evaluationChildren)
-              .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
+              .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!) && !(c.href === "/student/evaluations" && evalAvailable === false))
               .map((child) => (
                 <Link
                   key={child.href}
@@ -474,7 +516,14 @@ export default function Sidebar() {
                   <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d={child.icon!} />
                   </svg>
-                  {child.label}
+                  <span className="flex items-center gap-1.5">
+                    {child.label}
+                    {child.href === "/student/evaluations" && evalAvailable === true && primaryRole === "STUDENT" && (
+                      <svg className="w-3 h-3 text-gold-400 animate-pulse shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                      </svg>
+                    )}
+                  </span>
                 </Link>
               ))}
           </div>

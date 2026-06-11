@@ -12,9 +12,9 @@ export default function Loading() {
         <h1 className="text-xl sm:text-2xl font-bold text-primary">
           ETL Hub
         </h1>
-        <p className="text-sm text-tertiary mt-1">
+        <div className="text-sm text-tertiary mt-1">
           <Skeleton variant="text" className="w-96" />
-        </p>
+        </div>
       </div>
 
       {/* Bulk Import */}
@@ -22,9 +22,9 @@ export default function Loading() {
         <h3 className="text-lg font-semibold text-primary">
           Bulk Import
         </h3>
-        <p className="text-sm text-tertiary mt-1">
+        <div className="text-sm text-tertiary mt-1">
           <Skeleton variant="text" className="w-64" />
-        </p>
+        </div>
         <div className="mt-4 mb-4 flex items-center gap-3">
           <label className="text-xs font-semibold text-secondary shrink-0">
             Department
@@ -64,9 +64,9 @@ export default function Loading() {
         <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
           Reset Data
         </h3>
-        <p className="text-sm text-tertiary mt-1">
+        <div className="text-sm text-tertiary mt-1">
           <Skeleton variant="text" className="w-96" />
-        </p>
+        </div>
         <div className="mt-4 flex items-center gap-3">
           <Skeleton variant="badge" className="w-48 h-8" />
         </div>

@@ -105,6 +105,29 @@ export async function proxy(request: NextRequest) {
   // Authenticated non-admin API requests are allowed by default
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
+  // Student evaluations require an active semester with valid eval period dates
+  if (pathname.startsWith("/student/evaluations")) {
+    try {
+      const { data: semester } = await supabase
+        .from("semesters")
+        .select("evalStartDate, evalEndDate")
+        .eq("isActive", true)
+        .maybeSingle()
+      if (!semester?.evalStartDate || !semester?.evalEndDate) {
+        return NextResponse.redirect(new URL("/403", request.url))
+      }
+      const now = new Date()
+      const start = new Date(semester.evalStartDate)
+      const end = new Date(semester.evalEndDate)
+      end.setHours(23, 59, 59, 999)
+      if (now < start || now > end) {
+        return NextResponse.redirect(new URL("/403", request.url))
+      }
+    } catch {
+      return NextResponse.redirect(new URL("/403", request.url))
+    }
+  }
+
   // Layer 2: DB access-config merged with defaults
   const config = await loadAccessConfig();
   const entry = config[group];
