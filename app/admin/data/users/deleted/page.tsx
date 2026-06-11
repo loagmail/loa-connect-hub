@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Skeleton from "@/components/Skeleton"
 
 interface DeletedUser {
   id: string
@@ -11,9 +12,43 @@ interface DeletedUser {
 }
 
 export default function DeletedUsersPage() {
+  const [accessState, setAccessState] = useState<"loading" | "granted" | "locked">("loading")
   const [users, setUsers] = useState<DeletedUser[]>([])
   const [loading, setLoading] = useState(true)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.user) { setAccessState("locked"); return }
+        const role = j.user.role ?? ""
+        setAccessState(role.split("|").includes("ADMIN") ? "granted" : "locked")
+      })
+      .catch(() => setAccessState("locked"))
+  }, [])
+
+  if (accessState === "loading") {
+    return (
+      <div className="max-w-6xl mx-auto pb-12">
+        <Skeleton variant="card" />
+      </div>
+    )
+  }
+
+  if (accessState === "locked") {
+    return (
+      <div className="max-w-6xl mx-auto pb-12">
+        <div className="card p-12 text-center space-y-4">
+          <div className="text-4xl text-tertiary">&#x1f512;</div>
+          <h1 className="text-xl font-bold text-primary">Access Restricted</h1>
+          <p className="text-sm text-tertiary max-w-md mx-auto">
+            Deleted Users is restricted to Administrators only.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   const doFetch = async () => {
     const res = await fetch("/api/admin/users/deleted")

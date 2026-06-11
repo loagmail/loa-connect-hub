@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       .from("faculty_subjects")
       .select(`
         id,
-        faculty:faculty_id (id, name, email),
+        faculty:faculty_id (id, name, email, "departmentId"),
         subject:subject_id (id, code, name),
         section:section_id (id, name, program)
       `)

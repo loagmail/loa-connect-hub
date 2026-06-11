@@ -39,7 +39,7 @@ const PUBLIC_PATHS = new Set([
   "/setup-password", "/403",
 ])
 
-const PUBLIC_PREFIXES = ["/_next", "/api"]
+const PUBLIC_PREFIXES = ["/_next", "/api/auth", "/api/test-auth"]
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -70,6 +70,9 @@ export async function proxy(request: NextRequest) {
   const userPerm = await checkUserPermission(userId, pathname);
   if (userPerm === true) return NextResponse.next();
   if (userPerm === false) return NextResponse.redirect(new URL("/403", request.url));
+
+  // Authenticated API requests are allowed by default unless explicitly denied above
+  if (pathname.startsWith("/api/")) return NextResponse.next();
 
   // Layer 2: DB access-config merged with defaults
   const config = await loadAccessConfig();

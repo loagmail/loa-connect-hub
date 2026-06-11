@@ -20,9 +20,13 @@ interface Section {
 
 interface FacultyMapping {
   id: string
-  faculty: { id: string; name: string; email: string }
+  faculty: { id: string; name: string; email: string; departmentId: string | null }
   subject: { id: string; code: string; name: string }
   section: { id: string; name: string; program: string }
+}
+
+interface Department {
+  id: string; name: string; code: string
 }
 
 interface Enrollment {
@@ -87,6 +91,52 @@ function SearchInput({ value, onChange, placeholder }: {
 export default function AcademicInfrastructurePage() {
   const [mainTab, setMainTab] = useState<MainTab>("departments")
   const [infraTab, setInfraTab] = useState<InfraTab>("departments")
+
+  // ── Access control ─────────────────────────────────────
+  const [accessState, setAccessState] = useState<"loading" | "granted" | "locked">("loading")
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.user) { setAccessState("locked"); return }
+        const role = j.user.role ?? ""
+        if (role.split("|").includes("ADMIN")) { setAccessState("granted"); return }
+        const perms = Array.isArray(j.permissions) ? j.permissions : []
+        const hasAccess = perms.some(
+          (p: { resource_path: string; grants: string[] }) =>
+            p.resource_path === "/admin/data/academic-infrastructure" && p.grants?.includes("access")
+        )
+        setAccessState(hasAccess ? "granted" : "locked")
+      })
+      .catch(() => setAccessState("locked"))
+  }, [])
+
+  if (accessState === "loading") {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 pb-12">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-64 bg-surface-dim rounded" />
+          <div className="h-4 w-96 bg-surface-dim rounded" />
+        </div>
+      </div>
+    )
+  }
+
+  if (accessState === "locked") {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 pb-12">
+        <div className="card p-12 text-center space-y-4">
+          <div className="text-4xl text-tertiary">&#x1f512;</div>
+          <h1 className="text-xl font-bold text-primary">Access Restricted</h1>
+          <p className="text-sm text-tertiary max-w-md mx-auto">
+            You do not have permission to access the Academic Infrastructure page.
+            Contact your administrator to request access.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
@@ -639,6 +689,11 @@ function FacultyTab() {
 
   const [deleting, setDeleting] = useState<string | null>(null)
 
+  // ── Department filter ────────────────────────────────────
+  const [deptFilter, setDeptFilter] = useState("all")
+  const [currentUserDept, setCurrentUserDept] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+
   const fetchData = useCallback(async (isRefresh?: boolean) => {
     if (isRefresh) { setLoading(true); setError("") }
     try {
@@ -652,13 +707,31 @@ function FacultyTab() {
 
   useEffect(() => { Promise.resolve().then(() => fetchData()) }, [fetchData])
 
-  const { data: allUsers } = useApiGet<{ users: { id: string; name: string; email: string; role: string }[] }>("/api/admin/users")
+  // Get current user info for department restriction
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.user) {
+          const isAdm = j.user.role?.split("|").includes("ADMIN")
+          setIsAdmin(isAdm)
+          if (!isAdm && j.user.departmentId) {
+            setCurrentUserDept(j.user.departmentId)
+            setDeptFilter(j.user.departmentId)
+          }
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const { data: allUsers } = useApiGet<{ users: { id: string; name: string; email: string; role: string; departmentId: string | null }[]; departments: Department[] }>("/api/admin/users")
   const { data: subjectsData } = useApiGet<{ data: Subject[] }>("/api/data/evaluation-mappings?type=subjects")
   const { data: sectionsData } = useApiGet<{ data: Section[] }>("/api/data/evaluation-mappings?type=sections")
 
   const faculties = (allUsers?.users ?? []).filter((u) => u.role?.split("|").includes("FACULTY") && !u.role?.split("|").includes("ADMIN"))
   const subjects = subjectsData?.data ?? []
   const sections = sectionsData?.data ?? []
+  const departments = allUsers?.departments ?? []
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -690,7 +763,12 @@ function FacultyTab() {
     finally { setDeleting(null) }
   }
 
-  const filtered = data?.filter((m) => {
+  const byDept = data?.filter((m) => {
+    if (deptFilter === "all") return true
+    return m.faculty.departmentId === deptFilter
+  }) ?? []
+
+  const filtered = byDept.filter((m) => {
     if (!search) return true
     const q = search.toLowerCase()
     return (
@@ -701,6 +779,11 @@ function FacultyTab() {
       `${m.section.program}-${m.section.name}`.toLowerCase().includes(q)
     )
   })
+
+  const deptPills = [
+    { id: "all", label: "All" },
+    ...departments.map((d) => ({ id: d.id, label: d.name })),
+  ]
 
   return (
     <div className="space-y-6">
@@ -737,7 +820,31 @@ function FacultyTab() {
         <div><SubmitButton type="submit" loading={formSaving} variant="primary">Add Mapping</SubmitButton></div>
       </form>
 
-      <div className="card p-4 sm:p-6 space-y-4">
+      {/* Department Filter */}
+      <div className="card p-4 sm:p-6 bg-surface space-y-3">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          {deptPills.map((pill) => {
+            const active = deptFilter === pill.id
+            return (
+              <button
+                key={pill.id}
+                onClick={() => {
+                  if (!isAdmin && pill.id !== currentUserDept) return
+                  setDeptFilter(pill.id)
+                }}
+                disabled={!isAdmin && pill.id !== currentUserDept}
+                className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                  active
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                    : "bg-surface text-tertiary border-default hover:border-amber-300 hover:text-secondary"
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+              >
+                {pill.label}
+              </button>
+            )
+          })}
+        </div>
+
         <SearchInput value={search} onChange={setSearch} placeholder="Search by faculty name, email, subject code, or section..." />
         <div className="overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
           <table className="w-full text-[11px]">
@@ -753,10 +860,10 @@ function FacultyTab() {
             <tbody>
               {loading && !data ? (
                 <tr><td colSpan={5} className="p-4"><SkeletonTable rows={4} cols={4} /></td></tr>
-              ) : filtered?.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <tr><td colSpan={5} className="p-4 text-center text-xs text-tertiary">No mappings found.</td></tr>
               ) : (
-                filtered?.map((m) => (
+                filtered.map((m) => (
                   <tr key={m.id} className="border-b border-default hover:bg-surface-hover">
                     <td className="p-2 font-medium text-secondary">{m.faculty.name}</td>
                     <td className="p-2 text-tertiary">{m.faculty.email}</td>
@@ -780,7 +887,7 @@ function FacultyTab() {
             </tbody>
           </table>
         </div>
-        {data && <p className="text-xs text-tertiary">{data.length} mapping{data.length !== 1 ? "s" : ""}</p>}
+        {data && <p className="text-xs text-tertiary">{filtered.length} mapping{filtered.length !== 1 ? "s" : ""}{deptFilter !== "all" ? ` (${byDept.length} in department)` : ""}</p>}
       </div>
     </div>
   )
