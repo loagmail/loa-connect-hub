@@ -365,46 +365,7 @@ function UserPermissionsTab() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      <aside className="w-full lg:w-72 shrink-0">
-        <div className="card p-4 space-y-3">
-          <div>
-            <label className="text-xs font-semibold text-secondary">Filter paths</label>
-            <input type="text" value={sidebarFilter} onChange={(e) => setSidebarFilter(e.target.value)}
-              placeholder="Search paths..." className="input text-xs w-full mt-1 px-3 py-2 rounded-lg border border-strong" />
-          </div>
-          <div className="max-h-[calc(100vh-320px)] overflow-y-auto space-y-3">
-            {Object.entries(groupedPaths).map(([category, paths]) => (
-              <div key={category}>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-tertiary mb-1">{category}</p>
-                <div className="space-y-0.5">
-                  {paths.map((path) => {
-                    const perm = permissions.find((p) => p.resource_path === path)
-                    const granted = perm?.grants.includes("access") ?? false
-                    const effective = eff(path)
-                    return (
-                      <label key={path} className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-xs hover:bg-surface-hover ${granted ? "bg-amber-50 dark:bg-amber-900/10" : ""}`}>
-                        <input type="checkbox" checked={granted} onChange={() => togglePermission(path)}
-                          disabled={!selectedUser} className="rounded border-strong text-gold-600 focus:ring-gold-500 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <span className="block truncate">{lab(path)}</span>
-                          <span className="block text-[10px] text-tertiary font-mono truncate" title={path}>{path}</span>
-                        </div>
-                        {selectedUser && (
-                          <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-px rounded-full ${effective === "granted" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" : effective === "denied" ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400" : "bg-surface text-tertiary"}`}>
-                            {effective === "granted" ? "ON" : effective === "denied" ? "OFF" : "\u2014"}
-                          </span>
-                        )}
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      <div className="flex-1 min-w-0 space-y-6">
+      <div className="flex-1 min-w-0 space-y-6 order-1 lg:order-2">
         <div className="card p-4">
           <label className="text-xs font-semibold text-secondary">Search user</label>
           <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); if (selectedUser) { setSelectedUser(null); setPermissions([]); setSaved(false) } }}
@@ -465,6 +426,45 @@ function UserPermissionsTab() {
           </div>
         )}
       </div>
+
+      <aside className="w-full lg:w-72 shrink-0 order-2 lg:order-1">
+        <div className="card p-4 space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-secondary">Filter paths</label>
+            <input type="text" value={sidebarFilter} onChange={(e) => setSidebarFilter(e.target.value)}
+              placeholder="Search paths..." className="input text-xs w-full mt-1 px-3 py-2 rounded-lg border border-strong" />
+          </div>
+          <div className="max-h-[calc(100vh-320px)] overflow-y-auto space-y-3">
+            {Object.entries(groupedPaths).map(([category, paths]) => (
+              <div key={category}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-tertiary mb-1">{category}</p>
+                <div className="space-y-0.5">
+                  {paths.map((path) => {
+                    const perm = permissions.find((p) => p.resource_path === path)
+                    const granted = perm?.grants.includes("access") ?? false
+                    const effective = eff(path)
+                    return (
+                      <label key={path} className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-xs hover:bg-surface-hover ${granted ? "bg-amber-50 dark:bg-amber-900/10" : ""}`}>
+                        <input type="checkbox" checked={granted} onChange={() => togglePermission(path)}
+                          disabled={!selectedUser} className="rounded border-strong text-gold-600 focus:ring-gold-500 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <span className="block truncate">{lab(path)}</span>
+                          <span className="block text-[10px] text-tertiary font-mono truncate" title={path}>{path}</span>
+                        </div>
+                        {selectedUser && (
+                          <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-px rounded-full ${effective === "granted" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" : effective === "denied" ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400" : "bg-surface text-tertiary"}`}>
+                            {effective === "granted" ? "ON" : effective === "denied" ? "OFF" : "\u2014"}
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
     </div>
   )
 }

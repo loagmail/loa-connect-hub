@@ -46,7 +46,7 @@ export function Paginator({
   if (totalItems === 0) return null
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-3 pb-1">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 sm:px-6 pt-3 pb-1">
       <div className="flex items-center gap-2 text-xs text-tertiary">
         {showSizeSelector && setPageSize && (
           <>
