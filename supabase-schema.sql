@@ -1329,3 +1329,25 @@ DO $$ BEGIN
     ALTER TABLE student_enrollments ADD CONSTRAINT student_enrollments_student_id_faculty_subject_id_key UNIQUE(student_id, faculty_subject_id, "semesterId");
   END IF;
 END $$;
+
+-- =========================================================
+-- Migration 22: Add isDisabled column to subjects and sections
+-- =========================================================
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'subjects' AND column_name = 'isDisabled'
+  ) THEN
+    ALTER TABLE subjects ADD COLUMN "isDisabled" BOOLEAN NOT NULL DEFAULT FALSE;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'sections' AND column_name = 'isDisabled'
+  ) THEN
+    ALTER TABLE sections ADD COLUMN "isDisabled" BOOLEAN NOT NULL DEFAULT FALSE;
+  END IF;
+END $$;

@@ -58,13 +58,19 @@ export async function PATCH(
 
   try {
     const body = await request.json()
-    const { title, isActive } = body
+    const { title, isActive, evalStartDate, evalEndDate } = body
     
-    if (!title) {
-        return NextResponse.json({ error: "Title is required." }, { status: 400 })
+    const updates: Record<string, unknown> = {}
+    if (title !== undefined) updates.title = title
+    if (isActive !== undefined) updates.isActive = isActive
+    if (evalStartDate !== undefined) updates.evalStartDate = evalStartDate
+    if (evalEndDate !== undefined) updates.evalEndDate = evalEndDate
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: "No fields to update." }, { status: 400 })
     }
 
-    const updatedSemester = await updateSemester(id, { title, isActive })
+    const updatedSemester = await updateSemester(id, updates)
     return NextResponse.json({ data: updatedSemester }, { status: 200 })
   } catch (error) {
     console.error("Error updating semester", error)

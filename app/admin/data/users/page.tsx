@@ -498,31 +498,15 @@ export default function AdminUsersPage() {
                             Default
                           </span>
                         ) : (
-                          <div className="flex items-center gap-1.5">
-                            <SubmitButton
-                              onClick={() => openEditModal(u)}
-                              variant="primary"
-                              className="text-[10px] font-semibold px-2 py-1 rounded-lg"
-                            >
-                              Edit
-                            </SubmitButton>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => openEditModal(u)} className="text-xs font-bold text-amber-500 hover:text-amber-700">Edit</button>
                             {!isDefaultAdmin && (
-                              <SubmitButton
-                                onClick={() => handleToggle(u.id, u.isDisabled)}
-                                variant={u.isDisabled ? "primary" : "danger"}
-                                className="text-[10px] font-semibold px-2 py-1 rounded-lg"
-                              >
+                              <button onClick={() => handleToggle(u.id, u.isDisabled)} className={`text-xs font-bold ${u.isDisabled ? "text-green-600 hover:text-green-800" : "text-red-500 hover:text-red-700"}`}>
                                 {u.isDisabled ? "Enable" : "Disable"}
-                              </SubmitButton>
+                              </button>
                             )}
                             {!u.hasLoggedInBefore && !isDefaultAdmin && (
-                              <SubmitButton
-                                onClick={() => handleResetOnboarding(u.id)}
-                                variant="danger"
-                                className="text-[10px] font-semibold px-2 py-1 rounded-lg"
-                              >
-                                Reset
-                              </SubmitButton>
+                              <button onClick={() => handleResetOnboarding(u.id)} className="text-xs font-bold text-red-500 hover:text-red-700">Reset</button>
                             )}
                           </div>
                         )}
@@ -655,28 +639,12 @@ export default function AdminUsersPage() {
                       </span>
                     ) : (
                       <>
-                        <SubmitButton
-                          onClick={() => openEditModal(u)}
-                          variant="primary"
-                          className="text-[10px] font-semibold px-3 py-2 flex-1"
-                        >
-                          Edit
-                        </SubmitButton>
-                        <SubmitButton
-                          onClick={() => handleToggle(u.id, u.isDisabled)}
-                          variant={u.isDisabled ? "primary" : "danger"}
-                          className="text-[10px] font-semibold px-3 py-2 flex-1"
-                        >
+                        <button onClick={() => openEditModal(u)} className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors">Edit</button>
+                        <button onClick={() => handleToggle(u.id, u.isDisabled)} className={`flex-1 text-xs font-semibold px-3 py-2 rounded-lg border transition-colors ${u.isDisabled ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"}`}>
                           {u.isDisabled ? "Enable" : "Disable"}
-                        </SubmitButton>
+                        </button>
                         {!u.hasLoggedInBefore && (
-                          <SubmitButton
-                            onClick={() => handleResetOnboarding(u.id)}
-                            variant="danger"
-                            className="text-[10px] font-semibold px-3 py-2 flex-1"
-                          >
-                            Reset
-                          </SubmitButton>
+                          <button onClick={() => handleResetOnboarding(u.id)} className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg border transition-colors bg-red-50 text-red-700 border-red-200 hover:bg-red-100">Reset</button>
                         )}
                       </>
                     )}

@@ -12,11 +12,11 @@ type MainTab = "departments" | "subjects" | "sections" | "faculty" | "enrollment
 type InfraTab = "departments" | "courses"
 
 interface Subject {
-  id: string; code: string; name: string
+  id: string; code: string; name: string; isDisabled: boolean
 }
 
 interface Section {
-  id: string; name: string; program: string
+  id: string; name: string; program: string; isDisabled: boolean
 }
 
 interface FacultyMapping {
@@ -406,7 +406,7 @@ function DepartmentsCoursesTab({ infraTab, setInfraTab }: {
                         <th className="px-6 py-3">Department Name</th>
                         <th className="px-6 py-3">Dean Assigned</th>
                         <th className="px-6 py-3">Status</th>
-                        <th className="px-6 py-3 w-40">Actions</th>
+                    <th className="px-6 py-3 text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -426,7 +426,7 @@ function DepartmentsCoursesTab({ infraTab, setInfraTab }: {
                                 {dept.isDisabled ? "Disabled" : "Active"}
                               </span>
                             </td>
-                            <td className="px-6 py-4 space-x-3">
+                      <td className="px-6 py-4 space-x-3 text-center">
                               <button onClick={() => startEditing(dept)} className="text-xs font-bold text-amber-500 hover:text-amber-700">Edit</button>
                               <button onClick={() => handleToggleStatus(dept)} className={`text-xs font-bold ${dept.isDisabled ? "text-green-600 hover:text-green-800" : "text-red-500 hover:text-red-700"}`}>
                                 {dept.isDisabled ? "Enable" : "Disable"}
@@ -554,8 +554,37 @@ function SubjectsTab() {
   const [data, setData] = useState<Subject[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
+  const [saving, setSaving] = useState(false)
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editCode, setEditCode] = useState("")
+  const [editName, setEditName] = useState("")
+
+  const [newCode, setNewCode] = useState("")
+  const [newName, setNewName] = useState("")
+
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  const isEditing = editingId !== null
+
+  useEffect(() => {
+    if (!isEditing) return
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setEditingId(null) }
+    document.addEventListener("keydown", handler)
+    return () => document.removeEventListener("keydown", handler)
+  }, [isEditing])
+
+  useEffect(() => {
+    if (!isEditing) return
+    const handler = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) setEditingId(null)
+    }
+    document.addEventListener("mousedown", handler, true)
+    return () => document.removeEventListener("mousedown", handler, true)
+  }, [isEditing])
 
   const fetchData = useCallback(async (isRefresh?: boolean) => {
     if (isRefresh) { setLoading(true); setError("") }
@@ -577,38 +606,173 @@ function SubjectsTab() {
     return s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
   })
 
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newCode || !newName) return
+    setSaving(true); setError(""); setSuccess("")
+    try {
+      const res = await fetch("/api/admin/subjects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: newCode, name: newName }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to add subject") }
+      setNewCode(""); setNewName("")
+      setSuccess("Subject added!")
+      setTimeout(() => setSuccess(""), 3000)
+      fetchData(true)
+    } catch (err) { setError((err as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleEdit = async () => {
+    if (!editingId || !editCode || !editName) return
+    setSaving(true); setError(""); setSuccess("")
+    try {
+      const res = await fetch(`/api/admin/subjects/${editingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: editCode, name: editName }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to update subject") }
+      setEditingId(null)
+      setSuccess("Subject updated!")
+      setTimeout(() => setSuccess(""), 3000)
+      fetchData(true)
+    } catch (err) { setError((err as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleToggleStatus = async (subject: Subject) => {
+    setError(""); setSuccess("")
+    try {
+      const res = await fetch(`/api/admin/subjects/${subject.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDisabled: !subject.isDisabled }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to update status") }
+      setSuccess(`Subject is now ${!subject.isDisabled ? "disabled" : "enabled"}!`)
+      setTimeout(() => setSuccess(""), 3000)
+      fetchData(true)
+    } catch (err) { setError((err as Error).message) }
+  }
+
+  const startEditing = (subject: Subject) => {
+    setEditingId(subject.id)
+    setEditCode(subject.code)
+    setEditName(subject.name)
+  }
+
   return (
     <div className="space-y-6">
       {locked && <LockedTab endpoint={locked} />}
-      {!locked && error && <p className="text-xs font-medium text-red-600">{error}</p>}
-      <div className="card p-6 space-y-4">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search by code or name..." />
-        <div className="overflow-x-auto border border-default rounded-lg">
-          <table className="w-full text-[11px]">
-            <thead>
-              <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default">
-                <th className="p-2">Code</th>
-                <th className="p-2">Name</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && !data ? (
-                <tr><td colSpan={2} className="p-4 text-center text-xs text-tertiary">Loading...</td></tr>
-              ) : filtered?.length === 0 ? (
-                <tr><td colSpan={2} className="p-4 text-center text-xs text-tertiary">No subjects found.</td></tr>
-              ) : (
-                filtered?.map((s) => (
-                  <tr key={s.id} className="border-b border-default hover:bg-surface-hover">
-                    <td className="p-2 font-medium text-secondary">{s.code}</td>
-                    <td className="p-2 text-tertiary">{s.name}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {!locked && error && <p className="text-xs font-medium text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
+      {success && <p className="text-xs font-medium text-green-600 bg-green-50 p-3 rounded-lg">{success}</p>}
+
+      <form onSubmit={handleAdd} className="card p-4 sm:p-6 bg-surface space-y-4">
+        <h2 className="text-sm font-bold text-secondary">Add New Subject</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-tertiary mb-1">Code</label>
+            <input value={newCode} onChange={(e) => setNewCode(e.target.value.toUpperCase())} maxLength={20} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="e.g. CS101" required />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-tertiary mb-1">Name</label>
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="e.g. Introduction to Programming" required />
+          </div>
         </div>
+        <div><SubmitButton type="submit" loading={saving} variant="primary">Add Subject</SubmitButton></div>
+      </form>
+
+      <div className="card p-4 sm:p-6 bg-surface space-y-4">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search by code or name..." />
+        {loading && !data ? (
+          <SkeletonTable rows={4} cols={3} />
+        ) : filtered?.length === 0 ? (
+          <p className="text-xs text-tertiary text-center py-8">No subjects found.</p>
+        ) : (
+          <>
+            <div className="desktop-only">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider bg-slate-50/50">
+                    <th className="px-6 py-3">Code</th>
+                    <th className="px-6 py-3">Name</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered?.map((s) => (
+                    <tr key={s.id} className="border-b border-slate-50 hover:bg-surface-hover/70">
+                      <td className="px-6 py-4 font-mono text-xs font-bold text-secondary">{s.code}</td>
+                      <td className="px-6 py-4 text-primary font-medium">{s.name}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${s.isDisabled ? "bg-red-50 text-red-600 border border-red-200" : "bg-green-50 text-green-600 border border-green-200"}`}>
+                          {s.isDisabled ? "Disabled" : "Active"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 space-x-3 text-center">
+                        <button onClick={() => startEditing(s)} className="text-xs font-bold text-amber-500 hover:text-amber-700">Edit</button>
+                        <button onClick={() => handleToggleStatus(s)} className={`text-xs font-bold ${s.isDisabled ? "text-green-600 hover:text-green-800" : "text-red-500 hover:text-red-700"}`}>
+                          {s.isDisabled ? "Enable" : "Disable"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mobile-only space-y-2">
+              {filtered?.map((s) => (
+                <div key={s.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-bold text-primary">{s.name}</p>
+                      <p className="text-xs font-mono font-semibold text-tertiary">{s.code}</p>
+                    </div>
+                    <span className={`shrink-0 inline-flex px-2 py-1 text-[10px] font-bold rounded-full ${s.isDisabled ? "bg-red-50 text-red-600 border border-red-200" : "bg-green-50 text-green-600 border border-green-200"}`}>
+                      {s.isDisabled ? "Disabled" : "Active"}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => startEditing(s)} className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors">Edit</button>
+                    <button onClick={() => handleToggleStatus(s)} className={`flex-1 text-xs font-semibold px-3 py-2 rounded-lg border transition-colors ${s.isDisabled ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"}`}>
+                      {s.isDisabled ? "Enable" : "Disable"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
         {data && <p className="text-xs text-tertiary">{data.length} subject{data.length !== 1 ? "s" : ""}</p>}
       </div>
+
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div ref={modalRef} className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-bold text-primary">Edit Subject</h2>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-tertiary mb-1">Code</label>
+                <input value={editCode} onChange={(e) => setEditCode(e.target.value.toUpperCase())} maxLength={20} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-tertiary mb-1">Name</label>
+                <input value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setEditingId(null)} className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-secondary hover:bg-slate-50 transition-colors">Cancel</button>
+              <SubmitButton type="button" loading={saving} variant="primary" onClick={handleEdit}>Save Changes</SubmitButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -621,8 +785,37 @@ function SectionsTab() {
   const [data, setData] = useState<Section[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
+  const [saving, setSaving] = useState(false)
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState("")
+  const [editProgram, setEditProgram] = useState("")
+
+  const [newName, setNewName] = useState("")
+  const [newProgram, setNewProgram] = useState("")
+
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  const isEditing = editingId !== null
+
+  useEffect(() => {
+    if (!isEditing) return
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setEditingId(null) }
+    document.addEventListener("keydown", handler)
+    return () => document.removeEventListener("keydown", handler)
+  }, [isEditing])
+
+  useEffect(() => {
+    if (!isEditing) return
+    const handler = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) setEditingId(null)
+    }
+    document.addEventListener("mousedown", handler, true)
+    return () => document.removeEventListener("mousedown", handler, true)
+  }, [isEditing])
 
   const fetchData = useCallback(async (isRefresh?: boolean) => {
     if (isRefresh) { setLoading(true); setError("") }
@@ -644,38 +837,173 @@ function SectionsTab() {
     return s.name.toLowerCase().includes(q) || s.program.toLowerCase().includes(q)
   })
 
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newName || !newProgram) return
+    setSaving(true); setError(""); setSuccess("")
+    try {
+      const res = await fetch("/api/admin/sections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName, program: newProgram }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to add section") }
+      setNewName(""); setNewProgram("")
+      setSuccess("Section added!")
+      setTimeout(() => setSuccess(""), 3000)
+      fetchData(true)
+    } catch (err) { setError((err as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleEdit = async () => {
+    if (!editingId || !editName || !editProgram) return
+    setSaving(true); setError(""); setSuccess("")
+    try {
+      const res = await fetch(`/api/admin/sections/${editingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName, program: editProgram }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to update section") }
+      setEditingId(null)
+      setSuccess("Section updated!")
+      setTimeout(() => setSuccess(""), 3000)
+      fetchData(true)
+    } catch (err) { setError((err as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleToggleStatus = async (section: Section) => {
+    setError(""); setSuccess("")
+    try {
+      const res = await fetch(`/api/admin/sections/${section.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDisabled: !section.isDisabled }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to update status") }
+      setSuccess(`Section is now ${!section.isDisabled ? "disabled" : "enabled"}!`)
+      setTimeout(() => setSuccess(""), 3000)
+      fetchData(true)
+    } catch (err) { setError((err as Error).message) }
+  }
+
+  const startEditing = (section: Section) => {
+    setEditingId(section.id)
+    setEditName(section.name)
+    setEditProgram(section.program)
+  }
+
   return (
     <div className="space-y-6">
       {locked && <LockedTab endpoint={locked} />}
-      {!locked && error && <p className="text-xs font-medium text-red-600">{error}</p>}
-      <div className="card p-6 space-y-4">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search by program or name..." />
-        <div className="overflow-x-auto border border-default rounded-lg">
-          <table className="w-full text-[11px]">
-            <thead>
-              <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default">
-                <th className="p-2">Program</th>
-                <th className="p-2">Name</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && !data ? (
-                <tr><td colSpan={2} className="p-4 text-center text-xs text-tertiary">Loading...</td></tr>
-              ) : filtered?.length === 0 ? (
-                <tr><td colSpan={2} className="p-4 text-center text-xs text-tertiary">No sections found.</td></tr>
-              ) : (
-                filtered?.map((s) => (
-                  <tr key={s.id} className="border-b border-default hover:bg-surface-hover">
-                    <td className="p-2 font-medium text-secondary">{s.program}</td>
-                    <td className="p-2 text-secondary">{s.name}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {!locked && error && <p className="text-xs font-medium text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
+      {success && <p className="text-xs font-medium text-green-600 bg-green-50 p-3 rounded-lg">{success}</p>}
+
+      <form onSubmit={handleAdd} className="card p-4 sm:p-6 bg-surface space-y-4">
+        <h2 className="text-sm font-bold text-secondary">Add New Section</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-tertiary mb-1">Program</label>
+            <input value={newProgram} onChange={(e) => setNewProgram(e.target.value)} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="e.g. BSIT" required />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-tertiary mb-1">Name</label>
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="e.g. Section A" required />
+          </div>
         </div>
+        <div><SubmitButton type="submit" loading={saving} variant="primary">Add Section</SubmitButton></div>
+      </form>
+
+      <div className="card p-4 sm:p-6 bg-surface space-y-4">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search by program or name..." />
+        {loading && !data ? (
+          <SkeletonTable rows={4} cols={3} />
+        ) : filtered?.length === 0 ? (
+          <p className="text-xs text-tertiary text-center py-8">No sections found.</p>
+        ) : (
+          <>
+            <div className="desktop-only">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider bg-slate-50/50">
+                    <th className="px-6 py-3">Program</th>
+                    <th className="px-6 py-3">Name</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered?.map((s) => (
+                    <tr key={s.id} className="border-b border-slate-50 hover:bg-surface-hover/70">
+                      <td className="px-6 py-4 font-medium text-secondary">{s.program}</td>
+                      <td className="px-6 py-4 text-primary font-medium">{s.name}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${s.isDisabled ? "bg-red-50 text-red-600 border border-red-200" : "bg-green-50 text-green-600 border border-green-200"}`}>
+                          {s.isDisabled ? "Disabled" : "Active"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 space-x-3 text-center">
+                        <button onClick={() => startEditing(s)} className="text-xs font-bold text-amber-500 hover:text-amber-700">Edit</button>
+                        <button onClick={() => handleToggleStatus(s)} className={`text-xs font-bold ${s.isDisabled ? "text-green-600 hover:text-green-800" : "text-red-500 hover:text-red-700"}`}>
+                          {s.isDisabled ? "Enable" : "Disable"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mobile-only space-y-2">
+              {filtered?.map((s) => (
+                <div key={s.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-bold text-primary">{s.name}</p>
+                      <p className="text-xs font-semibold text-tertiary">{s.program}</p>
+                    </div>
+                    <span className={`shrink-0 inline-flex px-2 py-1 text-[10px] font-bold rounded-full ${s.isDisabled ? "bg-red-50 text-red-600 border border-red-200" : "bg-green-50 text-green-600 border border-green-200"}`}>
+                      {s.isDisabled ? "Disabled" : "Active"}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => startEditing(s)} className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors">Edit</button>
+                    <button onClick={() => handleToggleStatus(s)} className={`flex-1 text-xs font-semibold px-3 py-2 rounded-lg border transition-colors ${s.isDisabled ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"}`}>
+                      {s.isDisabled ? "Enable" : "Disable"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
         {data && <p className="text-xs text-tertiary">{data.length} section{data.length !== 1 ? "s" : ""}</p>}
       </div>
+
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div ref={modalRef} className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-bold text-primary">Edit Section</h2>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-tertiary mb-1">Program</label>
+                <input value={editProgram} onChange={(e) => setEditProgram(e.target.value)} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-tertiary mb-1">Name</label>
+                <input value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setEditingId(null)} className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-secondary hover:bg-slate-50 transition-colors">Cancel</button>
+              <SubmitButton type="button" loading={saving} variant="primary" onClick={handleEdit}>Save Changes</SubmitButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -699,6 +1027,8 @@ function FacultyTab() {
   const [formSuccess, setFormSuccess] = useState("")
 
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [conflictId, setConflictId] = useState<string | null>(null)
+  const tableRef = useRef<HTMLDivElement>(null)
 
   // ── Department filter ────────────────────────────────────
   const [deptFilter, setDeptFilter] = useState("all")
@@ -740,7 +1070,7 @@ function FacultyTab() {
   const { data: subjectsData } = useApiGet<{ data: Subject[] }>("/api/data/evaluation-mappings?type=subjects")
   const { data: sectionsData } = useApiGet<{ data: Section[] }>("/api/data/evaluation-mappings?type=sections")
 
-  const faculties = (allUsers?.users ?? []).filter((u) => u.role?.split("|").includes("FACULTY") && !u.role?.split("|").includes("ADMIN"))
+  const faculties = (allUsers?.users ?? []).filter((u) => u.email.endsWith("@lyceumalabang.edu.ph") && u.email !== "admin@lyceumalabang.edu.ph" && u.id !== "a0000000-0000-0000-0000-000000000001")
   const subjects = subjectsData?.data ?? []
   const sections = sectionsData?.data ?? []
   const departments = allUsers?.departments ?? []
@@ -748,6 +1078,18 @@ function FacultyTab() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formFaculty || !formSubject || !formSection) return
+    const existing = data?.find(
+      (m) => m.faculty.id === formFaculty && m.subject.id === formSubject && m.section.id === formSection
+    )
+    if (existing) {
+      setConflictId(existing.id)
+      setFormError(`This faculty already handles "${existing.subject.code} - ${existing.subject.name}" for section ${existing.section.program}-${existing.section.name}.`)
+      setTimeout(() => {
+        tableRef.current?.querySelector(`[data-id="${existing.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+      }, 100)
+      return
+    }
+    setConflictId(null)
     setFormSaving(true); setFormError(""); setFormSuccess("")
     try {
       const res = await fetch("/api/admin/faculty-subjects", {
@@ -810,21 +1152,21 @@ function FacultyTab() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs font-semibold text-tertiary mb-1">Faculty</label>
-            <select value={formFaculty} onChange={(e) => setFormFaculty(e.target.value)} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
+            <select value={formFaculty} onChange={(e) => { setFormFaculty(e.target.value); setConflictId(null) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
               <option value="">Select faculty...</option>
               {faculties.map((f) => (<option key={f.id} value={f.id}>{f.name} ({f.email})</option>))}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-tertiary mb-1">Subject</label>
-            <select value={formSubject} onChange={(e) => setFormSubject(e.target.value)} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
+            <select value={formSubject} onChange={(e) => { setFormSubject(e.target.value); setConflictId(null) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
               <option value="">Select subject...</option>
               {subjects.map((s) => (<option key={s.id} value={s.id}>{s.code} - {s.name}</option>))}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-tertiary mb-1">Section</label>
-            <select value={formSection} onChange={(e) => setFormSection(e.target.value)} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
+            <select value={formSection} onChange={(e) => { setFormSection(e.target.value); setConflictId(null) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
               <option value="">Select section...</option>
               {sections.map((s) => (<option key={s.id} value={s.id}>{s.program} - {s.name}</option>))}
             </select>
@@ -857,8 +1199,8 @@ function FacultyTab() {
           })}
         </div>
 
-        <SearchInput value={search} onChange={setSearch} placeholder="Search by faculty name, email, subject code, or section..." />
-        <div className="overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
+        <SearchInput value={search} onChange={(v) => { setSearch(v); setConflictId(null) }} placeholder="Search by faculty name, email, subject code, or section..." />
+        <div ref={tableRef} className="overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
           <table className="w-full text-[11px]">
             <thead>
               <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
@@ -876,7 +1218,7 @@ function FacultyTab() {
                 <tr><td colSpan={5} className="p-4 text-center text-xs text-tertiary">No mappings found.</td></tr>
               ) : (
                 filtered.map((m) => (
-                  <tr key={m.id} className="border-b border-default hover:bg-surface-hover">
+                  <tr key={m.id} data-id={m.id} className={`border-b border-default hover:bg-surface-hover ${conflictId === m.id ? "bg-amber-50 border-amber-300" : ""}`}>
                     <td className="p-2 font-medium text-secondary">{m.faculty.name}</td>
                     <td className="p-2 text-tertiary">{m.faculty.email}</td>
                     <td className="p-2">
@@ -888,7 +1230,7 @@ function FacultyTab() {
                       <button
                         onClick={() => handleDelete(m.id)}
                         disabled={deleting === m.id}
-                        className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40"
+                        className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40"
                       >
                         {deleting === m.id ? "..." : "Delete"}
                       </button>
@@ -1394,7 +1736,7 @@ function EnrollmentsTab() {
                       <button
                         onClick={() => handleDelete(m.id)}
                         disabled={deleting === m.id}
-                        className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40"
+                        className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40"
                       >
                         {deleting === m.id ? "..." : "Delete"}
                       </button>
@@ -1428,8 +1770,11 @@ function SemestersTab() {
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
-  const [editIsActive, setEditIsActive] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  const [evalEditingId, setEvalEditingId] = useState<string | null>(null)
+  const [editEvalStartDate, setEditEvalStartDate] = useState("")
+  const [editEvalEndDate, setEditEvalEndDate] = useState("")
 
   const { data: semestersData, isLoading: semestersLoading, error: semestersErr } = useApiGet<{ data: SemesterData[] }>("/api/semesters")
 
@@ -1463,11 +1808,43 @@ function SemestersTab() {
       const res = await fetch(`/api/semesters/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: editTitle, isActive: editIsActive }),
+        body: JSON.stringify({ title: editTitle }),
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       setEditingId(null)
       showSuccessMessage("Semester updated!")
+      invalidate("/api/semesters")
+    } catch (err) { setError((err as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleStartEvaluation = async (id: string) => {
+    if (!editEvalStartDate) return
+    setSaving(true); setError("")
+    try {
+      const res = await fetch(`/api/semesters/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ evalStartDate: editEvalStartDate, evalEndDate: editEvalEndDate || null }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
+      setEvalEditingId(null)
+      showSuccessMessage("Evaluation period started!")
+      invalidate("/api/semesters")
+    } catch (err) { setError((err as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleEndEvaluation = async (id: string) => {
+    setSaving(true); setError("")
+    try {
+      const res = await fetch(`/api/semesters/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ evalStartDate: null, evalEndDate: null }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
+      showSuccessMessage("Evaluation period ended!")
       invalidate("/api/semesters")
     } catch (err) { setError((err as Error).message) }
     finally { setSaving(false) }
@@ -1513,7 +1890,7 @@ function SemestersTab() {
           />
         </div>
         <p className="text-[11px] text-tertiary">
-          Dates and activation are configured on the <strong>Evaluation Periods</strong> page. New semesters start as inactive.
+          Evaluation dates are managed inline — click <strong>Enable Evaluation</strong> on a semester to set start/end dates. Only semesters with evaluation dates can have active evaluations. New semesters start as inactive.
         </p>
         <div><SubmitButton type="submit" loading={saving} variant="primary">Create Semester</SubmitButton></div>
       </form>
@@ -1529,14 +1906,46 @@ function SemestersTab() {
                 <label className="block text-xs font-semibold text-tertiary mb-1">Semester Name</label>
                 <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required />
               </div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={editIsActive} onChange={(e) => setEditIsActive(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500" />
-                <span className="text-sm font-medium text-primary">Active</span>
-              </label>
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setEditingId(null)} className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-secondary hover:bg-slate-50 transition-colors">Cancel</button>
               <SubmitButton type="button" loading={saving} variant="primary" onClick={() => handleUpdate(editingId!)}>Save Changes</SubmitButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {evalEditingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-bold text-primary">Enable Evaluation</h2>
+            </div>
+            <p className="text-[11px] text-tertiary">Set the start and optional end date for this semester&apos;s evaluation period. Students can submit evaluations only within this window.</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-tertiary mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={editEvalStartDate}
+                  onChange={(e) => setEditEvalStartDate(e.target.value)}
+                  className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-tertiary mb-1">End Date (Optional)</label>
+                <input
+                  type="date"
+                  value={editEvalEndDate}
+                  onChange={(e) => setEditEvalEndDate(e.target.value)}
+                  className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setEvalEditingId(null)} className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-secondary hover:bg-slate-50 transition-colors">Cancel</button>
+              <SubmitButton type="button" loading={saving} variant="primary" onClick={() => handleStartEvaluation(evalEditingId!)}>Enable</SubmitButton>
             </div>
           </div>
         </div>
@@ -1556,7 +1965,7 @@ function SemestersTab() {
                     <th className="px-6 py-3">Start Date</th>
                     <th className="px-6 py-3">End Date</th>
                     <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3 w-40">Actions</th>
+                    <th className="px-6 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1570,13 +1979,13 @@ function SemestersTab() {
                           {semester.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <SubmitButton
-                          onClick={() => { setEditTitle(semester.title); setEditIsActive(semester.isActive); setEditingId(semester.id) }}
-                          variant="primary" className="text-[10px] font-semibold px-2 py-1 rounded-lg"
-                        >
-                          Edit
-                        </SubmitButton>
+                      <td className="px-6 py-4 space-x-3 text-center">
+                        <button onClick={() => { setEditTitle(semester.title); setEditingId(semester.id) }} className="text-xs font-bold text-amber-500 hover:text-amber-700">Edit</button>
+                        {semester.evalStartDate ? (
+                          <button onClick={() => handleEndEvaluation(semester.id)} className="text-xs font-bold text-red-500 hover:text-red-700">End Evaluation</button>
+                        ) : (
+                          <button onClick={() => { setEvalEditingId(semester.id); setEditEvalStartDate(semester.evalStartDate || ""); setEditEvalEndDate(semester.evalEndDate || "") }} className="text-xs font-bold text-emerald-600 hover:text-emerald-800">Enable Evaluation</button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1595,8 +2004,13 @@ function SemestersTab() {
                   <div className="text-xs space-y-1 mt-2">
                     <p className="text-tertiary">Period: {semester.evalStartDate} to {semester.evalEndDate || 'N/A'}</p>
                   </div>
-                  <div className="pt-2">
-                    <button onClick={() => { setEditTitle(semester.title); setEditIsActive(semester.isActive); setEditingId(semester.id) }} className="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100">Edit</button>
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={() => { setEditTitle(semester.title); setEditingId(semester.id) }} className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors">Edit</button>
+                    {semester.evalStartDate ? (
+                      <button onClick={() => handleEndEvaluation(semester.id)} className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg border transition-colors bg-red-50 text-red-700 border-red-200 hover:bg-red-100">End Evaluation</button>
+                    ) : (
+                      <button onClick={() => { setEvalEditingId(semester.id); setEditEvalStartDate(semester.evalStartDate || ""); setEditEvalEndDate(semester.evalEndDate || "") }} className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">Enable Evaluation</button>
+                    )}
                   </div>
                 </div>
               ))}
