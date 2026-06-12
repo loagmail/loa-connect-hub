@@ -57,9 +57,25 @@ interface SemesterData {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const tabClass = (active: boolean) =>
-  `px-4 sm:px-6 py-3 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${active ? "border-amber-500 text-amber-600" : "border-transparent text-tertiary hover:text-secondary"
-  }`
+function SegmentedControl<T extends string>({ options, selected, onSelect }: { options: { key: T; label: string }[]; selected: T; onSelect: (key: T) => void }) {
+  return (
+    <div className="flex gap-1 p-1 bg-surface-tertiary rounded-xl overflow-x-auto">
+      {options.map((opt) => (
+        <button
+          key={opt.key}
+          onClick={() => onSelect(opt.key)}
+          className={`shrink-0 text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap transition-all duration-200 ${
+            selected === opt.key
+              ? "bg-surface text-amber-600 shadow-ios-sm"
+              : "text-tertiary hover:text-secondary"
+          } ios-tab-item`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 const mainTabs: { key: MainTab; label: string }[] = [
   { key: "departments", label: "Departments & Courses" },
@@ -148,17 +164,11 @@ export default function AcademicInfrastructurePage() {
       </div>
 
       {/* Main Tabs */}
-      <div className="flex border-b border-default overflow-x-auto">
-        {mainTabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => { setMainTab(t.key); setInfraTab("departments") }}
-            className={tabClass(mainTab === t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        options={mainTabs}
+        selected={mainTab}
+        onSelect={(key) => { setMainTab(key); setInfraTab("departments") }}
+      />
 
       {/* ── TAB: Departments & Courses ─────────────────────────────────── */}
       {mainTab === "departments" && <DepartmentsCoursesTab infraTab={infraTab} setInfraTab={setInfraTab} />}
@@ -336,14 +346,11 @@ function DepartmentsCoursesTab({ infraTab, setInfraTab }: {
       {success && <p className="text-xs font-medium text-green-600 bg-green-50 p-3 rounded-lg">{success}</p>}
 
       {/* Sub-tabs */}
-      <div className="flex border-b border-default overflow-x-auto">
-        <button onClick={() => { setInfraTab("departments"); setError("") }} className={tabClass(infraTab === "departments")}>
-          Departments Management
-        </button>
-        <button onClick={() => { setInfraTab("courses"); setError("") }} className={tabClass(infraTab === "courses")}>
-          Courses Mapping
-        </button>
-      </div>
+      <SegmentedControl
+        options={[{ key: "departments" as const, label: "Departments Management" }, { key: "courses" as const, label: "Courses Mapping" }]}
+        selected={infraTab}
+        onSelect={(key) => { setInfraTab(key); setError("") }}
+      />
 
       {/* ── Departments Sub-tab ──────────────────────────────────────────── */}
       {infraTab === "departments" && (
@@ -1205,47 +1212,66 @@ function FacultyTab() {
         </div>
 
         <SearchInput value={search} onChange={(v) => { setSearch(v); setConflictId(null) }} placeholder="Search by faculty name, email, subject code, or section..." />
-        <div ref={tableRef} className="overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
-          <table className="w-full text-[11px]">
-            <thead>
-              <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
-                <th className="p-2">Faculty</th>
-                <th className="p-2">Email</th>
-                <th className="p-2">Subject</th>
-                <th className="p-2">Section</th>
-                <th className="p-2 w-16">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && !data ? (
-                <tr><td colSpan={5} className="p-4"><SkeletonTable rows={4} cols={4} /></td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="p-4 text-center text-xs text-tertiary">No mappings found.</td></tr>
-              ) : (
-                filtered.map((m) => (
-                  <tr key={m.id} data-id={m.id} className={`border-b border-default hover:bg-surface-hover ${conflictId === m.id ? "bg-amber-50 border-amber-300" : ""}`}>
-                    <td className="p-2 font-medium text-secondary">{m.faculty.name}</td>
-                    <td className="p-2 text-tertiary">{m.faculty.email}</td>
-                    <td className="p-2">
-                      <span className="font-medium text-secondary">{m.subject.code}</span>
-                      <span className="text-tertiary ml-1">{m.subject.name}</span>
-                    </td>
-                    <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
-                    <td className="p-2">
-                      <button
-                        onClick={() => handleDelete(m.id)}
-                        disabled={deleting === m.id}
-                        className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40"
-                      >
-                        {deleting === m.id ? "..." : "Delete"}
-                      </button>
-                    </td>
+        {loading && !data ? (
+          <SkeletonTable rows={4} cols={4} />
+        ) : filtered.length === 0 ? (
+          <p className="text-xs text-tertiary text-center py-8">No mappings found.</p>
+        ) : (
+          <>
+            <div ref={tableRef} className="desktop-only overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
+                    <th className="p-2">Faculty</th>
+                    <th className="p-2">Email</th>
+                    <th className="p-2">Subject</th>
+                    <th className="p-2">Section</th>
+                    <th className="p-2 w-16">Action</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {filtered.map((m) => (
+                    <tr key={m.id} data-id={m.id} className={`border-b border-default hover:bg-surface-hover ${conflictId === m.id ? "bg-amber-50 border-amber-300" : ""}`}>
+                      <td className="p-2 font-medium text-secondary">{m.faculty.name}</td>
+                      <td className="p-2 text-tertiary">{m.faculty.email}</td>
+                      <td className="p-2">
+                        <span className="font-medium text-secondary">{m.subject.code}</span>
+                        <span className="text-tertiary ml-1">{m.subject.name}</span>
+                      </td>
+                      <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
+                      <td className="p-2">
+                        <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40">{deleting === m.id ? "..." : "Delete"}</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mobile-only space-y-2">
+              {filtered.map((m) => (
+                <div key={m.id} data-id={m.id} className={`p-4 rounded-xl bg-surface border space-y-2 ${conflictId === m.id ? "border-amber-300 bg-amber-50" : "border-default"}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-primary truncate">{m.faculty.name}</p>
+                      <p className="text-xs text-tertiary truncate">{m.faculty.email}</p>
+                    </div>
+                    <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="shrink-0 text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40 px-3 py-2">{deleting === m.id ? "..." : "Delete"}</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-tertiary">Subject: </span>
+                      <span className="font-medium text-secondary">{m.subject.code} - {m.subject.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-tertiary">Section: </span>
+                      <span className="text-secondary">{m.section.program}-{m.section.name}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
         {data && <p className="text-xs text-tertiary">{filtered.length} mapping{filtered.length !== 1 ? "s" : ""}{deptFilter !== "all" ? ` (${byDept.length} in department)` : ""}</p>}
       </div>
     </div>
@@ -1706,52 +1732,79 @@ function EnrollmentsTab() {
          ═══════════════════════════════════════════════════ */}
       <div className="card p-4 sm:p-6 space-y-4">
         <SearchInput value={search} onChange={setSearch} placeholder="Search by student name, email, section, subject, or faculty..." />
-        <div className="overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
-          <table className="w-full text-[11px]">
-            <thead>
-              <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
-                <th className="p-2">Student</th>
-                <th className="p-2">Email</th>
-                <th className="p-2">Section</th>
-                <th className="p-2">Subject</th>
-                <th className="p-2">Faculty</th>
-                <th className="p-2 w-16">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && !data ? (
-                <tr><td colSpan={6} className="p-4"><SkeletonTable rows={4} cols={5} /></td></tr>
-              ) : filtered?.length === 0 ? (
-                <tr><td colSpan={6} className="p-4 text-center text-xs text-tertiary">No enrollments found.</td></tr>
-              ) : (
-                filtered?.map((m) => (
-                  <tr key={m.id} className="border-b border-default hover:bg-surface-hover">
-                    <td className="p-2 font-medium text-secondary">{m.student.name}</td>
-                    <td className="p-2 text-tertiary">{m.student.email}</td>
-                    <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
-                    <td className="p-2">
+        {loading && !data ? (
+          <SkeletonTable rows={4} cols={5} />
+        ) : filtered?.length === 0 ? (
+          <p className="text-xs text-tertiary text-center py-8">No enrollments found.</p>
+        ) : (
+          <>
+            <div className="desktop-only overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
+                    <th className="p-2">Student</th>
+                    <th className="p-2">Email</th>
+                    <th className="p-2">Section</th>
+                    <th className="p-2">Subject</th>
+                    <th className="p-2">Faculty</th>
+                    <th className="p-2 w-16">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered?.map((m) => (
+                    <tr key={m.id} className="border-b border-default hover:bg-surface-hover">
+                      <td className="p-2 font-medium text-secondary">{m.student.name}</td>
+                      <td className="p-2 text-tertiary">{m.student.email}</td>
+                      <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
+                      <td className="p-2">
+                        {m.faculty_subject ? (
+                          <><span className="font-medium text-secondary">{m.faculty_subject.subject.code}</span><span className="text-tertiary ml-1">{m.faculty_subject.subject.name}</span></>
+                        ) : (
+                          <span className="text-tertiary italic">—</span>
+                        )}
+                      </td>
+                      <td className="p-2 text-secondary">{m.faculty_subject?.faculty.name ?? <span className="text-tertiary italic">—</span>}</td>
+                      <td className="p-2">
+                        <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40">{deleting === m.id ? "..." : "Delete"}</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mobile-only space-y-2">
+              {filtered?.map((m) => (
+                <div key={m.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-primary truncate">{m.student.name}</p>
+                      <p className="text-xs text-tertiary truncate">{m.student.email}</p>
+                    </div>
+                    <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="shrink-0 text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40 px-3 py-2">{deleting === m.id ? "..." : "Delete"}</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-tertiary">Section: </span>
+                      <span className="text-secondary">{m.section.program}-{m.section.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-tertiary">Subject: </span>
                       {m.faculty_subject ? (
-                        <><span className="font-medium text-secondary">{m.faculty_subject.subject.code}</span><span className="text-tertiary ml-1">{m.faculty_subject.subject.name}</span></>
+                        <span className="text-secondary">{m.faculty_subject.subject.code} - {m.faculty_subject.subject.name}</span>
                       ) : (
                         <span className="text-tertiary italic">—</span>
                       )}
-                    </td>
-                    <td className="p-2 text-secondary">{m.faculty_subject?.faculty.name ?? <span className="text-tertiary italic">—</span>}</td>
-                    <td className="p-2">
-                      <button
-                        onClick={() => handleDelete(m.id)}
-                        disabled={deleting === m.id}
-                        className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40"
-                      >
-                        {deleting === m.id ? "..." : "Delete"}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-tertiary">Faculty: </span>
+                    <span className="text-secondary">{m.faculty_subject?.faculty.name ?? <span className="text-tertiary italic">—</span>}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
         {data && <p className="text-xs text-tertiary">{data.length} enrollment{data.length !== 1 ? "s" : ""}</p>}
       </div>
     </div>

@@ -50,6 +50,7 @@ export default function Sidebar() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set())
   const [popoverGroup, setPopoverGroup] = useState<string | null>(null)
   const [mobilePopoverGroup, setMobilePopoverGroup] = useState<string | null>(null)
+  const [showMobileActions, setShowMobileActions] = useState(false)
   const [evalAvailable, setEvalAvailable] = useState<boolean | null>(null)
 
   const { data: accessData } = useApiGet<{ pages: string[] }>(
@@ -71,7 +72,7 @@ export default function Sidebar() {
   }, [pathname])
 
   useEffect(() => {
-    Promise.resolve().then(() => setMobilePopoverGroup(null))
+    Promise.resolve().then(() => { setMobilePopoverGroup(null); setShowMobileActions(false) })
   }, [pathname])
 
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -88,6 +89,7 @@ export default function Sidebar() {
   }, [popoverGroup])
 
   const mobilePopoverRef = useRef<HTMLDivElement>(null)
+  const actionsPopoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!mobilePopoverGroup) return
@@ -99,6 +101,17 @@ export default function Sidebar() {
     document.addEventListener("mousedown", handler, true)
     return () => document.removeEventListener("mousedown", handler, true)
   }, [mobilePopoverGroup])
+
+  useEffect(() => {
+    if (!showMobileActions) return
+    const handler = (e: MouseEvent) => {
+      if (actionsPopoverRef.current && !actionsPopoverRef.current.contains(e.target as Node)) {
+        setShowMobileActions(false)
+      }
+    }
+    document.addEventListener("mousedown", handler, true)
+    return () => document.removeEventListener("mousedown", handler, true)
+  }, [showMobileActions])
 
   useEffect(() => {
     Promise.resolve().then(async () => {
@@ -292,7 +305,67 @@ export default function Sidebar() {
               </Link>
             )
           })}
+
+          {/* MORE BUTTON */}
+          <button
+            type="button"
+            onClick={() => { setShowMobileActions(!showMobileActions); setMobilePopoverGroup(null) }}
+            className="relative flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 py-1 ios-tab-item text-tertiary"
+          >
+            <div className="relative flex items-center justify-center w-6 h-6">
+              <svg className="w-6 h-6 ios-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12h.01M12 12h.01M18 12h.01" />
+              </svg>
+            </div>
+            <span className="flex items-center gap-1 text-[10px] leading-none font-medium scale-95 opacity-70">More</span>
+          </button>
         </nav>
+
+        {showMobileActions && (
+          <div
+            ref={actionsPopoverRef}
+            className="fixed bottom-16 inset-x-4 z-50 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-2"
+          >
+            <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-tertiary">Quick Actions</p>
+
+            <Link
+              href="/faq"
+              onClick={() => setShowMobileActions(false)}
+              className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-tertiary hover:bg-slate-800/50 hover:text-white transition-colors"
+            >
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+              </svg>
+              <span>FAQ</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                const isDark = document.documentElement.classList.toggle("dark")
+                localStorage.setItem("theme", isDark ? "dark" : "light")
+                setShowMobileActions(false)
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-tertiary hover:bg-slate-800/50 hover:text-white transition-colors"
+            >
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+              <span>Toggle Theme</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        )}
 
         {mobilePopoverGroup && (
           <div
