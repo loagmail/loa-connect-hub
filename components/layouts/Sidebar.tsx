@@ -38,7 +38,7 @@ const dataChildren: NavItem[] = [
   { href: "/admin/data-management", label: "Export & Delete", icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" },
 ]
 
-const hiddenHrefs = new Set(['/admin/reports', '/admin/evaluations', '/dean/reports'])
+const hiddenHrefs = new Set(['/admin/reports', '/admin/evaluations', '/admin/evaluations/periods', '/admin/evaluations/results', '/dean/reports'])
 const reportHrefs = new Set(reportChildren.map((c) => c.href!))
 const evaluationHrefs = new Set(evaluationChildren.map((c) => c.href!))
 const dataHrefs = new Set(dataChildren.map((c) => c.href!))
