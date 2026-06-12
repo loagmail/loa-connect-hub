@@ -387,15 +387,15 @@ export default function EvaluationDashboard({
       </div>
 
       {/* Filter Card */}
-      <div className="max-w-[1400px] mx-auto px-6 pt-6">
-        <div className="flex flex-wrap items-end gap-4 p-5 bg-surface rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6 pt-3 sm:pt-6">
+        <div className="flex flex-wrap items-end gap-2 sm:gap-4 p-3 sm:p-5 bg-surface rounded-2xl shadow-sm">
           {showDepartmentFilter && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-tertiary">Department</label>
+            <div className="flex flex-col gap-1 sm:gap-1.5 w-full sm:w-auto">
+              <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-tertiary">Department</label>
               <select
                 value={selectedDept}
                 onChange={(e) => { setSelectedDept(e.target.value); setSelectedFaculty(null) }}
-                className="px-3 py-2 rounded-lg text-sm text-secondary bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all min-w-[160px]"
+                className="w-full sm:w-auto px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm text-secondary bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all min-w-0 sm:min-w-[160px]"
               >
                 <option value="">All Departments</option>
                 {departments.map((d) => (
@@ -404,36 +404,36 @@ export default function EvaluationDashboard({
               </select>
             </div>
           )}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-tertiary">Period</label>
+          <div className="flex flex-col gap-1 sm:gap-1.5 w-full sm:w-auto">
+            <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-tertiary">Period</label>
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm text-secondary bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all min-w-[160px]"
+              className="w-full sm:w-auto px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm text-secondary bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all min-w-0 sm:min-w-[160px]"
             >
               {periods.map((p) => (
                 <option key={p.id} value={p.id}>{p.name || p.title || p.id}</option>
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto pt-1 sm:pt-0">
             {showVisibilityToggles && (
               <>
                 <button
                   type="button"
                   onClick={() => bulkSetVisibility(true)}
                   disabled={results.length === 0 || toggling}
-                  className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
+                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-50"
                 >
-                  Publish All
+                  Publish
                 </button>
                 <button
                   type="button"
                   onClick={() => bulkSetVisibility(false)}
                   disabled={results.length === 0 || toggling}
-                  className="px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
+                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-amber-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-amber-600 active:scale-[0.98] transition-all disabled:opacity-50"
                 >
-                  Hide All
+                  Hide
                 </button>
               </>
             )}
@@ -441,17 +441,17 @@ export default function EvaluationDashboard({
               type="button"
               onClick={downloadBulkCSV}
               disabled={results.length === 0}
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-600 text-white text-[11px] sm:text-sm font-semibold hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              Export CSV
+              CSV
             </button>
             <button
               type="button"
               onClick={downloadPDF}
               disabled={results.length === 0}
-              className="px-4 py-2 rounded-lg bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm disabled:opacity-50"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-brand-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-brand-600 active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              Export PDF
+              PDF
             </button>
           </div>
         </div>
@@ -515,9 +515,6 @@ export default function EvaluationDashboard({
                 <thead>
                   <tr className="bg-surface-muted text-xs font-bold text-tertiary uppercase tracking-wider border-b border-default">
                     <th className="p-3 text-left">Faculty</th>
-                    {CATEGORIES.map((c) => (
-                      <th key={c.key} className="p-3 text-center whitespace-nowrap">{c.label}</th>
-                    ))}
                     <th className="p-3 text-center whitespace-nowrap">General</th>
                     <th className="p-3 text-center whitespace-nowrap">Respondents</th>
                     <th className="p-3 text-center">Remark</th>
@@ -533,9 +530,6 @@ export default function EvaluationDashboard({
                     return (
                       <tr key={r.id} className={`border-b border-default/50 hover:bg-surface-hover cursor-pointer transition-colors ${isSelected ? "bg-brand-50 dark:bg-brand-500/10" : ""}`} onClick={() => selectFaculty(r.facultyId)}>
                         <td className="p-3 font-semibold text-primary whitespace-nowrap">{name}</td>
-                        {CATEGORIES.map((c) => (
-                          <td key={c.key} className="p-3 text-center text-primary">{r[c.key] !== null ? r[c.key]!.toFixed(2) : "—"}</td>
-                        ))}
                         <td className="p-3 text-center font-bold text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</td>
                         <td className="p-3 text-center text-secondary">{r.totalRespondents}</td>
                         <td className="p-3 text-center">{r.remarks && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getRemarkColor(r.remarks)}`}>{r.remarks}</span>}</td>
@@ -624,15 +618,6 @@ export default function EvaluationDashboard({
                     <svg className={`w-5 h-5 mt-0.5 shrink-0 text-tertiary transition-transform ${isSelected ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-2 text-[11px]">
-                    {CATEGORIES.map((c) => (
-                      <div key={c.key} className="text-center">
-                        <p className="font-semibold text-primary">{r[c.key] !== null ? r[c.key]!.toFixed(2) : "—"}</p>
-                        <p className="text-tertiary truncate">{c.label}</p>
-                      </div>
-                    ))}
                   </div>
 
                   <div className="flex items-center justify-between gap-2 pt-1">
@@ -748,10 +733,15 @@ function DetailPanel({
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-surface-tertiary text-tertiary">Total: {students.length}</span>
           </div>
 
-          <div className="flex items-center gap-6 mb-4 bg-surface-muted rounded-lg px-4 py-3 text-sm">
-            <span><span className="font-bold text-primary">{result.generalRating?.toFixed(2) ?? "—"}</span> <span className="text-tertiary ml-1">General</span></span>
-            <span className="text-border">|</span>
-            <span className="text-tertiary">Per-category: {CATEGORIES_FULL.map((c) => `${c.label}: ${result[c.key]?.toFixed(2) ?? "—"}`).join("  |  ")}</span>
+          <div className="flex items-center gap-2 mb-4 bg-surface-muted rounded-lg px-4 py-3 text-sm">
+            <span className="font-bold text-primary">{result.generalRating?.toFixed(2) ?? "—"}</span>
+            <span className="text-tertiary">General</span>
+            {CATEGORIES_FULL.map((c, i) => (
+              <span key={c.key} className="hidden sm:inline text-tertiary">
+                {i > 0 && <span className="mx-2 text-border">|</span>}
+                {c.label}: <span className="font-semibold text-secondary">{result[c.key]?.toFixed(2) ?? "—"}</span>
+              </span>
+            ))}
           </div>
 
           <div className="desktop-only overflow-x-auto bg-surface rounded-xl border border-default">

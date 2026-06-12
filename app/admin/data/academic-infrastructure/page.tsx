@@ -8,8 +8,10 @@ import LockedTab from "@/components/ui/LockedTab"
 
 // ── Shared Types ───────────────────────────────────────────────────────────
 
-type MainTab = "departments" | "subjects" | "sections" | "faculty" | "enrollments" | "semesters"
+type MainTab = "semesters" | "departments" | "subjects" | "faculty_enroll"
 type InfraTab = "departments" | "courses"
+type SubjectTab = "subjects" | "sections"
+type FacEnrollTab = "faculty" | "enrollments"
 
 interface Subject {
   id: string; code: string; name: string; isDisabled: boolean
@@ -59,7 +61,7 @@ interface SemesterData {
 
 function SegmentedControl<T extends string>({ options, selected, onSelect }: { options: { key: T; label: string }[]; selected: T; onSelect: (key: T) => void }) {
   return (
-    <div className="flex gap-1 p-1 bg-surface-tertiary rounded-xl overflow-x-auto">
+    <div className="flex gap-1 p-1 bg-surface-tertiary rounded-xl overflow-x-auto scrollbar-hide">
       {options.map((opt) => (
         <button
           key={opt.key}
@@ -78,12 +80,10 @@ function SegmentedControl<T extends string>({ options, selected, onSelect }: { o
 }
 
 const mainTabs: { key: MainTab; label: string }[] = [
-  { key: "departments", label: "Departments & Courses" },
-  { key: "subjects", label: "Subjects" },
-  { key: "sections", label: "Sections" },
-  { key: "faculty", label: "Faculty-Subject" },
-  { key: "enrollments", label: "Student Enrollments" },
   { key: "semesters", label: "Semesters" },
+  { key: "departments", label: "Departments & Courses" },
+  { key: "subjects", label: "Subjects & Sections" },
+  { key: "faculty_enroll", label: "Faculty Loading & Enrollments" },
 ]
 
 // ── Components ─────────────────────────────────────────────────────────────
@@ -105,8 +105,10 @@ function SearchInput({ value, onChange, placeholder }: {
 // ── Main Page ──────────────────────────────────────────────────────────────
 
 export default function AcademicInfrastructurePage() {
-  const [mainTab, setMainTab] = useState<MainTab>("departments")
+  const [mainTab, setMainTab] = useState<MainTab>("semesters")
   const [infraTab, setInfraTab] = useState<InfraTab>("departments")
+  const [subjectTab, setSubjectTab] = useState<SubjectTab>("subjects")
+  const [facEnrollTab, setFacEnrollTab] = useState<FacEnrollTab>("faculty")
 
   // ── Access control ─────────────────────────────────────
   const [accessState, setAccessState] = useState<"loading" | "granted" | "locked">("loading")
@@ -167,26 +169,20 @@ export default function AcademicInfrastructurePage() {
       <SegmentedControl
         options={mainTabs}
         selected={mainTab}
-        onSelect={(key) => { setMainTab(key); setInfraTab("departments") }}
+        onSelect={(key) => { setMainTab(key); setInfraTab("departments"); setSubjectTab("subjects"); setFacEnrollTab("faculty") }}
       />
+
+      {/* ── TAB: Semesters ────────────────────────────────────────────── */}
+      {mainTab === "semesters" && <SemestersTab />}
 
       {/* ── TAB: Departments & Courses ─────────────────────────────────── */}
       {mainTab === "departments" && <DepartmentsCoursesTab infraTab={infraTab} setInfraTab={setInfraTab} />}
 
-      {/* ── TAB: Subjects ──────────────────────────────────────────────── */}
-      {mainTab === "subjects" && <SubjectsTab />}
+      {/* ── TAB: Subjects & Sections ──────────────────────────────────── */}
+      {mainTab === "subjects" && <SubjectsSectionsTab subjectTab={subjectTab} setSubjectTab={setSubjectTab} />}
 
-      {/* ── TAB: Sections ─────────────────────────────────────────────── */}
-      {mainTab === "sections" && <SectionsTab />}
-
-      {/* ── TAB: Faculty-Subject ──────────────────────────────────────── */}
-      {mainTab === "faculty" && <FacultyTab />}
-
-      {/* ── TAB: Student Enrollments ──────────────────────────────────── */}
-      {mainTab === "enrollments" && <EnrollmentsTab />}
-
-      {/* ── TAB: Semesters ────────────────────────────────────────────── */}
-      {mainTab === "semesters" && <SemestersTab />}
+      {/* ── TAB: Faculty Loading & Enrollments ────────────────────────── */}
+      {mainTab === "faculty_enroll" && <FacultyEnrollTab facEnrollTab={facEnrollTab} setFacEnrollTab={setFacEnrollTab} />}
 
       {/* Disclaimer */}
       <div className="text-xs text-tertiary bg-amber-50/50 border border-amber-200 rounded-lg px-4 py-3 leading-relaxed">
@@ -559,7 +555,27 @@ function DepartmentsCoursesTab({ infraTab, setInfraTab }: {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  SUBJECTS TAB
+//  SUBJECTS & SECTIONS TAB
+// ══════════════════════════════════════════════════════════════════════════════
+
+function SubjectsSectionsTab({ subjectTab, setSubjectTab }: {
+  subjectTab: SubjectTab; setSubjectTab: (t: SubjectTab) => void
+}) {
+  return (
+    <div className="space-y-6">
+      <SegmentedControl
+        options={[{ key: "subjects" as const, label: "Subjects Management" }, { key: "sections" as const, label: "Sections Management" }]}
+        selected={subjectTab}
+        onSelect={(key) => setSubjectTab(key)}
+      />
+      {subjectTab === "subjects" && <SubjectsTab />}
+      {subjectTab === "sections" && <SectionsTab />}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SUBJECTS TAB (internal)
 // ══════════════════════════════════════════════════════════════════════════════
 
 function SubjectsTab() {
@@ -790,7 +806,7 @@ function SubjectsTab() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  SECTIONS TAB
+//  SECTIONS TAB (internal)
 // ══════════════════════════════════════════════════════════════════════════════
 
 function SectionsTab() {
@@ -1021,7 +1037,27 @@ function SectionsTab() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  FACULTY-SUBJECT TAB
+//  FACULTY LOADING & ENROLLMENTS TAB
+// ══════════════════════════════════════════════════════════════════════════════
+
+function FacultyEnrollTab({ facEnrollTab, setFacEnrollTab }: {
+  facEnrollTab: FacEnrollTab; setFacEnrollTab: (t: FacEnrollTab) => void
+}) {
+  return (
+    <div className="space-y-6">
+      <SegmentedControl
+        options={[{ key: "faculty" as const, label: "Faculty Loading" }, { key: "enrollments" as const, label: "Student Enrollments" }]}
+        selected={facEnrollTab}
+        onSelect={(key) => setFacEnrollTab(key)}
+      />
+      {facEnrollTab === "faculty" && <FacultyTab />}
+      {facEnrollTab === "enrollments" && <EnrollmentsTab />}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  FACULTY LOADING TAB (internal)
 // ══════════════════════════════════════════════════════════════════════════════
 
 function FacultyTab() {
@@ -1279,7 +1315,7 @@ function FacultyTab() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  STUDENT ENROLLMENTS TAB
+//  STUDENT ENROLLMENTS TAB (internal)
 // ══════════════════════════════════════════════════════════════════════════════
 
 function EnrollmentsTab() {
