@@ -2,6 +2,7 @@
 
 import { useMemo, useCallback } from "react"
 import type { CoverageData, CoverageTrendEntry } from "@/lib/types"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 
 interface CoverageReportProps {
   overall: CoverageData
@@ -287,6 +288,7 @@ export function CoverageReport({ overall, byDepartment, trend, departmentName }:
     () => [...byDepartment].sort((a, b) => b.coveragePercentage - a.coveragePercentage),
     [byDepartment]
   )
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(sortedDepts, 25)
 
   const hasData = overall.totalStudents > 0
 
@@ -389,7 +391,7 @@ export function CoverageReport({ overall, byDepartment, trend, departmentName }:
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sortedDepts.map((dept) => (
+              {paginatedItems.map((dept) => (
                 <tr key={dept.departmentId} className="transition-colors duration-150 hover:bg-surface-hover">
                   <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{dept.departmentName}</td>
                   <td className="px-4 py-4 text-center font-mono text-sm text-secondary">{dept.totalStudents}</td>
@@ -403,6 +405,7 @@ export function CoverageReport({ overall, byDepartment, trend, departmentName }:
             </tbody>
           </table>
         </div>
+        <Paginator {...{ page, totalPages, pageSize, setPage, setPageSize }} totalItems={sortedDepts.length} />
       </div>
     </div>
   )

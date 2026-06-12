@@ -1,6 +1,7 @@
 "use client"
 
 import type { BacklogEntry } from "@/lib/types"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 
 interface BacklogAgingTableProps {
   entries: BacklogEntry[]
@@ -43,57 +44,70 @@ export function BacklogAgingTable({ entries }: BacklogAgingTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {grouped.map((group) => {
-              const bucketColor =
-                group.label === "0 - 3 Days" ? "bg-emerald-50" :
-                group.label === "4 - 7 Days" ? "bg-amber-50" :
-                group.label === "8 - 14 Days" ? "bg-orange-50" :
-                "bg-red-50"
-
-              const bucketBadge =
-                group.label === "0 - 3 Days" ? "bg-emerald-100 text-emerald-700" :
-                group.label === "4 - 7 Days" ? "bg-amber-100 text-amber-700" :
-                group.label === "8 - 14 Days" ? "bg-orange-100 text-orange-700" :
-                "bg-red-100 text-red-700"
-
-              if (group.entries.length === 0) {
-                return (
-                  <tr key={group.label} className={`${bucketColor} border-b border-default`}>
-                    <td className="px-4 py-3" colSpan={6}>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${bucketBadge}`}>
-                        {group.label}
-                      </span>
-                      <span className="text-xs text-tertiary ml-2">No entries</span>
-                    </td>
-                  </tr>
-                )
-              }
-
-              return group.entries.map((entry, idx) => (
-                <tr key={entry.id} className={`${idx === 0 ? bucketColor : ""} transition-colors duration-150 hover:bg-surface-hover`}>
-                  <td className="px-4 py-3">
-                    {idx === 0 && (
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${bucketBadge}`}>
-                        {group.label}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
-                  <td className="px-4 py-3 text-secondary">{entry.studentName}</td>
-                  <td className="px-4 py-3 text-center font-mono text-xs text-tertiary">{entry.date}</td>
-                  <td className="px-4 py-3 text-center">
-                    <StatusBadge status={entry.status} />
-                  </td>
-                  <td className="px-4 py-3 text-center font-mono text-sm font-semibold text-secondary">
-                    {entry.ageDays}d
-                  </td>
-                </tr>
-              ))
-            })}
+            {grouped.map((group) => (
+              <AgingGroup key={group.label} group={group} />
+            ))}
           </tbody>
         </table>
       </div>
     </div>
+  )
+}
+
+function AgingGroup({ group }: { group: { label: string; entries: BacklogEntry[] } }) {
+  const bucketColor =
+    group.label === "0 - 3 Days" ? "bg-emerald-50" :
+    group.label === "4 - 7 Days" ? "bg-amber-50" :
+    group.label === "8 - 14 Days" ? "bg-orange-50" :
+    "bg-red-50"
+
+  const bucketBadge =
+    group.label === "0 - 3 Days" ? "bg-emerald-100 text-emerald-700" :
+    group.label === "4 - 7 Days" ? "bg-amber-100 text-amber-700" :
+    group.label === "8 - 14 Days" ? "bg-orange-100 text-orange-700" :
+    "bg-red-100 text-red-700"
+
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(group.entries, 25)
+
+  if (group.entries.length === 0) {
+    return (
+      <tr className={`${bucketColor} border-b border-default`}>
+        <td className="px-4 py-3" colSpan={6}>
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${bucketBadge}`}>
+            {group.label}
+          </span>
+          <span className="text-xs text-tertiary ml-2">No entries</span>
+        </td>
+      </tr>
+    )
+  }
+
+  return (
+    <>
+      {paginatedItems.map((entry) => (
+        <tr key={entry.id} className="transition-colors duration-150 hover:bg-surface-hover">
+          <td className="px-4 py-3">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${bucketBadge}`}>
+              {group.label}
+            </span>
+          </td>
+          <td className="px-4 py-3 font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
+          <td className="px-4 py-3 text-secondary">{entry.studentName}</td>
+          <td className="px-4 py-3 text-center font-mono text-xs text-tertiary">{entry.date}</td>
+          <td className="px-4 py-3 text-center">
+            <StatusBadge status={entry.status} />
+          </td>
+          <td className="px-4 py-3 text-center font-mono text-sm font-semibold text-secondary">
+            {entry.ageDays}d
+          </td>
+        </tr>
+      ))}
+      <tr>
+        <td colSpan={6} className="px-4 py-1">
+          <Paginator {...{ page, totalPages, pageSize, setPage, setPageSize }} totalItems={group.entries.length} />
+        </td>
+      </tr>
+    </>
   )
 }
 

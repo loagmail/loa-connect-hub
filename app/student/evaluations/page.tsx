@@ -86,7 +86,7 @@ export default function StudentEvaluationsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6 sm:space-y-8 pb-12">
       <div className="animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
           <div>
@@ -121,7 +121,7 @@ export default function StudentEvaluationsPage() {
 
       {!outOfRange && total > 0 && (
         <div className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {[
               { label: "Pending", value: pending.length, color: "from-amber-500 to-orange-500", bg: "bg-amber-50 border-amber-200", icon: "⏳" },
               { label: "Submitted", value: evaluations.filter((e) => e.status === "SUBMITTED").length, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-50 border-emerald-200", icon: "✅" },

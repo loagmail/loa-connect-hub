@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import type { RawAppointmentData } from "@/lib/types"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 
 interface ScheduleViewProps {
   rawAppointments: RawAppointmentData[]
@@ -46,103 +47,99 @@ export function ScheduleView({ rawAppointments }: ScheduleViewProps) {
 
   return (
     <div className="space-y-3">
-      {sortedFaculties.map(([facultyId, { facultyName, appointments }]) => {
-        const isExpanded = expandedFaculties.has(facultyId)
-
-        return (
-          <div
+        {sortedFaculties.map(([facultyId, { facultyName, appointments }]) => (
+          <FacultyScheduleCard
             key={facultyId}
-            className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
-          >
-            <button
-              onClick={() => toggleFaculty(facultyId)}
-              className="w-full flex items-center gap-3 px-6 py-4 text-left transition-colors duration-150 hover:bg-surface-hover/80"
-            >
-              <svg
-                className={`w-4 h-4 text-tertiary transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+            facultyId={facultyId}
+            facultyName={facultyName}
+            appointments={appointments}
+            isExpanded={expandedFaculties.has(facultyId)}
+            onToggle={toggleFaculty}
+          />
+        ))}
+    </div>
+  )
+}
 
-              <span className="text-sm font-bold text-primary">{facultyName}</span>
+function FacultyScheduleCard({
+  facultyId,
+  facultyName,
+  appointments,
+  isExpanded,
+  onToggle,
+}: {
+  facultyId: string
+  facultyName: string
+  appointments: RawAppointmentData[]
+  isExpanded: boolean
+  onToggle: (id: string) => void
+}) {
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(appointments, 25)
 
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold-100 text-gold-800 text-xs">
-                {appointments.length} appointment{appointments.length !== 1 ? "s" : ""}
-              </span>
-            </button>
+  return (
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+      <button
+        onClick={() => onToggle(facultyId)}
+        className="w-full flex items-center gap-3 px-6 py-4 text-left transition-colors duration-150 hover:bg-surface-hover/80"
+      >
+        <svg
+          className={`w-4 h-4 text-tertiary transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
 
-            {isExpanded && (
-              <div className="overflow-x-auto border-t border-default">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-surface/50 border-b border-default">
-                      <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
-                        Date
-                      </th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
-                        Day
-                      </th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
-                        Start
-                      </th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
-                        End
-                      </th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
-                        Student
-                      </th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {appointments.map((apt) => {
-                      const dateObj = new Date(apt.date + "T00:00:00")
-                      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" })
-                      const formattedDate = dateObj.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
+        <span className="text-sm font-bold text-primary">{facultyName}</span>
 
-                      return (
-                        <tr
-                          key={apt.id}
-                          className="transition-colors duration-150 hover:bg-surface-hover/80"
-                        >
-                          <td className="px-6 py-3 font-medium text-secondary whitespace-nowrap">
-                            {formattedDate}
-                          </td>
-                          <td className="px-4 py-3 text-tertiary whitespace-nowrap">
-                            {dayName}
-                          </td>
-                          <td className="px-4 py-3 font-mono text-sm text-secondary whitespace-nowrap">
-                            {apt.startTime}
-                          </td>
-                          <td className="px-4 py-3 font-mono text-sm text-secondary whitespace-nowrap">
-                            {apt.endTime}
-                          </td>
-                          <td className="px-4 py-3 text-secondary whitespace-nowrap">
-                            {apt.studentName}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <StatusBadge status={apt.status} />
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )
-      })}
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold-100 text-gold-800 text-xs">
+          {appointments.length} appointment{appointments.length !== 1 ? "s" : ""}
+        </span>
+      </button>
+
+      {isExpanded && (
+        <div className="overflow-x-auto border-t border-default">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-surface/50 border-b border-default">
+                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Date</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Day</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Start</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">End</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Student</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedItems.map((apt) => {
+                const dateObj = new Date(apt.date + "T00:00:00")
+                const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" })
+                const formattedDate = dateObj.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+
+                return (
+                  <tr key={apt.id} className="transition-colors duration-150 hover:bg-surface-hover/80">
+                    <td className="px-6 py-3 font-medium text-secondary whitespace-nowrap">{formattedDate}</td>
+                    <td className="px-4 py-3 text-tertiary whitespace-nowrap">{dayName}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-secondary whitespace-nowrap">{apt.startTime}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-secondary whitespace-nowrap">{apt.endTime}</td>
+                    <td className="px-4 py-3 text-secondary whitespace-nowrap">{apt.studentName}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <StatusBadge status={apt.status} />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          <Paginator {...{ page, totalPages, pageSize, setPage, setPageSize }} totalItems={appointments.length} />
+        </div>
+      )}
     </div>
   )
 }

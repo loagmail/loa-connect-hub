@@ -2,6 +2,7 @@
 
 import { useMemo, useCallback } from "react"
 import type { WorkloadDistributionEntry } from "@/lib/types"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 
 interface WorkloadDistributionReportProps {
   entries: WorkloadDistributionEntry[]
@@ -26,6 +27,7 @@ export function WorkloadDistributionReport({
     () => [...entries].sort((a, b) => b.total - a.total),
     [entries]
   )
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(sorted, 25)
 
   const maxTotal = useMemo(
     () => Math.max(...entries.map((e) => e.total), 1),
@@ -243,7 +245,7 @@ export function WorkloadDistributionReport({
                 </td>
                 <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">100%</td>
               </tr>
-              {sorted.map((entry) => (
+              {paginatedItems.map((entry) => (
                 <tr key={entry.facultyId} className="transition-colors duration-150 hover:bg-surface-hover">
                   <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
                   <td className="px-4 py-4 text-sm text-tertiary">{entry.departmentName}</td>
@@ -264,6 +266,7 @@ export function WorkloadDistributionReport({
             </tbody>
           </table>
         </div>
+        <Paginator {...{ page, totalPages, pageSize, setPage, setPageSize }} totalItems={sorted.length} />
       </div>
     </div>
   )

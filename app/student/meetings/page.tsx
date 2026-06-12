@@ -99,7 +99,7 @@ export default async function StudentMeetings(props: {
   const filterLabel = filterSegments.find((s) => s.key === activeFilter)?.label || "All Consultations"
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8 pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <h2 className="text-lg font-bold text-primary">

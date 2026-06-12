@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Skeleton from "@/components/Skeleton"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 
 interface DeletedUser {
   id: string
@@ -16,6 +17,7 @@ export default function DeletedUsersPage() {
   const [users, setUsers] = useState<DeletedUser[]>([])
   const [loading, setLoading] = useState(true)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(users, 25)
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -115,7 +117,7 @@ export default function DeletedUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {users.map((user) => (
+                {paginatedItems.map((user) => (
                   <tr key={user.id} className="hover:bg-surface/80 transition-colors">
                     <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{user.name}</td>
                     <td className="px-4 py-4 text-secondary whitespace-nowrap">{user.email}</td>
@@ -151,7 +153,7 @@ export default function DeletedUsersPage() {
 
           {/* Mobile cards */}
           <div className="mobile-only space-y-3">
-            {users.map((user) => (
+            {paginatedItems.map((user) => (
               <div key={user.id} className="rounded-2xl border border-default/70 bg-surface p-4 shadow-sm space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -182,6 +184,7 @@ export default function DeletedUsersPage() {
               </div>
             ))}
           </div>
+          <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={users.length} setPage={setPage} setPageSize={setPageSize} />
         </>
       )}
 

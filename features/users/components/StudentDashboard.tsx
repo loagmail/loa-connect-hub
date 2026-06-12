@@ -214,7 +214,7 @@ export default function StudentDashboard({ studentName, course, appointments }: 
       {facultyGroups.length > 0 && (
         <div className="space-y-4 animate-fade-in" style={{ animationDelay: "0.25s" }}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-primary">Your Consultation Journey</h2>
+            <h2 className="text-sm font-bold text-primary">Consultations by Faculty</h2>
             <span className="text-2xl">{stats.completed === stats.total ? "🏆" : "📈"}</span>
           </div>
 
@@ -229,8 +229,8 @@ export default function StudentDashboard({ studentName, course, appointments }: 
                   <p className="text-xs text-tertiary truncate">{group.email}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-lg font-bold text-primary">{group.pct}%</p>
-                  <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">{group.completed}/{group.total}</p>
+                  <p className="text-lg font-bold text-primary">{group.completed}/{group.total}</p>
+                  <p className="text-[10px] font-semibold text-tertiary uppercase tracking-wider">completed</p>
                 </div>
               </div>
 

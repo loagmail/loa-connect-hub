@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 import BulkStudentImport from "@/features/users/components/bulk-import/BulkStudentImport"
 import BulkFacultyImport from "@/features/users/components/bulk-import/BulkFacultyImport"
 import Skeleton, { SkeletonMetricGrid, SkeletonTable } from "@/components/ui/Skeleton"
@@ -80,6 +81,11 @@ function ViewMappings() {
     if (studentSectionFilter && m.section.id !== studentSectionFilter) return false
     return true
   })
+
+  const facPagination = usePagination(filteredFaculty ?? [], 25)
+  const studentPagination = usePagination(filteredStudents ?? [], 25)
+  const enrolled = viewingClass ? (studentData || []).filter((e) => e.section.id === viewingClass.section.id) : []
+  const enrolledPagination = usePagination(enrolled, 25)
 
   return (
     <div className="card p-6">
@@ -174,7 +180,7 @@ function ViewMappings() {
                     {filteredFaculty?.length === 0 ? (
                       <tr><td colSpan={5} className="p-4 text-center text-xs text-tertiary">No mappings yet.</td></tr>
                     ) : (
-                      filteredFaculty?.map((m) => (
+                      facPagination.paginatedItems.map((m) => (
                         <tr key={m.id} className="border-b border-default/50 hover:bg-surface-hover">
                           <td className="p-2 font-medium text-secondary">{m.faculty.name}</td>
                           <td className="p-2">
@@ -205,7 +211,7 @@ function ViewMappings() {
                 {filteredFaculty?.length === 0 ? (
                   <p className="text-xs text-tertiary text-center py-8">No mappings yet.</p>
                 ) : (
-                  filteredFaculty?.map((m) => (
+                  facPagination.paginatedItems.map((m) => (
                     <div key={m.id} className="rounded-xl border border-default bg-surface p-3 space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
@@ -227,6 +233,7 @@ function ViewMappings() {
                   ))
                 )}
               </div>
+              <Paginator page={facPagination.page} totalPages={facPagination.totalPages} pageSize={facPagination.pageSize} totalItems={filteredFaculty?.length ?? 0} setPage={facPagination.setPage} setPageSize={facPagination.setPageSize} showSizeSelector={false} />
             </div>
           )}
 
@@ -254,7 +261,7 @@ function ViewMappings() {
                     {filteredStudents?.length === 0 ? (
                       <tr><td colSpan={2} className="p-4 text-center text-xs text-tertiary">No enrollments yet.</td></tr>
                     ) : (
-                      filteredStudents?.map((m) => (
+                      studentPagination.paginatedItems.map((m) => (
                         <tr key={m.id} className="border-b border-default/50 hover:bg-surface-hover">
                           <td className="p-2 font-medium text-secondary">{m.student.name}</td>
                           <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
@@ -268,7 +275,7 @@ function ViewMappings() {
                 {filteredStudents?.length === 0 ? (
                   <p className="text-xs text-tertiary text-center py-8">No enrollments yet.</p>
                 ) : (
-                  filteredStudents?.map((m) => (
+                  studentPagination.paginatedItems.map((m) => (
                     <div key={m.id} className="rounded-xl border border-default bg-surface p-3 flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-primary truncate">{m.student.name}</p>
@@ -278,6 +285,7 @@ function ViewMappings() {
                   ))
                 )}
               </div>
+              <Paginator page={studentPagination.page} totalPages={studentPagination.totalPages} pageSize={studentPagination.pageSize} totalItems={filteredStudents?.length ?? 0} setPage={studentPagination.setPage} setPageSize={studentPagination.setPageSize} showSizeSelector={false} />
             </div>
           )}
         </>
@@ -303,7 +311,6 @@ function ViewMappings() {
             </div>
             <div className="p-4 max-h-[60vh] overflow-y-auto">
               {(() => {
-                const enrolled = (studentData || []).filter((e) => e.section.id === viewingClass.section.id)
                 if (enrolled.length === 0) {
                   return <p className="text-xs text-tertiary text-center py-6">No students enrolled in this section.</p>
                 }
@@ -318,7 +325,7 @@ function ViewMappings() {
                       </tr>
                     </thead>
                     <tbody>
-                      {enrolled.map((e, i) => (
+                      {enrolledPagination.paginatedItems.map((e, i) => (
                         <tr key={e.id} className="border-b border-default hover:bg-surface-hover">
                           <td className="p-2 text-tertiary">{i + 1}</td>
                           <td className="p-2 font-medium text-secondary">{e.student.name}</td>
@@ -328,7 +335,7 @@ function ViewMappings() {
                     </tbody>
                   </table>
                   <div className="mobile-only space-y-1.5">
-                    {enrolled.map((e, i) => (
+                    {enrolledPagination.paginatedItems.map((e, i) => (
                       <div key={e.id} className="flex items-center gap-3 px-2 py-2 rounded-lg bg-surface-hover/50 text-xs">
                         <span className="text-tertiary font-mono w-5 shrink-0 text-right">{i + 1}</span>
                         <div className="min-w-0 flex-1">
@@ -338,6 +345,7 @@ function ViewMappings() {
                       </div>
                     ))}
                   </div>
+                    <Paginator page={enrolledPagination.page} totalPages={enrolledPagination.totalPages} pageSize={enrolledPagination.pageSize} totalItems={enrolled.length} setPage={enrolledPagination.setPage} setPageSize={enrolledPagination.setPageSize} showSizeSelector={false} />
                   </>
                 )
               })()}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useApiGet, invalidate } from "@/lib/api/client"
 import SubmitButton from "@/components/ui/SubmitButton"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 import { SkeletonTable } from "@/components/ui/Skeleton"
 import LockedTab from "@/components/ui/LockedTab"
 
@@ -634,6 +635,8 @@ function SubjectsTab() {
     return s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
   })
 
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(filtered ?? [], 25)
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newCode || !newName) return
@@ -732,7 +735,7 @@ function SubjectsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered?.map((s) => (
+                  {paginatedItems.map((s) => (
                     <tr key={s.id} className="border-b border-slate-50 hover:bg-surface-hover/70">
                       <td className="px-6 py-4 font-mono text-xs font-bold text-secondary">{s.code}</td>
                       <td className="px-6 py-4 text-primary font-medium">{s.name}</td>
@@ -753,7 +756,7 @@ function SubjectsTab() {
               </table>
             </div>
             <div className="mobile-only space-y-2">
-              {filtered?.map((s) => (
+              {paginatedItems.map((s) => (
                 <div key={s.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -773,6 +776,7 @@ function SubjectsTab() {
                 </div>
               ))}
             </div>
+          <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={filtered?.length ?? 0} setPage={setPage} setPageSize={setPageSize} />
           </>
         )}
         {data && <p className="text-xs text-tertiary">{data.length} subject{data.length !== 1 ? "s" : ""}</p>}
@@ -864,6 +868,8 @@ function SectionsTab() {
     const q = search.toLowerCase()
     return s.name.toLowerCase().includes(q) || s.program.toLowerCase().includes(q)
   })
+
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(filtered ?? [], 25)
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -963,7 +969,7 @@ function SectionsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered?.map((s) => (
+                  {paginatedItems.map((s) => (
                     <tr key={s.id} className="border-b border-slate-50 hover:bg-surface-hover/70">
                       <td className="px-6 py-4 font-medium text-secondary">{s.program}</td>
                       <td className="px-6 py-4 text-primary font-medium">{s.name}</td>
@@ -984,7 +990,7 @@ function SectionsTab() {
               </table>
             </div>
             <div className="mobile-only space-y-2">
-              {filtered?.map((s) => (
+              {paginatedItems.map((s) => (
                 <div key={s.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -1004,6 +1010,7 @@ function SectionsTab() {
                 </div>
               ))}
             </div>
+          <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={filtered?.length ?? 0} setPage={setPage} setPageSize={setPageSize} />
           </>
         )}
         {data && <p className="text-xs text-tertiary">{data.length} section{data.length !== 1 ? "s" : ""}</p>}
@@ -1182,6 +1189,8 @@ function FacultyTab() {
     )
   })
 
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(filtered, 25)
+
   const deptPills = [
     { id: "all", label: "All" },
     ...departments.map((d) => ({ id: d.id, label: d.name })),
@@ -1266,7 +1275,7 @@ function FacultyTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((m) => (
+                  {paginatedItems.map((m) => (
                     <tr key={m.id} data-id={m.id} className={`border-b border-default hover:bg-surface-hover ${conflictId === m.id ? "bg-amber-50 border-amber-300" : ""}`}>
                       <td className="p-2 font-medium text-secondary">{m.faculty.name}</td>
                       <td className="p-2 text-tertiary">{m.faculty.email}</td>
@@ -1284,7 +1293,7 @@ function FacultyTab() {
               </table>
             </div>
             <div className="mobile-only space-y-2">
-              {filtered.map((m) => (
+              {paginatedItems.map((m) => (
                 <div key={m.id} data-id={m.id} className={`p-4 rounded-xl bg-surface border space-y-2 ${conflictId === m.id ? "border-amber-300 bg-amber-50" : "border-default"}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -1306,6 +1315,7 @@ function FacultyTab() {
                 </div>
               ))}
             </div>
+            <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={filtered.length} setPage={setPage} setPageSize={setPageSize} />
           </>
         )}
         {data && <p className="text-xs text-tertiary">{filtered.length} mapping{filtered.length !== 1 ? "s" : ""}{deptFilter !== "all" ? ` (${byDept.length} in department)` : ""}</p>}
@@ -1486,6 +1496,8 @@ function EnrollmentsTab() {
       (m.faculty_subject?.faculty.name ?? "").toLowerCase().includes(q)
     )
   })
+
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(filtered ?? [], 25)
 
   const domainOk = (email: string) => email.endsWith("@itmlyceumalabang.onmicrosoft.com")
 
@@ -1787,7 +1799,7 @@ function EnrollmentsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered?.map((m) => (
+                  {paginatedItems.map((m) => (
                     <tr key={m.id} className="border-b border-default hover:bg-surface-hover">
                       <td className="p-2 font-medium text-secondary">{m.student.name}</td>
                       <td className="p-2 text-tertiary">{m.student.email}</td>
@@ -1809,7 +1821,7 @@ function EnrollmentsTab() {
               </table>
             </div>
             <div className="mobile-only space-y-2">
-              {filtered?.map((m) => (
+              {paginatedItems.map((m) => (
                 <div key={m.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -1839,6 +1851,7 @@ function EnrollmentsTab() {
                 </div>
               ))}
             </div>
+            <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={filtered?.length ?? 0} setPage={setPage} setPageSize={setPageSize} />
           </>
         )}
         {data && <p className="text-xs text-tertiary">{data.length} enrollment{data.length !== 1 ? "s" : ""}</p>}

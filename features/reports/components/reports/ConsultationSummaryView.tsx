@@ -2,6 +2,7 @@
 
 import { useState, useCallback, Fragment } from "react"
 import type { ConsultationSummaryData } from "@/lib/types"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 
 interface ConsultationSummaryViewProps {
   summaries: ConsultationSummaryData[]
@@ -21,6 +22,8 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
       return next
     })
   }, [])
+
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(summaries, 25)
 
   if (summaries.length === 0) {
     return (
@@ -61,7 +64,7 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {summaries.map((item) => {
+            {paginatedItems.map((item) => {
               const isExpanded = expandedRows.has(item.id)
 
               return (
@@ -159,6 +162,7 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
           </tbody>
         </table>
       </div>
+      <Paginator {...{ page, totalPages, pageSize, setPage, setPageSize }} totalItems={summaries.length} />
     </div>
   )
 }

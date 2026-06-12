@@ -46,21 +46,33 @@ interface TimelineItem {
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr + "T00:00:00")
-  return d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 
-function formatDateTime(dateStr: string) {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })
+function formatTime(timeStr: string) {
+  const [h, m] = timeStr.split(":").map(Number)
+  const ampm = h >= 12 ? "PM" : "AM"
+  const hour = h % 12 || 12
+  return `${hour}:${m.toString().padStart(2, "0")} ${ampm}`
 }
 
-function daysBetween(a: string, b: string): number {
-  const d1 = new Date(a + "T00:00:00").getTime()
-  const d2 = new Date(b + "T00:00:00").getTime()
-  return Math.round((d2 - d1) / 86400000)
+function formatMonth(dateStr: string) {
+  const d = new Date(dateStr + "T00:00:00")
+  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 }
 
-export default function ConsultationHistory({ studentName, course, appointments, evaluations = [], auditEvents = [] }: Props) {
+function getMonthKey(dateStr: string) {
+  return dateStr.slice(0, 7)
+}
+
+const statusColors: Record<string, string> = {
+  COMPLETED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  APPROVED: "bg-gold-100 text-gold-700 dark:bg-amber-900/40 dark:text-amber-300",
+  PENDING: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+}
+
+export default function ConsultationHistory({ studentName: _studentName, course, appointments, evaluations = [], auditEvents = [] }: Props) {
   const timeline = useMemo(() => {
     const items: TimelineItem[] = [
       ...appointments.map((a) => ({
@@ -71,20 +83,18 @@ export default function ConsultationHistory({ studentName, course, appointments,
       })),
       ...evaluations.map((e) => {
         const d = new Date(e.submittedAt)
-        const dateStr = d.toISOString().slice(0, 10)
         return {
           type: "evaluation" as const,
-          date: dateStr,
+          date: d.toISOString().slice(0, 10),
           sortKey: e.submittedAt,
           data: e,
         }
       }),
       ...auditEvents.map((e) => {
         const d = new Date(e.createdAt)
-        const dateStr = d.toISOString().slice(0, 10)
         return {
           type: "audit" as const,
-          date: dateStr,
+          date: d.toISOString().slice(0, 10),
           sortKey: e.createdAt,
           data: e,
         }
@@ -94,22 +104,19 @@ export default function ConsultationHistory({ studentName, course, appointments,
     return items
   }, [appointments, evaluations, auditEvents])
 
-  const completed = appointments.filter((a) => a.status === "COMPLETED")
-  const uniqueFaculty = useMemo(
-    () => [...new Set(appointments.map((a) => a.faculty?.name).filter(Boolean))],
-    [appointments]
-  )
-  const auditFailCount = auditEvents.filter((e) => e.action === "EMAIL_FAILED").length
-
-  const firstDate = timeline.length > 0 ? timeline[0].date : null
-  const lastDate = timeline.length > 0 ? timeline[timeline.length - 1].date : null
-  const timespan = firstDate && lastDate ? daysBetween(firstDate, lastDate) : 0
-  const submissionCount = evaluations.length
-
-  const firstName = studentName.split(" ")[0]
+  const grouped = useMemo(() => {
+    const map = new Map<string, TimelineItem[]>()
+    for (const item of timeline) {
+      const key = getMonthKey(item.date)
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(item)
+    }
+    const sorted = Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a))
+    return sorted
+  }, [timeline])
 
   return (
-    <div className="max-w-6xl mx-auto pb-16">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
       {timeline.length === 0 ? (
         <div className="card p-12 sm:p-16 bg-surface text-center animate-fade-in mt-8">
           <div className="w-16 h-16 bg-surface border border-default rounded-2xl flex items-center justify-center mx-auto mb-5">
@@ -127,248 +134,129 @@ export default function ConsultationHistory({ studentName, course, appointments,
           </Link>
         </div>
       ) : (
-        <article className="space-y-0">
-          {/* ── Title Page ────────────────────────────────── */}
-          <div className="text-center py-12 sm:py-16 border-b border-default mb-10">
-            <p className="text-xs font-semibold text-gold-600 uppercase tracking-widest mb-3">Student Activity Log</p>
-            <h1 className="text-3xl sm:text-4xl font-bold text-primary tracking-tight leading-tight">
-              {studentName}&apos;s Journey
-            </h1>
-            <p className="text-base text-tertiary mt-3">
-              {studentName}{course ? ` · ${course}` : ""}
-            </p>
-            <div className="flex items-center justify-center gap-4 mt-6 text-xs text-tertiary">
-              <span>{timeline.length} entr{timeline.length === 1 ? "y" : "ies"}</span>
-              <span className="text-slate-300">·</span>
-              <span>{completed.length} consultations</span>
-              {submissionCount > 0 && (
-                <>
-                  <span className="text-slate-300">·</span>
-                  <span>{submissionCount} evaluation{submissionCount !== 1 ? "s" : ""}</span>
-                </>
-              )}
-              {auditFailCount > 0 && (
-                <>
-                  <span className="text-slate-300">·</span>
-                  <span>{auditFailCount} email {auditFailCount === 1 ? "issue" : "issues"}</span>
-                </>
-              )}
-              <span className="text-slate-300">·</span>
-              <span>{uniqueFaculty.length} facult{uniqueFaculty.length === 1 ? "y" : "ies"}</span>
-              {timespan > 0 && (
-                <>
-                  <span className="text-slate-300">·</span>
-                  <span>{timespan} day{timespan !== 1 ? "s" : ""}</span>
-                </>
-              )}
-            </div>
-          </div>
+        <>
+          <h1 className="text-xl sm:text-2xl font-bold text-primary pt-6 pb-1">Activity Timeline</h1>
+          {course && <p className="text-sm text-tertiary mb-6">{course}</p>}
 
-          {/* ── Foreword ──────────────────────────────────── */}
-          <div className="prose prose-sm max-w-none text-secondary mb-12 px-1">
-            <p>
-              This report documents {firstName}&apos;s activity throughout {firstName.split(" ")[0]}&apos;s academic journey.
-              {firstDate && <> It begins on <strong>{formatDate(firstDate)}</strong></>}
-              {lastDate && firstDate !== lastDate && <> and spans through <strong>{formatDate(lastDate)}</strong></>}
-              {timespan > 0 && <>, covering a period of <strong>{timespan} day{timespan !== 1 ? "s" : ""}</strong>.</>}
-              {completed.length > 0 && <> Of the <strong>{appointments.length}</strong> consultation{appointments.length === 1 ? "" : "s"} conducted, <strong>{completed.length}</strong> {completed.length === 1 ? "has" : "have"} been completed.</>}
-              {submissionCount > 0 && <> {firstName} also submitted <strong>{submissionCount}</strong> facult{submissionCount === 1 ? "y" : "ies"} evaluation{submissionCount !== 1 ? "s" : ""}.</>}
-              {uniqueFaculty.length > 0 && <> {firstName} engaged with <strong>{uniqueFaculty.length}</strong> facult{uniqueFaculty.length === 1 ? "y" : "ies"} member{uniqueFaculty.length === 1 ? "" : "s"}.</>}
-            </p>
-          </div>
+          <div className="relative">
+            {grouped.map(([monthKey, items]) => (
+              <div key={monthKey} className="mb-8">
+                <div className="sticky top-0 z-10 bg-white dark:bg-gray-950 pb-3 pt-2">
+                  <h2 className="text-sm font-bold text-primary uppercase tracking-wider">
+                    {formatMonth(items[0].date)}
+                  </h2>
+                </div>
 
-          {/* ── Narrative Entries ─────────────────────────── */}
-          <div className="space-y-10">
-            {timeline.map((item, i) => {
-              const prev = i > 0 ? timeline[i - 1] : null
-              const gap = prev ? daysBetween(prev.date, item.date) : 0
-              const isEval = item.type === "evaluation"
+                <div className="relative">
+                  <div className="absolute left-[17px] sm:left-[19px] top-2 bottom-0 w-px bg-slate-200 dark:bg-gray-700" />
 
-              if (isEval) {
-                const ev = item.data as HistoryEvaluation
-                return (
-                  <section key={ev.id} className="animate-fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
-                    {gap > 1 && (
-                      <div className="flex items-center gap-3 mb-5 text-xs text-tertiary">
-                        <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0" />
-                        <span className="italic">{gap} day{gap !== 1 ? "s" : ""} later</span>
-                        <span className="flex-1 h-px bg-slate-200" />
-                      </div>
-                    )}
-                    <div className="group relative pl-8 sm:pl-10">
-                      <div className="absolute left-[11px] sm:left-[13px] top-0 bottom-0 w-px bg-slate-200" />
-                      <div className="absolute left-0 sm:left-1 top-1 w-[23px] sm:w-[27px] h-[23px] sm:h-[27px] rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm ring-4 ring-white z-10 bg-purple-500 text-white">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <div className="pb-2">
-                        <time className="text-xs font-semibold text-purple-600 uppercase tracking-wider">
-                          {formatDateTime(ev.submittedAt)}
-                        </time>
-                        <div className="mt-4 space-y-4 text-sm text-secondary leading-relaxed">
-                          <p>
-                            {firstName} submitted a facult{firstName.split(" ")[0] ? "y" : ""} evaluation for <strong>{ev.facultyName}</strong>.
+                  {items.map((item, i) => {
+                    if (item.type === "evaluation") {
+                      const ev = item.data as HistoryEvaluation
+                      return (
+                        <div key={`eval-${ev.id}`} className="relative pl-10 sm:pl-12 pb-6 last:pb-0">
+                          <div className="absolute left-[11px] sm:left-[13px] top-[6px] w-[13px] h-[13px] rounded-full ring-2 ring-white dark:ring-gray-950 z-10 bg-purple-500" />
+                          <time className="text-xs text-tertiary font-medium">{formatDateTime(ev.submittedAt)}</time>
+                          <div className="mt-1 bg-surface border border-default rounded-lg p-3 sm:p-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Evaluation</span>
+                                <p className="text-sm text-secondary mt-1">
+                                  Evaluated <span className="font-semibold text-primary">{ev.facultyName}</span>
+                                </p>
+                              </div>
+                              <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                                Submitted
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    if (item.type === "audit") {
+                      const ev = item.data as HistoryAuditEvent
+                      return (
+                        <div key={`audit-${ev.id}`} className="relative pl-10 sm:pl-12 pb-6 last:pb-0">
+                          <div className="absolute left-[11px] sm:left-[13px] top-[6px] w-[13px] h-[13px] rounded-full ring-2 ring-white dark:ring-gray-950 z-10 bg-red-500" />
+                          <time className="text-xs text-tertiary font-medium">{formatDateTime(ev.createdAt)}</time>
+                          <div className="mt-1 bg-surface border border-default rounded-lg p-3 sm:p-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">Email Issue</span>
+                                <p className="text-sm text-secondary mt-1">
+                                  Delivery to <span className="font-semibold text-primary">{ev.email}</span> failed
+                                </p>
+                                {ev.details && <p className="text-xs text-tertiary mt-0.5">{ev.details}</p>}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    const apt = item.data as HistoryAppointment
+                    const isCompleted = apt.status === "COMPLETED"
+
+                    return (
+                      <div key={`apt-${apt.id}`} className="relative pl-10 sm:pl-12 pb-6 last:pb-0">
+                        <div className={`absolute left-[11px] sm:left-[13px] top-[6px] w-[13px] h-[13px] rounded-full ring-2 ring-white dark:ring-gray-950 z-10 ${
+                          isCompleted ? "bg-emerald-500" : "bg-slate-300 dark:bg-gray-600"
+                        }`} />
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <time className="text-xs text-tertiary font-medium">
+                            {formatDate(apt.date)}
+                          </time>
+                          <span className="text-[11px] text-tertiary">
+                            {formatTime(apt.startTime)} – {formatTime(apt.endTime)}
+                          </span>
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${statusColors[apt.status] || "bg-surface text-tertiary"}`}>
+                            {apt.status}
+                          </span>
+                        </div>
+                        <div className="mt-1 bg-surface border border-default rounded-lg p-3 sm:p-4">
+                          <p className="text-sm font-semibold text-primary">
+                            {apt.faculty?.name || "Faculty Member"}
                           </p>
+                          {apt.title && (
+                            <p className="text-sm text-secondary mt-0.5">&ldquo;{apt.title}&rdquo;</p>
+                          )}
+                          {apt.description && (
+                            <p className="text-xs text-tertiary mt-1.5 line-clamp-2">{apt.description}</p>
+                          )}
+                          {apt.actionTaken && (
+                            <div className="mt-2 pl-3 border-l-2 border-emerald-300 dark:border-emerald-700">
+                              <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Faculty notes</p>
+                              <p className="text-xs text-secondary mt-0.5 line-clamp-2">{apt.actionTaken}</p>
+                            </div>
+                          )}
+                          <Link
+                            href={`/student/meetings/${apt.id}`}
+                            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-gold-600 hover:text-gold-700 dark:text-gold-500 dark:hover:text-gold-400 transition-colors"
+                          >
+                            View details →
+                          </Link>
                         </div>
                       </div>
-                    </div>
-                  </section>
-                )
-              }
-
-              if (item.type === "audit") {
-                const ev = item.data as HistoryAuditEvent
-                const isFailed = ev.action === "EMAIL_FAILED"
-                return (
-                  <section key={ev.id} className="animate-fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
-                    {gap > 1 && (
-                      <div className="flex items-center gap-3 mb-5 text-xs text-tertiary">
-                        <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0" />
-                        <span className="italic">{gap} day{gap !== 1 ? "s" : ""} later</span>
-                        <span className="flex-1 h-px bg-slate-200" />
-                      </div>
-                    )}
-                    <div className="group relative pl-8 sm:pl-10">
-                      <div className="absolute left-[11px] sm:left-[13px] top-0 bottom-0 w-px bg-slate-200" />
-                      <div className={`absolute left-0 sm:left-1 top-1 w-[23px] sm:w-[27px] h-[23px] sm:h-[27px] rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm ring-4 ring-white z-10 ${
-                        isFailed ? "bg-red-500 text-white" : "bg-slate-400 text-white"
-                      }`}>
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d={isFailed ? "M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" : "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"} />
-                        </svg>
-                      </div>
-                      <div className="pb-2">
-                        <time className="text-xs font-semibold text-tertiary uppercase tracking-wider">
-                          {formatDateTime(ev.createdAt)}
-                        </time>
-                        <div className="mt-4 space-y-4 text-sm text-secondary leading-relaxed">
-                          <p>
-                            {isFailed ? (
-                              <>Email delivery to <strong>{ev.email}</strong> failed: {ev.details || "Unknown error"}</>
-                            ) : (
-                              <>{ev.action.replace(/_/g, " ")} — {ev.details || "No details"}</>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                )
-              }
-
-              const apt = item.data as HistoryAppointment
-              const isCompleted = apt.status === "COMPLETED"
-
-              return (
-                <section key={apt.id} className="animate-fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
-                  {/* Time gap indicator */}
-                  {gap > 1 && (
-                    <div className="flex items-center gap-3 mb-5 text-xs text-tertiary">
-                      <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0" />
-                      <span className="italic">{gap} day{gap !== 1 ? "s" : ""} later</span>
-                      <span className="flex-1 h-px bg-slate-200" />
-                    </div>
-                  )}
-
-                  {/* Entry */}
-                  <div className="group relative pl-8 sm:pl-10">
-                    {/* Vertical line */}
-                    <div className="absolute left-[11px] sm:left-[13px] top-0 bottom-0 w-px bg-slate-200" />
-
-                    {/* Clock dot */}
-                    <div className={`absolute left-0 sm:left-1 top-1 w-[23px] sm:w-[27px] h-[23px] sm:h-[27px] rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm ring-4 ring-white z-10 ${
-                      isCompleted
-                        ? "bg-emerald-500 text-white"
-                        : "bg-slate-300 text-white"
-                    }`}>
-                      <svg className={`w-3 h-3 ${isCompleted ? "" : "opacity-60"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-
-                    {/* Content */}
-                    <div className="pb-2">
-                      <time className="text-xs font-semibold text-gold-700 uppercase tracking-wider">
-                        {formatDate(apt.date)}
-                      </time>
-
-                      <p className="text-sm text-tertiary mt-0.5">
-                        {apt.startTime} – {apt.endTime}
-                        <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[8px] uppercase tracking-wider ${
-                          isCompleted
-                            ? "bg-emerald-100 text-emerald-700"
-                            : apt.status === "APPROVED"
-                              ? "bg-gold-100 text-gold-700"
-                              : apt.status === "PENDING"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-surface text-tertiary"
-                        }`}>
-                          {apt.status}
-                        </span>
-                      </p>
-
-                      <div className="mt-4 space-y-4 text-sm text-secondary leading-relaxed">
-                        <p>
-                          {firstName} met with <strong>{apt.faculty?.name || "a faculty member"}</strong>
-                          {apt.title ? <> to discuss &ldquo;<em>{apt.title}</em>&rdquo;.</> : "."}
-                        </p>
-
-                        {apt.description && (
-                          <div className="pl-4 border-l-2 border-default text-secondary">
-                            <p className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-1">Topics discussed</p>
-                            <p className="whitespace-pre-wrap">{apt.description}</p>
-                          </div>
-                        )}
-
-                        {apt.actionTaken && (
-                          <div className="pl-4 border-l-2 border-emerald-300 bg-emerald-50/50 -ml-0.5 p-3 rounded-r-lg">
-                            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">Faculty notes</p>
-                            <p className="text-emerald-800 whitespace-pre-wrap">{apt.actionTaken}</p>
-                          </div>
-                        )}
-
-                        {!apt.description && !apt.actionTaken && (
-                          <p className="text-tertiary italic text-xs">No details recorded for this session.</p>
-                        )}
-                      </div>
-
-                      <div className="mt-3">
-                        <Link
-                          href={`/student/meetings/${apt.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-gold-600 hover:text-gold-700 transition-colors"
-                        >
-                          Read full entry →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              )
-            })}
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
-
-          {/* ── Closing ───────────────────────────────────── */}
-          <div className="mt-16 pt-10 border-t border-default">
-            <div className="text-center max-w-lg mx-auto">
-              <span className="text-3xl block mb-4">📖</span>
-              <p className="text-sm text-secondary leading-relaxed">
-                This concludes {firstName}&apos;s activity log.
-                {completed.length < appointments.length
-                  ? ` ${appointments.length - completed.length} consultation${appointments.length - completed.length === 1 ? "" : "s"} still pending.`
-                  : " All consultations have been completed."}
-                {submissionCount > 0 && ` ${submissionCount} evaluation${submissionCount !== 1 ? "s" : ""} submitted.`}
-              </p>
-              <p className="text-xs text-tertiary mt-2">
-                {uniqueFaculty.length} facult{uniqueFaculty.length === 1 ? "y" : "ies"} · {appointments.length} consultation{appointments.length === 1 ? "" : "s"}
-                {submissionCount > 0 ? ` · ${submissionCount} evaluation${submissionCount !== 1 ? "s" : ""}` : ""}
-                {auditFailCount > 0 ? ` · ${auditFailCount} email ${auditFailCount === 1 ? "issue" : "issues"}` : ""}
-                {timespan > 0 ? ` · ${timespan} day${timespan !== 1 ? "s" : ""}` : ""}
-              </p>
-            </div>
-          </div>
-        </article>
+        </>
       )}
     </div>
   )
+}
+
+function formatDateTime(dateStr: string) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })
 }

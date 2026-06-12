@@ -1,6 +1,7 @@
 "use client"
 
 import type { FacultyStatsData } from "@/lib/types"
+import { usePagination, Paginator } from "@/components/ui/Paginator"
 
 interface ReportTableProps {
   stats: FacultyStatsData[]
@@ -16,6 +17,7 @@ export function ReportTable({ stats }: ReportTableProps) {
   }
 
   const sorted = [...stats].sort((a, b) => b.total - a.total)
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(sorted, 25)
 
   return (
     <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
@@ -48,7 +50,7 @@ export function ReportTable({ stats }: ReportTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {sorted.map((stat) => (
+            {paginatedItems.map((stat) => (
               <tr
                 key={stat.facultyId}
                 className="transition-colors duration-150 hover:bg-surface-hover/80"
@@ -76,6 +78,7 @@ export function ReportTable({ stats }: ReportTableProps) {
           </tbody>
         </table>
       </div>
+      <Paginator {...{ page, totalPages, pageSize, setPage, setPageSize }} totalItems={stats.length} />
     </div>
   )
 }
