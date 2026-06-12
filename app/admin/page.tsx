@@ -20,7 +20,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams?: 
   const page = Number(resolvedParams?.page) || 1
   const pageSize = 25
 
-  const [auditLogs, dbSize] = await Promise.all([
+  const [{ logs: auditLogs, total: totalLogs }, dbSize] = await Promise.all([
     getAuditLogs(page, pageSize),
     getDatabaseSize(),
   ])
@@ -130,7 +130,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams?: 
               {/* Pagination */}
               <div className="flex items-center justify-between px-6 py-4 border-t border-default bg-surface">
                 <p className="text-xs text-tertiary">
-                  Page <span className="font-semibold">{page}</span> • {auditLogs.length} entries
+                  Page <span className="font-semibold">{page}</span> • {totalLogs} entries
                 </p>
                 <div className="flex items-center gap-2">
                   {page > 1 && (

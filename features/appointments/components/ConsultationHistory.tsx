@@ -21,18 +21,27 @@ interface HistoryEvaluation {
   submittedAt: string
 }
 
+interface HistoryAuditEvent {
+  id: string
+  action: string
+  email: string | null
+  details: string | null
+  createdAt: string
+}
+
 interface Props {
   studentName: string
   course: string | null
   appointments: HistoryAppointment[]
   evaluations?: HistoryEvaluation[]
+  auditEvents?: HistoryAuditEvent[]
 }
 
 interface TimelineItem {
-  type: "consultation" | "evaluation"
+  type: "consultation" | "evaluation" | "audit"
   date: string
   sortKey: string
-  data: HistoryAppointment | HistoryEvaluation
+  data: HistoryAppointment | HistoryEvaluation | HistoryAuditEvent
 }
 
 function formatDate(dateStr: string) {
@@ -51,7 +60,7 @@ function daysBetween(a: string, b: string): number {
   return Math.round((d2 - d1) / 86400000)
 }
 
-export default function ConsultationHistory({ studentName, course, appointments, evaluations = [] }: Props) {
+export default function ConsultationHistory({ studentName, course, appointments, evaluations = [], auditEvents = [] }: Props) {
   const timeline = useMemo(() => {
     const items: TimelineItem[] = [
       ...appointments.map((a) => ({
@@ -70,16 +79,27 @@ export default function ConsultationHistory({ studentName, course, appointments,
           data: e,
         }
       }),
+      ...auditEvents.map((e) => {
+        const d = new Date(e.createdAt)
+        const dateStr = d.toISOString().slice(0, 10)
+        return {
+          type: "audit" as const,
+          date: dateStr,
+          sortKey: e.createdAt,
+          data: e,
+        }
+      }),
     ]
     items.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
     return items
-  }, [appointments, evaluations])
+  }, [appointments, evaluations, auditEvents])
 
   const completed = appointments.filter((a) => a.status === "COMPLETED")
   const uniqueFaculty = useMemo(
     () => [...new Set(appointments.map((a) => a.faculty?.name).filter(Boolean))],
     [appointments]
   )
+  const auditFailCount = auditEvents.filter((e) => e.action === "EMAIL_FAILED").length
 
   const firstDate = timeline.length > 0 ? timeline[0].date : null
   const lastDate = timeline.length > 0 ? timeline[timeline.length - 1].date : null
@@ -125,6 +145,12 @@ export default function ConsultationHistory({ studentName, course, appointments,
                 <>
                   <span className="text-slate-300">·</span>
                   <span>{submissionCount} evaluation{submissionCount !== 1 ? "s" : ""}</span>
+                </>
+              )}
+              {auditFailCount > 0 && (
+                <>
+                  <span className="text-slate-300">·</span>
+                  <span>{auditFailCount} email {auditFailCount === 1 ? "issue" : "issues"}</span>
                 </>
               )}
               <span className="text-slate-300">·</span>
@@ -183,6 +209,46 @@ export default function ConsultationHistory({ studentName, course, appointments,
                         <div className="mt-4 space-y-4 text-sm text-secondary leading-relaxed">
                           <p>
                             {firstName} submitted a facult{firstName.split(" ")[0] ? "y" : ""} evaluation for <strong>{ev.facultyName}</strong>.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                )
+              }
+
+              if (item.type === "audit") {
+                const ev = item.data as HistoryAuditEvent
+                const isFailed = ev.action === "EMAIL_FAILED"
+                return (
+                  <section key={ev.id} className="animate-fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
+                    {gap > 1 && (
+                      <div className="flex items-center gap-3 mb-5 text-xs text-tertiary">
+                        <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0" />
+                        <span className="italic">{gap} day{gap !== 1 ? "s" : ""} later</span>
+                        <span className="flex-1 h-px bg-slate-200" />
+                      </div>
+                    )}
+                    <div className="group relative pl-8 sm:pl-10">
+                      <div className="absolute left-[11px] sm:left-[13px] top-0 bottom-0 w-px bg-slate-200" />
+                      <div className={`absolute left-0 sm:left-1 top-1 w-[23px] sm:w-[27px] h-[23px] sm:h-[27px] rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm ring-4 ring-white z-10 ${
+                        isFailed ? "bg-red-500 text-white" : "bg-slate-400 text-white"
+                      }`}>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d={isFailed ? "M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" : "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"} />
+                        </svg>
+                      </div>
+                      <div className="pb-2">
+                        <time className="text-xs font-semibold text-tertiary uppercase tracking-wider">
+                          {formatDateTime(ev.createdAt)}
+                        </time>
+                        <div className="mt-4 space-y-4 text-sm text-secondary leading-relaxed">
+                          <p>
+                            {isFailed ? (
+                              <>Email delivery to <strong>{ev.email}</strong> failed: {ev.details || "Unknown error"}</>
+                            ) : (
+                              <>{ev.action.replace(/_/g, " ")} — {ev.details || "No details"}</>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -295,7 +361,8 @@ export default function ConsultationHistory({ studentName, course, appointments,
               </p>
               <p className="text-xs text-tertiary mt-2">
                 {uniqueFaculty.length} facult{uniqueFaculty.length === 1 ? "y" : "ies"} · {appointments.length} consultation{appointments.length === 1 ? "" : "s"}
-                {submissionCount > 0 && ` · ${submissionCount} evaluation${submissionCount !== 1 ? "s" : ""}`}
+                {submissionCount > 0 ? ` · ${submissionCount} evaluation${submissionCount !== 1 ? "s" : ""}` : ""}
+                {auditFailCount > 0 ? ` · ${auditFailCount} email ${auditFailCount === 1 ? "issue" : "issues"}` : ""}
                 {timespan > 0 ? ` · ${timespan} day${timespan !== 1 ? "s" : ""}` : ""}
               </p>
             </div>

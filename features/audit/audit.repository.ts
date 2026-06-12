@@ -11,13 +11,31 @@ export const auditLogRepository: IAuditLogRepository = {
     if (error) throw error
     return log as AuditLogData
   },
-  async list(limit = 100, offset = 0) {
-    const { data, error } = await supabase
-      .from("audit_logs")
-      .select("*")
+  async list(limit = 100, offset = 0, filters) {
+    let q = supabase.from("audit_logs").select("*", { count: "exact" })
+
+    if (filters?.action) q = q.eq("action", filters.action)
+    if (filters?.email) q = q.ilike("email", `%${filters.email}%`)
+    if (filters?.dateFrom) q = q.gte("createdAt", filters.dateFrom)
+    if (filters?.dateTo) q = q.lte("createdAt", filters.dateTo)
+
+    const { data, error, count } = await q
       .order("createdAt", { ascending: false })
       .range(offset, offset + limit - 1)
+
     if (error) throw error
-    return data as AuditLogData[]
+    return { logs: data as AuditLogData[], total: count ?? 0 }
+  },
+  async clearAll() {
+    const { error } = await supabase.from("audit_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+    if (error) throw error
+  },
+  async getDistinctActions() {
+    const { data, error } = await supabase
+      .from("audit_logs")
+      .select("action")
+      .order("action", { ascending: true })
+    if (error) throw error
+    return [...new Set((data || []).map((r) => r.action))]
   },
 }

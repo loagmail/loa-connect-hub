@@ -25,6 +25,14 @@ interface HistoryEvaluation {
   submittedAt: string
 }
 
+interface AuditEvent {
+  id: string
+  action: string
+  email: string | null
+  details: string | null
+  createdAt: string
+}
+
 export default async function StudentHistoryPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
@@ -50,12 +58,23 @@ export default async function StudentHistoryPage() {
     }
   }
 
+  const { data: auditEvents } = dbUser?.email
+    ? await supabase
+        .from("audit_logs")
+        .select("id, action, email, details, createdAt")
+        .eq("email", dbUser.email)
+        .in("action", ["EMAIL_FAILED"])
+        .order("createdAt", { ascending: false })
+        .limit(50)
+    : { data: null }
+
   return (
     <ConsultationHistory
       studentName={dbUser?.name || "Student"}
       course={dbUser?.course || null}
       appointments={appointments}
       evaluations={enriched}
+      auditEvents={(auditEvents as AuditEvent[]) || []}
     />
   )
 }
