@@ -42,6 +42,26 @@ const faqs = [
     q: "How do I import users in bulk?",
     a: "Deans and Admins can upload CSV files from the 'Import Users' or 'Import Students' pages. Download the template for the correct format.",
   },
+  {
+    q: "How do I view my evaluation results?",
+    a: "Faculty members can view their evaluation results by navigating to 'Evaluations → My Results' in the sidebar. Select a period from the dropdown to see your scores, ratings, and student feedback.",
+  },
+  {
+    q: "Why can't I see my evaluation results?",
+    a: "Evaluation results must first be computed and published by an Admin. Once published, the 'My Results' page will display your scores. If no results are visible, your period may not yet have been published.",
+  },
+  {
+    q: "How do I export my evaluation results?",
+    a: "On the 'My Results' page, click 'Download PDF' or 'Download CSV' to export your evaluation scores. Admin/Dean users can also export per-faculty or bulk CSV/PDF from the evaluation dashboard.",
+  },
+  {
+    q: "How do I see individual student responses?",
+    a: "On the evaluation results page, click your name row in the results table to expand and view the per-student breakdown, including category scores and comments.",
+  },
+  {
+    q: "How do I publish evaluation results?",
+    a: "Admins can toggle visibility per faculty member from the 'Evaluation Results' page under the Evaluations section. Use the eye icon to publish or unpublish results — faculty will only see results when published.",
+  },
 ]
 
 export default async function FaqPage() {
