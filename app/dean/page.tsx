@@ -6,18 +6,6 @@ import { OnboardingWalkthrough } from "@/features/users/components/OnboardingWal
 import { hasRole } from "@/lib/utils/roles"
 import FacultyDeanDashboard from "@/features/appointments/components/FacultyDeanDashboard"
 
-interface DashboardAppointment {
-  id: string
-  title: string | null
-  date: string
-  startTime: string
-  endTime: string
-  status: string
-  meetingType: string
-  teamsLink: string | null
-  student?: { name: string; email: string } | null
-}
-
 export default async function DeanDashboard() {
   const session = await auth()
   if (!session?.user) redirect("/login")
@@ -29,7 +17,7 @@ export default async function DeanDashboard() {
   const department = await departmentRepository.findByDeanId(deanId)
 
   // Dean's own appointments (personal dashboard sections)
-  const appointments = (await listFacultyAppointments(deanId)) as DashboardAppointment[]
+  const { data: appointments } = await listFacultyAppointments(deanId)
 
   // Department-wide stats for the dean-only section
   let departmentStats: { facultyCount: number; total: number; pending: number; completed: number } | undefined

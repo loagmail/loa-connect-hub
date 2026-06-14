@@ -40,7 +40,7 @@ export default async function StudentHistoryPage() {
 
   const userId = (session.user as Record<string, unknown>).id as string
   const dbUser = await userRepository.findById(userId)
-  const appointments = (await listStudentAppointments(userId)) as unknown as HistoryAppointment[]
+  const appointments = (await listStudentAppointments(userId)).data as unknown as HistoryAppointment[]
 
   const evaluations = (await getMyEvaluations(userId)).filter((e) => e.status === "SUBMITTED" && e.submittedAt)
 

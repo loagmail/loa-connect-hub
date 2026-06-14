@@ -46,7 +46,7 @@ export default async function StudentMeetings(props: {
   const activeSort = searchParams?.sort === "asc" ? "asc" : "desc"
 
   const studentId = (session.user as Record<string, unknown>).id as string
-  const appointments = (await listStudentAppointments(studentId)) as unknown as StudentAppointment[]
+  const appointments = (await listStudentAppointments(studentId)).data as unknown as StudentAppointment[]
 
   // Apply time/ownership filter
   const today = new Date()

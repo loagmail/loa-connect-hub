@@ -252,13 +252,16 @@ export async function getAppointmentDetail(id: string) {
   }
 }
 
-export async function getMeetingsForUser(userId: string) {
+export async function getMeetingsForUser(userId: string, pagination?: { page?: number; limit?: number }) {
   const [organized, invited] = await Promise.all([
-    appointmentRepository.listByFaculty(userId),
-    appointmentRepository.listByParticipant(userId),
+    appointmentRepository.listByFaculty(userId, pagination),
+    appointmentRepository.listByParticipant(userId, pagination),
   ])
 
-  const merged = [...organized, ...invited]
+  const organizedData = organized.data
+  const invitedData = invited.data
+
+  const merged = [...organizedData, ...invitedData]
   const seen = new Set<string>()
   const unique = merged.filter((apt: unknown) => {
     const a = apt as { id?: string }

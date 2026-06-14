@@ -26,7 +26,7 @@ export default async function StudentDashboardPage() {
   const dbUser = await userRepository.findById(userId)
   const needsOnboarding = dbUser?.onboardingVersion === 0
 
-  const appointments = (await listStudentAppointments(userId)) as StudentAppointment[]
+  const appointments = (await listStudentAppointments(userId)).data as StudentAppointment[]
 
   return (
     <>

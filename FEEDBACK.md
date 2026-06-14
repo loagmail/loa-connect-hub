@@ -24,7 +24,7 @@
 
 **Strengths:** Appointment slot/attendee creation and conflict checks use `Promise.all` for parallel DB operations instead of sequential `for...of` + `await` loops, reducing N+M round-trips to a handful of batches.
 
-**Weaknesses:** No pagination on any list endpoint — `listAll`, `listByFaculty`, `listByStudent`, and all report queries fetch every matching record. This is the most significant scalability risk as data grows. Department-scaled report queries run 7+ queries per department in parallel (fine for <20 departments, problematic at 50+). Missing indexes on `appointments.date`, `appointments.meetingType`, and composite `(facultyId, status, date)` for common report patterns. No server-side caching beyond the 60s TTL access config cache (no Redis, no query result caching, no ISR).
+**Weaknesses:** Pagination has been added to all appointment list endpoints (`listByStudent`, `listByFaculty`, `listByParticipant`, `listAll`) using Supabase `.range()` + `count: "exact"` with default limit 50. Missing indexes on `appointments.date`, `appointments.meetingType`, and composite `(facultyId, status, date)` have been added. Department-scaled report queries still run 7+ queries per department in parallel (fine for <20 departments, problematic at 50+). No server-side caching beyond the 60s TTL access config cache (no Redis, no query result caching, no ISR).
 
 ---
 

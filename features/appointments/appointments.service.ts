@@ -1,7 +1,7 @@
 import { appointmentRepository, userRepository } from "@/lib/repositories/factory"
 import { MIN_TIMESLOT_DURATION_MINUTES, MAX_TIMESLOT_DURATION_MINUTES } from "@/lib/constants"
 import { hasRole } from "@/lib/utils/roles"
-import type { AppointmentData } from "@/lib/types"
+import type { AppointmentData, PaginationParams, PagedResult } from "@/lib/types"
 
 type DbRecord = Record<string, unknown>
 
@@ -453,16 +453,16 @@ export async function getFacultyBookedAppointments(facultyId: string, startDate:
   return appointmentRepository.listFacultyAppointmentsByDateRange(facultyId, startDate, endDate, "APPROVED")
 }
 
-export async function listStudentAppointments(studentId: string) {
-  return appointmentRepository.listByStudent(studentId)
+export async function listStudentAppointments(studentId: string, pagination?: PaginationParams): Promise<PagedResult<AppointmentData>> {
+  return appointmentRepository.listByStudent(studentId, pagination)
 }
 
-export async function listFacultyAppointments(facultyId: string) {
-  return appointmentRepository.listByFaculty(facultyId)
+export async function listFacultyAppointments(facultyId: string, pagination?: PaginationParams): Promise<PagedResult<AppointmentData>> {
+  return appointmentRepository.listByFaculty(facultyId, pagination)
 }
 
-export async function getAllAppointments() {
-  return appointmentRepository.listAll()
+export async function getAllAppointments(pagination?: PaginationParams): Promise<PagedResult<AppointmentData>> {
+  return appointmentRepository.listAll(pagination)
 }
 
 export async function getAppointmentById(id: string) {

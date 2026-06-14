@@ -338,6 +338,15 @@ CREATE INDEX IF NOT EXISTS idx_appointments_faculty
 CREATE INDEX IF NOT EXISTS idx_appointments_status
   ON appointments(status);
 
+CREATE INDEX IF NOT EXISTS idx_appointments_date
+  ON appointments("date");
+
+CREATE INDEX IF NOT EXISTS idx_appointments_meeting_type
+  ON appointments("meetingType");
+
+CREATE INDEX IF NOT EXISTS idx_appointments_faculty_status_date
+  ON appointments("facultyId", status, "date");
+
 CREATE INDEX IF NOT EXISTS idx_timeslot_appointment
   ON appointment_time_slots("appointmentId");
 

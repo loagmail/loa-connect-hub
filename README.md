@@ -322,6 +322,7 @@ Non-activated accounts must use the activation flow at `/activate`.
 | 16. Staggered & Multi-Faculty Booking | ✅ Done |
 | 17. Mobile Companion Pages | ✅ Done |
 | 18. Dark Mode | ✅ Done |
+| 19. Pagination & Indexes | ✅ Done |
 
 ## Faculty Evaluation Module
 

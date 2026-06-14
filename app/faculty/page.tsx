@@ -6,18 +6,6 @@ import { OnboardingWalkthrough } from "@/features/users/components/OnboardingWal
 import { hasRole } from "@/lib/utils/roles"
 import FacultyDeanDashboard from "@/features/appointments/components/FacultyDeanDashboard"
 
-interface DashboardAppointment {
-  id: string
-  title: string | null
-  date: string
-  startTime: string
-  endTime: string
-  status: string
-  meetingType: string
-  teamsLink: string | null
-  student?: { name: string; email: string } | null
-}
-
 export default async function FacultyDashboard() {
   const session = await auth()
   if (!session?.user) redirect("/login")
@@ -27,7 +15,7 @@ export default async function FacultyDashboard() {
   const facultyId = (session.user as Record<string, unknown>).id as string
   const dbUser = await userRepository.findById(facultyId)
   const needsOnboarding = dbUser?.onboardingVersion === 0 && hasRole(role, "FACULTY")
-  const appointments = (await listFacultyAppointments(facultyId)) as DashboardAppointment[]
+  const { data: appointments } = await listFacultyAppointments(facultyId)
 
   return (
     <>
