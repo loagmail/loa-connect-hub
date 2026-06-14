@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Skeleton from "@/components/Skeleton"
+import Skeleton from "@/components/ui/Skeleton"
 import { usePagination, Paginator } from "@/components/ui/Paginator"
 
 interface DeletedUser {

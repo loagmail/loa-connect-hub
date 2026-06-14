@@ -4,7 +4,7 @@ import { listStudentAppointments } from "@/features/appointments/appointments.se
 import { userRepository } from "@/lib/repositories/factory"
 import { getMyEvaluations } from "@/features/evaluations/evaluations.service"
 import { supabase } from "@/lib/db"
-import ConsultationHistory from "@/components/ConsultationHistory"
+import ConsultationHistory from "@/features/appointments/components/ConsultationHistory"
 import { hasRole } from "@/lib/utils/roles"
 
 interface HistoryAppointment {

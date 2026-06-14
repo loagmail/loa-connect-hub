@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import Skeleton from "@/components/Skeleton"
-import SubmitButton from "@/components/SubmitButton"
+import Skeleton from "@/components/ui/Skeleton"
+import SubmitButton from "@/components/ui/SubmitButton"
 
 interface GroupAccess {
   groupName: string

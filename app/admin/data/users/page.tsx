@@ -1,8 +1,8 @@
 "use client"
 
 import { useRef, useState, useMemo, useEffect } from "react"
-import Skeleton from "@/components/Skeleton"
-import SubmitButton from "@/components/SubmitButton"
+import Skeleton from "@/components/ui/Skeleton"
+import SubmitButton from "@/components/ui/SubmitButton"
 import { useApiGet } from "@/lib/api/client"
 import { hasRole } from "@/lib/utils/roles"
 

@@ -42,7 +42,7 @@ features/                     # Domain slices — controllers, services, repos, 
 ├── audit/                    # Audit logging
 └── user-permissions/         # Permission management
 
-components/                   # Global reusable React components (39 files)
+components/                   # Global reusable React components (23 files — ui/ + layouts/)
 ├── ui/                       # StatusBadge, Skeleton, SubmitButton, SearchInput, etc.
 ├── layouts/                  # AppShell, Sidebar, Navbar, Providers, Breadcrumbs
 └── ...                       # FacultyDeanDashboard, StudentBooking, etc.
@@ -118,7 +118,7 @@ Server Components fetch data directly via controllers (or services for simpler l
 |-----------|-------------|
 | `app/` | 174 (pages, API routes, layouts, error boundaries, loading states) |
 | `features/` | 120 (controllers, services, repos, actions, domain components) |
-| `components/` | 39 (global React components, includes backward-compat shims) |
+| `components/` | 23 (global React components in ui/ + layouts/) |
 | `lib/` | 62 (types, utils, tests, services, repos factory, workflows, email) |
 | `hooks/` | 2 |
 | `types/` | 1 |

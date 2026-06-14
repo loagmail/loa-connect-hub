@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import SubmitButton from "@/components/SubmitButton"
+import SubmitButton from "@/components/ui/SubmitButton"
 
 interface ImportRow {
   name: string

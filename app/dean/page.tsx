@@ -2,9 +2,9 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { listFacultyAppointments } from "@/features/appointments/appointments.service"
 import { userRepository, departmentRepository, reportsRepository } from "@/lib/repositories/factory"
-import { OnboardingWalkthrough } from "@/components/OnboardingWalkthrough"
+import { OnboardingWalkthrough } from "@/features/users/components/OnboardingWalkthrough"
 import { hasRole } from "@/lib/utils/roles"
-import FacultyDeanDashboard from "@/components/FacultyDeanDashboard"
+import FacultyDeanDashboard from "@/features/appointments/components/FacultyDeanDashboard"
 
 interface DashboardAppointment {
   id: string

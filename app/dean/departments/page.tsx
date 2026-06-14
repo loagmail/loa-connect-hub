@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState } from "react"
 import { useSession } from "next-auth/react"
-import SubmitButton from "@/components/SubmitButton"
+import SubmitButton from "@/components/ui/SubmitButton"
 import { useApiGet, invalidate } from "@/lib/api/client"
 
 interface DepartmentCourse {
