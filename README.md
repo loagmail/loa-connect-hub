@@ -134,14 +134,61 @@ Pages use one of three patterns depending on interactivity needs:
 | **Client Component** | 22 | `"use client"` page calls API routes via `fetch`/custom hooks for data and mutations |
 | **Redirect / Static** | 10 | Redirect-only (`redirect()`) or static UI with no data fetching |
 
-**Server Component pages** (import controllers/services directly):
-`/admin` (dashboard), `/admin/reports/health`, `/admin/reports/backlog`, `/admin/reports/coverage`, `/admin/reports/distribution`, `/admin/reports/demand`, `/admin/evaluations`, `/admin/evaluations/reports`, `/dean`, `/dean/evaluations`, `/dean/evaluations/reports`, `/faq`, `/faculty`, `/faculty/meetings`, `/faculty/meetings/new`, `/faculty/evaluations/[periodId]`, `/student`, `/student/book`, `/student/history`, `/student/meetings`
-
-**Client Component pages** (call API routes):
-`/login`, `/activate`, `/forgot-password`, `/change-password`, `/admin/data/users`, `/admin/data/users/deleted`, `/admin/data/academic-infrastructure`, `/admin/audit-trail`, `/admin/access-config`, `/admin/access-config/[groupName]`, `/admin/data-management`, `/admin/etl-hub`, `/admin/evaluations/results`, `/admin/evaluations/rubrics`, `/admin/evaluations/reports/sentiment`, `/dean/departments`, `/dean/evaluations/results`, `/faculty/upload`, `/faculty/availability`, `/faculty/evaluations`, `/faculty/evaluations/results`, `/student/evaluations`, `/student/evaluations/[id]`, `/student/evaluations/history`
-
-**Redirect / Static pages:**
-`/` (root — conditional redirect), `/admin/reports` (→ health), `/admin/reports/responsiveness` (→ health), `/admin/user-permissions` (→ access-config), `/faculty/reports` (→ health), `/403`, `/faculty/meetings/[id]` (delegates to client `<AppointmentDetail>`), `/student/meetings/[id]` (delegates to client `<AppointmentDetail>`), `/student/evaluations/thank-you`
+| Route | Pattern | Notes |
+|-------|---------|-------|
+| `/` | Redirect | Conditional redirect based on session/role |
+| `/403` | Static | Forbidden page |
+| `/faq` | Server | Imports lib directly |
+| `/login` | Client | Auth form |
+| `/activate` | Client | Account activation form |
+| `/forgot-password` | Client | Password reset form |
+| `/change-password` | Client | Password change form |
+| `/admin` | Server | Dashboard — imports services |
+| `/admin/reports` | Redirect | → `/admin/reports/health` |
+| `/admin/reports/health` | Server | Imports `admin-reports.controller` |
+| `/admin/reports/backlog` | Server | Imports `backlog.controller` |
+| `/admin/reports/coverage` | Server | Imports `coverage.controller` |
+| `/admin/reports/distribution` | Server | Imports `distribution.controller` |
+| `/admin/reports/demand` | Server | Imports `demand.controller` |
+| `/admin/reports/responsiveness` | Redirect | → `/admin/reports/health` |
+| `/admin/evaluations` | Server | Evaluations hub |
+| `/admin/evaluations/results` | Client | Wraps `EvaluationDashboard` |
+| `/admin/evaluations/rubrics` | Client | Rubric CRUD |
+| `/admin/evaluations/reports` | Server | Reports hub |
+| `/admin/evaluations/reports/sentiment` | Client | Sentiment analysis chart |
+| `/admin/data/users` | Client | User management |
+| `/admin/data/users/deleted` | Client | Deleted users list |
+| `/admin/data/academic-infrastructure` | Client | Multi-tab data manager |
+| `/admin/audit-trail` | Client | Audit log viewer |
+| `/admin/access-config` | Client | Access config list |
+| `/admin/access-config/[groupName]` | Client | Group detail editor |
+| `/admin/data-management` | Client | Data purge/management |
+| `/admin/etl-hub` | Client | ETL import with preview |
+| `/admin/user-permissions` | Redirect | → `/admin/access-config` |
+| `/dean` | Server | Dashboard — imports services |
+| `/dean/departments` | Client | Department course management |
+| `/dean/evaluations` | Server | Dean evaluations list |
+| `/dean/evaluations/results` | Client | Wraps `EvaluationDashboard` |
+| `/dean/evaluations/reports` | Server | Reports hub |
+| `/faculty` | Server | Dashboard — imports services |
+| `/faculty/upload` | Client | Bulk import uploader |
+| `/faculty/availability` | Client | Availability scheduler |
+| `/faculty/meetings` | Server | Meetings list |
+| `/faculty/meetings/new` | Server | Schedule meeting form |
+| `/faculty/meetings/[id]` | Static | Delegates to client `<AppointmentDetail>` |
+| `/faculty/reports` | Redirect | → `/admin/reports/health` |
+| `/faculty/evaluations` | Client | Evaluation periods list |
+| `/faculty/evaluations/[periodId]` | Server | Faculty period breakdown |
+| `/faculty/evaluations/results` | Client | Wraps `EvaluationDashboard` |
+| `/student` | Server | Dashboard — imports services |
+| `/student/book` | Server | Book consultation |
+| `/student/history` | Server | Consultation history |
+| `/student/meetings` | Server | Meetings list |
+| `/student/meetings/[id]` | Static | Delegates to client `<AppointmentDetail>` |
+| `/student/evaluations` | Client | Pending evaluations list |
+| `/student/evaluations/[id]` | Client | Evaluation form |
+| `/student/evaluations/history` | Client | Past evaluations list |
+| `/student/evaluations/thank-you` | Static | Thank-you confirmation |
 
 ### Known Issues & Risks
 
