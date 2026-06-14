@@ -416,44 +416,46 @@ export default function EvaluationDashboard({
               ))}
             </select>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto pt-1 sm:pt-0">
-            {showVisibilityToggles && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => bulkSetVisibility(true)}
-                  disabled={results.length === 0 || toggling}
-                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-50"
-                >
-                  Publish
-                </button>
-                <button
-                  type="button"
-                  onClick={() => bulkSetVisibility(false)}
-                  disabled={results.length === 0 || toggling}
-                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-amber-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-amber-600 active:scale-[0.98] transition-all disabled:opacity-50"
-                >
-                  Hide
-                </button>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={downloadBulkCSV}
-              disabled={results.length === 0}
-              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-600 text-white text-[11px] sm:text-sm font-semibold hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              CSV
-            </button>
-            <button
-              type="button"
-              onClick={downloadPDF}
-              disabled={results.length === 0}
-              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-brand-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-brand-600 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              PDF
-            </button>
-          </div>
+          {!loading && (
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto pt-1 sm:pt-0">
+              {showVisibilityToggles && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => bulkSetVisibility(true)}
+                    disabled={results.length === 0 || toggling}
+                    className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    Publish
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => bulkSetVisibility(false)}
+                    disabled={results.length === 0 || toggling}
+                    className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-amber-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-amber-600 active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    Hide
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={downloadBulkCSV}
+                disabled={results.length === 0}
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-600 text-white text-[11px] sm:text-sm font-semibold hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                CSV
+              </button>
+              <button
+                type="button"
+                onClick={downloadPDF}
+                disabled={results.length === 0}
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-brand-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-brand-600 active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                PDF
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
