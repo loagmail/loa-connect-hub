@@ -124,6 +124,25 @@ Server Components fetch data directly via controllers (or services for simpler l
 | `types/` | 1 |
 | Total | ~398 source files |
 
+### Page Rendering Strategy
+
+Pages use one of three patterns depending on interactivity needs:
+
+| Pattern | Count | How it works |
+|---------|-------|-------------|
+| **Server Component** | 20 | `async function` page imports controller/service directly, fetches data during SSR, passes props to client children |
+| **Client Component** | 22 | `"use client"` page calls API routes via `fetch`/custom hooks for data and mutations |
+| **Redirect / Static** | 10 | Redirect-only (`redirect()`) or static UI with no data fetching |
+
+**Server Component pages** (import controllers/services directly):
+`/admin` (dashboard), `/admin/reports/health`, `/admin/reports/backlog`, `/admin/reports/coverage`, `/admin/reports/distribution`, `/admin/reports/demand`, `/admin/evaluations`, `/admin/evaluations/reports`, `/dean`, `/dean/evaluations`, `/dean/evaluations/reports`, `/faq`, `/faculty`, `/faculty/meetings`, `/faculty/meetings/new`, `/faculty/evaluations/[periodId]`, `/student`, `/student/book`, `/student/history`, `/student/meetings`
+
+**Client Component pages** (call API routes):
+`/login`, `/activate`, `/forgot-password`, `/change-password`, `/admin/data/users`, `/admin/data/users/deleted`, `/admin/data/academic-infrastructure`, `/admin/audit-trail`, `/admin/access-config`, `/admin/access-config/[groupName]`, `/admin/data-management`, `/admin/etl-hub`, `/admin/evaluations/results`, `/admin/evaluations/rubrics`, `/admin/evaluations/reports/sentiment`, `/dean/departments`, `/dean/evaluations/results`, `/faculty/upload`, `/faculty/availability`, `/faculty/evaluations`, `/faculty/evaluations/results`, `/student/evaluations`, `/student/evaluations/[id]`, `/student/evaluations/history`
+
+**Redirect / Static pages:**
+`/` (root — conditional redirect), `/admin/reports` (→ health), `/admin/reports/responsiveness` (→ health), `/admin/user-permissions` (→ access-config), `/faculty/reports` (→ health), `/403`, `/faculty/meetings/[id]` (delegates to client `<AppointmentDetail>`), `/student/meetings/[id]` (delegates to client `<AppointmentDetail>`), `/student/evaluations/thank-you`
+
 ### Known Issues & Risks
 
 1. **Minimal test coverage** — Only 9 test files exist for ~23,000 LOC. Critical paths (appointment booking, conflict detection, role resolution, report aggregation) are untested.
