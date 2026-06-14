@@ -57,7 +57,7 @@ lib/                          # Cross-cutting infrastructure (62 files)
 ├── api/                      # API utility helpers
 ├── contexts/                 # React context providers
 ├── db/                       # DB client helpers
-└── __tests__/                # Test files (9 files)
+└── __tests__/                # Test files (14 files)
 
 hooks/                        # Custom React hooks (2 files)
 ├── useDebounce.ts
@@ -118,7 +118,7 @@ Server Components fetch data directly via controllers (or services for simpler l
 | `app/` | 174 (pages, API routes, layouts, error boundaries, loading states) |
 | `features/` | 120 (controllers, services, repos, actions, domain components) |
 | `components/` | 23 (global React components in ui/ + layouts/) |
-| `lib/` | 62 (types, utils, tests, services, repos factory, workflows, email) |
+| `lib/` | 63 (types, utils, tests, services, repos factory, workflows, email) |
 | `hooks/` | 2 |
 | `types/` | 1 |
 | Total | ~398 source files |
@@ -191,7 +191,7 @@ Pages use one of three patterns depending on interactivity needs:
 
 ### Known Issues & Risks
 
-1. **Minimal test coverage** — Only 9 test files exist for ~23,000 LOC. Critical paths (appointment booking, conflict detection, role resolution, report aggregation) are untested.
+1. **Minimal test coverage** — Only 14 test files (166 tests) for ~23,000 LOC. Critical paths remain untested: full report aggregation edge cases, most repository methods, email workflow orchestration edge cases.
 2. **HTML email templates via template literals** — Fragile string concatenation. No type safety or template engine.
 
 ## Environment Variables

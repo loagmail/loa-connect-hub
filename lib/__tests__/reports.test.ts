@@ -35,7 +35,7 @@ import { getAdminReportData } from "@/features/reports/admin-reports.controller"
 import type { FacultyStatsData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData } from "@/lib/types"
 
 beforeEach(() => {
-  vi.clearAllMocks()
+  vi.resetAllMocks()
 })
 
 const MOCK_DEPARTMENTS = [

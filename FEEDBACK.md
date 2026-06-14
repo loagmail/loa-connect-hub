@@ -12,9 +12,9 @@
 
 ## Testability
 
-**Strengths:** Repository pattern with interfaces allows module-level mocking via `vi.mock`. Tests that exist (9 test files) cover utilities (roles, auth, CSV parser), access control, appointment booking validation, report merging, ETL import, and some API routes. Latest tests use `vi.hoisted` for mock definitions before module resolution, which is the correct pattern for Vitest.
+**Strengths:** Repository pattern with interfaces allows module-level mocking via `vi.mock`. Tests that exist (14 test files, 166 tests) cover utilities (roles, auth, CSV parser), access control, appointment booking validation + lifecycle (accept, decline, complete, cancel, resend, attendee actions), report merging, ETL import, email templates (5 variants — HTML injection, null fields, all status variants), iCal generation (structure, fields, line folding, escaping), availability rules (findActiveRule, getEffectiveHours, isSlotAllowed), middleware (public paths, API/admin access, role-based page access, user-level permission denies), and API routes (reset-data, import-preview). All tests use `vi.hoisted` for mock definitions before module resolution and `vi.resetAllMocks()` in `beforeEach` for clean test isolation.
 
-**Weaknesses:** Estimated coverage is very low (~7%). Critical paths untested: appointment conflict detection, middleware role resolution, email template rendering, iCal generation, availability rule validation, full appointment lifecycle, report aggregation edge cases, most repository methods. No integration tests against a real/stub database. No setup files in Vitest config. Some tests use `clearAllMocks` where `resetAllMocks` is needed (noted in AGENTS.md as a known issue). Services use static imports from the factory — no constructor/parameter injection means varying mocks per test case requires workarounds.
+**Weaknesses:** Coverage is still modest (~21%). Untested critical paths: full report aggregation edge cases, most repository methods, email workflow orchestration edge cases. No integration tests against a real/stub database. Services use static imports from the factory — no constructor/parameter injection means varying mocks per test case requires workarounds.
 
 ---
 
