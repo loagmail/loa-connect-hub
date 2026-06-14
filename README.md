@@ -264,18 +264,18 @@ Non-activated accounts must use the activation flow at `/activate`.
 | `/admin/evaluations/periods/[id]` | ✅ Done |
 | `/admin/evaluations/periods/[id]/rubric` | ✅ Done |
 | `/admin/evaluations/results` | ✅ Done |
-| `/admin/evaluations/rubrics` (standalone editor) | ❌ Missing |
+| `/admin/evaluations/rubrics` (standalone editor) | ✅ Done |
 | `/admin/evaluations/upload` (ETL status) | ✅ N/A — use `/admin/etl-hub` |
-| `/admin/evaluations/reports` (landing + sentiment) | ❌ Missing |
-| `/dean/evaluations` (dashboard) | ❌ Missing |
+| `/admin/evaluations/reports` (landing + sentiment) | ✅ Done |
+| `/dean/evaluations` (dashboard) | ✅ Done |
 | `/dean/evaluations/results` | ✅ Done |
-| `/dean/evaluations/reports` | ❌ Missing |
-| `/faculty/evaluations` (dashboard) | ❌ Missing |
+| `/dean/evaluations/reports` | ✅ Done |
+| `/faculty/evaluations` (dashboard) | ✅ Done |
 | `/faculty/evaluations/results` | ✅ Done |
-| `/faculty/evaluations/[periodId]` | ❌ Missing |
+| `/faculty/evaluations/[periodId]` | ✅ Done |
 | `/student/evaluations` (pending list) | ✅ Done |
 | `/student/evaluations/[id]` (evaluation form) | ✅ Done |
-| `/student/evaluations/history` | ❌ Missing |
+| `/student/evaluations/history` | ✅ Done |
 
 ### Database
 
@@ -391,13 +391,13 @@ Non-activated accounts must use the activation flow at `/activate`.
 
 | Category | Done | Missing |
 |----------|------|---------|
-| Pages | 18 | 8 |
+| Pages | 26 | 0 |
 | Database | 5 | 0 |
 | Types | 1 | 0 |
 | Repositories | 8 | 2 |
 | Controllers | 6 | 0 |
-| API Routes | 27 | 8 |
+| API Routes | 27 | 3 |
 | Components | 6 | 0 |
 | Services | 2 | 0 |
 | Wiring | 4 | 0 |
-| **Total** | **77** | **18** |
+| **Total** | **85** | **10** |
