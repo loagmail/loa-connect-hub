@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react"
 import html2canvas from "html2canvas"
-import { jsPDF } from "jspdf"
 import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData } from "@/lib/types"
 import { ReportCharts } from "@/features/reports/components/reports/ReportCharts"
 import { ReportsView } from "@/features/reports/components/reports/ReportsView"
@@ -103,6 +102,7 @@ export function DeanReportsTabs({
     })
 
     const imgData = canvas.toDataURL("image/png")
+    const { jsPDF } = await import("jspdf")
     const pdf = new jsPDF("p", "mm", "a4")
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
