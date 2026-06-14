@@ -6,7 +6,7 @@
 
 **Gaps:** Faculty Evaluation module had ~18 items missing from the README checklist. The 8 missing pages have now been built: admin reports hub, sentiment dashboard, rubric editor (period selector + inline CRUD), dean dashboard + reports hub, faculty results + per-period student breakdown, and student evaluation history. 2 repositories and 3 API routes for evaluation reports remain incomplete. Sentiment analysis is still stubbed with placeholder implementations.
 
-**Architecture note:** A `lib/controllers/` layer is referenced in AGENTS.md but doesn't exist on disk — orchestration was initially mixed into service files. Refactoring of `features/appointments/` created three clean layers: `appointments.controller.ts` (orchestration + DTO mapping), `appointments.service.ts` (validation + business logic), and `appointments.notifications.ts` (email side-effects). Other domains (reports, evaluations, admin-data) still need the same treatment.
+**Architecture note:** `features/appointments/` has three clean layers: `appointments.controller.ts` (orchestration + DTO mapping), `appointments.service.ts` (validation + business logic), and `appointments.notifications.ts` (email side-effects). Other domains (reports, evaluations, admin-data) still mix orchestration into service files and would benefit from the same split.
 
 ---
 
