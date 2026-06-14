@@ -114,96 +114,108 @@ export async function checkForConflicts(
 
   // Students cannot invite other students
   if (hasRole(creatorRole, "STUDENT")) {
-    for (const uid of allAttendeeIds) {
-      if (uid === createdByUserId) continue
-      const user = await userRepository.findById(uid)
-      if (user && hasRole(user.role, "STUDENT")) {
+    const otherIds = allAttendeeIds.filter((uid) => uid !== createdByUserId)
+    if (otherIds.length > 0) {
+      const users = await Promise.all(otherIds.map((uid) => userRepository.findById(uid)))
+      const studentAttendee = users.find((user) => user && hasRole(user.role, "STUDENT"))
+      if (studentAttendee) {
         throw new Error("Students cannot invite other students to appointments")
       }
     }
   }
 
   if (hasRole(creatorRole, "STUDENT")) {
-    for (const slot of timeSlots) {
-      const conflictingSlots = await appointmentRepository.listStudentConflictingSlots(
-        createdByUserId,
-        slot.date,
-        slot.startTime,
-        slot.endTime,
-        sessionGroupId,
-      )
-      if (conflictingSlots.length > 0) {
-        const err = Object.assign(
-          new Error("You already have an appointment that overlaps with this time"),
-          {
-            conflicts: [{
-              userId: createdByUserId,
-              userName: "You",
-              message: "You already have an appointment that overlaps with this time",
-              appointments: mapConflicts(conflictingSlots as unknown as DbRecord[]),
-            }],
-          },
+    const [studentConflicts, facultyConflicts] = await Promise.all([
+      Promise.all(
+        timeSlots.map((slot) =>
+          appointmentRepository.listStudentConflictingSlots(
+            createdByUserId,
+            slot.date,
+            slot.startTime,
+            slot.endTime,
+            sessionGroupId,
+          )
         )
-        throw err
-      }
+      ),
+      Promise.all(
+        timeSlots.map((slot) =>
+          appointmentRepository.listConflictingSlots(
+            [facultyId],
+            slot.date,
+            slot.startTime,
+            slot.endTime,
+          )
+        )
+      ),
+    ])
+
+    const allStudentConflicts = studentConflicts.flat()
+    if (allStudentConflicts.length > 0) {
+      const err = Object.assign(
+        new Error("You already have an appointment that overlaps with this time"),
+        {
+          conflicts: [{
+            userId: createdByUserId,
+            userName: "You",
+            message: "You already have an appointment that overlaps with this time",
+            appointments: mapConflicts(allStudentConflicts as unknown as DbRecord[]),
+          }],
+        },
+      )
+      throw err
     }
 
-    for (const slot of timeSlots) {
-      const conflictingSlots = await appointmentRepository.listConflictingSlots(
-        [facultyId],
-        slot.date,
-        slot.startTime,
-        slot.endTime,
+    const allFacultySlots = facultyConflicts.flat() as unknown as DbRecord[]
+    const actualFacultyConflicts = allFacultySlots.filter((s) => {
+      const apt = s.appointment as DbRecord | undefined
+      return apt && apt.sessionGroupId !== sessionGroupId && apt.status === "APPROVED"
+    })
+    if (actualFacultyConflicts.length > 0) {
+      const faculty = await userRepository.findById(facultyId)
+      const err = Object.assign(
+        new Error(`${faculty?.name || "Faculty"} is already booked at this time`),
+        {
+          conflicts: [{
+            userId: facultyId,
+            userName: faculty?.name || "Faculty",
+            message: `${faculty?.name || "Faculty"} is already booked at this time`,
+            appointments: mapConflicts(actualFacultyConflicts),
+          }],
+        },
       )
-      const dbSlots = (conflictingSlots || []) as unknown as DbRecord[]
-      const actualConflicts = dbSlots.filter((s) => {
-        const apt = s.appointment as DbRecord | undefined
-        return apt && apt.sessionGroupId !== sessionGroupId && apt.status === "APPROVED"
-      })
-      if (actualConflicts.length > 0) {
-        const faculty = await userRepository.findById(facultyId)
-        const err = Object.assign(
-          new Error(`${faculty?.name || "Faculty"} is already booked at this time`),
-          {
-            conflicts: [{
-              userId: facultyId,
-              userName: faculty?.name || "Faculty",
-              message: `${faculty?.name || "Faculty"} is already booked at this time`,
-              appointments: mapConflicts(actualConflicts),
-            }],
-          },
-        )
-        throw err
-      }
+      throw err
     }
   } else if (hasRole(creatorRole, "FACULTY") || hasRole(creatorRole, "DEAN")) {
-    for (const slot of timeSlots) {
-      const conflictingSlots = await appointmentRepository.listConflictingSlots(
-        [createdByUserId],
-        slot.date,
-        slot.startTime,
-        slot.endTime,
-      )
-      const dbSlots = (conflictingSlots || []) as unknown as DbRecord[]
-      const actualConflicts = dbSlots.filter((s) => {
-        const apt = s.appointment as DbRecord | undefined
-        return apt && apt.sessionGroupId !== sessionGroupId && apt.status === "APPROVED"
-      })
-      if (actualConflicts.length > 0) {
-        const faculty = await userRepository.findById(facultyId)
-        const err = Object.assign(
-          new Error(`${faculty?.name || "Faculty"} is already booked at this time`),
-          {
-            conflicts: [{
-              userId: facultyId,
-              userName: faculty?.name || "Faculty",
-              message: `${faculty?.name || "Faculty"} is already booked at this time`,
-              appointments: mapConflicts(actualConflicts),
-            }],
-          },
+    const conflictResults = await Promise.all(
+      timeSlots.map((slot) =>
+        appointmentRepository.listConflictingSlots(
+          [createdByUserId],
+          slot.date,
+          slot.startTime,
+          slot.endTime,
         )
-        throw err
-      }
+      )
+    )
+
+    const allSlots = conflictResults.flat() as unknown as DbRecord[]
+    const actualConflicts = allSlots.filter((s) => {
+      const apt = s.appointment as DbRecord | undefined
+      return apt && apt.sessionGroupId !== sessionGroupId && apt.status === "APPROVED"
+    })
+    if (actualConflicts.length > 0) {
+      const faculty = await userRepository.findById(facultyId)
+      const err = Object.assign(
+        new Error(`${faculty?.name || "Faculty"} is already booked at this time`),
+        {
+          conflicts: [{
+            userId: facultyId,
+            userName: faculty?.name || "Faculty",
+            message: `${faculty?.name || "Faculty"} is already booked at this time`,
+            appointments: mapConflicts(actualConflicts),
+          }],
+        },
+      )
+      throw err
     }
   }
 }
@@ -295,33 +307,38 @@ export async function createAppointmentWithSlotsAndAttendees(
 ) {
   const appointment = await appointmentRepository.create(createData)
 
-  for (const slot of timeSlots) {
-    const createdSlot = await appointmentRepository.addTimeSlot(appointment.id, slot.date, slot.startTime, slot.endTime)
-    if (slotLinks) {
-      const key = `${slot.date}-${slot.startTime}-${slot.endTime}`
-      const link = slotLinks[key]
-      if (link && typeof link === "string") {
-        try {
-          await appointmentRepository.updateTimeSlot(createdSlot.id, { teamsLink: link.trim() })
-        } catch (err) {
-          console.error("Failed to save slot teams link:", err)
+  const createdSlots = await Promise.all(
+    timeSlots.map((slot) =>
+      appointmentRepository.addTimeSlot(appointment.id, slot.date, slot.startTime, slot.endTime)
+    )
+  )
+
+  if (slotLinks) {
+    await Promise.all(
+      createdSlots.map((createdSlot, i) => {
+        const slot = timeSlots[i]
+        const key = `${slot.date}-${slot.startTime}-${slot.endTime}`
+        const link = slotLinks[key]
+        if (link && typeof link === "string") {
+          return appointmentRepository.updateTimeSlot(createdSlot.id, { teamsLink: link.trim() }).catch((err) => {
+            console.error("Failed to save slot teams link:", err)
+          })
         }
-      }
-    }
+        return Promise.resolve()
+      })
+    )
   }
 
-  if (attendeeOptions && attendeeOptions.length > 0) {
-    for (const opt of attendeeOptions) {
-      if (opt.userId !== facultyId) {
-        await appointmentRepository.addAttendee(appointment.id, opt.userId, opt.isMandatory)
-      }
-    }
-  } else if (attendeeIds && attendeeIds.length > 0) {
-    for (const attendeeId of attendeeIds) {
-      if (attendeeId !== facultyId) {
-        await appointmentRepository.addAttendee(appointment.id, attendeeId)
-      }
-    }
+  const attendeePayloads = attendeeOptions
+    ? attendeeOptions.filter((opt) => opt.userId !== facultyId).map((opt) => ({ userId: opt.userId, isMandatory: opt.isMandatory }))
+    : (attendeeIds || []).filter((id) => id !== facultyId).map((userId) => ({ userId, isMandatory: true }))
+
+  if (attendeePayloads.length > 0) {
+    await Promise.all(
+      attendeePayloads.map(({ userId, isMandatory }) =>
+        appointmentRepository.addAttendee(appointment.id, userId, isMandatory)
+      )
+    )
   }
 
   return appointment
