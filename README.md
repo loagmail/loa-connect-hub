@@ -308,8 +308,8 @@ Non-activated accounts must use the activation flow at `/activate`.
 | `rubric` | ✅ Done |
 | `evaluation` | ✅ Done |
 | `evaluation-result` | ✅ Done |
-| `evaluation-rating` | ❌ Missing |
-| `evaluation-comment` | ❌ Missing |
+| `evaluation-rating` | ✅ Done — inline in `evaluations.repository.ts` |
+| `evaluation-comment` | ✅ Done — inline in `evaluations.repository.ts` |
 
 ### Controllers
 
