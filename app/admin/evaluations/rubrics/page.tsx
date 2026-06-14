@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { IosSkeletonCard } from "@/components/ui/IosSkeleton"
 import SubmitButton from "@/components/ui/SubmitButton"
+import LockedTab from "@/components/ui/LockedTab"
+import ErrorState from "@/components/ui/ErrorState"
+import ErrorBoundary from "@/components/ui/ErrorBoundary"
 
 interface RubricItem {
   id: string
@@ -33,18 +36,22 @@ export default function AdminRubricsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [lockedEndpoint, setLockedEndpoint] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     Promise.resolve().then(async () => {
       try {
         const res = await fetch("/api/evaluation-periods")
+        if (res.status === 403) { setLockedEndpoint("/api/evaluation-periods"); return }
+        if (!res.ok) { setErrorMessage("Failed to load periods"); return }
         const data = await res.json()
         const list: Period[] = data.periods || []
         setPeriods(list)
         const active = list.find((p: Period) => p.isActive)
         if (active) setSelectedPeriodId(active.id)
       } catch {
-        alert("Failed to load periods")
+        setErrorMessage("Failed to load periods")
       } finally {
         setLoading(false)
       }
@@ -57,10 +64,12 @@ export default function AdminRubricsPage() {
       setLoading(true)
       try {
         const res = await fetch(`/api/evaluation-periods/${selectedPeriodId}/rubric`)
+        if (res.status === 403) { setLockedEndpoint(`/api/evaluation-periods/${selectedPeriodId}/rubric`); return }
+        if (!res.ok) { setErrorMessage("Failed to load rubric"); return }
         const data = await res.json()
         setCategories(data.rubric || [])
       } catch {
-        alert("Failed to load rubric")
+        setErrorMessage("Failed to load rubric")
       } finally {
         setLoading(false)
       }
@@ -187,7 +196,16 @@ export default function AdminRubricsPage() {
     }
   }, [selectedPeriodId, categories])
 
+  if (lockedEndpoint) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 pb-safe px-4">
+        <LockedTab endpoint={lockedEndpoint} />
+      </div>
+    )
+  }
+
   return (
+    <ErrorBoundary>
     <div className="max-w-4xl mx-auto space-y-6 pb-safe">
       <div className="flex items-start justify-between gap-4 px-4">
         <div>
@@ -206,7 +224,13 @@ export default function AdminRubricsPage() {
         </select>
       </div>
 
-      <div className="px-4">
+      {errorMessage && (
+        <div className="px-4">
+          <ErrorState message={errorMessage} onRetry={() => { setErrorMessage(""); setLoading(true); setLockedEndpoint(""); window.location.reload() }} />
+        </div>
+      )}
+
+      {!errorMessage && <div className="px-4">
         <button
           onClick={() => setShowInfo(!showInfo)}
           className="ios-table-row w-full gap-2 !min-h-[44px]"
@@ -250,9 +274,9 @@ export default function AdminRubricsPage() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
-      {loading ? (
+      {!errorMessage && (loading ? (
         <div className="space-y-3 px-4">
           <IosSkeletonCard />
           <IosSkeletonCard />
@@ -324,7 +348,8 @@ export default function AdminRubricsPage() {
             </SubmitButton>
           </div>
         </div>
-      )}
+      ))}
     </div>
+    </ErrorBoundary>
   )
 }

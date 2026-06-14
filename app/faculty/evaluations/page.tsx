@@ -4,6 +4,9 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import { SkeletonCard } from "@/components/ui/Skeleton"
+import LockedTab from "@/components/ui/LockedTab"
+import ErrorState from "@/components/ui/ErrorState"
+import ErrorBoundary from "@/components/ui/ErrorBoundary"
 
 interface Period {
   id: string
@@ -60,18 +63,25 @@ export default function FacultyEvaluationsPage() {
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>("")
   const [result, setResult] = useState<FacultyResult | null>(null)
   const [loading, setLoading] = useState(true)
+  const [lockedEndpoint, setLockedEndpoint] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     Promise.resolve().then(async () => {
       try {
         const res = await fetch("/api/evaluation-periods")
+        if (res.status === 403) {
+          const data = await res.json()
+          setLockedEndpoint(data.endpoint || "/api/evaluation-periods")
+          return
+        }
         const data = await res.json()
         const list: Period[] = data.periods || []
         setPeriods(list)
         const active = list.find((p: Period) => p.isActive)
         if (active) setSelectedPeriodId(active.id)
       } catch {
-        alert("Failed to load periods")
+        setErrorMessage("Failed to load periods")
       } finally {
         setLoading(false)
       }
@@ -84,6 +94,11 @@ export default function FacultyEvaluationsPage() {
       setLoading(true)
       try {
         const res = await fetch(`/api/faculty/evaluation-results?periodId=${selectedPeriodId}`)
+        if (res.status === 403) {
+          const data = await res.json()
+          setLockedEndpoint(data.endpoint || `/api/faculty/evaluation-results?periodId=${selectedPeriodId}`)
+          return
+        }
         const data: FacultyResultsResponse = await res.json()
         setResult(data.results?.[0] ?? null)
       } catch {
@@ -104,7 +119,24 @@ export default function FacultyEvaluationsPage() {
     )
   }
 
+  if (lockedEndpoint) {
+    return (
+      <div className="max-w-4xl mx-auto pb-12">
+        <LockedTab endpoint={lockedEndpoint} />
+      </div>
+    )
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="max-w-4xl mx-auto pb-12">
+        <ErrorState message={errorMessage} onRetry={() => setErrorMessage("")} />
+      </div>
+    )
+  }
+
   return (
+    <ErrorBoundary>
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -176,5 +208,6 @@ export default function FacultyEvaluationsPage() {
         </>
       )}
     </div>
+    </ErrorBoundary>
   )
 }

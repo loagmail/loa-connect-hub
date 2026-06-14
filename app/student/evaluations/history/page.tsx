@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react"
 import Skeleton from "@/components/ui/Skeleton"
+import LockedTab from "@/components/ui/LockedTab"
+import ErrorState from "@/components/ui/ErrorState"
+import ErrorBoundary from "@/components/ui/ErrorBoundary"
 
 interface Period {
   id: string
@@ -25,6 +28,8 @@ export default function StudentEvaluationHistoryPage() {
   const [periods, setPeriods] = useState<Period[]>([])
   const [evaluations, setEvaluations] = useState<EvalItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [lockedEndpoint, setLockedEndpoint] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     Promise.resolve().then(async () => {
@@ -33,11 +38,13 @@ export default function StudentEvaluationHistoryPage() {
           fetch("/api/evaluation-periods"),
           fetch("/api/evaluations"),
         ])
+        if (perRes.status === 403) { setLockedEndpoint("/api/evaluation-periods"); setLoading(false); return }
+        if (evalRes.status === 403) { setLockedEndpoint("/api/evaluations"); setLoading(false); return }
         const [perData, evalData] = await Promise.all([perRes.json(), evalRes.json()])
         setPeriods(perData.periods || [])
         setEvaluations(evalData.evaluations || [])
       } catch {
-        alert("Failed to load history")
+        setErrorMessage("Failed to load history")
       } finally {
         setLoading(false)
       }
@@ -53,6 +60,14 @@ export default function StudentEvaluationHistoryPage() {
     grouped.get(key)!.push(ev)
   }
 
+  if (lockedEndpoint) {
+    return (
+      <div className="pb-12 space-y-6">
+        <LockedTab endpoint={lockedEndpoint} />
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="pb-12 space-y-6">
@@ -64,13 +79,18 @@ export default function StudentEvaluationHistoryPage() {
   }
 
   return (
+    <ErrorBoundary>
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       <div>
         <h1 className="text-xl font-bold text-primary">Evaluation History</h1>
         <p className="text-sm text-tertiary mt-1">{submitted.length} evaluation{submitted.length !== 1 ? "s" : ""} submitted</p>
       </div>
 
-      {submitted.length === 0 ? (
+      {errorMessage ? (
+        <ErrorState message={errorMessage} onRetry={() => window.location.reload()} />
+      ) : (
+        <>
+        {submitted.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
           <p className="text-sm text-tertiary">No submitted evaluations yet.</p>
         </div>
@@ -98,6 +118,9 @@ export default function StudentEvaluationHistoryPage() {
           )
         })
       )}
+        </>
+      )}
     </div>
+    </ErrorBoundary>
   )
 }

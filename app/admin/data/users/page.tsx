@@ -3,6 +3,9 @@
 import { useRef, useState, useMemo, useEffect } from "react"
 import Skeleton from "@/components/ui/Skeleton"
 import SubmitButton from "@/components/ui/SubmitButton"
+import LockedTab from "@/components/ui/LockedTab"
+import ErrorState from "@/components/ui/ErrorState"
+import ErrorBoundary from "@/components/ui/ErrorBoundary"
 import { useApiGet } from "@/lib/api/client"
 import { hasRole } from "@/lib/utils/roles"
 import type { UserData, DepartmentData } from "@/lib/types"
@@ -52,6 +55,8 @@ export default function AdminUsersPage() {
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0])
   const [changingRole, setChangingRole] = useState<string | null>(null)
   const [roleMenuOpen, setRoleMenuOpen] = useState<string | null>(null)
+  const [lockedEndpoint, setLockedEndpoint] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
   // Edit modal state
   const [editUser, setEditUser] = useState<UserData | null>(null)
@@ -74,7 +79,16 @@ export default function AdminUsersPage() {
   const [createSendInvite, setCreateSendInvite] = useState(true)
   const [createResult, setCreateResult] = useState<string | null>(null)
 
-  const { data: adminData, isLoading } = useApiGet<{ users: UserData[]; departments: DepartmentData[] }>("/api/admin/users")
+  const { data: adminData, isLoading, error: apiError } = useApiGet<{ users: UserData[]; departments: DepartmentData[] }>("/api/admin/users")
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      if (apiError) {
+        if (apiError.message?.includes("Forbidden")) setLockedEndpoint("/api/admin/users")
+        else setErrorMessage(apiError.message)
+      }
+    })
+  }, [apiError])
 
   useEffect(() => {
     if (adminData?.users && !users.length) setUsers(adminData.users) // eslint-disable-line react-hooks/set-state-in-effect
@@ -100,6 +114,7 @@ export default function AdminUsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, isDisabled: !currentStatus }),
       })
+      if (res.status === 403) { setLockedEndpoint("/api/admin/users"); return }
       if (res.ok) {
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? { ...u, isDisabled: !currentStatus } : u))
@@ -119,6 +134,7 @@ export default function AdminUsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, role: pipeRoles }),
       })
+      if (res.status === 403) { setLockedEndpoint("/api/admin/users"); return }
       if (res.ok) {
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? { ...u, role: pipeRoles } : u))
@@ -159,6 +175,7 @@ export default function AdminUsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
+      if (res.status === 403) { setLockedEndpoint("/api/admin/users"); return }
       if (res.ok) {
         const data = await res.json()
         if (data.user) {
@@ -169,9 +186,9 @@ export default function AdminUsersPage() {
         const text = await res.text()
         try {
           const data = JSON.parse(text)
-          alert(data.error || "Failed to update user")
+          setErrorMessage(data.error || "Failed to update user")
         } catch {
-          alert("Failed to update user")
+          setErrorMessage("Failed to update user")
         }
       }
     } finally {
@@ -187,6 +204,7 @@ export default function AdminUsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, onboardingVersion: 0 }),
       })
+      if (res.status === 403) { setLockedEndpoint("/api/admin/users"); return }
       if (res.ok) {
         const data = await res.json()
         if (data.user) {
@@ -196,9 +214,9 @@ export default function AdminUsersPage() {
         const text = await res.text()
         try {
           const data = JSON.parse(text)
-          alert(data.error || "Failed to reset onboarding")
+          setErrorMessage(data.error || "Failed to reset onboarding")
         } catch {
-          alert("Failed to reset onboarding")
+          setErrorMessage("Failed to reset onboarding")
         }
       }
     } catch { }
@@ -235,6 +253,7 @@ export default function AdminUsersPage() {
           departmentId: createDept || null,
         }),
       })
+      if (res.status === 403) { setLockedEndpoint("/api/admin/users"); return }
       const data = await res.json()
       if (res.ok) {
         setUsers((prev) => [data.user, ...prev])
@@ -251,6 +270,7 @@ export default function AdminUsersPage() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ email }),
             })
+            if (inviteRes.status === 403) { setLockedEndpoint("/api/auth/activate"); return }
             if (inviteRes.ok) {
               setCreateResult("User created and invite sent.")
             } else {
@@ -319,7 +339,16 @@ export default function AdminUsersPage() {
     )
   }
 
+  if (lockedEndpoint) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 pb-12 px-4">
+        <LockedTab endpoint={lockedEndpoint} />
+      </div>
+    )
+  }
+
   return (
+    <ErrorBoundary>
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
@@ -331,6 +360,12 @@ export default function AdminUsersPage() {
           </SubmitButton>
         </div>
       </div>
+
+      {errorMessage ? (
+        <div className="px-4">
+          <ErrorState message={errorMessage} onRetry={() => { setErrorMessage(""); window.location.reload() }} />
+        </div>
+      ) : (<>
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
@@ -884,6 +919,8 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+    </>)}
     </div>
+    </ErrorBoundary>
   )
 }

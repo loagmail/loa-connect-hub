@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { SkeletonMetricGrid, SkeletonTable } from "@/components/ui/Skeleton"
+import LockedTab from "@/components/ui/LockedTab"
+import ErrorState from "@/components/ui/ErrorState"
+import ErrorBoundary from "@/components/ui/ErrorBoundary"
 import type { DepartmentData } from "@/lib/types"
 
 interface Result {
@@ -128,44 +131,64 @@ export default function EvaluationDashboard({
   const [visibilityMap, setVisibilityMap] = useState<Record<string, boolean>>({})
   const [toggling, setToggling] = useState(false)
   const [page, setPage] = useState(0)
+  const [lockedEndpoint, setLockedEndpoint] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
-    fetch("/api/evaluation-periods")
-      .then((r) => r.json())
-      .then((data) => {
+    const endpoint = "/api/evaluation-periods"
+    const fetchData = async () => {
+      try {
+        const res = await fetch(endpoint)
+        if (res.status === 403) { setLockedEndpoint(endpoint); return }
+        const data = await res.json()
         const list = data.periods || []
         setPeriods(list)
         if (list.length > 0) setSelectedPeriod(list[0].id)
-      })
+      } catch {
+        setErrorMessage("Failed to load evaluation periods")
+      }
+    }
+    fetchData()
   }, [])
 
   useEffect(() => {
     if (!showDepartmentFilter) return
-    fetch("/api/admin/departments")
-      .then((r) => r.json())
-      .then((data) => {
+    const endpoint = "/api/admin/departments"
+    const fetchData = async () => {
+      try {
+        const res = await fetch(endpoint)
+        if (res.status === 403) { setLockedEndpoint(endpoint); return }
+        const data = await res.json()
         const list = Array.isArray(data) ? data : []
         setDepartments(list)
-      })
+      } catch {
+        setErrorMessage("Failed to load departments")
+      }
+    }
+    fetchData()
   }, [showDepartmentFilter])
 
   useEffect(() => {
     if (!selectedPeriod) return
-    Promise.resolve().then(() => {
+    Promise.resolve().then(async () => {
       setLoading(true)
       setSelectedFaculty(null)
       setStudentData({})
       setPage(0)
       const params = new URLSearchParams({ periodId: selectedPeriod })
       if (selectedDept) params.set("departmentId", selectedDept)
-      fetch(`${apiBase}?${params}&_=${Date.now()}`)
-        .then((r) => r.json())
-        .then((data) => {
-          setResults(data.results || [])
-          setFacultyNames(data.facultyNames || {})
-          setVisibilityMap(data.visibilityMap || {})
-          setLoading(false)
-        })
+      const endpoint = `${apiBase}?${params}&_=${Date.now()}`
+      try {
+        const res = await fetch(endpoint)
+        if (res.status === 403) { setLockedEndpoint(endpoint); setLoading(false); return }
+        const data = await res.json()
+        setResults(data.results || [])
+        setFacultyNames(data.facultyNames || {})
+        setVisibilityMap(data.visibilityMap || {})
+      } catch {
+        setErrorMessage("Failed to load evaluation results")
+      }
+      setLoading(false)
     })
   }, [selectedPeriod, selectedDept, apiBase])
 
@@ -177,6 +200,7 @@ export default function EvaluationDashboard({
     setLoadingStudents(true)
     try {
       const r = await fetch(`/api/dean/evaluation-results/details?periodId=${selectedPeriod}&facultyId=${facultyId}`)
+      if (r.status === 403) { setLockedEndpoint(`/api/dean/evaluation-results/details?periodId=${selectedPeriod}&facultyId=${facultyId}`); setLoadingStudents(false); return }
       const data = await r.json()
       setStudentData((prev) => ({ ...prev, [facultyId]: data.students || [] }))
     } catch {
@@ -191,11 +215,12 @@ export default function EvaluationDashboard({
     const prev = visibilityMap[facultyId]
     setVisibilityMap((m) => ({ ...m, [facultyId]: visible }))
     try {
-      await fetch("/api/admin/evaluation-results/visibility", {
+      const res = await fetch("/api/admin/evaluation-results/visibility", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ semesterId: selectedPeriod, facultyIds: [facultyId], visible }),
       })
+      if (res.status === 403) { setLockedEndpoint("/api/admin/evaluation-results/visibility"); setVisibilityMap((m) => ({ ...m, [facultyId]: prev })); return }
     } catch {
       setVisibilityMap((m) => ({ ...m, [facultyId]: prev }))
     }
@@ -211,11 +236,12 @@ export default function EvaluationDashboard({
     for (const id of facultyIds) update[id] = visible
     setVisibilityMap((m) => ({ ...m, ...update }))
     try {
-      await fetch("/api/admin/evaluation-results/visibility", {
+      const res = await fetch("/api/admin/evaluation-results/visibility", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ semesterId: selectedPeriod, facultyIds, visible }),
       })
+      if (res.status === 403) { setLockedEndpoint("/api/admin/evaluation-results/visibility"); setVisibilityMap(prev); return }
     } catch {
       setVisibilityMap(prev)
     }
@@ -375,7 +401,16 @@ export default function EvaluationDashboard({
   const selectedResult = results.find((r) => r.facultyId === selectedFaculty)
   const selectedStudents = selectedFaculty ? studentData[selectedFaculty] || [] : []
 
+  if (lockedEndpoint) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 pb-12 px-4">
+        <LockedTab endpoint={lockedEndpoint} />
+      </div>
+    )
+  }
+
   return (
+    <ErrorBoundary>
     <div className="pb-12">
       {/* Header */}
       <div className="max-w-[1400px] mx-auto px-6 pt-6">
@@ -383,6 +418,10 @@ export default function EvaluationDashboard({
         <p className="text-sm text-tertiary mt-1">{subtitle}</p>
       </div>
 
+      {errorMessage && <ErrorState message={errorMessage} onRetry={() => { setErrorMessage(""); window.location.reload() }} />}
+
+      {!errorMessage && (
+      <>
       {/* Filter Card */}
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 pt-3 sm:pt-6">
         <div className="flex flex-wrap items-end gap-2 sm:gap-4 p-3 sm:p-5 bg-surface rounded-2xl shadow-sm">
@@ -682,7 +721,10 @@ export default function EvaluationDashboard({
           )}
         </div>
       )}
+      </>
+      )}
     </div>
+    </ErrorBoundary>
   )
 }
 

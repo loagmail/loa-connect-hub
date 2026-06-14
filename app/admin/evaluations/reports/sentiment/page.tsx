@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import Skeleton from "@/components/ui/Skeleton"
 import { SkeletonCard } from "@/components/ui/Skeleton"
+import LockedTab from "@/components/ui/LockedTab"
+import ErrorState from "@/components/ui/ErrorState"
+import ErrorBoundary from "@/components/ui/ErrorBoundary"
 
 interface DistributionItem {
   label: string
@@ -44,6 +47,8 @@ export default function SentimentAnalysisPage() {
   const [comments, setComments] = useState<CommentRow[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string | null>(null)
+  const [lockedEndpoint, setLockedEndpoint] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     Promise.resolve().then(async () => {
@@ -52,11 +57,21 @@ export default function SentimentAnalysisPage() {
           fetch("/api/sentiment-analysis/summary"),
           fetch("/api/evaluation-comments"),
         ])
+        if (sumRes.status === 403) {
+          const data = await sumRes.json()
+          setLockedEndpoint(data.endpoint || "/api/sentiment-analysis/summary")
+          return
+        }
+        if (comRes.status === 403) {
+          const data = await comRes.json()
+          setLockedEndpoint(data.endpoint || "/api/evaluation-comments")
+          return
+        }
         const [sumData, comData] = await Promise.all([sumRes.json(), comRes.json()])
         setSummary(sumData.data)
         setComments(comData.comments || [])
       } catch {
-        alert("Failed to load sentiment data")
+        setErrorMessage("Failed to load sentiment data")
       } finally {
         setLoading(false)
       }
@@ -77,9 +92,26 @@ export default function SentimentAnalysisPage() {
     )
   }
 
+  if (lockedEndpoint) {
+    return (
+      <div className="max-w-5xl mx-auto pb-12">
+        <LockedTab endpoint={lockedEndpoint} />
+      </div>
+    )
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="max-w-5xl mx-auto pb-12">
+        <ErrorState message={errorMessage} onRetry={() => setErrorMessage("")} />
+      </div>
+    )
+  }
+
   const maxCount = summary ? Math.max(...summary.distribution.map((d) => d.count), 1) : 1
 
   return (
+    <ErrorBoundary>
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
       <div>
         <h1 className="text-xl font-bold text-primary">Sentiment Analysis</h1>
@@ -159,5 +191,6 @@ export default function SentimentAnalysisPage() {
         )}
       </div>
     </div>
+    </ErrorBoundary>
   )
 }
