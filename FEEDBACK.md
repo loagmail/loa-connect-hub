@@ -6,7 +6,7 @@
 
 **Gaps:** Faculty Evaluation module is the major incomplete area (~18 items missing from README checklist: 8 pages, 2 repositories, 3 API routes for evaluation reports). Sentiment analysis is stubbed with placeholder implementations. These live on the `eval` branch and haven't been merged.
 
-**Architecture note:** A `lib/controllers/` layer is referenced in AGENTS.md but doesn't exist on disk — some orchestration logic lives in service files instead, blurring the service/controller boundary.
+**Architecture note:** A `lib/controllers/` layer is referenced in AGENTS.md but doesn't exist on disk — orchestration was initially mixed into service files. Refactoring of `features/appointments/` created three clean layers: `appointments.controller.ts` (orchestration + DTO mapping), `appointments.service.ts` (validation + business logic), and `appointments.notifications.ts` (email side-effects). Other domains (reports, evaluations, admin-data) still need the same treatment.
 
 ---
 
