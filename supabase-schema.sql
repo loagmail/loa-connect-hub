@@ -1208,7 +1208,7 @@ BEGIN
 
   -- ── DEFAULT SEMESTER ─────────────────────────────────────
   INSERT INTO semesters (id, title, "evalStartDate", "evalEndDate", "isActive")
-  VALUES (_sem_id, 'System Default Semester', CURRENT_DATE, CURRENT_DATE + INTERVAL '180 days', TRUE)
+  VALUES (_sem_id, 'SY 2026-2027 First Semester', CURRENT_DATE, CURRENT_DATE + INTERVAL '180 days', TRUE)
   ON CONFLICT (id) DO NOTHING;
 
   -- ── RUBRIC CATEGORIES ──────────────────────────────────

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import Skeleton from "@/components/ui/Skeleton"
+import { IosSkeletonCard } from "@/components/ui/IosSkeleton"
 import SubmitButton from "@/components/ui/SubmitButton"
 
 interface RubricItem {
@@ -32,6 +32,7 @@ export default function AdminRubricsPage() {
   const [categories, setCategories] = useState<RubricCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [showInfo, setShowInfo] = useState(false)
 
   useEffect(() => {
     Promise.resolve().then(async () => {
@@ -187,16 +188,16 @@ export default function AdminRubricsPage() {
   }, [selectedPeriodId, categories])
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
-      <div className="flex items-start justify-between gap-4">
+    <div className="max-w-4xl mx-auto space-y-6 pb-safe">
+      <div className="flex items-start justify-between gap-4 px-4">
         <div>
-          <h1 className="text-xl font-bold text-primary">Rubric Editor</h1>
-          <p className="text-sm text-tertiary mt-1">Manage evaluation categories and items</p>
+          <h1 className="text-[28px] font-bold text-[var(--color-text)] tracking-tight">Rubric Editor</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Manage evaluation categories and items</p>
         </div>
         <select
           value={selectedPeriodId}
           onChange={(e) => setSelectedPeriodId(e.target.value)}
-          className="text-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-primary"
+          className="input text-sm min-w-[160px]"
         >
           <option value="">Select period...</option>
           {periods.map((p) => (
@@ -205,53 +206,99 @@ export default function AdminRubricsPage() {
         </select>
       </div>
 
+      <div className="px-4">
+        <button
+          onClick={() => setShowInfo(!showInfo)}
+          className="ios-table-row w-full gap-2 !min-h-[44px]"
+        >
+          <svg className="w-4 h-4 text-[var(--color-system-blue)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-[15px] text-[var(--color-text)] flex-1 text-left">How scoring works</span>
+          <svg
+            className={`w-4 h-4 text-[var(--color-text-muted)] transition-transform duration-200 ${showInfo ? "rotate-180" : ""}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {showInfo && (
+          <div className="ios-table-section mt-1">
+            <div className="px-4 py-3 space-y-3 text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+              <p>
+                <strong className="text-[var(--color-text)]">Fixed matrix.</strong> Each category contains items (criteria).
+                Students rate every item on a <strong className="text-[var(--color-text)]">1–5 scale</strong>.
+              </p>
+              <p>
+                <strong className="text-[var(--color-text)]">Category score</strong> = mean of all item ratings within that
+                category across all responding students. Each item contributes equally.
+              </p>
+              <p>
+                <strong className="text-[var(--color-text)]">General rating</strong> = mean of all 8 category scores.
+                Every category carries equal weight.
+              </p>
+              <div className="border-t border-[var(--color-border)] pt-3">
+                <p className="font-semibold text-[var(--color-text)] mb-1">Remarks</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  <span>≥ 4.50</span><span className="text-[var(--color-system-green)]">Outstanding</span>
+                  <span>≥ 3.50</span><span className="text-[var(--color-system-blue)]">Very Satisfactory</span>
+                  <span>≥ 2.50</span><span className="text-[var(--color-system-orange)]">Satisfactory</span>
+                  <span>≥ 1.50</span><span className="text-[var(--color-system-yellow)]">Unsatisfactory</span>
+                  <span>&lt; 1.50</span><span className="text-[var(--color-system-red)]">Poor</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {loading ? (
-        <div className="space-y-4">
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
+        <div className="space-y-3 px-4">
+          <IosSkeletonCard />
+          <IosSkeletonCard />
         </div>
       ) : categories.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <p className="text-sm text-tertiary">No rubric configured for this period.</p>
+        <div className="ios-table-section p-12 text-center mx-4">
+          <p className="text-sm text-[var(--color-text-muted)]">No rubric configured for this period.</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-3 px-4">
           {categories.map((cat) => (
-            <div key={cat.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
-                <h3 className="text-sm font-bold text-primary">{cat.name}</h3>
-                <div className="flex gap-2">
+            <div key={cat.id} className="ios-table-section">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
+                <h3 className="text-[15px] font-semibold text-[var(--color-text)]">{cat.name}</h3>
+                <div className="flex gap-1">
                   <button
                     onClick={() => updateCategoryName(cat.id, cat.name)}
-                    className="text-xs text-blue-600 hover:underline"
+                    className="btn-ios-plain text-xs h-7 px-2"
                   >
                     Rename
                   </button>
                   <button
                     onClick={() => deleteCategory(cat.id)}
-                    className="text-xs text-red-600 hover:underline"
+                    className="btn-ios-plain text-xs h-7 px-2 !text-[var(--color-system-red)]"
                   >
                     Delete
                   </button>
                 </div>
               </div>
-              <div className="divide-y divide-slate-100">
+              <div>
                 {cat.items.length === 0 ? (
-                  <p className="px-5 py-3 text-xs text-tertiary">No items</p>
+                  <p className="px-4 py-3 text-sm text-[var(--color-text-muted)]">No items</p>
                 ) : (
                   cat.items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between px-5 py-3">
-                      <span className="text-sm text-primary">{item.text}</span>
-                      <div className="flex gap-2 shrink-0">
+                    <div key={item.id} className="ios-table-row justify-between">
+                      <span className="text-[15px] text-[var(--color-text)]">{item.text}</span>
+                      <div className="flex gap-1 shrink-0">
                         <button
                           onClick={() => updateItem(item.id, cat.id, item.text)}
-                          className="text-xs text-blue-600 hover:underline"
+                          className="btn-ios-plain text-xs h-7 px-2"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => deleteItem(item.id, cat.id)}
-                          className="text-xs text-red-600 hover:underline"
+                          className="btn-ios-plain text-xs h-7 px-2 !text-[var(--color-system-red)]"
                         >
                           Remove
                         </button>
@@ -260,10 +307,10 @@ export default function AdminRubricsPage() {
                   ))
                 )}
               </div>
-              <div className="px-5 py-3 border-t border-slate-100">
+              <div className="border-t border-[var(--color-border)]">
                 <button
                   onClick={() => addItem(cat.id)}
-                  className="text-xs font-semibold text-blue-600 hover:underline"
+                  className="btn-ios-plain w-full text-sm font-semibold h-10"
                 >
                   + Add item
                 </button>
@@ -271,8 +318,8 @@ export default function AdminRubricsPage() {
             </div>
           ))}
 
-          <div className="flex justify-end">
-            <SubmitButton onClick={saveAll} loading={saving}>
+          <div className="flex justify-end pt-2">
+            <SubmitButton onClick={saveAll} loading={saving} variant="ios-primary">
               Save Rubric
             </SubmitButton>
           </div>
