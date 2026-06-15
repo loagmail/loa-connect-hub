@@ -65,6 +65,23 @@ export async function POST(request: NextRequest) {
       row.section_id = fs.section_id
     }
 
+    // Pre-check for existing enrollment on the intended unique constraint
+    let preCheck = supabase
+      .from("student_enrollments")
+      .select("id")
+      .eq("student_id", resolvedStudentId)
+      .eq("faculty_subject_id", faculty_subject_id)
+    if (semesterId) {
+      preCheck = preCheck.eq("semesterId", semesterId)
+    } else {
+      preCheck = preCheck.is("semesterId", null)
+    }
+    const { data: existing } = await preCheck.maybeSingle()
+
+    if (existing) {
+      return NextResponse.json({ error: "This enrollment already exists" }, { status: 409 })
+    }
+
     const { data, error } = await supabase
       .from("student_enrollments")
       .insert(row)
@@ -73,7 +90,9 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (error.code === "23505") {
-        return NextResponse.json({ error: "This enrollment already exists" }, { status: 409 })
+        // Hit a stale constraint (e.g. old (student_id, section_id, "semesterId") unique).
+        // The pre-check passed so it's a section-level conflict, not a real duplicate.
+        return NextResponse.json({ error: "This student is already enrolled in a different section for the same subject this semester" }, { status: 409 })
       }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }

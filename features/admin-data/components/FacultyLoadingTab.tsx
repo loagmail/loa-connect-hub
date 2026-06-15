@@ -38,6 +38,10 @@ function FacultyTab() {
   const [formFaculty, setFormFaculty] = useState("")
   const [formSubject, setFormSubject] = useState("")
   const [formSection, setFormSection] = useState("")
+  const [formDept, setFormDept] = useState("all")
+  const [facultySearch, setFacultySearch] = useState("")
+  const [facultyDropdownOpen, setFacultyDropdownOpen] = useState(false)
+  const facultyDropdownRef = useRef<HTMLDivElement>(null)
   const [formSaving, setFormSaving] = useState(false)
   const [formError, setFormError] = useState("")
   const [formSuccess, setFormSuccess] = useState("")
@@ -97,10 +101,34 @@ function FacultyTab() {
 
   const { data: enrollmentsData } = useApiGet<{ data: { id: string; faculty_subject_id: string | null }[] }>("/api/data/evaluation-mappings?type=student")
 
-  const faculties = (allUsers?.users ?? []).filter((u) => u.email.endsWith("@lyceumalabang.edu.ph") && u.email !== "admin@lyceumalabang.edu.ph" && u.id !== "a0000000-0000-0000-0000-000000000001")
+  const faculties = (allUsers?.users ?? []).filter((u) => (u.role.includes("FACULTY") || u.role.includes("DEAN")) && u.id !== "a0000000-0000-0000-0000-000000000001")
   const subjects = subjectsData?.data ?? []
   const sections = sectionsData?.data ?? []
   const departments = allUsers?.departments ?? []
+
+  const facultiesByDept = useMemo(() => {
+    return formDept === "all" ? faculties : faculties.filter((f) => f.departmentId === formDept)
+  }, [faculties, formDept])
+
+  const filteredFaculties = useMemo(() => {
+    if (!facultySearch) return facultiesByDept
+    const q = facultySearch.toLowerCase()
+    return facultiesByDept.filter((f) => f.name.toLowerCase().includes(q) || f.email.toLowerCase().includes(q))
+  }, [facultiesByDept, facultySearch])
+
+  const selectedFacultyName = formFaculty
+    ? faculties.find((f) => f.id === formFaculty)?.name ?? ""
+    : ""
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(e.target as Node)) {
+        setFacultyDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const enrollmentCountByFsId = useMemo(() => {
     const map = new Map<string, number>()
@@ -187,18 +215,49 @@ function FacultyTab() {
       {!locked && error && <p className="text-xs font-medium text-red-600">{error}</p>}
 
       {/* Add Form */}
-      <form onSubmit={handleAdd} className="card p-4 sm:p-6 bg-surface space-y-4">
-        <h2 className="text-sm font-bold text-secondary">Add Faculty-Subject Mapping</h2>
+      <form onSubmit={handleAdd} className="card p-6 sm:p-8 bg-surface space-y-5">
+        <h2 className="text-lg font-bold text-primary">Faculty Loading</h2>
         {formError && <p className="text-xs font-medium text-red-600 bg-red-50 p-2 rounded">{formError}</p>}
         {formSuccess && <p className="text-xs font-medium text-green-600 bg-green-50 p-2 rounded">{formSuccess}</p>}
-        {!activeSemesterId && <p className="text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded flex items-center gap-2"><span>⚠️</span> No active semester — semesterId will be null, evaluations won't work.</p>}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {!activeSemesterId && <p className="text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded flex items-center gap-2"><span>⚠️</span> No active semester — semesterId will be null, evaluations will not work.</p>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-tertiary mb-1">Faculty</label>
-            <select value={formFaculty} onChange={(e) => { setFormFaculty(e.target.value) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
-              <option value="">Select faculty...</option>
-              {faculties.map((f) => (<option key={f.id} value={f.id}>{f.name} ({f.email})</option>))}
+            <label className="block text-xs font-semibold text-tertiary mb-1">Department</label>
+            <select value={formDept} onChange={(e) => { setFormDept(e.target.value); setFormFaculty(""); setFacultySearch("") }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400">
+              <option value="all">All</option>
+              {departments.map((d) => (<option key={d.id} value={d.id}>{d.name}</option>))}
             </select>
+          </div>
+          <div className="relative" ref={facultyDropdownRef}>
+            <label className="block text-xs font-semibold text-tertiary mb-1">Faculty</label>
+            <input
+              value={facultySearch || selectedFacultyName}
+              onChange={(e) => { setFacultySearch(e.target.value); setFormFaculty(""); setFacultyDropdownOpen(true) }}
+              onFocus={() => setFacultyDropdownOpen(true)}
+              placeholder="Search faculty..."
+              className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              required
+              autoComplete="off"
+            />
+            {facultyDropdownOpen && (
+              <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl max-h-52 overflow-y-auto">
+                {filteredFaculties.length === 0 ? (
+                  <p className="text-xs text-tertiary text-center py-4">No faculty found</p>
+                ) : (
+                  filteredFaculties.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => { setFormFaculty(f.id); setFacultySearch(""); setFacultyDropdownOpen(false) }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-hover transition-colors ${formFaculty === f.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
+                    >
+                      <span className="text-primary">{f.name}</span>
+                      <span className="text-tertiary ml-1 text-xs">{f.email}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-tertiary mb-1">Subject</label>
@@ -215,7 +274,7 @@ function FacultyTab() {
             </select>
           </div>
         </div>
-        <div><IosButton type="submit" loading={formSaving} variant="primary">Add Mapping</IosButton></div>
+        <div className="pt-2"><IosButton type="submit" loading={formSaving} variant="primary">Create Faculty Load Entry</IosButton></div>
       </form>
 
       {/* Department Filter */}
@@ -245,7 +304,7 @@ function FacultyTab() {
         {hasNullSemesterId && (
           <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2.5">
             <span>⚠️</span>
-            <span>Some mappings are missing semesterId — affected faculty won't appear in student evaluations.</span>
+            <span>Some mappings are missing semesterId — affected faculty will not appear in student evaluations.</span>
           </div>
         )}
         <SearchInput value={search} onChange={(v) => { setSearch(v) }} placeholder="Search by faculty name, email, subject code, or section..." />

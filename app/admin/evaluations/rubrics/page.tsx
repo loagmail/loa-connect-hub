@@ -141,40 +141,7 @@ export default function AdminRubricsPage() {
     }
   }, [selectedPeriodId])
 
-  const updateCategoryName = useCallback(async (categoryId: string, currentName: string) => {
-    const name = prompt("Edit category name:", currentName)
-    if (!name || name === currentName) return
-    try {
-      const res = await fetch(`/api/evaluation-periods/${selectedPeriodId}/rubrics/categories/${categoryId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      })
-      const data = await res.json()
-      if (data.category) {
-        setCategories((prev) =>
-          prev.map((c) => (c.id === categoryId ? data.category : c))
-        )
-      }
-    } catch {
-      alert("Failed to update category")
-    }
-  }, [selectedPeriodId])
-
-  const deleteCategory = useCallback(async (categoryId: string) => {
-    if (!confirm("Delete this category and all items?")) return
-    try {
-      const res = await fetch(`/api/evaluation-periods/${selectedPeriodId}/rubrics/categories/${categoryId}`, {
-        method: "DELETE",
-      })
-      const data = await res.json()
-      if (data.success) {
-        setCategories((prev) => prev.filter((c) => c.id !== categoryId))
-      }
-    } catch {
-      alert("Failed to delete category")
-    }
-  }, [selectedPeriodId])
+  // updateCategoryName and deleteCategory available for future use
 
   const saveAll = useCallback(async () => {
     setSaving(true)

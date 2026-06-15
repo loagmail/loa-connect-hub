@@ -233,7 +233,7 @@ export function EnrollmentsTab() {
         {!activeSemesterId && (
           <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2.5">
             <span>⚠️</span>
-            <span>No active semester — semesterId will be null, evaluations won't work.</span>
+            <span>No active semester — semesterId will be null, evaluations won&rsquo;t work.</span>
           </div>
         )}
         {!csvFsId && (
@@ -475,7 +475,7 @@ export function EnrollmentsTab() {
         {hasNullSemesterId && (
           <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2.5">
             <span>⚠️</span>
-            <span>Some enrollments are missing semesterId — affected students won't see faculty to evaluate.</span>
+            <span>Some enrollments are missing semesterId — affected students won&rsquo;t see faculty to evaluate.</span>
           </div>
         )}
         <SearchInput value={search} onChange={setSearch} placeholder="Search by student name, email, section, subject, or faculty..." />

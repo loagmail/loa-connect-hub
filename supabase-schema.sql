@@ -1262,6 +1262,25 @@ DO $$ BEGIN
 END $$;
 
 -- =========================================================
+-- Migration 25: Drop old student_enrollments unique constraints
+-- =========================================================
+-- The old constraint was on (student_id, section_id, "semesterId")
+-- and could clash when inserting the same student+section under
+-- a different faculty_subject_id.  Clean up any variants.
+-- =========================================================
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'student_enrollments_student_id_section_id_semesterId_key') THEN
+    ALTER TABLE student_enrollments DROP CONSTRAINT student_enrollments_student_id_section_id_semesterId_key;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'student_enrollments_student_id_section_id_semesterid_key') THEN
+    ALTER TABLE student_enrollments DROP CONSTRAINT student_enrollments_student_id_section_id_semesterid_key;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'student_enrollments_student_id_section_id_key') THEN
+    ALTER TABLE student_enrollments DROP CONSTRAINT student_enrollments_student_id_section_id_key;
+  END IF;
+END $$;
+
+-- =========================================================
 -- SEED DATA
 --    Uses fixed UUIDs for idempotent re-runs.
 --    Placed after all migrations so all tables and
