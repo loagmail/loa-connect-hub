@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useApiGet, invalidate } from "@/lib/api/client"
 import SubmitButton from "@/components/ui/SubmitButton"
 import { usePagination, Paginator } from "@/components/ui/Paginator"
@@ -1141,8 +1141,6 @@ function FacultyTab() {
   const [formError, setFormError] = useState("")
   const [formSuccess, setFormSuccess] = useState("")
 
-  const [deleting, setDeleting] = useState<string | null>(null)
-  const [conflictId, setConflictId] = useState<string | null>(null)
   const tableRef = useRef<HTMLDivElement>(null)
 
   // ── Department filter ────────────────────────────────────
@@ -1197,14 +1195,12 @@ function FacultyTab() {
       (m) => m.faculty.id === formFaculty && m.subject.id === formSubject && m.section.id === formSection
     )
     if (existing) {
-      setConflictId(existing.id)
       setFormError(`This faculty already handles "${existing.subject.code} - ${existing.subject.name}" for section ${existing.section.program}-${existing.section.name}.`)
       setTimeout(() => {
         tableRef.current?.querySelector(`[data-id="${existing.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" })
       }, 100)
       return
     }
-    setConflictId(null)
     setFormSaving(true); setFormError(""); setFormSuccess("")
     try {
       const res = await fetch("/api/admin/faculty-subjects", {
@@ -1219,17 +1215,6 @@ function FacultyTab() {
       fetchData(true)
     } catch (err) { setFormError((err as Error).message) }
     finally { setFormSaving(false) }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Remove this faculty-subject mapping?")) return
-    setDeleting(id)
-    try {
-      const res = await fetch(`/api/admin/faculty-subjects/${id}`, { method: "DELETE" })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to delete") }
-      fetchData(true)
-    } catch (err) { setError((err as Error).message) }
-    finally { setDeleting(null) }
   }
 
   const byDept = data?.filter((m) => {
@@ -1249,7 +1234,21 @@ function FacultyTab() {
     )
   })
 
-  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(filtered, 25)
+  const groupedFaculty = useMemo(() => {
+    const map = new Map<string, { faculty: FacultyMapping["faculty"]; mappings: FacultyMapping[] }>()
+    for (const m of filtered) {
+      if (!map.has(m.faculty.id)) {
+        map.set(m.faculty.id, { faculty: m.faculty, mappings: [] })
+      }
+      map.get(m.faculty.id)!.mappings.push(m)
+    }
+    return Array.from(map.values())
+  }, [filtered])
+
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(groupedFaculty, 25)
+
+  const [selectedFacultyLoad, setSelectedFacultyLoad] = useState<FacultyMapping[] | null>(null)
+  const facultyLoadPagination = usePagination(selectedFacultyLoad ?? [], 25)
 
   const deptPills = [
     { id: "all", label: "All" },
@@ -1269,21 +1268,21 @@ function FacultyTab() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs font-semibold text-tertiary mb-1">Faculty</label>
-            <select value={formFaculty} onChange={(e) => { setFormFaculty(e.target.value); setConflictId(null) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
+            <select value={formFaculty} onChange={(e) => { setFormFaculty(e.target.value) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
               <option value="">Select faculty...</option>
               {faculties.map((f) => (<option key={f.id} value={f.id}>{f.name} ({f.email})</option>))}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-tertiary mb-1">Subject</label>
-            <select value={formSubject} onChange={(e) => { setFormSubject(e.target.value); setConflictId(null) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
+            <select value={formSubject} onChange={(e) => { setFormSubject(e.target.value) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
               <option value="">Select subject...</option>
               {subjects.map((s) => (<option key={s.id} value={s.id}>{s.code} - {s.name}</option>))}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-tertiary mb-1">Section</label>
-            <select value={formSection} onChange={(e) => { setFormSection(e.target.value); setConflictId(null) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
+            <select value={formSection} onChange={(e) => { setFormSection(e.target.value) }} className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400" required>
               <option value="">Select section...</option>
               {sections.map((s) => (<option key={s.id} value={s.id}>{s.program} - {s.name}</option>))}
             </select>
@@ -1316,10 +1315,10 @@ function FacultyTab() {
           })}
         </div>
 
-        <SearchInput value={search} onChange={(v) => { setSearch(v); setConflictId(null) }} placeholder="Search by faculty name, email, subject code, or section..." />
+        <SearchInput value={search} onChange={(v) => { setSearch(v) }} placeholder="Search by faculty name, email, subject code, or section..." />
         {loading && !data ? (
-          <SkeletonTable rows={4} cols={4} />
-        ) : filtered.length === 0 ? (
+          <SkeletonTable rows={4} cols={3} />
+        ) : groupedFaculty.length === 0 ? (
           <p className="text-xs text-tertiary text-center py-8">No mappings found.</p>
         ) : (
           <>
@@ -1329,23 +1328,22 @@ function FacultyTab() {
                   <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
                     <th className="p-2">Faculty</th>
                     <th className="p-2">Email</th>
-                    <th className="p-2">Subject</th>
-                    <th className="p-2">Section</th>
-                    <th className="p-2 w-16">Action</th>
+                    <th className="p-2">Subjects Load</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedItems.map((m) => (
-                    <tr key={m.id} data-id={m.id} className={`border-b border-default hover:bg-surface-hover ${conflictId === m.id ? "bg-amber-50 border-amber-300" : ""}`}>
-                      <td className="p-2 font-medium text-secondary">{m.faculty.name}</td>
-                      <td className="p-2 text-tertiary">{m.faculty.email}</td>
+                  {paginatedItems.map((group) => (
+                    <tr key={group.faculty.id} className="border-b border-default hover:bg-surface-hover">
+                      <td className="p-2 font-medium text-secondary">{group.faculty.name}</td>
+                      <td className="p-2 text-tertiary">{group.faculty.email}</td>
                       <td className="p-2">
-                        <span className="font-medium text-secondary">{m.subject.code}</span>
-                        <span className="text-tertiary ml-1">{m.subject.name}</span>
-                      </td>
-                      <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
-                      <td className="p-2">
-                        <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40">{deleting === m.id ? "..." : "Delete"}</button>
+                        <span className="font-semibold text-secondary">{group.mappings.length}</span>
+                        <button
+                          onClick={() => setSelectedFacultyLoad(group.mappings)}
+                          className="ml-2 text-xs font-semibold text-amber-600 hover:text-amber-800 underline underline-offset-2"
+                        >
+                          (Click to View)
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -1353,33 +1351,88 @@ function FacultyTab() {
               </table>
             </div>
             <div className="mobile-only space-y-2">
-              {paginatedItems.map((m) => (
-                <div key={m.id} data-id={m.id} className={`p-4 rounded-xl bg-surface border space-y-2 ${conflictId === m.id ? "border-amber-300 bg-amber-50" : "border-default"}`}>
+              {paginatedItems.map((group) => (
+                <div key={group.faculty.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-primary truncate">{m.faculty.name}</p>
-                      <p className="text-xs text-tertiary truncate">{m.faculty.email}</p>
+                      <p className="text-sm font-bold text-primary truncate">{group.faculty.name}</p>
+                      <p className="text-xs text-tertiary truncate">{group.faculty.email}</p>
                     </div>
-                    <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="shrink-0 text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40 px-3 py-2">{deleting === m.id ? "..." : "Delete"}</button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-tertiary">Subject: </span>
-                      <span className="font-medium text-secondary">{m.subject.code} - {m.subject.name}</span>
-                    </div>
-                    <div>
-                      <span className="text-tertiary">Section: </span>
-                      <span className="text-secondary">{m.section.program}-{m.section.name}</span>
+                    <div className="shrink-0 text-right">
+                      <span className="text-xs font-semibold text-secondary">{group.mappings.length} Subject{group.mappings.length !== 1 ? "s" : ""}</span>
+                      <button
+                        onClick={() => setSelectedFacultyLoad(group.mappings)}
+                        className="block text-[11px] font-semibold text-amber-600 hover:text-amber-800 underline underline-offset-2"
+                      >
+                        (Click to View)
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={filtered.length} setPage={setPage} setPageSize={setPageSize} />
+            <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={groupedFaculty.length} setPage={setPage} setPageSize={setPageSize} />
           </>
         )}
-        {data && <p className="text-xs text-tertiary">{filtered.length} mapping{filtered.length !== 1 ? "s" : ""}{deptFilter !== "all" ? ` (${byDept.length} in department)` : ""}</p>}
+        {data && <p className="text-xs text-tertiary">{groupedFaculty.length} facult{groupedFaculty.length !== 1 ? "ies" : "y"} ({filtered.length} mapping{filtered.length !== 1 ? "s" : ""}){deptFilter !== "all" ? ` (${byDept.length} in department)` : ""}</p>}
       </div>
+
+      {/* ── Faculty Load Modal ─────────────────────────────── */}
+      {selectedFacultyLoad && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 bg-black/60" onClick={() => setSelectedFacultyLoad(null)}>
+          <div className="bg-white dark:bg-surface-dim rounded-2xl w-full max-w-2xl mx-4 shadow-2xl border border-default overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-default">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-secondary truncate">{selectedFacultyLoad[0].faculty.name}</p>
+                <p className="text-xs text-tertiary truncate">{selectedFacultyLoad.length} subject load{selectedFacultyLoad.length !== 1 ? "s" : ""}</p>
+              </div>
+              <button type="button" onClick={() => setSelectedFacultyLoad(null)} className="text-xs p-1.5 rounded-lg hover:bg-surface-dim transition-colors shrink-0">
+                <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              <table className="desktop-only w-full text-[11px]">
+                <thead>
+                  <tr className="text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default">
+                    <th className="p-2 w-8">#</th>
+                    <th className="p-2">Subject</th>
+                    <th className="p-2">Section</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {facultyLoadPagination.paginatedItems.map((m, i) => (
+                    <tr key={m.id} className="border-b border-default hover:bg-surface-hover">
+                      <td className="p-2 text-tertiary">{i + 1}</td>
+                      <td className="p-2">
+                        <span className="font-medium text-secondary">{m.subject.code}</span>
+                        <span className="text-tertiary ml-1">- {m.subject.name}</span>
+                      </td>
+                      <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="mobile-only space-y-1.5">
+                {facultyLoadPagination.paginatedItems.map((m, i) => (
+                  <div key={m.id} className="flex items-center gap-3 px-2 py-2 rounded-lg bg-surface-hover/50 text-xs">
+                    <span className="text-tertiary font-mono w-5 shrink-0 text-right">{i + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-secondary truncate">{m.subject.code} - {m.subject.name}</p>
+                      <p className="text-tertiary truncate">{m.section.program}-{m.section.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between px-6 py-3 border-t border-default bg-surface-dim text-xs text-tertiary">
+              <span>{selectedFacultyLoad.length} subject load{selectedFacultyLoad.length !== 1 ? "s" : ""}</span>
+              <Paginator page={facultyLoadPagination.page} totalPages={facultyLoadPagination.totalPages} pageSize={facultyLoadPagination.pageSize} totalItems={selectedFacultyLoad.length} setPage={facultyLoadPagination.setPage} setPageSize={facultyLoadPagination.setPageSize} showSizeSelector={false} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1394,8 +1447,6 @@ function EnrollmentsTab() {
   const [error, setError] = useState("")
   const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
-
-  const [deleting, setDeleting] = useState<string | null>(null)
 
   // ── CSV Import state ─────────────────────────────────────
   const csvFileRef = useRef<HTMLInputElement>(null)
@@ -1533,17 +1584,6 @@ function EnrollmentsTab() {
     finally { setFormSaving(false) }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Remove this enrollment?")) return
-    setDeleting(id)
-    try {
-      const res = await fetch(`/api/admin/student-enrollments/${id}`, { method: "DELETE" })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to delete") }
-      fetchData(true)
-    } catch (err) { setError((err as Error).message) }
-    finally { setDeleting(null) }
-  }
-
   const filtered = data?.filter((m) => {
     if (!search) return true
     const q = search.toLowerCase()
@@ -1557,7 +1597,21 @@ function EnrollmentsTab() {
     )
   })
 
-  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(filtered ?? [], 25)
+  const groupedStudents = useMemo(() => {
+    const map = new Map<string, { student: Enrollment["student"]; enrollments: Enrollment[] }>()
+    for (const e of filtered ?? []) {
+      if (!map.has(e.student.id)) {
+        map.set(e.student.id, { student: e.student, enrollments: [] })
+      }
+      map.get(e.student.id)!.enrollments.push(e)
+    }
+    return Array.from(map.values())
+  }, [filtered])
+
+  const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(groupedStudents, 25)
+
+  const [selectedStudentEnrollments, setSelectedStudentEnrollments] = useState<Enrollment[] | null>(null)
+  const enrolledPagination = usePagination(selectedStudentEnrollments ?? [], 25)
 
   const domainOk = (email: string) => email.endsWith("@itmlyceumalabang.onmicrosoft.com")
 
@@ -1648,6 +1702,14 @@ function EnrollmentsTab() {
               {/* Preview table */}
               {csvRows && csvRows.length > 0 && (
                 <div className="flex flex-col h-full min-h-[24rem]">
+                  {csvImporting && (
+                    <div className="mb-3 space-y-1.5">
+                      <div className="w-full bg-slate-200 rounded-full h-2.5">
+                        <div className="bg-gold-500 h-2.5 rounded-full animate-pulse" style={{ width: "100%" }} />
+                      </div>
+                      <p className="text-[11px] text-tertiary text-center">Importing enrollments...</p>
+                    </div>
+                  )}
                   <div className="flex-1 space-y-3 overflow-hidden">
                     <div className="flex items-center justify-between">
                       <h4 className="text-sm font-semibold text-secondary">
@@ -1684,16 +1746,18 @@ function EnrollmentsTab() {
                                 </td>
                                 <td className="p-3">
                                   <input
-                                    value={row.name}
-                                    onChange={(e) => handleCsvRowUpdate(absIdx, e.target.value)}
-                                    className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px]"
-                                  />
+                                      value={row.name}
+                                      onChange={(e) => handleCsvRowUpdate(absIdx, e.target.value)}
+                                      disabled={csvImporting}
+                                      className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px] disabled:opacity-60"
+                                    />
                                 </td>
                                 <td className="p-3 text-center">
                                   <button
                                     type="button"
+                                    disabled={csvImporting}
                                     onClick={() => handleCsvRowRemove(absIdx)}
-                                    className="w-7 h-7 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors"
+                                    className="w-7 h-7 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     title="Remove row"
                                   >
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1716,7 +1780,7 @@ function EnrollmentsTab() {
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            disabled={csvPreviewPage === 0}
+                            disabled={csvPreviewPage === 0 || csvImporting}
                             onClick={() => setCsvPreviewPage((p) => p - 1)}
                             className="px-4 py-1.5 bg-surface-dim text-secondary rounded-full text-xs font-semibold hover:bg-surface-dim/70 disabled:opacity-40 transition-colors"
                           >
@@ -1724,7 +1788,7 @@ function EnrollmentsTab() {
                           </button>
                           <button
                             type="button"
-                            disabled={csvPreviewPage >= totalPreviewPages - 1}
+                            disabled={(csvPreviewPage >= totalPreviewPages - 1) || csvImporting}
                             onClick={() => setCsvPreviewPage((p) => p + 1)}
                             className="px-4 py-1.5 bg-surface-dim text-secondary rounded-full text-xs font-semibold hover:bg-surface-dim/70 disabled:opacity-40 transition-colors"
                           >
@@ -1738,8 +1802,9 @@ function EnrollmentsTab() {
                   <div className="sticky bottom-0 pt-4 pb-1 bg-white dark:bg-surface-dim flex items-center gap-3">
                     <button
                       type="button"
+                      disabled={csvImporting}
                       onClick={handleCsvReset}
-                      className="flex-1 text-sm font-semibold px-4 py-3 rounded-xl border border-default bg-surface-hover hover:bg-surface-dim transition-colors"
+                      className="flex-1 text-sm font-semibold px-4 py-3 rounded-xl border border-default bg-surface-hover hover:bg-surface-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Cancel
                     </button>
@@ -1841,8 +1906,8 @@ function EnrollmentsTab() {
       <div className="card p-4 sm:p-6 space-y-4">
         <SearchInput value={search} onChange={setSearch} placeholder="Search by student name, email, section, subject, or faculty..." />
         {loading && !data ? (
-          <SkeletonTable rows={4} cols={5} />
-        ) : filtered?.length === 0 ? (
+          <SkeletonTable rows={4} cols={3} />
+        ) : groupedStudents.length === 0 ? (
           <p className="text-xs text-tertiary text-center py-8">No enrollments found.</p>
         ) : (
           <>
@@ -1852,28 +1917,22 @@ function EnrollmentsTab() {
                   <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
                     <th className="p-2">Student</th>
                     <th className="p-2">Email</th>
-                    <th className="p-2">Section</th>
-                    <th className="p-2">Subject</th>
-                    <th className="p-2">Faculty</th>
-                    <th className="p-2 w-16">Action</th>
+                    <th className="p-2">Enrolled Subjects</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedItems.map((m) => (
-                    <tr key={m.id} className="border-b border-default hover:bg-surface-hover">
-                      <td className="p-2 font-medium text-secondary">{m.student.name}</td>
-                      <td className="p-2 text-tertiary">{m.student.email}</td>
-                      <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
+                  {paginatedItems.map((group) => (
+                    <tr key={group.student.id} className="border-b border-default hover:bg-surface-hover">
+                      <td className="p-2 font-medium text-secondary">{group.student.name}</td>
+                      <td className="p-2 text-tertiary">{group.student.email}</td>
                       <td className="p-2">
-                        {m.faculty_subject ? (
-                          <><span className="font-medium text-secondary">{m.faculty_subject.subject.code}</span><span className="text-tertiary ml-1">{m.faculty_subject.subject.name}</span></>
-                        ) : (
-                          <span className="text-tertiary italic">—</span>
-                        )}
-                      </td>
-                      <td className="p-2 text-secondary">{m.faculty_subject?.faculty.name ?? <span className="text-tertiary italic">—</span>}</td>
-                      <td className="p-2">
-                        <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40">{deleting === m.id ? "..." : "Delete"}</button>
+                        <span className="font-semibold text-primary">{group.enrollments.length}</span>
+                        <button
+                          onClick={() => setSelectedStudentEnrollments(group.enrollments)}
+                          className="ml-2 text-xs text-amber-600 hover:text-amber-800"
+                        >
+                          View
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -1881,41 +1940,109 @@ function EnrollmentsTab() {
               </table>
             </div>
             <div className="mobile-only space-y-2">
-              {paginatedItems.map((m) => (
-                <div key={m.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
+              {paginatedItems.map((group) => (
+                <div key={group.student.id} className="p-4 rounded-xl bg-surface border border-default space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-primary truncate">{m.student.name}</p>
-                      <p className="text-xs text-tertiary truncate">{m.student.email}</p>
+                      <p className="text-sm font-bold text-primary truncate">{group.student.name}</p>
+                      <p className="text-xs text-tertiary truncate">{group.student.email}</p>
                     </div>
-                    <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id} className="shrink-0 text-xs font-bold text-red-500 hover:text-red-700 disabled:opacity-40 px-3 py-2">{deleting === m.id ? "..." : "Delete"}</button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-tertiary">Section: </span>
-                      <span className="text-secondary">{m.section.program}-{m.section.name}</span>
+                    <div className="shrink-0 text-right">
+                      <span className="text-xs font-semibold text-secondary">{group.enrollments.length} Subject{group.enrollments.length !== 1 ? "s" : ""}</span>
+                      <button
+                        onClick={() => setSelectedStudentEnrollments(group.enrollments)}
+                        className="block text-[11px] font-semibold text-amber-600 hover:text-amber-800 underline underline-offset-2"
+                      >
+                        (View)
+                      </button>
                     </div>
-                    <div>
-                      <span className="text-tertiary">Subject: </span>
-                      {m.faculty_subject ? (
-                        <span className="text-secondary">{m.faculty_subject.subject.code} - {m.faculty_subject.subject.name}</span>
-                      ) : (
-                        <span className="text-tertiary italic">—</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-xs">
-                    <span className="text-tertiary">Faculty: </span>
-                    <span className="text-secondary">{m.faculty_subject?.faculty.name ?? <span className="text-tertiary italic">—</span>}</span>
                   </div>
                 </div>
               ))}
             </div>
-            <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={filtered?.length ?? 0} setPage={setPage} setPageSize={setPageSize} />
+            <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={groupedStudents.length} setPage={setPage} setPageSize={setPageSize} />
           </>
         )}
-        {data && <p className="text-xs text-tertiary">{data.length} enrollment{data.length !== 1 ? "s" : ""}</p>}
+        {data && <p className="text-xs text-tertiary">{groupedStudents.length} student{groupedStudents.length !== 1 ? "s" : ""} ({data.length} enrollment{data.length !== 1 ? "s" : ""})</p>}
       </div>
+
+      {/* ── Enrolled Subjects Modal ─────────────────────────── */}
+      {selectedStudentEnrollments && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 bg-black/60" onClick={() => setSelectedStudentEnrollments(null)}>
+          <div className="bg-white dark:bg-surface-dim rounded-2xl w-full max-w-2xl mx-4 shadow-2xl border border-default overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-default">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-secondary truncate">{selectedStudentEnrollments[0].student.name}</p>
+                <p className="text-xs text-tertiary truncate">{selectedStudentEnrollments.length} enrolled subject{selectedStudentEnrollments.length !== 1 ? "s" : ""}</p>
+              </div>
+              <button type="button" onClick={() => setSelectedStudentEnrollments(null)} className="text-xs p-1.5 rounded-lg hover:bg-surface-dim transition-colors shrink-0">
+                <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              <table className="desktop-only w-full text-[11px]">
+                <thead>
+                  <tr className="text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default">
+                    <th className="p-2 w-8">#</th>
+                    <th className="p-2">Section</th>
+                    <th className="p-2">Subject</th>
+                    <th className="p-2">Faculty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {enrolledPagination.paginatedItems.map((enr, i) => (
+                    <tr key={enr.id} className="border-b border-default hover:bg-surface-hover">
+                      <td className="p-2 text-tertiary">{i + 1}</td>
+                      <td className="p-2 text-secondary">{enr.section.program}-{enr.section.name}</td>
+                      <td className="p-2">
+                        {enr.faculty_subject ? (
+                          <span className="font-medium text-secondary">{enr.faculty_subject.subject.code} - {enr.faculty_subject.subject.name}</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-amber-600">
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            No mapping
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-2 text-secondary">{enr.faculty_subject?.faculty.name ?? <span className="text-tertiary italic">—</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="mobile-only space-y-1.5">
+                {enrolledPagination.paginatedItems.map((enr, i) => (
+                  <div key={enr.id} className="flex items-center gap-3 px-2 py-2 rounded-lg bg-surface-hover/50 text-xs">
+                    <span className="text-tertiary font-mono w-5 shrink-0 text-right">{i + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-secondary truncate">{enr.section.program}-{enr.section.name}</p>
+                      <p className="text-tertiary truncate">
+                        {enr.faculty_subject ? (
+                          <>{enr.faculty_subject.subject.code} - {enr.faculty_subject.subject.name} · {enr.faculty_subject.faculty.name}</>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-amber-600">
+                            <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            No mapping
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between px-6 py-3 border-t border-default bg-surface-dim text-xs text-tertiary">
+              <span>{selectedStudentEnrollments.length} enrolled subject{selectedStudentEnrollments.length !== 1 ? "s" : ""}</span>
+              <Paginator page={enrolledPagination.page} totalPages={enrolledPagination.totalPages} pageSize={enrolledPagination.pageSize} totalItems={selectedStudentEnrollments.length} setPage={enrolledPagination.setPage} setPageSize={enrolledPagination.setPageSize} showSizeSelector={false} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -44,52 +44,24 @@ export async function GET(request: NextRequest) {
   }
 
   if (type === "student") {
-    const { data: enrollments, error } = await supabase
+    const { data, error } = await supabase
       .from("student_enrollments")
       .select(`
         id,
         student:student_id (id, name, email),
-        section:section_id (id, name, program)
+        section:section_id (id, name, program),
+        faculty_subject:faculty_subject_id (
+          id,
+          faculty:faculty_id (id, name, email),
+          subject:subject_id (id, code, name),
+          section:section_id (id, name, program)
+        )
       `)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-    const enriched: (Record<string, unknown> & { faculty_subject_id: string | null; faculty_subject: Record<string, unknown> | null })[] = ((enrollments ?? []) as Record<string, unknown>[]).map((r) => ({
+    const enriched = (data ?? []).map((r: Record<string, unknown>) => ({
       ...r,
-      faculty_subject_id: null as string | null,
-      faculty_subject: null as Record<string, unknown> | null,
+      faculty_subject_id: (r.faculty_subject as Record<string, unknown> | null)?.id ?? null,
     }))
-
-    const { data: rawIds, error: rawIdsError } = await supabase
-      .from("student_enrollments")
-      .select("id, faculty_subject_id")
-    if (!rawIdsError && rawIds) {
-      const idMap = new Map<string, string | null>((rawIds as { id: string; faculty_subject_id: string | null }[]).map((r) => [r.id, r.faculty_subject_id]))
-
-      const fsIds = [...new Set((rawIds as { faculty_subject_id: string | null }[]).map((r) => r.faculty_subject_id).filter(Boolean))] as string[]
-      const fsMap: Record<string, unknown> = {}
-      if (fsIds.length > 0) {
-        const { data: fsData } = await supabase
-          .from("faculty_subjects")
-          .select(`
-            id,
-            faculty:faculty_id (id, name, email),
-            subject:subject_id (id, code, name),
-            section:section_id (id, name, program)
-          `)
-          .in("id", fsIds)
-        if (fsData) {
-          for (const fs of fsData) {
-            fsMap[fs.id as string] = fs
-          }
-        }
-      }
-
-      for (const r of enriched) {
-        r.faculty_subject_id = idMap.get(r.id as string) ?? null
-        r.faculty_subject = r.faculty_subject_id ? ((fsMap[r.faculty_subject_id as string] as Record<string, unknown>) || null) : null
-      }
-    }
-
     return NextResponse.json({ data: enriched })
   }
 
