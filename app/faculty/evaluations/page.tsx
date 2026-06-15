@@ -7,6 +7,7 @@ import { SkeletonCard } from "@/components/ui/Skeleton"
 import LockedTab from "@/components/ui/LockedTab"
 import ErrorState from "@/components/ui/ErrorState"
 import ErrorBoundary from "@/components/ui/ErrorBoundary"
+import { EVALUATION_CATEGORIES } from "@/features/evaluations/constants"
 
 interface Period {
   id: string
@@ -36,16 +37,7 @@ interface FacultyResultsResponse {
   results: FacultyResult[]
 }
 
-const CATEGORIES: { key: keyof Pick<FacultyResult, "professionalManner" | "communicationWithStudent" | "studentEngagement" | "learningMaterials" | "timeManagement" | "experientialLearning" | "respectUniqueness" | "assessmentAndFeedback">; label: string }[] = [
-  { key: "professionalManner", label: "Professional Manner" },
-  { key: "communicationWithStudent", label: "Communication w/ Students" },
-  { key: "studentEngagement", label: "Student Engagement" },
-  { key: "learningMaterials", label: "Learning Materials" },
-  { key: "timeManagement", label: "Time Management" },
-  { key: "experientialLearning", label: "Experiential Learning" },
-  { key: "respectUniqueness", label: "Respect for Uniqueness" },
-  { key: "assessmentAndFeedback", label: "Assessment & Feedback" },
-]
+const CATEGORIES = EVALUATION_CATEGORIES
 
 function getRemarkColor(remarks: string | null): string {
   switch (remarks) {
@@ -179,7 +171,7 @@ export default function FacultyEvaluationsPage() {
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-primary">Category Breakdown</h3>
             {CATEGORIES.map((cat) => {
-              const val = result[cat.key]
+              const val = (result as unknown as Record<string, number | null>)[cat.key]
               return (
                 <div key={cat.key} className="bg-white rounded-xl border border-slate-200 p-4">
                   <div className="flex items-center justify-between mb-1.5">

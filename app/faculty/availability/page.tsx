@@ -28,7 +28,7 @@ function todayStr() {
 }
 
 export default function AvailabilityPage() {
-  const { data: session, status } = useSession() ?? {};
+  const { data: session, status } = useSession();
   const [rules, setRules] = useState<Rule[]>([])
   const [isSavingAll, setIsSavingAll] = useState(false)
   const [startDate, setStartDate] = useState(todayStr())
@@ -58,8 +58,6 @@ export default function AvailabilityPage() {
     if (status === "unauthenticated") redirect("/login")
     if (status === "authenticated" && !hasRole((session?.user as Record<string, unknown>)?.role as string, "FACULTY") && !hasRole((session?.user as Record<string, unknown>)?.role as string, "DEAN")) redirect("/login")
   }, [status, session])
-
-  const loading = isLoading
 
   const activeRules = rules.filter((r) => {
     if (r.startDate > startDate) return false
@@ -146,18 +144,12 @@ export default function AvailabilityPage() {
   }
 
   const saveAll = async () => {
-    console.log("SAVE ALL CLICKED")
-    console.log("pendingChanges size", pendingChanges.size)
     if (pendingChanges.size === 0) return
-
 
     setIsSavingAll(true)
 
     try {
       for (const [day, rule] of pendingChanges) {
-        console.log("SENDING", day, rule)
-
-
         const res = await fetch("/api/availability-rules", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -172,7 +164,6 @@ export default function AvailabilityPage() {
         })
 
         if (res.status === 403) { setLockedEndpoint("/api/availability-rules"); return }
-        console.log("status", res.status)
       }
       const res = await fetch("/api/availability-rules")
       if (res.status === 403) { setLockedEndpoint("/api/availability-rules"); return }
@@ -197,7 +188,7 @@ export default function AvailabilityPage() {
     )
   }
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || isLoading) {
     return (
       <div className="max-w-6xl mx-auto py-12 flex items-center justify-center">
         <svg className="animate-spin ios-spinner w-6 h-6 text-gold-600" viewBox="0 0 24 24" fill="none">

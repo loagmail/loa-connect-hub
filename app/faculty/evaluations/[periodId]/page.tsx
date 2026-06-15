@@ -4,17 +4,9 @@ import { hasRole } from "@/lib/utils/roles"
 import { getStudentBreakdownsForFaculty } from "@/features/evaluation-results/evaluation-results.repository"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { EVALUATION_CATEGORIES } from "@/features/evaluations/constants"
 
-const CATEGORIES: { key: string; label: string }[] = [
-  { key: "professionalManner", label: "Professional Manner" },
-  { key: "communicationWithStudent", label: "Communication w/ Students" },
-  { key: "studentEngagement", label: "Student Engagement" },
-  { key: "learningMaterials", label: "Learning Materials" },
-  { key: "timeManagement", label: "Time Management" },
-  { key: "experientialLearning", label: "Experiential Learning" },
-  { key: "respectUniqueness", label: "Respect for Uniqueness" },
-  { key: "assessmentAndFeedback", label: "Assessment & Feedback" },
-]
+const CATEGORIES = EVALUATION_CATEGORIES
 
 function formatRating(val: number | null): string {
   return val !== null ? val.toFixed(2) : "—"

@@ -3,6 +3,7 @@
 import Link from "next/link"
 
 export default function FacultyErrorPage({
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string }

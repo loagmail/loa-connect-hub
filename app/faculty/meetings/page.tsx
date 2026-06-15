@@ -96,9 +96,6 @@ export default async function MeetingsPage(props: {
     if (activeFilter === "created_by_me" && m.organizerId !== userId) {
       return false
     }
-    if (activeFilter === "declined" && !m.participants?.some((p: ParticipantData) => p.userId === userId && p.status === "DECLINED")) {
-      return false
-    }
     if (activeTab !== "all" && m.status.toLowerCase() !== activeTab) {
       return false
     }
