@@ -21,6 +21,32 @@ export const studentEnrollmentRepository: IStudentEnrollmentRepository = {
     if (insErr) throw insErr
   },
 
+  async findExisting(student_id, faculty_subject_id, semesterId) {
+    let q = supabase
+      .from("student_enrollments")
+      .select("*")
+      .eq("student_id", student_id)
+      .eq("faculty_subject_id", faculty_subject_id)
+    if (semesterId) {
+      q = q.eq("semesterId", semesterId)
+    } else {
+      q = q.is("semesterId", null)
+    }
+    const { data, error } = await q.maybeSingle()
+    if (error) throw error
+    return data as StudentEnrollmentData | null
+  },
+
+  async create(data) {
+    const { data: created, error } = await supabase
+      .from("student_enrollments")
+      .insert(data)
+      .select("*")
+      .single()
+    if (error) throw error
+    return created as StudentEnrollmentData
+  },
+
   async addEnrollments(items) {
     if (items.length === 0) return
     const sectionIds = [...new Set(items.map((i) => i.section_id))]

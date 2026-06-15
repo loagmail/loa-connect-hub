@@ -263,6 +263,8 @@ export interface IStudentEnrollmentRepository {
   list(filters?: { student_id?: string; section_id?: string; semesterId?: string }): Promise<StudentEnrollmentData[]>
   replaceBySection(section_id: string, items: { student_id: string; semesterId?: string | null }[]): Promise<void>
   addEnrollments(items: { student_id: string; section_id: string; semesterId?: string | null }[]): Promise<void>
+  findExisting(student_id: string, faculty_subject_id: string, semesterId?: string | null): Promise<StudentEnrollmentData | null>
+  create(data: { student_id: string; faculty_subject_id: string; section_id: string; semesterId?: string | null }): Promise<StudentEnrollmentData>
   getDistinctFaculty(student_id: string, semesterId?: string): Promise<string[]>
   getFacultySubjectsByStudent(student_id: string, faculty_id: string, semesterId: string): Promise<{ id: string; code: string; title: string }[]>
 }
