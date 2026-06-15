@@ -209,56 +209,56 @@ export function WorkloadDistributionReport({
       </div>
 
       {/* Distribution Table */}
-      <div className="rounded-2xl bg-surface shadow-sm overflow-hidden">
+      <div className="rounded-2xl bg-surface shadow-sm overflow-hidden tbl">
         <div className="px-6 py-4 border-b border-default">
           <h3 className="text-sm font-bold text-primary">Faculty Consultation Distribution</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table>
             <thead>
-              <tr className="border-b border-default bg-surface/50">
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Faculty</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Department</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Total</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-emerald-600">Completed</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-amber-600">Pending</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-blue-600">Approved</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-red-600">Rejected</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Cancelled</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Rate</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Share</th>
+              <tr>
+                <th className="text-left">Faculty</th>
+                <th className="text-left">Department</th>
+                <th className="text-center">Total</th>
+                <th className="text-center text-emerald-600">Completed</th>
+                <th className="text-center text-amber-600">Pending</th>
+                <th className="text-center text-blue-600">Approved</th>
+                <th className="text-center text-red-600">Rejected</th>
+                <th className="text-center">Cancelled</th>
+                <th className="text-center">Rate</th>
+                <th className="text-center">Share</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               <tr className="bg-surface/30 font-medium">
-                <td className="px-6 py-4 font-bold text-primary whitespace-nowrap" colSpan={2}>
+                <td className="font-bold text-primary whitespace-nowrap" colSpan={2}>
                   {entries.length} Faculty
                 </td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-secondary">{departmentTotal}</td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-emerald-600">{completedConsultations}</td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-amber-600">{pendingConsultations}</td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-blue-600">{entries.reduce((s, e) => s + e.approved, 0)}</td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-red-600">{entries.reduce((s, e) => s + e.rejected, 0)}</td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">{entries.reduce((s, e) => s + e.cancelled, 0)}</td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">
+                <td className="text-center font-mono text-sm text-secondary">{departmentTotal}</td>
+                <td className="text-center font-mono text-sm text-emerald-600">{completedConsultations}</td>
+                <td className="text-center font-mono text-sm text-amber-600">{pendingConsultations}</td>
+                <td className="text-center font-mono text-sm text-blue-600">{entries.reduce((s, e) => s + e.approved, 0)}</td>
+                <td className="text-center font-mono text-sm text-red-600">{entries.reduce((s, e) => s + e.rejected, 0)}</td>
+                <td className="text-center font-mono text-sm text-tertiary">{entries.reduce((s, e) => s + e.cancelled, 0)}</td>
+                <td className="text-center font-mono text-sm text-tertiary">
                   {departmentTotal > 0 ? Math.round((completedConsultations / departmentTotal) * 100) : 0}%
                 </td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">100%</td>
+                <td className="text-center font-mono text-sm text-tertiary">100%</td>
               </tr>
               {paginatedItems.map((entry) => (
-                <tr key={entry.facultyId} className="transition-colors duration-150 hover:bg-surface-hover">
-                  <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
-                  <td className="px-4 py-4 text-sm text-tertiary">{entry.departmentName}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-secondary">{entry.total}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-emerald-600">{entry.completed}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-amber-600">{entry.pending}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-blue-600">{entry.approved}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-red-600">{entry.rejected}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-tertiary">{entry.cancelled}</td>
-                  <td className="px-4 py-4 text-center">
+                <tr key={entry.facultyId}>
+                  <td className="font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
+                  <td className="text-sm text-tertiary">{entry.departmentName}</td>
+                  <td className="text-center font-mono text-sm text-secondary">{entry.total}</td>
+                  <td className="text-center font-mono text-sm text-emerald-600">{entry.completed}</td>
+                  <td className="text-center font-mono text-sm text-amber-600">{entry.pending}</td>
+                  <td className="text-center font-mono text-sm text-blue-600">{entry.approved}</td>
+                  <td className="text-center font-mono text-sm text-red-600">{entry.rejected}</td>
+                  <td className="text-center font-mono text-sm text-tertiary">{entry.cancelled}</td>
+                  <td className="text-center">
                     <RateBadge rate={entry.completionRate} />
                   </td>
-                  <td className="px-4 py-4 text-center">
+                  <td className="text-center">
                     <ShareBadge share={entry.departmentShare} />
                   </td>
                 </tr>

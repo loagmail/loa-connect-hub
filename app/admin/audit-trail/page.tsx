@@ -201,7 +201,7 @@ export default function AuditTrailPage() {
       </div>
 
       {/* Table */}
-      <div className="card overflow-x-auto bg-surface">
+      <div className="card overflow-x-auto bg-surface tbl">
         {loading ? (
           <div className="p-8 text-center text-sm text-tertiary">Loading...</div>
         ) : !data || data.logs.length === 0 ? (
@@ -210,28 +210,28 @@ export default function AuditTrailPage() {
           </div>
         ) : (
           <>
-            <table className="min-w-full divide-y divide-slate-100">
+            <table>
               <thead>
-                <tr className="bg-surface">
-                  <th className="px-6 py-3.5 text-left text-xs font-bold text-tertiary uppercase tracking-wider">Timestamp</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold text-tertiary uppercase tracking-wider">Action</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold text-tertiary uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold text-tertiary uppercase tracking-wider">Details</th>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                  <th>User</th>
+                  <th>Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {data.logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-surface-hover transition-colors">
-                    <td className="px-6 py-3 whitespace-nowrap text-xs text-tertiary font-medium tabular-nums">
+                  <tr key={log.id}>
+                    <td className="whitespace-nowrap text-xs text-tertiary font-medium tabular-nums">
                       {new Date(log.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-xs">
+                    <td className="whitespace-nowrap text-xs">
                       <ActionBadge action={log.action} />
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-xs text-secondary font-medium">
+                    <td className="whitespace-nowrap text-xs text-secondary font-medium">
                       {log.email || "\u2014"}
                     </td>
-                    <td className="px-6 py-3 text-xs text-tertiary max-w-xs truncate">
+                    <td className="text-xs text-tertiary max-w-xs truncate">
                       {log.details || "\u2014"}
                     </td>
                   </tr>

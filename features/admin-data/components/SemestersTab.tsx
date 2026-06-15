@@ -207,24 +207,24 @@ export function SemestersTab() {
           <p className="text-xs text-tertiary p-6">No semesters configured yet.</p>
         ) : (
           <>
-            <div className="desktop-only">
-              <table className="w-full text-sm">
-                <thead className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider bg-slate-50/50">
+            <div className="desktop-only tbl">
+              <table>
+                <thead>
                   <tr>
-                    <th className="px-6 py-3">Title</th>
-                    <th className="px-6 py-3">Start Date</th>
-                    <th className="px-6 py-3">End Date</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3 text-center">Actions</th>
+                    <th>Title</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th className="text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {semesters.map((semester) => (
-                    <tr key={semester.id} className="border-b border-slate-50 hover:bg-surface-hover/70">
-                      <td className="px-6 py-4 font-medium">{semester.title}</td>
-                      <td className="px-6 py-4">{semester.evalStartDate}</td>
-                      <td className="px-6 py-4">{semester.evalEndDate || <span className='text-tertiary'>N/A</span>}</td>
-                      <td className="px-6 py-4">
+                    <tr key={semester.id}>
+                      <td className="font-medium">{semester.title}</td>
+                      <td>{semester.evalStartDate}</td>
+                      <td>{semester.evalEndDate || <span className='text-tertiary'>N/A</span>}</td>
+                      <td>
                         <span className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${semester.isActive ? "bg-green-50 text-green-600 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
                           {semester.isActive ? "Active" : "Inactive"}
                         </span>

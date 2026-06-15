@@ -235,29 +235,29 @@ function FacultyTab() {
           <p className="text-xs text-tertiary text-center py-8">No mappings found.</p>
         ) : (
           <>
-            <div ref={tableRef} className="desktop-only overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
-              <table className="w-full text-[11px] text-align-center">
+            <div ref={tableRef} className="desktop-only max-h-96 overflow-y-auto tbl-container tbl">
+              <table>
                 <thead>
-                  <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
-                    <th className="p-2">Faculty</th>
-                    <th className="p-2">Email</th>
-                 
-                    <th className="p-2">Headcount</th>
-                    <th className="p-2">Action</th>
+                  <tr>
+                    <th>Faculty</th>
+                    <th>Email</th>
+                  
+                    <th>Headcount</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedItems.map((group) => {
                     const headcount = group.mappings.reduce((sum, m) => sum + (enrollmentCountByFsId.get(m.id) ?? 0), 0)
                     return (
-                      <tr key={group.faculty.id} className="border-b border-default hover:bg-surface-hover">
-                        <td className="p-2 font-medium text-secondary">{group.faculty.name}</td>
-                        <td className="p-2 text-tertiary">{group.faculty.email}</td>
-       
-                        <td className="p-2">
+                      <tr key={group.faculty.id}>
+                        <td className="font-medium text-secondary">{group.faculty.name}</td>
+                        <td className="text-tertiary">{group.faculty.email}</td>
+        
+                        <td>
                           <span className="font-semibold text-secondary">{headcount}</span>
                         </td>
-                        <td className="p-2">
+                        <td>
                           <IosButton variant="plain" size="xs" onClick={() => setSelectedFacultyLoad(group.mappings)}>View Class Load</IosButton>
                         </td>
                       </tr>
@@ -307,28 +307,28 @@ function FacultyTab() {
                 </svg>
               </IosButton>
             </div>
-            <div className="p-4 max-h-[60vh] overflow-y-auto">
-              <table className="desktop-only w-full text-[11px]">
+            <div className="p-4 max-h-[60vh] overflow-y-auto tbl">
+              <table className="desktop-only">
                 <thead>
-                  <tr className="text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default">
-                    <th className="p-2 w-8">#</th>
-                    <th className="p-2">Subject</th>
-                    <th className="p-2">Section</th>
-                    <th className="p-2 text-center">HeadCount</th>
+                  <tr>
+                    <th className="w-8">#</th>
+                    <th>Subject</th>
+                    <th>Section</th>
+                    <th className="text-center">HeadCount</th>
                   </tr>
                 </thead>
                 <tbody>
                   {facultyLoadPagination.paginatedItems.map((m, i) => {
                     const hc = enrollmentCountByFsId.get(m.id) ?? 0
                     return (
-                      <tr key={m.id} className="border-b border-default hover:bg-surface-hover">
-                        <td className="p-2 text-tertiary">{i + 1}</td>
-                        <td className="p-2">
+                      <tr key={m.id}>
+                        <td className="text-tertiary">{i + 1}</td>
+                        <td>
                           <span className="font-medium text-secondary">{m.subject.code}</span>
                           <span className="text-tertiary ml-1">- {m.subject.name}</span>
                         </td>
-                        <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
-                        <td className="p-2 text-center font-semibold text-secondary">{hc}</td>
+                        <td className="text-secondary">{m.section.program}-{m.section.name}</td>
+                        <td className="text-center font-semibold text-secondary">{hc}</td>
                       </tr>
                     )
                   })}

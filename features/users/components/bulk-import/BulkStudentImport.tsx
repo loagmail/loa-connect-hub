@@ -216,47 +216,47 @@ export default function BulkStudentImport({ departmentId, semesterId }: { depart
 
             {error && <p className="text-xs font-medium text-red-600">{error}</p>}
 
-            <div className="overflow-x-auto max-h-72 overflow-y-auto border border-default rounded-xl">
-              <table className="w-full text-[13px]">
+            <div className="max-h-72 overflow-y-auto tbl-container tbl">
+              <table>
                 <thead>
-                  <tr className="bg-surface-dim text-left text-[11px] font-semibold text-tertiary border-b border-default sticky top-0">
-                    <th className="p-3 w-8">#</th>
-                    <th className="p-3">Email</th>
-                    <th className="p-3">Name</th>
-                    <th className="p-3">Subject</th>
-                    <th className="p-3">Section</th>
-                    <th className="p-3 w-12"></th>
+                  <tr>
+                    <th className="w-8">#</th>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Subject</th>
+                    <th>Section</th>
+                    <th className="w-12"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedRows.map((r, i) => {
                     const absIdx = previewPage * PREVIEW_PAGE_SIZE + i
                     return (
-                      <tr key={`${previewPage}-${i}`} className="border-b border-default/50 hover:bg-surface-hover">
-                        <td className="p-3 text-tertiary">{r.row}</td>
-                        <td className="p-3 text-secondary">{r.email}</td>
-                        <td className="p-3">
+                      <tr key={`${previewPage}-${i}`}>
+                        <td className="text-tertiary">{r.row}</td>
+                        <td className="text-secondary">{r.email}</td>
+                        <td>
                           <input
                             value={r.name}
                             onChange={(e) => handleFieldChange(absIdx, "name", e.target.value)}
                             className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px]"
                           />
                         </td>
-                        <td className="p-3">
+                        <td>
                           <input
                             value={r.subjectCode}
                             onChange={(e) => handleFieldChange(absIdx, "subjectCode", e.target.value)}
                             className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px]"
                           />
                         </td>
-                        <td className="p-3">
+                        <td>
                           <input
                             value={r.section}
                             onChange={(e) => handleFieldChange(absIdx, "section", e.target.value)}
                             className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px]"
                           />
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="text-center">
                           <button
                             type="button"
                             onClick={() => handleRemoveRow(absIdx)}

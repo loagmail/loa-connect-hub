@@ -20,57 +20,56 @@ export function ReportTable({ stats }: ReportTableProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md tbl">
       <div className="px-6 py-4 border-b border-default">
         <h3 className="text-sm font-bold text-primary">Faculty Consultation Summary</h3>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table>
           <thead>
-            <tr className="border-b border-default bg-surface/50">
-              <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+            <tr>
+              <th className="text-left">
                 Faculty
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Total
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Completed
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Pending
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Cancelled
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Completion Rate
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {paginatedItems.map((stat) => (
               <tr
                 key={stat.facultyId}
-                className="transition-colors duration-150 hover:bg-surface-hover/80"
               >
-                <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">
+                <td className="font-medium text-primary whitespace-nowrap">
                   {stat.facultyName}
                 </td>
-                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
+                <td className="text-center text-secondary font-mono text-sm">
                   {stat.total}
                 </td>
-                <td className="px-4 py-4 text-center text-emerald-600 font-mono text-sm">
+                <td className="text-center text-emerald-600 font-mono text-sm">
                   {stat.completed}
                 </td>
-                <td className="px-4 py-4 text-center text-amber-600 font-mono text-sm">
+                <td className="text-center text-amber-600 font-mono text-sm">
                   {stat.pending}
                 </td>
-                <td className="px-4 py-4 text-center text-tertiary font-mono text-sm">
+                <td className="text-center text-tertiary font-mono text-sm">
                   {stat.cancelled}
                 </td>
-                <td className="px-4 py-4 text-center">
+                <td className="text-center">
                   <CompletionBadge rate={stat.completionRate} />
                 </td>
               </tr>

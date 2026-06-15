@@ -623,36 +623,35 @@ function FacultyFrequencyTable({ data, deanId }: { data: FacultyFrequencyData[];
   )
 
   return (
-    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md tbl">
       <div className="px-6 py-4 border-b border-default">
         <h3 className="text-sm font-bold text-primary">Per-Faculty Frequency Breakdown</h3>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table>
           <thead>
-            <tr className="border-b border-default bg-surface/50">
-              <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+            <tr>
+              <th className="text-left">
                 Faculty
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Total
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Avg / Month
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-left">
                 Monthly Breakdown
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {sorted.map((faculty) => (
               <tr
                 key={faculty.facultyId}
-                className="transition-colors duration-150 hover:bg-surface-hover/80"
               >
-                <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">
+                <td className="font-medium text-primary whitespace-nowrap">
                   <span className="flex items-center gap-2">
                     {faculty.facultyName}
                     {faculty.facultyId === deanId && (
@@ -662,13 +661,13 @@ function FacultyFrequencyTable({ data, deanId }: { data: FacultyFrequencyData[];
                     )}
                   </span>
                 </td>
-                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
+                <td className="text-center text-secondary font-mono text-sm">
                   {faculty.total}
                 </td>
-                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
+                <td className="text-center text-secondary font-mono text-sm">
                   {faculty.averagePerMonth.toFixed(1)}
                 </td>
-                <td className="px-4 py-4">
+                <td>
                   <div className="flex items-center gap-1.5 min-w-[200px]">
                     {allMonths.map((month) => {
                       const mc = faculty.monthlyCounts.find((m) => m.month === month)
@@ -721,36 +720,35 @@ function FacultyYearlyTable({ data, deanId }: { data: FacultyYearlyData[]; deanI
   )
 
   return (
-    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md tbl">
       <div className="px-6 py-4 border-b border-default">
         <h3 className="text-sm font-bold text-primary">Per-Faculty Yearly Frequency Breakdown</h3>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table>
           <thead>
-            <tr className="border-b border-default bg-surface/50">
-              <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+            <tr>
+              <th className="text-left">
                 Faculty
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Total
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-center">
                 Avg / Year
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-left">
                 Yearly Breakdown
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {sorted.map((faculty) => (
               <tr
                 key={faculty.facultyId}
-                className="transition-colors duration-150 hover:bg-surface-hover/80"
               >
-                <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">
+                <td className="font-medium text-primary whitespace-nowrap">
                   <span className="flex items-center gap-2">
                     {faculty.facultyName}
                     {faculty.facultyId === deanId && (
@@ -760,13 +758,13 @@ function FacultyYearlyTable({ data, deanId }: { data: FacultyYearlyData[]; deanI
                     )}
                   </span>
                 </td>
-                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
+                <td className="text-center text-secondary font-mono text-sm">
                   {faculty.total}
                 </td>
-                <td className="px-4 py-4 text-center text-secondary font-mono text-sm">
+                <td className="text-center text-secondary font-mono text-sm">
                   {faculty.averagePerYear.toFixed(1)}
                 </td>
-                <td className="px-4 py-4">
+                <td>
                   <div className="flex items-center gap-1.5 min-w-[200px]">
                     {allYears.map((year) => {
                       const yc = faculty.yearlyCounts.find((y) => y.year === year)

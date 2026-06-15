@@ -46,6 +46,7 @@
   /* iOS System Background Colors */
   --color-surface: #ffffff;
   --color-surface-muted: #f2f2f7;
+  --color-surface-dim: #f2f2f7;
   --color-surface-hover: #e8e8ed;
   --color-surface-secondary: #f9f9fb;
   --color-surface-tertiary: #efeff4;
@@ -116,6 +117,7 @@
   /* iOS System Background Colors */
   --color-surface: #1c1c1e;
   --color-surface-muted: #000000;
+  --color-surface-dim: #1c1c1e;
   --color-surface-hover: #2c2c2e;
   --color-surface-secondary: #2c2c2e;
   --color-surface-tertiary: #1c1c1e;
@@ -381,6 +383,7 @@
   .bg-surface { background-color: var(--color-surface); }
   .bg-surface-muted { background-color: var(--color-surface-muted); }
   .bg-surface-hover { background-color: var(--color-surface-hover); }
+  .bg-surface-dim { background-color: var(--color-surface-dim); }
   .hover\:bg-surface-hover:hover { background-color: var(--color-surface-hover); }
   .text-primary { color: var(--color-text); }
   .text-secondary { color: var(--color-text-secondary); }
@@ -761,5 +764,48 @@
     border-radius: 9999px;
     font-size: 0.6875rem; font-weight: 600;
     background-color: var(--color-info-bg); color: var(--color-info-text);
+  }
+
+  /* ── Table Internals ────────────────────────────── */
+  .tbl table {
+    width: 100%;
+    font-size: 0.6875rem;
+  }
+  .tbl thead tr {
+    background-color: var(--color-surface-dim);
+    text-align: left;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border-default);
+  }
+  .tbl thead tr td,
+  .tbl thead tr th {
+    position: sticky;
+    top: 0;
+  }
+  .tbl thead th {
+    padding: 0.5rem;
+  }
+  .tbl tbody tr {
+    border-bottom: 1px solid var(--color-border-default);
+    transition: background-color 0.15s ease;
+  }
+  .tbl tbody tr:last-child {
+    border-bottom: none;
+  }
+  .tbl tbody tr:hover {
+    background-color: var(--color-surface-hover);
+  }
+  .tbl tbody td {
+    padding: 0.5rem;
+  }
+  /* ── Table Container (add container styling) ────── */
+  .tbl-container {
+    overflow-x: auto;
+    border: 1px solid var(--color-border-default);
+    border-radius: 0.75rem;
   }
 }

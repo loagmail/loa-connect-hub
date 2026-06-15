@@ -172,22 +172,22 @@ function SubjectsTab() {
           <p className="text-xs text-tertiary text-center py-8">No subjects found.</p>
         ) : (
           <>
-            <div className="desktop-only">
-              <table className="w-full text-sm">
+            <div className="desktop-only tbl">
+              <table>
                 <thead>
-                  <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider bg-slate-50/50">
-                    <th className="px-6 py-3">Code</th>
-                    <th className="px-6 py-3">Name</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3 text-center">Actions</th>
+                  <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th className="text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedItems.map((s) => (
-                    <tr key={s.id} className="border-b border-slate-50 hover:bg-surface-hover/70">
-                      <td className="px-6 py-4 font-mono text-xs font-bold text-secondary">{s.code}</td>
-                      <td className="px-6 py-4 text-primary font-medium">{s.name}</td>
-                      <td className="px-6 py-4">
+                    <tr key={s.id}>
+                      <td className="font-mono text-xs font-bold text-secondary">{s.code}</td>
+                      <td className="text-primary font-medium">{s.name}</td>
+                      <td>
                         <span className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${s.isDisabled ? "bg-red-50 text-red-600 border border-red-200" : "bg-green-50 text-green-600 border border-green-200"}`}>
                           {s.isDisabled ? "Disabled" : "Active"}
                         </span>
@@ -466,22 +466,22 @@ function SectionsTab() {
           <p className="text-xs text-tertiary text-center py-8">No sections found.</p>
         ) : (
           <>
-            <div className="desktop-only">
-              <table className="w-full text-sm">
+            <div className="desktop-only tbl">
+              <table>
                 <thead>
-                  <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider bg-slate-50/50">
-                    <th className="px-6 py-3">Section</th>
-                    <th className="px-6 py-3">Department</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3 text-center">Actions</th>
+                  <tr>
+                    <th>Section</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th className="text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedItems.map((s) => (
-                    <tr key={s.id} className="border-b border-slate-50 hover:bg-surface-hover/70">
-                      <td className="px-6 py-4 font-mono text-xs font-bold text-secondary">{s.program}-{s.name}</td>
-                      <td className="px-6 py-4 text-primary font-medium">{sectionDeptName(s)}</td>
-                      <td className="px-6 py-4">
+                    <tr key={s.id}>
+                      <td className="font-mono text-xs font-bold text-secondary">{s.program}-{s.name}</td>
+                      <td className="text-primary font-medium">{sectionDeptName(s)}</td>
+                      <td>
                         <span className={`inline-flex px-2 py-1 text-xs font-bold rounded-full ${s.isDisabled ? "bg-red-50 text-red-600 border border-red-200" : "bg-green-50 text-green-600 border border-green-200"}`}>
                           {s.isDisabled ? "Disabled" : "Active"}
                         </span>

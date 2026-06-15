@@ -77,7 +77,7 @@ function FacultyScheduleCard({
   const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(appointments, 25)
 
   return (
-    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md tbl">
       <button
         onClick={() => onToggle(facultyId)}
         className="w-full flex items-center gap-3 px-6 py-4 text-left transition-colors duration-150 hover:bg-surface-hover/80"
@@ -101,18 +101,18 @@ function FacultyScheduleCard({
 
       {isExpanded && (
         <div className="overflow-x-auto border-t border-default">
-          <table className="w-full text-sm">
+          <table>
             <thead>
-              <tr className="bg-surface/50 border-b border-default">
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Date</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Day</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Start</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">End</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Student</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Status</th>
+              <tr>
+                <th className="text-left">Date</th>
+                <th className="text-left">Day</th>
+                <th className="text-left">Start</th>
+                <th className="text-left">End</th>
+                <th className="text-left">Student</th>
+                <th className="text-left">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {paginatedItems.map((apt) => {
                 const dateObj = new Date(apt.date + "T00:00:00")
                 const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" })
@@ -123,13 +123,13 @@ function FacultyScheduleCard({
                 })
 
                 return (
-                  <tr key={apt.id} className="transition-colors duration-150 hover:bg-surface-hover/80">
-                    <td className="px-6 py-3 font-medium text-secondary whitespace-nowrap">{formattedDate}</td>
-                    <td className="px-4 py-3 text-tertiary whitespace-nowrap">{dayName}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-secondary whitespace-nowrap">{apt.startTime}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-secondary whitespace-nowrap">{apt.endTime}</td>
-                    <td className="px-4 py-3 text-secondary whitespace-nowrap">{apt.studentName}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                  <tr key={apt.id}>
+                    <td className="font-medium text-secondary whitespace-nowrap">{formattedDate}</td>
+                    <td className="text-tertiary whitespace-nowrap">{dayName}</td>
+                    <td className="font-mono text-sm text-secondary whitespace-nowrap">{apt.startTime}</td>
+                    <td className="font-mono text-sm text-secondary whitespace-nowrap">{apt.endTime}</td>
+                    <td className="text-secondary whitespace-nowrap">{apt.studentName}</td>
+                    <td className="whitespace-nowrap">
                       <StatusBadge status={apt.status} />
                     </td>
                   </tr>

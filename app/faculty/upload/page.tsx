@@ -188,21 +188,21 @@ export default function FacultyUploadPage() {
           {result.created.length > 0 && (
             <section className="space-y-2">
               <h3 className="text-sm font-bold text-secondary">Created Students</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="desktop-only tbl-container tbl">
+                <table>
                   <thead>
-                    <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider">
-                      <th className="pb-2 pr-4">Name</th>
-                      <th className="pb-2 pr-4">Email</th>
-                      <th className="pb-2 pr-4">Course</th>
+                    <tr >
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Course</th>
                     </tr>
                   </thead>
                   <tbody>
                     {result.created.map((u) => (
-                      <tr key={u.email} className="border-b border-default">
-                        <td className="py-2 pr-4 text-primary">{u.name}</td>
-                        <td className="py-2 pr-4 text-secondary text-xs">{u.email}</td>
-                        <td className="py-2 pr-4 text-tertiary text-xs">{u.course || "—"}</td>
+                      <tr key={u.email} >
+                        <td className="text-primary">{u.name}</td>
+                        <td className="text-secondary text-xs">{u.email}</td>
+                        <td className="text-tertiary text-xs">{u.course || "—"}</td>
                       </tr>
                     ))}
                   </tbody>

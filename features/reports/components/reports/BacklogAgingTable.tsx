@@ -27,23 +27,23 @@ export function BacklogAgingTable({ entries }: BacklogAgingTableProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden">
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden tbl">
       <div className="px-6 py-4 border-b border-default">
         <h3 className="text-sm font-bold text-primary">Aging Table</h3>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table>
           <thead>
-            <tr className="border-b border-default bg-surface/50">
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Aging Bucket</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Faculty</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Student</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Date</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Status</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Age</th>
+            <tr>
+              <th className="text-left">Aging Bucket</th>
+              <th className="text-left">Faculty</th>
+              <th className="text-left">Student</th>
+              <th className="text-center">Date</th>
+              <th className="text-center">Status</th>
+              <th className="text-center">Age</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {grouped.map((group) => (
               <AgingGroup key={group.label} group={group} />
             ))}
@@ -71,8 +71,8 @@ function AgingGroup({ group }: { group: { label: string; entries: BacklogEntry[]
 
   if (group.entries.length === 0) {
     return (
-      <tr className={`${bucketColor} border-b border-default`}>
-        <td className="px-4 py-3" colSpan={6}>
+      <tr className={bucketColor}>
+        <td colSpan={6}>
           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${bucketBadge}`}>
             {group.label}
           </span>
@@ -85,19 +85,19 @@ function AgingGroup({ group }: { group: { label: string; entries: BacklogEntry[]
   return (
     <>
       {paginatedItems.map((entry) => (
-        <tr key={entry.id} className="transition-colors duration-150 hover:bg-surface-hover">
-          <td className="px-4 py-3">
+        <tr key={entry.id}>
+          <td>
             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs ${bucketBadge}`}>
               {group.label}
             </span>
           </td>
-          <td className="px-4 py-3 font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
-          <td className="px-4 py-3 text-secondary">{entry.studentName}</td>
-          <td className="px-4 py-3 text-center font-mono text-xs text-tertiary">{entry.date}</td>
-          <td className="px-4 py-3 text-center">
+          <td className="font-medium text-primary whitespace-nowrap">{entry.facultyName}</td>
+          <td className="text-secondary">{entry.studentName}</td>
+          <td className="text-center font-mono text-xs text-tertiary">{entry.date}</td>
+          <td className="text-center">
             <StatusBadge status={entry.status} />
           </td>
-          <td className="px-4 py-3 text-center font-mono text-sm font-semibold text-secondary">
+          <td className="text-center font-mono text-sm font-semibold text-secondary">
             {entry.ageDays}d
           </td>
         </tr>

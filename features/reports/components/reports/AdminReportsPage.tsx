@@ -89,60 +89,60 @@ export function AdminReportsPage({
       </div>
 
       {/* Department Summary Table */}
-      <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden tbl">
         <div className="px-6 py-4 border-b border-default">
           <h3 className="text-sm font-bold text-primary">Department Summary</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table>
             <thead>
-              <tr className="border-b border-default bg-surface/50">
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <tr>
+                <th className="text-left">
                   Department
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+                <th className="text-center">
                   Faculty Count
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+                <th className="text-center">
                   Total
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+                <th className="text-center">
                   Completed
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+                <th className="text-center">
                   Pending
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+                <th className="text-center">
                   Completion Rate
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {/* All Departments Row */}
               <tr
                 onClick={() => navigate(null)}
-                className={`transition-colors duration-150 hover:bg-surface-hover cursor-pointer bg-surface/30 ${
+                className={`${
                   selectedDepartmentId === null
                     ? "bg-gold-50/50 border-l-2 border-l-gold-500"
                     : ""
                 }`}
               >
-                <td className="px-6 py-4 font-bold text-primary whitespace-nowrap">
+                <td className="font-bold text-primary whitespace-nowrap">
                   {allDeptsRow.name}
                 </td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-secondary">
+                <td className="text-center font-mono text-sm text-secondary">
                   {allDeptsRow.facultyCount}
                 </td>
-                <td className="px-4 py-4 text-center font-mono text-sm text-secondary">
+                <td className="text-center font-mono text-sm text-secondary">
                   {allDeptsRow.total}
                 </td>
-                <td className="px-4 py-4 text-center text-emerald-600 font-mono text-sm">
+                <td className="text-center text-emerald-600 font-mono text-sm">
                   {allDeptsRow.completed}
                 </td>
-                <td className="px-4 py-4 text-center text-amber-600 font-mono text-sm">
+                <td className="text-center text-amber-600 font-mono text-sm">
                   {allDeptsRow.pending}
                 </td>
-                <td className="px-4 py-4 text-center">
+                <td className="text-center">
                   <CompletionBadge rate={allDeptsRow.completionRate} />
                 </td>
               </tr>
@@ -152,28 +152,28 @@ export function AdminReportsPage({
                 <tr
                   key={dept.id}
                   onClick={() => navigate(dept.id)}
-                  className={`transition-colors duration-150 hover:bg-surface-hover cursor-pointer ${
+                  className={`${
                     selectedDepartmentId === dept.id
                       ? "bg-gold-50/50 border-l-2 border-l-gold-500"
                       : ""
                   }`}
                 >
-                  <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">
+                  <td className="font-medium text-primary whitespace-nowrap">
                     {dept.name}
                   </td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-secondary">
+                  <td className="text-center font-mono text-sm text-secondary">
                     {dept.facultyCount}
                   </td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-secondary">
+                  <td className="text-center font-mono text-sm text-secondary">
                     {dept.total}
                   </td>
-                  <td className="px-4 py-4 text-center text-emerald-600 font-mono text-sm">
+                  <td className="text-center text-emerald-600 font-mono text-sm">
                     {dept.completed}
                   </td>
-                  <td className="px-4 py-4 text-center text-amber-600 font-mono text-sm">
+                  <td className="text-center text-amber-600 font-mono text-sm">
                     {dept.pending}
                   </td>
-                  <td className="px-4 py-4 text-center">
+                  <td className="text-center">
                     <CompletionBadge rate={dept.completionRate} />
                   </td>
                 </tr>

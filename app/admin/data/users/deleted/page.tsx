@@ -100,31 +100,31 @@ export default function DeletedUsersPage() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="desktop-only rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="desktop-only tbl-container tbl">
+            <table>
               <thead>
-                <tr className="border-b border-default bg-surface/50">
-                  <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Name</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Email</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Role</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Deleted At</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Actions</th>
+                <tr >
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Deleted At</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {paginatedItems.map((user) => (
-                  <tr key={user.id} className="hover:bg-surface/80 transition-colors">
-                    <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{user.name}</td>
-                    <td className="px-4 py-4 text-secondary whitespace-nowrap">{user.email}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                  <tr key={user.id} >
+                    <td className="font-medium text-primary whitespace-nowrap">{user.name}</td>
+                    <td className="text-secondary whitespace-nowrap">{user.email}</td>
+                    <td className="whitespace-nowrap">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-50 text-red-700 border-red-200/50">
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-tertiary whitespace-nowrap text-xs">
+                    <td className="text-tertiary whitespace-nowrap text-xs">
                       {user.deletedAt ? new Date(user.deletedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "\u2014"}
                     </td>
-                    <td className="px-4 py-4 text-right whitespace-nowrap">
+                    <td className="text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleRestore(user.id)}

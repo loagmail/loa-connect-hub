@@ -547,18 +547,18 @@ export default function EvaluationDashboard({
           )}
 
           {/* Main table — desktop */}
-          <div className="desktop-only bg-surface rounded-xl border border-default overflow-hidden">
+          <div className="desktop-only bg-surface rounded-xl border border-default overflow-hidden tbl">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table>
                 <thead>
-                  <tr className="bg-surface-muted text-xs font-bold text-tertiary uppercase tracking-wider border-b border-default">
-                    <th className="p-3 text-left">Faculty</th>
-                    <th className="p-3 text-center whitespace-nowrap">General</th>
-                    <th className="p-3 text-center whitespace-nowrap">Respondents</th>
-                    <th className="p-3 text-center">Remark</th>
-                    {showVisibilityToggles && <th className="p-3 text-center whitespace-nowrap">Visible</th>}
-                    <th className="p-3 text-center w-16">Actions</th>
-                    <th className="p-3 text-center w-10"></th>
+                  <tr>
+                    <th className="text-left">Faculty</th>
+                    <th className="text-center whitespace-nowrap">General</th>
+                    <th className="text-center whitespace-nowrap">Respondents</th>
+                    <th className="text-center">Remark</th>
+                    {showVisibilityToggles && <th className="text-center whitespace-nowrap">Visible</th>}
+                    <th className="text-center w-16">Actions</th>
+                    <th className="text-center w-10"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -566,13 +566,13 @@ export default function EvaluationDashboard({
                     const name = facultyNames[r.facultyId] || r.facultyId
                     const isSelected = selectedFaculty === r.facultyId
                     return (
-                      <tr key={r.id} className={`border-b border-default/50 hover:bg-surface-hover cursor-pointer transition-colors ${isSelected ? "bg-brand-50 dark:bg-brand-500/10" : ""}`} onClick={() => selectFaculty(r.facultyId)}>
-                        <td className="p-3 font-semibold text-primary whitespace-nowrap">{name}</td>
-                        <td className="p-3 text-center font-bold text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</td>
-                        <td className="p-3 text-center text-secondary">{r.totalRespondents}</td>
-                        <td className="p-3 text-center">{r.remarks && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getRemarkColor(r.remarks)}`}>{r.remarks}</span>}</td>
+                      <tr key={r.id} className={`${isSelected ? "bg-brand-50 dark:bg-brand-500/10" : ""}`} onClick={() => selectFaculty(r.facultyId)}>
+                        <td className="font-semibold text-primary whitespace-nowrap">{name}</td>
+                        <td className="text-center font-bold text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</td>
+                        <td className="text-center text-secondary">{r.totalRespondents}</td>
+                        <td className="text-center">{r.remarks && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getRemarkColor(r.remarks)}`}>{r.remarks}</span>}</td>
                         {showVisibilityToggles && (
-                          <td className="p-3 text-center">
+                          <td className="text-center">
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); toggleVisibility(r.facultyId, !visibilityMap[r.facultyId]) }}
@@ -592,7 +592,7 @@ export default function EvaluationDashboard({
                             </button>
                           </td>
                         )}
-                        <td className="p-3 text-center whitespace-nowrap">
+                        <td className="text-center whitespace-nowrap">
                           <div className="flex items-center justify-center gap-1">
                             <button
                               type="button"
@@ -617,7 +617,7 @@ export default function EvaluationDashboard({
                             </button>
                           </div>
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="text-center">
                           <svg className={`w-4 h-4 mx-auto text-tertiary transition-transform ${isSelected ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                           </svg>
@@ -785,27 +785,27 @@ function DetailPanel({
             ))}
           </div>
 
-          <div className="desktop-only overflow-x-auto bg-surface rounded-xl border border-default">
-            <table className="w-full text-xs">
+          <div className="desktop-only overflow-x-auto bg-surface rounded-xl border border-default tbl">
+            <table>
               <thead>
-                <tr className="bg-surface-muted text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default">
-                  <th className="p-2.5 text-left w-10">#</th>
+                <tr>
+                  <th className="text-left w-10">#</th>
                   {CATEGORIES.map((c) => (
-                    <th key={c.key} className="p-2.5 text-center min-w-14">{c.label}</th>
+                    <th key={c.key} className="text-center min-w-14">{c.label}</th>
                   ))}
-                  <th className="p-2.5 text-center min-w-12">Gen.</th>
-                  <th className="p-2.5 text-left min-w-36">Comment</th>
+                  <th className="text-center min-w-12">Gen.</th>
+                  <th className="text-left min-w-36">Comment</th>
                 </tr>
               </thead>
               <tbody>
                 {slice.map((s) => (
-                  <tr key={s.id} className="border-b border-default/50 hover:bg-surface-hover">
-                    <td className="p-2.5 font-semibold text-primary">{s.id}</td>
+                  <tr key={s.id}>
+                    <td className="font-semibold text-primary">{s.id}</td>
                     {CATEGORIES.map((c) => (
-                      <td key={c.key} className="p-2.5 text-center text-primary">{s[c.key] !== null ? s[c.key]!.toFixed(2) : "—"}</td>
+                      <td key={c.key} className="text-center text-primary">{s[c.key] !== null ? s[c.key]!.toFixed(2) : "—"}</td>
                     ))}
-                    <td className="p-2.5 text-center font-bold text-primary">{s.generalRating !== null ? s.generalRating.toFixed(2) : "—"}</td>
-                    <td className="p-2.5 text-tertiary max-w-48 truncate" title={s.comment || ""}>{s.comment || "—"}</td>
+                    <td className="text-center font-bold text-primary">{s.generalRating !== null ? s.generalRating.toFixed(2) : "—"}</td>
+                    <td className="text-tertiary max-w-48 truncate" title={s.comment || ""}>{s.comment || "—"}</td>
                   </tr>
                 ))}
               </tbody>

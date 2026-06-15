@@ -218,25 +218,25 @@ export function DepartmentsCoursesTab() {
               <p className="text-xs text-tertiary p-6">No departments configured yet.</p>
             ) : (
               <>
-                <div className="desktop-only">
-                  <table className="w-full text-sm">
+                <div className="desktop-only tbl">
+                  <table>
                     <thead>
-                      <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider bg-slate-50/50">
-                        <th className="px-6 py-3">Code</th>
-                        <th className="px-6 py-3">Department Name</th>
-                        <th className="px-6 py-3">Dean Assigned</th>
-                        <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3 text-center">Actions</th>
+                      <tr>
+                        <th>Code</th>
+                        <th>Department Name</th>
+                        <th>Dean Assigned</th>
+                        <th>Status</th>
+                    <th className="text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {departments.map((dept) => {
                         const assignedDean = users.find((u) => u.id === dept.deanId)
                         return (
-                          <tr key={dept.id} className="border-b border-slate-50 hover:bg-surface-hover/70">
-                            <td className="px-6 py-4 font-mono text-xs font-bold text-secondary">{dept.code}</td>
-                            <td className="px-6 py-4 text-primary font-medium">{dept.name}</td>
-                            <td className="px-6 py-4 text-secondary">
+                          <tr key={dept.id}>
+                            <td className="font-mono text-xs font-bold text-secondary">{dept.code}</td>
+                            <td className="text-primary font-medium">{dept.name}</td>
+                            <td className="text-secondary">
                               {assignedDean ? (
                                 <div><p className="font-semibold text-primary">{assignedDean.name}</p><p className="text-xs text-tertiary">{assignedDean.email}</p></div>
                               ) : (<span className="text-xs italic text-tertiary">No dean assigned</span>)}
@@ -325,21 +325,21 @@ export function DepartmentsCoursesTab() {
                   <p className="text-xs text-tertiary px-6 py-4">No courses configured.</p>
                 ) : (
                   <>
-                    <div className="desktop-only">
-                      <table className="w-full text-sm">
+                    <div className="desktop-only tbl">
+                      <table>
                         <thead>
-                          <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider">
-                            <th className="px-6 py-3">Code</th>
-                            <th className="px-6 py-3">Name</th>
-                            <th className="px-6 py-3 w-24">Actions</th>
+                          <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th className="w-24">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           {dept.courses.map((c) => (
-                            <tr key={c.id} className="border-b border-slate-50 hover:bg-surface-hover">
-                              <td className="px-6 py-3 font-mono text-xs font-semibold text-secondary">{c.code}</td>
-                              <td className="px-6 py-3 text-secondary">{c.name}</td>
-                              <td className="px-6 py-3">
+                            <tr key={c.id}>
+                              <td className="font-mono text-xs font-semibold text-secondary">{c.code}</td>
+                              <td className="text-secondary">{c.name}</td>
+                              <td>
                                 <IosButton variant="plain" size="xs" onClick={() => handleDeleteCourse(c.id)} className="!text-red-500">Remove</IosButton>
                               </td>
                             </tr>

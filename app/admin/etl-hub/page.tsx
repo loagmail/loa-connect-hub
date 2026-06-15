@@ -174,15 +174,15 @@ function ViewMappings() {
                   <option key={s.id} value={s.id}>{s.program}-{s.name}</option>
                 ))}
               </select>
-              <div className="desktop-only overflow-x-auto max-h-72 overflow-y-auto border border-default rounded-xl">
-                <table className="w-full text-[11px]">
+              <div className="desktop-only max-h-72 overflow-y-auto tbl-container tbl">
+                <table>
                   <thead>
-                    <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
-                      <th className="p-2">Faculty</th>
-                      <th className="p-2">Subject</th>
-                      <th className="p-2">Section</th>
-                      <th className="p-2 text-right">Students</th>
-                      <th className="p-2 w-12"></th>
+                    <tr>
+                      <th>Faculty</th>
+                      <th>Subject</th>
+                      <th>Section</th>
+                      <th className="text-right">Students</th>
+                      <th className="w-12"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -190,18 +190,18 @@ function ViewMappings() {
                       <tr><td colSpan={5} className="p-4 text-center text-xs text-tertiary">No mappings yet.</td></tr>
                     ) : (
                       facPagination.paginatedItems.map((m) => (
-                        <tr key={m.id} className="border-b border-default/50 hover:bg-surface-hover">
-                          <td className="p-2 font-medium text-secondary">{m.faculty.name}</td>
-                          <td className="p-2">
+                        <tr key={m.id}>
+                          <td className="font-medium text-secondary">{m.faculty.name}</td>
+                          <td>
                             <span className="font-medium text-secondary">{m.subject.code}</span>
                           </td>
-                          <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
-                          <td className="p-2 text-right">
+                          <td className="text-secondary">{m.section.program}-{m.section.name}</td>
+                          <td className="text-right">
                             <span className="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                               {m.student_count}
                             </span>
                           </td>
-                          <td className="p-2 text-center">
+                          <td className="text-center">
                             <button
                               type="button"
                               onClick={() => setViewingClass(m)}
@@ -258,12 +258,12 @@ function ViewMappings() {
                   <option key={s.id} value={s.id}>{s.program}-{s.name}</option>
                 ))}
               </select>
-              <div className="desktop-only overflow-x-auto max-h-72 overflow-y-auto border border-default rounded-xl">
-                <table className="w-full text-[11px]">
+              <div className="desktop-only max-h-72 overflow-y-auto tbl-container tbl">
+                <table>
                   <thead>
-                    <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
-                      <th className="p-2">Student</th>
-                      <th className="p-2">Section</th>
+                    <tr>
+                      <th>Student</th>
+                      <th>Section</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -271,9 +271,9 @@ function ViewMappings() {
                       <tr><td colSpan={2} className="p-4 text-center text-xs text-tertiary">No enrollments yet.</td></tr>
                     ) : (
                       studentPagination.paginatedItems.map((m) => (
-                        <tr key={m.id} className="border-b border-default/50 hover:bg-surface-hover">
-                          <td className="p-2 font-medium text-secondary">{m.student.name}</td>
-                          <td className="p-2 text-secondary">{m.section.program}-{m.section.name}</td>
+                        <tr key={m.id}>
+                          <td className="font-medium text-secondary">{m.student.name}</td>
+                          <td className="text-secondary">{m.section.program}-{m.section.name}</td>
                         </tr>
                       ))
                     )}
@@ -318,31 +318,31 @@ function ViewMappings() {
                 </svg>
               </button>
             </div>
-            <div className="p-4 max-h-[60vh] overflow-y-auto">
+            <div className="p-4 max-h-[60vh] overflow-y-auto tbl">
               {(() => {
                 if (enrolled.length === 0) {
                   return <p className="text-xs text-tertiary text-center py-6">No students enrolled in this section.</p>
                 }
-                return (
-                  <>
-                  <table className="desktop-only w-full text-[11px]">
-                    <thead>
-                      <tr className="text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default">
-                        <th className="p-2 w-8">#</th>
-                        <th className="p-2">Student</th>
-                        <th className="p-2">Email</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {enrolledPagination.paginatedItems.map((e, i) => (
-                        <tr key={e.id} className="border-b border-default hover:bg-surface-hover">
-                          <td className="p-2 text-tertiary">{i + 1}</td>
-                          <td className="p-2 font-medium text-secondary">{e.student.name}</td>
-                          <td className="p-2 text-tertiary">{e.student.email}</td>
+                  return (
+                    <>
+                    <table className="desktop-only">
+                      <thead>
+                        <tr>
+                          <th className="w-8">#</th>
+                          <th>Student</th>
+                          <th>Email</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {enrolledPagination.paginatedItems.map((e, i) => (
+                          <tr key={e.id}>
+                            <td className="text-tertiary">{i + 1}</td>
+                            <td className="font-medium text-secondary">{e.student.name}</td>
+                            <td className="text-tertiary">{e.student.email}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   <div className="mobile-only space-y-1.5">
                     {enrolledPagination.paginatedItems.map((e, i) => (
                       <div key={e.id} className="flex items-center gap-3 px-2 py-2 rounded-lg bg-surface-hover/50 text-xs">

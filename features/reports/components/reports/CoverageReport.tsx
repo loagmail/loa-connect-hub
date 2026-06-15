@@ -375,29 +375,29 @@ export function CoverageReport({ overall, byDepartment, trend, departmentName }:
       </div>
 
       {/* Department Breakdown Table */}
-      <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden tbl">
         <div className="px-6 py-4 border-b border-default">
           <h3 className="text-sm font-bold text-primary">Department Reach Breakdown</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table>
             <thead>
-              <tr className="border-b border-default bg-surface/50">
-                <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Department</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Total Students</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-emerald-600">With Consultations</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-amber-600">Without</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">Reach</th>
+              <tr>
+                <th className="text-left">Department</th>
+                <th className="text-center">Total Students</th>
+                <th className="text-center text-emerald-600">With Consultations</th>
+                <th className="text-center text-amber-600">Without</th>
+                <th className="text-center">Reach</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {paginatedItems.map((dept) => (
-                <tr key={dept.departmentId} className="transition-colors duration-150 hover:bg-surface-hover">
-                  <td className="px-6 py-4 font-medium text-primary whitespace-nowrap">{dept.departmentName}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-secondary">{dept.totalStudents}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-emerald-600">{dept.studentsWithConsultations}</td>
-                  <td className="px-4 py-4 text-center font-mono text-sm text-amber-600">{dept.studentsWithoutConsultations}</td>
-                  <td className="px-4 py-4 text-center">
+                <tr key={dept.departmentId}>
+                  <td className="font-medium text-primary whitespace-nowrap">{dept.departmentName}</td>
+                  <td className="text-center font-mono text-sm text-secondary">{dept.totalStudents}</td>
+                  <td className="text-center font-mono text-sm text-emerald-600">{dept.studentsWithConsultations}</td>
+                  <td className="text-center font-mono text-sm text-amber-600">{dept.studentsWithoutConsultations}</td>
+                  <td className="text-center">
                     <CoverageBadge rate={dept.coveragePercentage} />
                   </td>
                 </tr>

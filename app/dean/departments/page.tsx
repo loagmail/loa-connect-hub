@@ -178,21 +178,21 @@ export default function DeanDepartmentsPage() {
         ) : (
           <>
             {/* Desktop table */}
-            <div className="desktop-only">
-              <table className="w-full text-sm">
+            <div className="desktop-only tbl-container tbl">
+              <table>
                 <thead>
-                  <tr className="border-b border-default text-left text-xs font-semibold text-tertiary uppercase tracking-wider">
-                    <th className="px-6 py-3">Code</th>
-                    <th className="px-6 py-3">Name</th>
-                    <th className="px-6 py-3 w-24">Actions</th>
+                  <tr >
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th className="w-24">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {courses.map((c) => (
-                    <tr key={c.id} className="border-b border-slate-50 hover:bg-surface-hover">
-                      <td className="px-6 py-3 font-mono text-xs font-semibold text-secondary">{c.code}</td>
-                      <td className="px-6 py-3 text-secondary">{c.name}</td>
-                      <td className="px-6 py-3">
+                    <tr key={c.id} >
+                      <td className="font-mono text-xs font-semibold text-secondary">{c.code}</td>
+                      <td className="text-secondary">{c.name}</td>
+                      <td>
                         <IosButton variant="plain" size="xs" className="!text-red-500" onClick={() => handleDelete(c.id)}>
                           Remove
                         </IosButton>

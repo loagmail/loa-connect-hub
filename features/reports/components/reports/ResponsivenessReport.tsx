@@ -174,7 +174,7 @@ export function ResponsivenessReport({
             <ResponseTimeDistributionChart distribution={distribution} />
 
             {/* Per-Faculty Table */}
-            <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm">
+            <div className="rounded-2xl border border-default/70 bg-surface p-6 shadow-sm tbl">
               <h3 className="text-sm font-bold text-primary mb-4">Per-Faculty Response Times</h3>
               {sortedFaculty.length === 0 ? (
                 <div className="flex items-center justify-center h-48 text-tertiary text-sm">
@@ -182,24 +182,24 @@ export function ResponsivenessReport({
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table>
                     <thead>
-                      <tr className="border-b border-default">
-                        <th className="text-left px-2 py-2 text-xs font-semibold uppercase tracking-wider text-tertiary">Faculty</th>
-                        <th className="text-right px-2 py-2 text-xs font-semibold uppercase tracking-wider text-tertiary">Avg</th>
-                        <th className="text-right px-2 py-2 text-xs font-semibold uppercase tracking-wider text-tertiary">Fastest</th>
-                        <th className="text-right px-2 py-2 text-xs font-semibold uppercase tracking-wider text-tertiary">Slowest</th>
-                        <th className="text-right px-2 py-2 text-xs font-semibold uppercase tracking-wider text-tertiary">Count</th>
+                      <tr>
+                        <th className="text-left">Faculty</th>
+                        <th className="text-right">Avg</th>
+                        <th className="text-right">Fastest</th>
+                        <th className="text-right">Slowest</th>
+                        <th className="text-right">Count</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {sortedFaculty.map((f) => (
-                        <tr key={f.facultyId} className="transition-colors duration-150 hover:bg-surface-hover">
-                          <td className="px-2 py-2 font-medium text-primary whitespace-nowrap">{f.facultyName}</td>
-                          <td className="px-2 py-2 text-right font-mono text-sm text-secondary">{formatHours(f.averageHours)}</td>
-                          <td className="px-2 py-2 text-right font-mono text-sm text-emerald-600">{formatHours(f.fastestHours)}</td>
-                          <td className="px-2 py-2 text-right font-mono text-sm text-red-500">{formatHours(f.slowestHours)}</td>
-                          <td className="px-2 py-2 text-right font-mono text-sm text-tertiary">{f.totalResponded}</td>
+                        <tr key={f.facultyId}>
+                          <td className="font-medium text-primary whitespace-nowrap">{f.facultyName}</td>
+                          <td className="text-right font-mono text-sm text-secondary">{formatHours(f.averageHours)}</td>
+                          <td className="text-right font-mono text-sm text-emerald-600">{formatHours(f.fastestHours)}</td>
+                          <td className="text-right font-mono text-sm text-red-500">{formatHours(f.slowestHours)}</td>
+                          <td className="text-right font-mono text-sm text-tertiary">{f.totalResponded}</td>
                         </tr>
                       ))}
                     </tbody>

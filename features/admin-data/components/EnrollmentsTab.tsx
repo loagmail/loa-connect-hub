@@ -288,23 +288,23 @@ export function EnrollmentsTab() {
 
                     {csvError && <p className="text-xs font-medium text-red-600">{csvError}</p>}
 
-                    <div className="overflow-x-auto max-h-72 overflow-y-auto border border-default rounded-xl">
-                      <table className="w-full text-[13px]">
+                    <div className="max-h-72 overflow-y-auto tbl-container tbl">
+                      <table>
                         <thead>
-                          <tr className="bg-surface-dim text-left text-[11px] font-semibold text-tertiary border-b border-default sticky top-0">
-                            <th className="p-3 w-8">#</th>
-                            <th className="p-3">Email</th>
-                            <th className="p-3">Name</th>
-                            <th className="p-3 w-12"></th>
+                          <tr>
+                            <th className="w-8">#</th>
+                            <th>Email</th>
+                            <th>Name</th>
+                            <th className="w-12"></th>
                           </tr>
                         </thead>
                         <tbody>
                           {paginatedCsvRows.map((row, i) => {
                             const absIdx = csvPreviewPage * PREVIEW_PAGE_SIZE + i
                             return (
-                              <tr key={`${csvPreviewPage}-${i}`} className="border-b border-default/50 hover:bg-surface-hover">
-                                <td className="p-3 text-tertiary">{absIdx + 1}</td>
-                                <td className={`p-3 ${domainOk(row.email) ? "text-secondary" : "text-red-500"}`}>
+                              <tr key={`${csvPreviewPage}-${i}`}>
+                                <td className="text-tertiary">{absIdx + 1}</td>
+                                <td className={`${domainOk(row.email) ? "text-secondary" : "text-red-500"}`}>
                                   <div className="flex items-center gap-2">
                                     <span>{row.email || <span className="italic text-red-400">missing</span>}</span>
                                     {!domainOk(row.email) && (
@@ -312,7 +312,7 @@ export function EnrollmentsTab() {
                                     )}
                                   </div>
                                 </td>
-                                <td className="p-3">
+                                <td>
                                   <input
                                       value={row.name}
                                       onChange={(e) => handleCsvRowUpdate(absIdx, e.target.value)}
@@ -320,7 +320,7 @@ export function EnrollmentsTab() {
                                       className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px] disabled:opacity-60"
                                     />
                                 </td>
-                                <td className="p-3 text-center">
+                                <td className="text-center">
                                   <button
                                     type="button"
                                     disabled={csvImporting}
@@ -459,21 +459,21 @@ export function EnrollmentsTab() {
           <p className="text-xs text-tertiary text-center py-8">No enrollments found.</p>
         ) : (
           <>
-            <div className="desktop-only overflow-x-auto max-h-96 overflow-y-auto border border-default rounded-lg">
-              <table className="w-full text-[11px]">
+            <div className="desktop-only max-h-96 overflow-y-auto tbl-container tbl">
+              <table>
                 <thead>
-                  <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
-                    <th className="p-2">Student</th>
-                    <th className="p-2">Email</th>
-                    <th className="p-2">Action</th>
+                  <tr>
+                    <th>Student</th>
+                    <th>Email</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedItems.map((group) => (
-                    <tr key={group.student.id} className="border-b border-default hover:bg-surface-hover">
-                      <td className="p-2 font-medium text-secondary">{group.student.name}</td>
-                      <td className="p-2 text-tertiary">{group.student.email}</td>
-                      <td className="p-2">
+                    <tr key={group.student.id}>
+                      <td className="font-medium text-secondary">{group.student.name}</td>
+                      <td className="text-tertiary">{group.student.email}</td>
+                      <td>
                          <IosButton variant="plain" size="xs" onClick={() => setSelectedStudentEnrollments(group.enrollments)}>View Enrolled Subjects</IosButton>
                       </td>
                     </tr>
@@ -518,22 +518,22 @@ export function EnrollmentsTab() {
                 </svg>
               </IosButton>
             </div>
-            <div className="p-4 max-h-[60vh] overflow-y-auto">
-              <table className="desktop-only w-full text-[11px]">
+            <div className="p-4 max-h-[60vh] overflow-y-auto tbl">
+              <table className="desktop-only">
                 <thead>
-                  <tr className="text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default">
-                    <th className="p-2 w-8">#</th>
-                    <th className="p-2">Section</th>
-                    <th className="p-2">Subject</th>
-                    <th className="p-2">Faculty</th>
+                  <tr>
+                    <th className="w-8">#</th>
+                    <th>Section</th>
+                    <th>Subject</th>
+                    <th>Faculty</th>
                   </tr>
                 </thead>
                 <tbody>
                   {enrolledPagination.paginatedItems.map((enr, i) => (
-                    <tr key={enr.id} className="border-b border-default hover:bg-surface-hover">
-                      <td className="p-2 text-tertiary">{i + 1}</td>
-                      <td className="p-2 text-secondary">{enr.section.program}-{enr.section.name}</td>
-                      <td className="p-2">
+                    <tr key={enr.id}>
+                      <td className="text-tertiary">{i + 1}</td>
+                      <td className="text-secondary">{enr.section.program}-{enr.section.name}</td>
+                      <td>
                         {enr.faculty_subject ? (
                           <span className="font-medium text-secondary">{enr.faculty_subject.subject.code} - {enr.faculty_subject.subject.name}</span>
                         ) : (
@@ -545,7 +545,7 @@ export function EnrollmentsTab() {
                           </span>
                         )}
                       </td>
-                      <td className="p-2 text-secondary">{enr.faculty_subject?.faculty.name ?? <span className="text-tertiary italic">—</span>}</td>
+                      <td className="text-secondary">{enr.faculty_subject?.faculty.name ?? <span className="text-tertiary italic">—</span>}</td>
                     </tr>
                   ))}
                 </tbody>

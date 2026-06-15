@@ -414,18 +414,18 @@ export default function AdminUsersPage() {
         ) : (
           <>
             {/* Desktop table */}
-            <div className="desktop-only overflow-x-auto max-h-96 overflow-y-auto">
-              <table className="w-full text-[11px]">
+            <div className="desktop-only max-h-96 overflow-y-auto tbl-container tbl">
+              <table>
                 <thead>
-                  <tr className="bg-surface-dim text-left text-[10px] font-bold text-tertiary uppercase tracking-wider border-b border-default sticky top-0">
-                    <th className="p-2">User</th>
-                    <th className="p-2">User Type / Grants</th>
-                    <th className="p-2">Department</th>
-                    <th className="p-2">Status</th>
-                    <th className="p-2">Registered</th>
-                    <th className="p-2">Activated</th>
-                    <th className="p-2">Last Login</th>
-                    <th className="p-2">Actions</th>
+                  <tr >
+                    <th>User</th>
+                    <th>User Type / Grants</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                    <th>Activated</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -435,12 +435,12 @@ export default function AdminUsersPage() {
                     const isDefaultAdmin = u.email === "admin@lyceumalabang.ph" || u.id === "a0000000-0000-0000-0000-000000000001"
 
                     return (
-                      <tr key={u.id} className="border-b border-default hover:bg-surface-hover">
-                        <td className="p-2">
+                      <tr key={u.id} >
+                        <td>
                           <p className="text-primary font-medium">{u.name}</p>
                           <p className="text-tertiary text-xs">{u.email}</p>
                         </td>
-                        <td className="p-2 relative">
+                        <td className="relative">
                           <button
                             onClick={() => !isDefaultAdmin && setRoleMenuOpen(roleMenuOpen === u.id ? null : u.id)}
                             disabled={changingRole === u.id || isDefaultAdmin}
@@ -506,28 +506,28 @@ export default function AdminUsersPage() {
                           </div>
                         )}
                       </td>
-                      <td className="p-2 text-xs text-tertiary">
+                      <td className="text-xs text-tertiary">
                         {u.departmentId ? deptMap[u.departmentId] || "—" : "—"}
                       </td>
-                      <td className="p-2">
+                      <td>
                         {u.isDisabled ? (
                           <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Disabled</span>
                         ) : (
                           <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Active</span>
                         )}
                       </td>
-                      <td className="p-2 text-tertiary text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
-                      <td className="p-2">
+                      <td className="text-tertiary text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+                      <td>
                         {u.hasLoggedInBefore ? (
                           <span className="text-xs text-emerald-600">Yes</span>
                         ) : (
                           <span className="text-xs text-amber-600">Pending</span>
                         )}
                       </td>
-                      <td className="p-2 text-tertiary text-xs">
+                      <td className="text-tertiary text-xs">
                         {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : "—"}
                       </td>
-                      <td className="p-2">
+                      <td>
                         {isDefaultAdmin ? (
                           <span className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg bg-surface text-tertiary border border-default">
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

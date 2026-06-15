@@ -34,36 +34,36 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
   }
 
   return (
-    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
+    <div className="rounded-2xl border border-default/70 bg-surface shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md tbl">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table>
           <thead>
-            <tr className="border-b border-default bg-surface/50">
-              <th className="w-8 px-2 py-3" />
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+            <tr>
+              <th className="w-8" />
+              <th className="text-left">
                 Faculty
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-left">
                 Date
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-left">
                 Time
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-left">
                 Student
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-left">
                 Concern
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-left">
                 Action Taken
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-tertiary">
+              <th className="text-left">
                 Status
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {paginatedItems.map((item) => {
               const isExpanded = expandedRows.has(item.id)
 
@@ -71,9 +71,8 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
                 <Fragment key={item.id}>
                   <tr
                     onClick={() => toggleRow(item.id)}
-                    className="cursor-pointer transition-colors duration-150 hover:bg-surface-hover/80"
                   >
-                    <td className="px-2 py-4">
+                    <td>
                       <svg
                         className={`w-4 h-4 text-tertiary transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
                         fill="none"
@@ -84,25 +83,25 @@ export function ConsultationSummaryView({ summaries }: ConsultationSummaryViewPr
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </td>
-                    <td className="px-4 py-4 font-medium text-primary whitespace-nowrap">
+                    <td className="font-medium text-primary whitespace-nowrap">
                       {item.facultyName}
                     </td>
-                    <td className="px-4 py-4 text-secondary whitespace-nowrap">
+                    <td className="text-secondary whitespace-nowrap">
                       {formatDate(item.date)}
                     </td>
-                    <td className="px-4 py-4 font-mono text-sm text-secondary whitespace-nowrap">
+                    <td className="font-mono text-sm text-secondary whitespace-nowrap">
                       {item.startTime} &ndash; {item.endTime}
                     </td>
-                    <td className="px-4 py-4 text-secondary whitespace-nowrap">
+                    <td className="text-secondary whitespace-nowrap">
                       {item.studentName}
                     </td>
-                    <td className="px-4 py-4 text-secondary max-w-[200px] truncate">
+                    <td className="text-secondary max-w-[200px] truncate">
                       {item.description || item.title || "\u2014"}
                     </td>
-                    <td className="px-4 py-4 text-secondary max-w-[180px] truncate">
+                    <td className="text-secondary max-w-[180px] truncate">
                       {renderActionTaken(item)}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap">
                       <StatusBadge status={item.status} />
                     </td>
                   </tr>
