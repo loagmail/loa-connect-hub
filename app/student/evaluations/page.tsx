@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
 import { SkeletonCard } from "@/components/ui/Skeleton"
@@ -33,6 +33,20 @@ export default function StudentEvaluationsPage() {
   const [outOfRange, setOutOfRange] = useState(false)
   const [lockedEndpoint, setLockedEndpoint] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
+  const evalTabRef = useRef<Window | null>(null)
+  const evalTabIdRef = useRef<string | null>(null)
+
+  function openEvalTab(id: string) {
+    if (evalTabRef.current && !evalTabRef.current.closed) {
+      if (evalTabIdRef.current === id) {
+        evalTabRef.current.focus()
+        return
+      }
+      evalTabRef.current.close()
+    }
+    evalTabRef.current = window.open(`/evaluate/${id}`, "_blank")
+    evalTabIdRef.current = id
+  }
 
   useEffect(() => {
     Promise.resolve().then(async () => {
@@ -199,7 +213,7 @@ export default function StudentEvaluationsPage() {
                       })
                       if (res.status === 403) { setErrorMessage("Access denied"); setNavigatingId(null); return }
                       const data = await res.json()
-                      if (data.evaluation?.id) { window.open(`/evaluate/${data.evaluation.id}`, "_blank"); setNavigatingId(null) }
+                      if (data.evaluation?.id) { openEvalTab(data.evaluation.id); setNavigatingId(null) }
                   } catch {
                     setNavigatingId(null)
                   }
@@ -256,7 +270,7 @@ export default function StudentEvaluationsPage() {
                       if (ev.status === "SUBMITTED") {
                         router.push(`/student/evaluations/${data.evaluation.id}`)
                       } else {
-                        window.open(`/evaluate/${data.evaluation.id}`, "_blank"); setNavigatingId(null)
+                        openEvalTab(data.evaluation.id); setNavigatingId(null)
                       }
                     }
                   } catch {
