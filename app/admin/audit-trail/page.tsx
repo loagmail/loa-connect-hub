@@ -113,7 +113,7 @@ export default function AuditTrailPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6 pb-12">
+      <div className="w-full space-y-6 pb-12">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -124,7 +124,7 @@ export default function AuditTrailPage() {
     {errorMessage ? (
       <ErrorState message={errorMessage} onRetry={() => { setErrorMessage(""); fetchLogs() }} />
     ) : (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12">
+    <div className="w-full space-y-6 pb-12">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-primary">Audit Trail</h1>
         <div className="flex items-center gap-2">

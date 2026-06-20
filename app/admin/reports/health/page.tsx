@@ -29,7 +29,7 @@ export default async function HealthReportPage(props: {
     data = await getAdminReportData(filters, departmentId)
   } catch (err) {
     return (
-      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <div className="w-full space-y-8 pb-12">
         <ReportHeader title="General Report" />
         <div className="rounded-2xl bg-surface p-8 shadow-sm text-center">
           <p className="text-tertiary">{(err as Error).message}</p>
@@ -39,7 +39,7 @@ export default async function HealthReportPage(props: {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <ReportHeader title="General Report">
         <Suspense fallback={<div className="h-12" />}>
           <ReportFiltersWithDept

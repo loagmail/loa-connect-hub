@@ -94,7 +94,7 @@ export default function SentimentAnalysisPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="max-w-5xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -102,7 +102,7 @@ export default function SentimentAnalysisPage() {
 
   if (errorMessage) {
     return (
-      <div className="max-w-5xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <ErrorState message={errorMessage} onRetry={() => setErrorMessage("")} />
       </div>
     )
@@ -112,7 +112,7 @@ export default function SentimentAnalysisPage() {
 
   return (
     <ErrorBoundary>
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <div>
         <h1 className="text-xl font-bold text-primary">Sentiment Analysis</h1>
         <p className="text-sm text-tertiary mt-1">

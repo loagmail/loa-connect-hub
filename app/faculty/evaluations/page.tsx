@@ -113,7 +113,7 @@ export default function FacultyEvaluationsPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="max-w-4xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -121,7 +121,7 @@ export default function FacultyEvaluationsPage() {
 
   if (errorMessage) {
     return (
-      <div className="max-w-4xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <ErrorState message={errorMessage} onRetry={() => setErrorMessage("")} />
       </div>
     )
@@ -129,7 +129,7 @@ export default function FacultyEvaluationsPage() {
 
   return (
     <ErrorBoundary>
-    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-primary">My Evaluation Results</h1>

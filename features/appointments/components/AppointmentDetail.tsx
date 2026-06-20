@@ -239,7 +239,7 @@ export default function AppointmentDetail() {
   if (loading) return <AppointmentDetailSkeleton />
 
   if (error || !appointment) return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto">
+    <div className="p-6 md:p-8 w-full">
       <p className="text-red-600">{error || "Appointment not found"}</p>
     </div>
   )
@@ -253,7 +253,7 @@ export default function AppointmentDetail() {
   const myAttendeeRecord = appointment.attendees?.find((a) => a.userId === userId)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8 pb-12">
+    <div className="w-full px-4 sm:px-6 space-y-8 pb-12">
       {/* ── Main ticket card ──────────────────────────────────────── */}
       <div className="card p-6 bg-surface mb-6">
         {/* Header */}

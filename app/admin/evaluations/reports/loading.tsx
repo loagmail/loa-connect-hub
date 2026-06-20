@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+    <div className="w-full space-y-6 pb-12">
       <div>
         <div className="h-7 w-40 bg-surface-dim rounded animate-pulse-soft" />
         <div className="h-4 w-36 bg-surface-dim rounded animate-pulse-soft mt-1" />

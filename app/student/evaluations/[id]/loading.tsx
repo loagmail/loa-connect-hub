@@ -24,11 +24,11 @@ export default function Loading() {
       </header>
 
       <div className="pt-20 sm:pt-22 pb-12 animate-pulse">
-        <div className="md:hidden mx-auto max-w-5xl px-4 sm:px-8 mb-4">
+        <div className="md:hidden w-full px-4 sm:px-8 mb-4">
           <div className="h-2 bg-surface-tertiary rounded-full" />
         </div>
 
-        <div className="mx-auto max-w-5xl flex gap-0 px-4 sm:px-8">
+        <div className="w-full flex gap-0 px-4 sm:px-8">
           <div className="hidden md:block w-52 lg:w-60 shrink-0 -ml-4">
             <div className="sticky top-24 pl-4 pr-6 lg:pr-8 border-r border-default min-h-[calc(100dvh-10rem)]">
               <div className="flex flex-col gap-0 pt-1">

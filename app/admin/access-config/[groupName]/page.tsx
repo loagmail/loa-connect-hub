@@ -118,7 +118,7 @@ export default function EditAccessGroupPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <div className="w-full space-y-8 pb-12">
         <Skeleton variant="card" />
       </div>
     )
@@ -126,7 +126,7 @@ export default function EditAccessGroupPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="max-w-6xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -134,7 +134,7 @@ export default function EditAccessGroupPage() {
 
   if (!group) {
     return (
-      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <div className="w-full space-y-8 pb-12">
         <Link href="/admin/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
         <p className="text-sm text-tertiary text-center py-8">Group not found.</p>
       </div>
@@ -143,7 +143,7 @@ export default function EditAccessGroupPage() {
 
   if (errorMessage) {
     return (
-      <div className="max-w-6xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <ErrorState message={errorMessage} onRetry={() => setErrorMessage("")} />
       </div>
     )
@@ -153,7 +153,7 @@ export default function EditAccessGroupPage() {
 
   return (
     <ErrorBoundary>
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <div>
         <Link href="/admin/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
       </div>

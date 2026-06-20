@@ -165,7 +165,7 @@ export default function AdminRubricsPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="max-w-6xl mx-auto space-y-8 pb-12 px-4 animate-ios-slide-in">
+      <div className="w-full space-y-8 pb-12 px-4 animate-ios-slide-in">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -173,7 +173,7 @@ export default function AdminRubricsPage() {
 
   return (
     <ErrorBoundary>
-    <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-ios-slide-in">
+    <div className="w-full space-y-6 pb-12 animate-ios-slide-in">
       <div className="flex items-start justify-between gap-4 px-4">
         <div>
           <h1 className="text-[28px] font-bold text-[var(--color-text)] tracking-tight">Rubric Editor</h1>

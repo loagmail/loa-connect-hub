@@ -2,7 +2,7 @@ import Skeleton, { SkeletonCard } from "@/components/ui/Skeleton"
 
 export default function FacultyDashboardLoading() {
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       {/* Metric cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <Skeleton variant="metric" />

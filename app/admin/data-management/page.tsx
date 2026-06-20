@@ -82,7 +82,7 @@ export default function DataManagementPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <div className="w-full space-y-8 pb-12">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -93,7 +93,7 @@ export default function DataManagementPage() {
     {errorMessage ? (
       <ErrorState message={errorMessage} onRetry={() => { setErrorMessage(""); window.location.reload() }} />
     ) : (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <h1 className="text-2xl font-bold text-primary">Data Management</h1>
 
       {result && (

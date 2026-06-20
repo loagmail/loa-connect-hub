@@ -2,7 +2,7 @@ import Skeleton, { SkeletonCard } from "@/components/ui/Skeleton"
 
 export default function DeanDashboardLoading() {
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       {/* Header */}
       <Skeleton variant="text" className="w-72 h-8" />
 

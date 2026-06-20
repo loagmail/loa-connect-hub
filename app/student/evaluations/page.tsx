@@ -106,7 +106,7 @@ export default function StudentEvaluationsPage() {
 
   return (
     <ErrorBoundary>
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6 sm:space-y-8 pb-12">
+    <div className="w-full px-4 sm:px-6 space-y-6 sm:space-y-8 pb-12">
       <div className="animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
           <div>

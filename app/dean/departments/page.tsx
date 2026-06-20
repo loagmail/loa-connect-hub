@@ -101,7 +101,7 @@ export default function DeanDepartmentsPage() {
 
   if (!department) {
     return (
-      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <div className="w-full space-y-8 pb-12">
         <h1 className="text-2xl font-bold text-primary">My Department</h1>
         <div className="card p-8 bg-surface text-center">
           <p className="text-sm text-tertiary">No department assigned to your account.</p>
@@ -124,7 +124,7 @@ export default function DeanDepartmentsPage() {
 
   return (
     <ErrorBoundary>
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-primary">My Department: {department.name}</h1>
         <p className="text-sm text-tertiary mt-1">Manage courses for {department.name} ({department.code}). These courses are available when importing students.</p>

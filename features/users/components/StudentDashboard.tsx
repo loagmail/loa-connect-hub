@@ -105,7 +105,7 @@ export default function StudentDashboard({ studentName, course, appointments }: 
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
+    <div className="w-full space-y-6 sm:space-y-8 pb-12">
       <div className="animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
           <div>

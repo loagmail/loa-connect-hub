@@ -116,7 +116,7 @@ export default function ConsultationHistory({ studentName: _studentName, course,
   }, [timeline])
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
+    <div className="w-full px-4 sm:px-6 pb-16">
       {timeline.length === 0 ? (
         <div className="card p-12 sm:p-16 bg-surface text-center animate-fade-in mt-8">
           <div className="w-16 h-16 bg-surface border border-default rounded-2xl flex items-center justify-center mx-auto mb-5">

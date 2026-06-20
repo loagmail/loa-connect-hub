@@ -321,7 +321,7 @@ export default function AdminUsersPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <div className="w-full space-y-8 pb-12">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-primary">Manage Users</h1>
         </div>
@@ -341,7 +341,7 @@ export default function AdminUsersPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6 pb-12 px-4">
+      <div className="w-full space-y-6 pb-12 px-4">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -349,7 +349,7 @@ export default function AdminUsersPage() {
 
   return (
     <ErrorBoundary>
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <h1 className="text-xl sm:text-2xl font-bold text-primary">Manage Users</h1>

@@ -265,7 +265,7 @@ export default function FillEvaluationPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-20 sm:pt-22 pb-12">
+      <div className="w-full px-4 sm:px-6 pt-20 sm:pt-22 pb-12">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -284,7 +284,7 @@ export default function FillEvaluationPage() {
           </div>
         </header>
         <div className="pt-20 sm:pt-22 pb-12 animate-pulse">
-          <div className="mx-auto max-w-5xl px-4 sm:px-8">
+          <div className="w-full px-4 sm:px-8">
             <div className="mb-8 space-y-2">
               <div className="h-7 w-72 bg-surface-tertiary rounded-full" />
               <div className="h-4 w-48 bg-surface-tertiary rounded-full" />
@@ -320,7 +320,7 @@ export default function FillEvaluationPage() {
     const labelMap = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"]
     return (
       <ErrorBoundary>
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+      <div className="w-full px-4 sm:px-6">
         <Link
           href="/student/evaluations"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 mb-6"
@@ -417,13 +417,13 @@ export default function FillEvaluationPage() {
   // ── Fill mode (draft / new) ──
 
   const fillContent = errorMessage ? (
-    <div className="pt-20 sm:pt-22 pb-12 max-w-5xl mx-auto px-4 sm:px-8">
+    <div className="pt-20 sm:pt-22 pb-12 w-full px-4 sm:px-8">
       <ErrorState message={errorMessage} onRetry={() => window.location.reload()} />
     </div>
   ) : (
     <div className="pt-20 sm:pt-22 pb-12">
         {/* ── Mobile progress indicator (outside flex) ── */}
-        <div className="md:hidden mx-auto max-w-5xl px-4 sm:px-8 mb-4">
+        <div className="md:hidden w-full px-4 sm:px-8 mb-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button
@@ -523,7 +523,7 @@ export default function FillEvaluationPage() {
           </div>
         )}
 
-        <div className="mx-auto max-w-5xl flex gap-0 px-4 sm:px-8">
+        <div className="w-full flex gap-0 px-4 sm:px-8">
           {/* ── Sidebar Stepper (desktop) ── */}
           <div className="hidden md:block w-52 lg:w-60 shrink-0 -ml-4">
             <div className="sticky top-24 pl-4 pr-6 lg:pr-8 border-r border-default min-h-[calc(100dvh-10rem)]">

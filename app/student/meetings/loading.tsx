@@ -2,7 +2,7 @@ import Skeleton, { SkeletonCard } from "@/components/ui/Skeleton"
 
 export default function StudentMeetingsLoading() {
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       {/* Header */}
       <div className="flex items-center justify-between">
         <Skeleton variant="text" className="w-32 h-8" />

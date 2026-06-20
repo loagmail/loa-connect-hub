@@ -1,6 +1,6 @@
 export default function AppointmentDetailSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-pulse-soft">
+    <div className="w-full space-y-8 pb-12 animate-pulse-soft">
       {/* Card 1: Main info */}
       <div className="card p-6 bg-surface mb-6">
         {/* Header row */}

@@ -33,7 +33,7 @@ const deanUsers = await userRepository.listByRole("DEAN")
   )
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-primary">Book a Consultation</h1>
         <p className="text-sm text-tertiary mt-1">Select faculty and schedule your consultation time.</p>

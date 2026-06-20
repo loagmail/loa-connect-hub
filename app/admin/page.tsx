@@ -44,7 +44,7 @@ export default async function AdminDashboard() {
   const { count: deptCount } = await supabase.from("departments").select("*", { count: "exact", head: true }).eq("isDisabled", false) || { count: 0 }
 
   return (
-    <div className="max-w-6xl mx-auto pb-12 space-y-8">
+    <div className="w-full pb-12 space-y-8">
       <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
 
       {/* Stats Grid */}

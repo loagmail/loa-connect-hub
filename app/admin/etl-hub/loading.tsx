@@ -6,7 +6,7 @@ import Skeleton, {
 
 export default function Loading() {
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       {/* Title area */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-primary">

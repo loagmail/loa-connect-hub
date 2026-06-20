@@ -182,7 +182,7 @@ export default function FacultyDeanDashboard({
   }, [teamsLinkInput])
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
+    <div className="w-full space-y-6 sm:space-y-8 pb-12">
       <div className="animate-fade-in">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div>

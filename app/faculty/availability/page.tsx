@@ -190,7 +190,7 @@ export default function AvailabilityPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="max-w-6xl mx-auto py-12 flex items-center justify-center">
+      <div className="w-full py-12 flex items-center justify-center">
         <svg className="animate-spin ios-spinner w-6 h-6 text-gold-600" viewBox="0 0 24 24" fill="none">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -201,7 +201,7 @@ export default function AvailabilityPage() {
 
   return (
     <ErrorBoundary>
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-primary font-display">Availability Settings</h1>
         <p className="text-sm text-tertiary mt-1">

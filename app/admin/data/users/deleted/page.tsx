@@ -41,7 +41,7 @@ export default function DeletedUsersPage() {
 
   if (accessState === "loading") {
     return (
-      <div className="max-w-6xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <Skeleton variant="card" />
       </div>
     )
@@ -49,7 +49,7 @@ export default function DeletedUsersPage() {
 
   if (accessState === "locked") {
     return (
-      <div className="max-w-6xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <LockedTab endpoint="/api/auth/me" />
       </div>
     )
@@ -89,7 +89,7 @@ export default function DeletedUsersPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12">
+    <div className="w-full space-y-6 pb-12">
       <h1 className="text-2xl font-bold text-primary">Deleted Users</h1>
       <p className="text-sm text-tertiary">Users that have been soft-deleted. You can restore them or permanently erase their records.</p>
       

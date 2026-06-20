@@ -1,6 +1,6 @@
 export function ReportSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-pulse">
+    <div className="w-full space-y-8 pb-12 animate-pulse">
       {/* Header */}
       <div className="h-8 w-72 bg-slate-200 rounded-lg" />
       <div className="h-4 w-48 bg-surface rounded" />

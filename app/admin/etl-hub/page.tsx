@@ -464,7 +464,7 @@ export default function EtlHubPage() {
 
   if (lockedEndpoint) {
     return (
-      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      <div className="w-full space-y-8 pb-12">
         <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
@@ -475,7 +475,7 @@ export default function EtlHubPage() {
     {errorMessage ? (
       <ErrorState message={errorMessage} onRetry={() => { setErrorMessage(""); window.location.reload() }} />
     ) : (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-primary">ETL Hub</h1>
         <p className="text-sm text-tertiary mt-1">

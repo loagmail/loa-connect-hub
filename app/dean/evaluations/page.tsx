@@ -15,7 +15,7 @@ export default async function DeanEvaluationsPage() {
 
   if (!dept) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      <div className="w-full space-y-6 pb-12">
         <h1 className="text-xl font-bold text-primary">Department Evaluation Dashboard</h1>
         <p className="text-sm text-tertiary">You are not assigned to any department.</p>
       </div>
@@ -41,7 +41,7 @@ export default async function DeanEvaluationsPage() {
   const evaluatedFaculty = new Set((evaluations || []).map((e) => e.evaluateeId)).size
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+    <div className="w-full space-y-6 pb-12">
       <div>
         <h1 className="text-xl font-bold text-primary">Department Evaluation Dashboard</h1>
         <p className="text-sm text-tertiary mt-1">{dept.name}</p>

@@ -54,7 +54,7 @@ function AdminAccessConfigPageInner() {
   const activeTab = searchParams.get("tab") || "rbac"
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold text-primary">Access Configuration</h1>
         <p className="text-xs text-tertiary mt-1">
@@ -510,7 +510,7 @@ export default function AdminAccessConfigPage() {
 
   if (accessState === "loading") {
     return (
-      <div className="max-w-6xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <Skeleton variant="card" />
       </div>
     )
@@ -518,7 +518,7 @@ export default function AdminAccessConfigPage() {
 
   if (accessState === "locked") {
     return (
-      <div className="max-w-6xl mx-auto pb-12">
+      <div className="w-full pb-12">
         <LockedTab endpoint="/admin/access-config" />
       </div>
     )
