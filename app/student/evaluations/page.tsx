@@ -74,7 +74,7 @@ export default function StudentEvaluationsPage() {
             })
             .then((rubricData) => {
               if (rubricData?.rubric) {
-                sessionStorage.setItem("eval_rubric_cache", JSON.stringify({ categories: rubricData.rubric, fetchedAt: Date.now() }))
+                localStorage.setItem("eval_rubric_cache", JSON.stringify({ categories: rubricData.rubric, fetchedAt: Date.now() }))
               }
             })
             .catch(() => {})

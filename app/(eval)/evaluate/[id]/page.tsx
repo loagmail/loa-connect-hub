@@ -106,10 +106,15 @@ export default function StandaloneEvaluationPage() {
         const periodData = await periodRes.json()
         const activePeriod = (periodData.periods || []).find((p: { isActive: boolean }) => p.isActive)
         if (activePeriod) {
-          const rubricRes = await fetch(`/api/evaluation-periods/${activePeriod.id}/rubric`)
-          if (rubricRes.status === 403) { setLockedEndpoint(`/api/evaluation-periods/${activePeriod.id}/rubric`); return }
-          const rubricData = await rubricRes.json()
-          setCategories(rubricData.rubric || [])
+          const cached = localStorage.getItem("eval_rubric_cache")
+          if (cached) {
+            try { const p = JSON.parse(cached); if (p.categories?.length) setCategories(p.categories) } catch {}
+          } else {
+            const rubricRes = await fetch(`/api/evaluation-periods/${activePeriod.id}/rubric`)
+            if (rubricRes.status === 403) { setLockedEndpoint(`/api/evaluation-periods/${activePeriod.id}/rubric`); return }
+            const rubricData = await rubricRes.json()
+            setCategories(rubricData.rubric || [])
+          }
         }
         setPageLoading(false)
       } catch {
