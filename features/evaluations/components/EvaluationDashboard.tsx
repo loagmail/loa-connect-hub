@@ -7,6 +7,7 @@ import ErrorState from "@/components/ui/ErrorState"
 import ErrorBoundary from "@/components/ui/ErrorBoundary"
 import type { DepartmentData } from "@/lib/types"
 import { SentimentBadge } from "./evaluation/SentimentBadge"
+import ReportModal from "./ReportModal"
 
 interface Result {
   id: string
@@ -80,7 +81,7 @@ const CATEGORIES_FULL: { key: typeof CATEGORIES[number]["key"]; label: string }[
 
 const PAGE_SIZE = 50
 
-function getRemark(general: number | null): string | null {
+export function getRemark(general: number | null): string | null {
   if (general === null) return null
   if (general >= 4.5) return "Outstanding"
   if (general >= 3.5) return "Very Satisfactory"
@@ -89,7 +90,7 @@ function getRemark(general: number | null): string | null {
   return "Poor"
 }
 
-function getRemarkColor(remarks: string | null): string {
+export function getRemarkColor(remarks: string | null): string {
   switch (remarks) {
     case "Outstanding": return "bg-success-bg text-success-text"
     case "Very Satisfactory": return "bg-info-bg text-info-text"
@@ -136,6 +137,9 @@ export default function EvaluationDashboard({
   const [page, setPage] = useState(0)
   const [lockedEndpoint, setLockedEndpoint] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
+  const [showReportModal, setShowReportModal] = useState(false)
+
+  const departmentName = departments.find((d) => d.id === selectedDept)?.name ?? ""
 
   useEffect(() => {
     const endpoint = "/api/evaluation-periods"
@@ -690,27 +694,11 @@ export default function EvaluationDashboard({
               )}
               <button
                 type="button"
-                onClick={downloadBulkCSV}
-                disabled={results.length === 0}
-                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-600 text-white text-[11px] sm:text-sm font-semibold hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                CSV
-              </button>
-              <button
-                type="button"
-                onClick={printDepartment}
-                disabled={results.length === 0}
-                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-slate-700 text-white text-[11px] sm:text-sm font-semibold hover:bg-slate-800 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                Print
-              </button>
-              <button
-                type="button"
-                onClick={downloadPDF}
+                onClick={() => setShowReportModal(true)}
                 disabled={results.length === 0}
                 className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-brand-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-brand-600 active:scale-[0.98] transition-all disabled:opacity-50"
               >
-                PDF
+                Print Report
               </button>
             </div>
           )}
@@ -966,6 +954,15 @@ export default function EvaluationDashboard({
       </>
       )}
     </div>
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        departmentName={departmentName}
+        periodName={periods.find((p) => p.id === selectedPeriod)?.name || periods.find((p) => p.id === selectedPeriod)?.title || selectedPeriod}
+        results={results}
+        facultyNames={facultyNames}
+        facultyStudentData={studentData}
+      />
     </ErrorBoundary>
   )
 }
