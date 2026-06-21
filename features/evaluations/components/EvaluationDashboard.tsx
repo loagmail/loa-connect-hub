@@ -57,6 +57,8 @@ interface EvaluationDashboardProps {
   subtitle: string
 }
 
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+
 const CATEGORIES: { key: keyof Pick<Result, "professionalManner" | "communicationWithStudent" | "studentEngagement" | "learningMaterials" | "timeManagement" | "experientialLearning" | "respectUniqueness" | "assessmentAndFeedback">; label: string }[] = [
   { key: "professionalManner", label: "Prof. Manner" },
   { key: "communicationWithStudent", label: "Comm." },
@@ -297,7 +299,7 @@ export default function EvaluationDashboard({
         y = doc.lastAutoTable.finalY + 8
       } else { y += 4 }
     }
-    doc.save("evaluation-results.pdf")
+    doc.save(`${slug("department")}-${selectedPeriod}-${Date.now()}.pdf`)
   }, [results, periods, selectedPeriod, facultyNames, studentData])
 
   const printDepartment = useCallback(async () => {
@@ -490,7 +492,7 @@ export default function EvaluationDashboard({
     const interpLines = doc.splitTextToSize(interp, pageW - 50)
     doc.text(interpLines, 25, y)
 
-    doc.save(`evaluation-${facultyResult.facultyId}.pdf`)
+    doc.save(`${slug(name)}-${selectedPeriod}-${Date.now()}.pdf`)
   }, [facultyNames, periods, selectedPeriod, fetchStudentsForFaculty])
 
   const printFaculty = useCallback(async (facultyResult: Result) => {
@@ -654,7 +656,7 @@ export default function EvaluationDashboard({
     const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
-    a.href = url; a.download = `evaluation-${facultyResult.facultyId}.csv`; a.click()
+    a.href = url; a.download = `${slug(name)}-${selectedPeriod}-${Date.now()}.csv`; a.click()
     URL.revokeObjectURL(url)
   }, [facultyNames, fetchStudentsForFaculty])
 
@@ -671,7 +673,7 @@ export default function EvaluationDashboard({
     const url = URL.createObjectURL(blob)
     const periodName = periods.find((p) => p.id === selectedPeriod)?.name || selectedPeriod
     const a = document.createElement("a")
-    a.href = url; a.download = `evaluation-results-${periodName}.csv`; a.click()
+    a.href = url; a.download = `${slug("department")}-${selectedPeriod}-${Date.now()}.csv`; a.click()
     URL.revokeObjectURL(url)
   }, [results, facultyNames, periods, selectedPeriod])
 

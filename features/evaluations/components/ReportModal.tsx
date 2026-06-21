@@ -44,6 +44,8 @@ interface StudentRow {
   sentimentScore: number | null
 }
 
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+
 interface SubjectMapping {
   id: string
   semesterId: string | null
@@ -594,9 +596,16 @@ export default function ReportModal({
       }
     }
 
-    doc.autoPrint()
-    doc.output("dataurlnewwindow")
-  }, [tab, deptResults, periodName, departmentName, facultyNames, selectedResult, selectedStudents, results, facultyStudentData])
+    let pdfName: string
+    if (tab === "department") {
+      pdfName = slug("department")
+    } else if (selectedResult) {
+      pdfName = slug(facultyNames[selectedResult.facultyId] || selectedResult.facultyId)
+    } else {
+      pdfName = slug("all-faculty")
+    }
+    doc.save(`${pdfName}-${periodId}-${Date.now()}.pdf`)
+  }, [tab, deptResults, periodName, departmentName, facultyNames, selectedResult, selectedStudents, results, facultyStudentData, periodId])
 
   const handlePrintHTML = useCallback(() => {
     window.print()
@@ -618,7 +627,7 @@ export default function ReportModal({
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `department-evaluation-${periodName.replace(/[\s/]+/g, "-")}.csv`
+      a.download = `${slug("department")}-${periodId}-${Date.now()}.csv`
       a.click()
       URL.revokeObjectURL(url)
     } else if (tab === "individual") {
@@ -639,7 +648,7 @@ export default function ReportModal({
         const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `faculty-evaluation-${fn.replace(/[\s/]+/g, "-")}.csv`
+        a.download = `${slug(fn)}-${periodId}-${Date.now()}.csv`
         a.click()
         URL.revokeObjectURL(url)
       } else {
@@ -669,7 +678,7 @@ export default function ReportModal({
         const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `individual-evaluation-all-${periodName.replace(/[\s/]+/g, "-")}.csv`
+        a.download = `${slug("all-faculty")}-${periodId}-${Date.now()}.csv`
         a.click()
         URL.revokeObjectURL(url)
       }
