@@ -175,7 +175,7 @@ export default function ReportModal({
 }: ReportModalProps) {
   const [tab, setTab] = useState<"department" | "individual">("department")
   const [periodId, setPeriodId] = useState(initialPeriod)
-  const [deptId, setDeptId] = useState("")
+  const [deptId, setDeptId] = useState(initialDept)
   const [results, setResults] = useState<Result[]>(initialResults)
   const [facultyNames, setFacultyNames] = useState<Record<string, string>>(initialFacultyNames)
   const [facultyStudentData, setFacultyStudentData] = useState<Record<string, StudentRow[]>>(initialStudentData)
