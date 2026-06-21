@@ -163,7 +163,6 @@ export default function SentimentAnalysisPage() {
               {d.label}
             </p>
             <p className="text-2xl font-bold text-primary mt-1">{d.count}</p>
-            <p className="text-xs text-tertiary">{d.percentage}%</p>
           </div>
         ))}
       </div>
