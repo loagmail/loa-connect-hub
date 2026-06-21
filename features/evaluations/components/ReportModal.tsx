@@ -612,12 +612,18 @@ export default function ReportModal({
         {/* Body */}
         <div className="p-5 max-h-[70vh] overflow-y-auto">
           {tab === "department" ? (
-            <DepartmentView
-              departmentName={departmentName}
-              periodName={periodName}
-              results={deptResults}
-              facultyNames={facultyNames}
-            />
+            fetching ? (
+              <div className="text-center py-10 text-sm text-tertiary">Loading...</div>
+            ) : results.length === 0 ? (
+              <div className="text-center py-10 text-sm text-tertiary">No evaluation results available.</div>
+            ) : (
+              <DepartmentView
+                departmentName={departmentName}
+                periodName={periodName}
+                results={deptResults}
+                facultyNames={facultyNames}
+              />
+            )
           ) : (
             <div className="space-y-5">
               {fetching ? (
@@ -658,6 +664,43 @@ export default function ReportModal({
                     )}
                   </div>
 
+                  {/* Summary table when no faculty selected */}
+                  {!selectedId && results.length > 0 && (
+                    <div className="border border-default rounded-xl overflow-hidden">
+                      <div className="w-full overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-surface-muted">
+                              <th className="text-left px-4 py-2.5 font-semibold text-primary text-xs uppercase tracking-wider">Faculty</th>
+                              <th className="text-center px-4 py-2.5 font-semibold text-primary text-xs uppercase tracking-wider">General Rating</th>
+                              <th className="text-center px-4 py-2.5 font-semibold text-primary text-xs uppercase tracking-wider">Respondents</th>
+                              <th className="text-center px-4 py-2.5 font-semibold text-primary text-xs uppercase tracking-wider">Remark</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-default">
+                            {results.map((r) => {
+                              const fn = facultyNames[r.facultyId] || r.facultyId
+                              return (
+                                <tr key={r.id} className="hover:bg-surface-muted/50">
+                                  <td className="px-4 py-2.5 font-medium text-primary">{fn}</td>
+                                  <td className="text-center px-4 py-2.5 font-bold text-primary">{r.generalRating?.toFixed(2) ?? "—"}</td>
+                                  <td className="text-center px-4 py-2.5 text-secondary">{r.totalRespondents}</td>
+                                  <td className="text-center px-4 py-2.5">
+                                    {r.remarks && (
+                                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getRemarkColor(r.remarks)}`}>
+                                        {r.remarks}
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Selected faculty report */}
                   {selectedResult ? (
                     <IndividualPreview
@@ -666,9 +709,9 @@ export default function ReportModal({
                       students={selectedStudents}
                       subjects={selectedSubjects}
                     />
-                  ) : (
+                  ) : !selectedId ? null : (
                     <div className="text-center py-10 text-sm text-tertiary">
-                      Search and select a faculty member to view their evaluation report.
+                      No data available for this faculty member.
                     </div>
                   )}
                 </>
