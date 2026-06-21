@@ -636,7 +636,7 @@ export default function ReportModal({
                     <input
                       type="text"
                       value={facultySearch}
-                      onChange={(e) => { setFacultySearch(e.target.value); setShowDropdown(true) }}
+                      onChange={(e) => { setFacultySearch(e.target.value); if (!e.target.value) setSelectedId(""); setShowDropdown(true) }}
                       onFocus={() => setShowDropdown(true)}
                       onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                       placeholder="Type faculty name..."
