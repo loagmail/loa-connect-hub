@@ -1098,17 +1098,6 @@ function DetailPanel({
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-surface-tertiary text-tertiary">Total: {students.length}</span>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 bg-surface-muted rounded-lg px-4 py-3 text-sm">
-            <span className="font-bold text-primary">{result.generalRating?.toFixed(2) ?? "—"}</span>
-            <span className="text-tertiary">General</span>
-            {CATEGORIES_FULL.map((c, i) => (
-              <span key={c.key} className="hidden sm:inline text-tertiary">
-                {i > 0 && <span className="mx-2 text-border">|</span>}
-                {c.label}: <span className="font-semibold text-secondary">{result[c.key]?.toFixed(2) ?? "—"}</span>
-              </span>
-            ))}
-          </div>
-
           <div className="desktop-only overflow-x-auto bg-surface rounded-xl border border-default tbl">
             <table>
               <thead>
