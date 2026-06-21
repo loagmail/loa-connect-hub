@@ -175,7 +175,7 @@ export default function ReportModal({
 }: ReportModalProps) {
   const [tab, setTab] = useState<"department" | "individual">("department")
   const [periodId, setPeriodId] = useState(initialPeriod)
-  const [deptId, setDeptId] = useState(initialDept)
+  const [deptId, setDeptId] = useState("")
   const [results, setResults] = useState<Result[]>(initialResults)
   const [facultyNames, setFacultyNames] = useState<Record<string, string>>(initialFacultyNames)
   const [facultyStudentData, setFacultyStudentData] = useState<Record<string, StudentRow[]>>(initialStudentData)
@@ -189,8 +189,10 @@ export default function ReportModal({
 
   // Reset faculty selection when results change
   useEffect(() => {
-    setSelectedId("")
-    setFacultySearch("")
+    Promise.resolve().then(() => {
+      setSelectedId("")
+      setFacultySearch("")
+    })
   }, [periodId, deptId])
 
   // Fetch results when period or dept changes
@@ -198,9 +200,11 @@ export default function ReportModal({
     if (!periodId || !isOpen) return
     if (periodId === initialPeriod && deptId === initialDept) {
       // Use initial data if filters match dashboard
-      setResults(initialResults)
-      setFacultyNames(initialFacultyNames)
-      setFacultyStudentData(initialStudentData)
+      Promise.resolve().then(() => {
+        setResults(initialResults)
+        setFacultyNames(initialFacultyNames)
+        setFacultyStudentData(initialStudentData)
+      })
       return
     }
     const fetchData = async () => {
@@ -251,19 +255,18 @@ export default function ReportModal({
   // When faculty selected, load details + subjects
   useEffect(() => {
     if (!selectedId) return
-    fetchStudentDetails(selectedId)
-    fetchSubjects(selectedId)
+    Promise.resolve().then(() => {
+      fetchStudentDetails(selectedId)
+      fetchSubjects(selectedId)
+    })
   }, [selectedId, fetchStudentDetails, fetchSubjects])
 
-  // Filtered results by department (for department tab)
-  const deptResults = useMemo(() => {
-    if (!deptId) return results
-    return results.filter((r) => r.departmentId === deptId)
-  }, [results, deptId])
+  // Results are already filtered by department server-side via the API
+  const deptResults = results
 
   // Filtered faculty list for search
   const filteredFaculty = useMemo(() => {
-    let list = results
+    const list = results
     if (!facultySearch) return list
     const q = facultySearch.toLowerCase()
     return list.filter((r) => (facultyNames[r.facultyId] || r.facultyId).toLowerCase().includes(q))
@@ -278,6 +281,232 @@ export default function ReportModal({
   const selectedResult = results.find((r) => r.facultyId === selectedId)
   const selectedStudents = selectedId ? facultyStudentData[selectedId] || [] : []
   const selectedSubjects = selectedId ? facultySubjects[selectedId] || [] : []
+
+  // ── Print handlers ──────────────────────────────────────────
+
+  const handleGeneratePDF = useCallback(async () => {
+    const { jsPDF } = await import("jspdf")
+    const { default: autoTable } = await import("jspdf-autotable")
+    const doc = new jsPDF("portrait")
+    const pageW = doc.internal.pageSize.getWidth()
+
+    const logoY = 12
+    const logoWidth = 28
+    let logoHeight = 28
+    try {
+      const resp = await fetch("/logo-blk.png")
+      const blob = await resp.blob()
+      const logoData = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
+      const img = new Image()
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = reject
+        img.src = logoData
+      })
+      logoHeight = logoWidth * (img.naturalHeight / img.naturalWidth)
+      doc.addImage(logoData, "PNG", (pageW - logoWidth) / 2, logoY, logoWidth, logoHeight)
+    } catch { /* logo not available */ }
+
+    const addrY = logoY + logoHeight + 3
+    doc.setFontSize(7)
+    doc.text("Main Bldg. Km. 30 National Road, Tunasan, Muntinlupa City", pageW / 2, addrY, { align: "center" })
+    const lineY = addrY + 5
+    doc.setDrawColor(180, 180, 180)
+    doc.line(14, lineY, pageW - 14, lineY)
+    doc.setDrawColor(0, 0, 0)
+
+    let y = lineY + 6
+
+    if (tab === "department") {
+      const deptAvg = deptResults.length > 0
+        ? deptResults.reduce((s, r) => s + (r.generalRating ?? 0), 0) / deptResults.length
+        : 0
+      const totalResp = deptResults.reduce((s, r) => s + r.totalRespondents, 0)
+
+      doc.setFontSize(11)
+      doc.text("DEPARTMENT EVALUATION REPORT", pageW / 2, y, { align: "center" })
+      y += 9
+      doc.setFontSize(8)
+      doc.text(`Department: ${departmentName || "All Departments"}`, 14, y)
+      y += 4.5
+      doc.text(`Semester: ${periodName}`, 14, y)
+      y += 4.5
+      doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, y)
+      y += 8
+
+      // Metrics
+      doc.setFontSize(8)
+      doc.text(`Faculties Evaluated: ${deptResults.length}`, pageW / 2, y, { align: "center" })
+      y += 5
+      doc.text(`Department Average: ${deptAvg.toFixed(2)}`, pageW / 2, y, { align: "center" })
+      y += 5
+      doc.text(`Total Respondents: ${totalResp.toLocaleString()}`, pageW / 2, y, { align: "center" })
+      y += 8
+
+      const dHead = [["Faculty", "General Rating", "Respondents", "Remark"]]
+      const dBody = deptResults.map((r) => [
+        facultyNames[r.facultyId] || r.facultyId,
+        r.generalRating?.toFixed(2) ?? "—",
+        String(r.totalRespondents),
+        r.remarks ?? "—",
+      ])
+
+      autoTable(doc, {
+        startY: y,
+        head: dHead,
+        body: dBody,
+        theme: "grid",
+        styles: { fontSize: 8, cellPadding: 2, halign: "center" },
+        headStyles: { fillColor: [59, 130, 246], fontStyle: "bold" },
+        columnStyles: { 0: { halign: "left" } },
+        tableWidth: "auto",
+        margin: { left: 14, right: 14 },
+      })
+    } else if (tab === "individual" && selectedResult) {
+      const overall = selectedResult.generalRating ?? 0
+      const remarkLabel = getRemark(overall) ?? ""
+
+      doc.setFontSize(11)
+      doc.text("INDIVIDUAL FACULTY EVALUATION REPORT", pageW / 2, y, { align: "center" })
+      y += 9
+      doc.setFontSize(8)
+      doc.text(`Name: ${facultyNames[selectedResult.facultyId] || selectedResult.facultyId}`, 14, y)
+      y += 4.5
+      doc.text(`Semester: ${periodName}`, 14, y)
+      y += 4.5
+      doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, y)
+      y += 8
+
+      const iHead = [["#", "Category", "Rating"]]
+      const iBody: (string | number)[][] = [
+        ["0", "OVERALL EVALUATION RESULT", overall.toFixed(2)],
+      ]
+      CATEGORIES_FULL.forEach((c, i) => {
+        iBody.push([String(i + 1), c.label, selectedResult[c.key] !== null ? selectedResult[c.key]!.toFixed(2) : "—"])
+      })
+
+      autoTable(doc, {
+        startY: y,
+        head: iHead,
+        body: iBody,
+        theme: "grid",
+        styles: { fontSize: 9, cellPadding: 2.5, halign: "center" },
+        headStyles: { fillColor: [59, 130, 246], fontStyle: "bold" },
+        columnStyles: { 1: { halign: "left", fontStyle: "bold" } },
+        tableWidth: "auto",
+        margin: { left: 20, right: 20 },
+      })
+      y = doc.lastAutoTable.finalY + 8
+
+      doc.setFontSize(9)
+      doc.text("Overall Rating", pageW / 2, y, { align: "center" })
+      y += 5
+      doc.setFontSize(10)
+      doc.text(`${overall.toFixed(2)} / 5.00 – ${remarkLabel}`, pageW / 2, y, { align: "center" })
+      y += 8
+
+      const comments = selectedStudents.filter((s) => s.comment?.trim())
+      if (comments.length > 0) {
+        doc.setFontSize(9)
+        doc.text("Student Comment", pageW / 2, y, { align: "center" })
+        y += 5
+        doc.setFontSize(8)
+
+        const maxShow = Math.min(comments.length, 30)
+        for (let i = 0; i < maxShow; i++) {
+          if (y > 260) { doc.addPage(); y = 20 }
+          const text = `"${comments[i].comment!.trim()}"`
+          const lines = doc.splitTextToSize(text, pageW - 50)
+          doc.text(lines, 25, y)
+          y += lines.length * 3.5 + 3
+        }
+        if (comments.length > 30) {
+          doc.text(`... and ${comments.length - 30} more comments`, 25, y)
+          y += 5
+        }
+        y += 2
+      }
+
+      if (y > 240) { doc.addPage(); y = 20 }
+      doc.setFontSize(9)
+      doc.text("Interpretation", pageW / 2, y, { align: "center" })
+      y += 5
+      doc.setFontSize(8)
+
+      const sentLabels = comments.map((c) => c.sentimentLabel).filter(Boolean)
+      const posCount = sentLabels.filter((l) => l === "positive").length
+      const negCount = sentLabels.filter((l) => l === "negative").length
+      const neutralCount = sentLabels.filter((l) => l === "neutral").length
+      const hasComments = comments.length > 0
+
+      let interp = `The instructor received an overall rating of ${overall.toFixed(2)}, indicating a ${remarkLabel.toLowerCase()} level of performance. `
+      if (hasComments && posCount > negCount && posCount > 0) {
+        interp += `Student feedback was predominantly positive (${Math.round((posCount / comments.length) * 100)}% of comments), with many students expressing appreciation for the instructor's teaching approach and classroom management. `
+      } else if (hasComments && negCount > posCount && negCount > 0) {
+        interp += `Some students provided critical feedback (${Math.round((negCount / comments.length) * 100)}% of comments), suggesting areas for improvement in instructional delivery and student engagement. `
+      }
+      if (hasComments && neutralCount > 0) {
+        interp += `A portion of comments were neutral or mixed, reflecting balanced perspectives on the instructor's overall effectiveness. `
+      }
+      interp += `The results reflect the collective assessment of ${selectedResult.totalRespondents} student respondent(s).`
+
+      const interpLines = doc.splitTextToSize(interp, pageW - 50)
+      doc.text(interpLines, 25, y)
+    }
+
+    doc.autoPrint()
+    doc.output("dataurlnewwindow")
+  }, [tab, deptResults, periodName, departmentName, facultyNames, selectedResult, selectedStudents])
+
+  const handlePrintHTML = useCallback(() => {
+    window.print()
+  }, [])
+
+  const handleExportCSV = useCallback(() => {
+    if (tab === "department") {
+      const rows = [["Faculty", "General Rating", "Respondents", "Remark"]]
+      deptResults.forEach((r) => {
+        rows.push([
+          facultyNames[r.facultyId] || r.facultyId,
+          r.generalRating?.toFixed(2) ?? "—",
+          String(r.totalRespondents),
+          r.remarks ?? "—",
+        ])
+      })
+      const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n")
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `department-evaluation-${periodName.replace(/[\s/]+/g, "-")}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } else if (tab === "individual" && selectedResult) {
+      const fn = facultyNames[selectedResult.facultyId] || selectedResult.facultyId
+      const rows = [["#", "Category", "Rating"]]
+      rows.push(["0", "OVERALL EVALUATION RESULT", selectedResult.generalRating?.toFixed(2) ?? "—"])
+      CATEGORIES_FULL.forEach((c, i) => {
+        rows.push([String(i + 1), c.label, selectedResult[c.key] !== null ? selectedResult[c.key]!.toFixed(2) : "—"])
+      })
+      rows.push([])
+      rows.push(["Student Comment", "Sentiment"])
+      selectedStudents.filter((s) => s.comment?.trim()).forEach((s) => {
+        rows.push([s.comment!.trim(), s.sentimentLabel ?? ""])
+      })
+      const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n")
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `faculty-evaluation-${fn.replace(/[\s/]+/g, "-")}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  }, [tab, deptResults, facultyNames, periodName, selectedResult, selectedStudents])
 
   if (!isOpen) return null
 
@@ -313,23 +542,45 @@ export default function ReportModal({
               Individual
             </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-tertiary hover:text-secondary hover:bg-surface-muted transition-all"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleGeneratePDF}
+              className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-brand-500 hover:bg-brand-600 transition-all"
+            >
+              Print PDF
+            </button>
+            <button
+              type="button"
+              onClick={handlePrintHTML}
+              className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-tertiary border border-default hover:bg-surface-muted hover:text-secondary transition-all"
+            >
+              Print HTML
+            </button>
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-tertiary border border-default hover:bg-surface-muted hover:text-secondary transition-all"
+            >
+              Print CSV
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-tertiary hover:text-secondary hover:bg-surface-muted transition-all"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
-        {/* Filters bar (only in individual tab) */}
-        {tab === "individual" && (
+        {/* Filters bar */}
           <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-default bg-surface-muted/30">
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] font-semibold uppercase tracking-wider text-tertiary">Semester</label>
               <select
                 value={periodId}
-                onChange={(e) => { setPeriodId(e.target.value); setDeptId(initialDept) }}
+                onChange={(e) => { setPeriodId(e.target.value); setDeptId("") }}
                 className="px-2.5 py-1.5 rounded-lg text-xs text-secondary bg-surface border border-default focus:outline-none focus:ring-2 focus:ring-brand-500/40 min-w-[140px]"
               >
                 {periods.map((p) => (
@@ -357,7 +608,6 @@ export default function ReportModal({
               </select>
             </div>
           </div>
-        )}
 
         {/* Body */}
         <div className="p-5 max-h-[70vh] overflow-y-auto">

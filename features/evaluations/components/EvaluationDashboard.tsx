@@ -369,13 +369,47 @@ export default function EvaluationDashboard({
     const overall = facultyResult.generalRating ?? 0
     const remarkLabel = getRemark(overall) ?? ""
 
-    // Header
-    doc.setFontSize(14)
-    doc.text("INDIVIDUAL FACULTY EVALUATION REPORT", pageW / 2, 15, { align: "center" })
+    // Formal header
+    const logoY = 12
+    const logoWidth = 28
+    let logoHeight = 28
+    try {
+      const resp = await fetch("/logo-blk.png")
+      const blob = await resp.blob()
+      const logoData = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
+      const img = new Image()
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = reject
+        img.src = logoData
+      })
+      logoHeight = logoWidth * (img.naturalHeight / img.naturalWidth)
+      doc.addImage(logoData, "PNG", (pageW - logoWidth) / 2, logoY, logoWidth, logoHeight)
+    } catch { /* logo not available */ }
+
+    const addrY = logoY + logoHeight + 3
+    doc.setFontSize(7)
+    doc.text("Main Bldg. Km. 30 National Road, Tunasan, Muntinlupa City", pageW / 2, addrY, { align: "center" })
+    const lineY = addrY + 5
+    doc.setDrawColor(180, 180, 180)
+    doc.line(14, lineY, pageW - 14, lineY)
+    doc.setDrawColor(0, 0, 0)
+
+    let y = lineY + 6
+    doc.setFontSize(11)
+    doc.text("INDIVIDUAL FACULTY EVALUATION REPORT", pageW / 2, y, { align: "center" })
+    y += 9
     doc.setFontSize(8)
-    doc.text(`Period: ${periodName}  |  Generated: ${new Date().toLocaleDateString()}`, pageW / 2, 22, { align: "center" })
-    doc.setFontSize(13)
-    doc.text(name, pageW / 2, 32, { align: "center" })
+    doc.text(`Name: ${name}`, 14, y)
+    y += 4.5
+    doc.text(`Semester: ${periodName}`, 14, y)
+    y += 4.5
+    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, y)
+    y += 8
 
     // Rating table
     const tableHead = [["#", "Category", "Rating"]]
@@ -387,7 +421,7 @@ export default function EvaluationDashboard({
     })
 
     autoTable(doc, {
-      startY: 40,
+      startY: y,
       head: tableHead,
       body: tableBody,
       theme: "grid",
@@ -397,10 +431,10 @@ export default function EvaluationDashboard({
       tableWidth: "auto",
       margin: { left: 20, right: 20 },
     })
-    let y = doc.lastAutoTable.finalY + 8
+    y = doc.lastAutoTable.finalY + 8
 
     doc.setFontSize(11)
-    doc.text(`Overall Rating`, pageW / 2, y, { align: "center" })
+    doc.text("Overall Rating", pageW / 2, y, { align: "center" })
     y += 6
     doc.setFontSize(13)
     doc.text(`${overall.toFixed(2)} / 5.00 – ${remarkLabel}`, pageW / 2, y, { align: "center" })
@@ -470,12 +504,46 @@ export default function EvaluationDashboard({
     const overall = facultyResult.generalRating ?? 0
     const remarkLabel = getRemark(overall) ?? ""
 
-    doc.setFontSize(14)
-    doc.text("INDIVIDUAL FACULTY EVALUATION REPORT", pageW / 2, 15, { align: "center" })
+    const logoY = 12
+    const logoWidth = 28
+    let logoHeight = 28
+    try {
+      const resp = await fetch("/logo-blk.png")
+      const blob = await resp.blob()
+      const logoData = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
+      const img = new Image()
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = reject
+        img.src = logoData
+      })
+      logoHeight = logoWidth * (img.naturalHeight / img.naturalWidth)
+      doc.addImage(logoData, "PNG", (pageW - logoWidth) / 2, logoY, logoWidth, logoHeight)
+    } catch { /* logo not available */ }
+
+    const addrY = logoY + logoHeight + 3
+    doc.setFontSize(7)
+    doc.text("Main Bldg. Km. 30 National Road, Tunasan, Muntinlupa City", pageW / 2, addrY, { align: "center" })
+    const lineY = addrY + 5
+    doc.setDrawColor(180, 180, 180)
+    doc.line(14, lineY, pageW - 14, lineY)
+    doc.setDrawColor(0, 0, 0)
+
+    let y = lineY + 6
+    doc.setFontSize(11)
+    doc.text("INDIVIDUAL FACULTY EVALUATION REPORT", pageW / 2, y, { align: "center" })
+    y += 9
     doc.setFontSize(8)
-    doc.text(`Period: ${periodName}  |  Generated: ${new Date().toLocaleDateString()}`, pageW / 2, 22, { align: "center" })
-    doc.setFontSize(13)
-    doc.text(name, pageW / 2, 32, { align: "center" })
+    doc.text(`Name: ${name}`, 14, y)
+    y += 4.5
+    doc.text(`Semester: ${periodName}`, 14, y)
+    y += 4.5
+    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 14, y)
+    y += 8
 
     const tableHead = [["#", "Category", "Rating"]]
     const tableBody: (string | number)[][] = [
@@ -486,7 +554,7 @@ export default function EvaluationDashboard({
     })
 
     autoTable(doc, {
-      startY: 40,
+      startY: y,
       head: tableHead,
       body: tableBody,
       theme: "grid",
@@ -496,7 +564,7 @@ export default function EvaluationDashboard({
       tableWidth: "auto",
       margin: { left: 20, right: 20 },
     })
-    let y = doc.lastAutoTable.finalY + 8
+    y = doc.lastAutoTable.finalY + 8
 
     doc.setFontSize(11)
     doc.text(`Overall Rating`, pageW / 2, y, { align: "center" })
