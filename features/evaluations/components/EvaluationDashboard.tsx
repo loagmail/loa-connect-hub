@@ -296,6 +296,52 @@ export default function EvaluationDashboard({
     doc.save("evaluation-results.pdf")
   }, [results, periods, selectedPeriod, facultyNames, studentData])
 
+  const printDepartment = useCallback(async () => {
+    const { jsPDF } = await import("jspdf")
+    const { default: autoTable } = await import("jspdf-autotable")
+    const doc = new jsPDF("landscape")
+    const pageW = doc.internal.pageSize.getWidth()
+    const periodName = periods.find((p) => p.id === selectedPeriod)?.name || periods.find((p) => p.id === selectedPeriod)?.title || selectedPeriod
+    const deptAvg = results.length > 0 ? results.reduce((s, r) => s + (r.generalRating ?? 0), 0) / results.length : 0
+    const deptTotalResp = results.reduce((s, r) => s + r.totalRespondents, 0)
+
+    doc.setFontSize(16)
+    doc.text("Evaluation Results", pageW / 2, 15, { align: "center" })
+    doc.setFontSize(10)
+    doc.text(`Period: ${periodName}`, pageW / 2, 22, { align: "center" })
+    doc.setFontSize(8)
+    doc.text(`Average: ${deptAvg.toFixed(2)}  |  Total Respondents: ${deptTotalResp}  |  Generated: ${new Date().toLocaleDateString()}`, pageW / 2, 28, { align: "center" })
+
+    let y = 34
+    for (const r of results) {
+      if (y > 180) { doc.addPage(); y = 15 }
+      const name = facultyNames[r.facultyId] || r.facultyId
+      doc.setFontSize(11)
+      doc.text(name, 10, y)
+      y += 5
+      doc.setFontSize(7)
+      doc.text(`General: ${r.generalRating?.toFixed(2) ?? "—"}  |  Respondents: ${r.totalRespondents}  |  Remarks: ${r.remarks || "—"}`, 10, y)
+      y += 4
+      const catVals = CATEGORIES_FULL.map((c) => (r[c.key] !== null ? r[c.key]!.toFixed(2) : "—"))
+      autoTable(doc, { startY: y, head: [CATEGORIES_FULL.map((c) => c.label)], body: [{ columns: catVals }], theme: "grid", styles: { fontSize: 7 }, headStyles: { fillColor: [59, 130, 246] }, tableWidth: "wrap", margin: { left: 10 } })
+      y = doc.lastAutoTable.finalY + 5
+      const students = studentData[r.facultyId]
+      if (students?.length) {
+        doc.setFontSize(8)
+        doc.text(`Per-Student (${students.length} total — first 100):`, 10, y)
+        y += 3
+        const slice = students.slice(0, 100)
+        const stuHead = ["Student", ...CATEGORIES_FULL.map((c) => c.label === "Communication w/ Students" ? "Comm" : c.label === "Assessment & Feedback" ? "Assess." : c.label), "General", "Comment"]
+        const stuBody = slice.map((s) => [s.id, ...CATEGORIES_FULL.map((c) => (s[c.key] !== null ? s[c.key]!.toFixed(2) : "—")), s.generalRating?.toFixed(2) ?? "—", s.comment?.slice(0, 30) ?? ""])
+        if (students.length > 100) stuBody.push([`... and ${students.length - 100} more`, "", "", "", "", "", "", "", "", ""])
+        autoTable(doc, { startY: y, head: [stuHead], body: stuBody, theme: "grid", styles: { fontSize: 5.5 }, headStyles: { fillColor: [100, 100, 100] }, tableWidth: "wrap", margin: { left: 10 } })
+        y = doc.lastAutoTable.finalY + 8
+      } else { y += 4 }
+    }
+    doc.autoPrint()
+    doc.output("dataurlnewwindow")
+  }, [results, periods, selectedPeriod, facultyNames, studentData])
+
   const fetchStudentsForFaculty = useCallback(async (facultyId: string): Promise<StudentRow[]> => {
     if (studentData[facultyId]) return studentData[facultyId]
     try {
@@ -342,6 +388,43 @@ export default function EvaluationDashboard({
       autoTable(doc, { startY: y, head: [stuHead], body: stuBody, theme: "grid", styles: { fontSize: 6 }, headStyles: { fillColor: [100, 100, 100] }, tableWidth: "wrap", margin: { left: 10 } })
     }
     doc.save(`evaluation-${facultyResult.facultyId}.pdf`)
+  }, [facultyNames, periods, selectedPeriod, fetchStudentsForFaculty])
+
+  const printFaculty = useCallback(async (facultyResult: Result) => {
+    const { jsPDF } = await import("jspdf")
+    const { default: autoTable } = await import("jspdf-autotable")
+    const students = await fetchStudentsForFaculty(facultyResult.facultyId)
+    const doc = new jsPDF("landscape")
+    const pageW = doc.internal.pageSize.getWidth()
+    const name = facultyNames[facultyResult.facultyId] || facultyResult.facultyId
+    const periodName = periods.find((p) => p.id === selectedPeriod)?.name || periods.find((p) => p.id === selectedPeriod)?.title || selectedPeriod
+
+    doc.setFontSize(16)
+    doc.text("Evaluation Result", pageW / 2, 15, { align: "center" })
+    doc.setFontSize(11)
+    doc.text(name, pageW / 2, 23, { align: "center" })
+    doc.setFontSize(8)
+    doc.text(`Period: ${periodName}  |  Generated: ${new Date().toLocaleDateString()}`, pageW / 2, 29, { align: "center" })
+
+    let y = 36
+    doc.setFontSize(9)
+    doc.text(`General Rating: ${facultyResult.generalRating?.toFixed(2) ?? "—"}  |  Respondents: ${facultyResult.totalRespondents}  |  Remarks: ${facultyResult.remarks || "—"}`, 10, y)
+    y += 6
+
+    const catVals = CATEGORIES_FULL.map((c) => (facultyResult[c.key] !== null ? facultyResult[c.key]!.toFixed(2) : "—"))
+    autoTable(doc, { startY: y, head: [CATEGORIES_FULL.map((c) => c.label)], body: [{ columns: catVals }], theme: "grid", styles: { fontSize: 8 }, headStyles: { fillColor: [59, 130, 246] }, tableWidth: "wrap", margin: { left: 10 } })
+    y = doc.lastAutoTable.finalY + 6
+
+    if (students.length > 0) {
+      doc.setFontSize(9)
+      doc.text(`Per-Student Breakdown (${students.length} total):`, 10, y)
+      y += 4
+      const stuHead = ["Student", ...CATEGORIES_FULL.map((c) => c.label === "Communication w/ Students" ? "Comm" : c.label === "Assessment & Feedback" ? "Assess." : c.label), "General", "Comment"]
+      const stuBody = students.map((s) => [s.id, ...CATEGORIES_FULL.map((c) => (s[c.key] !== null ? s[c.key]!.toFixed(2) : "—")), s.generalRating?.toFixed(2) ?? "—", s.comment?.slice(0, 40) ?? ""])
+      autoTable(doc, { startY: y, head: [stuHead], body: stuBody, theme: "grid", styles: { fontSize: 6 }, headStyles: { fillColor: [100, 100, 100] }, tableWidth: "wrap", margin: { left: 10 } })
+    }
+    doc.autoPrint()
+    doc.output("dataurlnewwindow")
   }, [facultyNames, periods, selectedPeriod, fetchStudentsForFaculty])
 
   const downloadFacultyCSV = useCallback(async (facultyResult: Result) => {
@@ -487,6 +570,14 @@ export default function EvaluationDashboard({
               </button>
               <button
                 type="button"
+                onClick={printDepartment}
+                disabled={results.length === 0}
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-slate-700 text-white text-[11px] sm:text-sm font-semibold hover:bg-slate-800 active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                Print
+              </button>
+              <button
+                type="button"
                 onClick={downloadPDF}
                 disabled={results.length === 0}
                 className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-brand-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-brand-600 active:scale-[0.98] transition-all disabled:opacity-50"
@@ -599,6 +690,16 @@ export default function EvaluationDashboard({
                           <div className="flex items-center justify-center gap-1">
                             <button
                               type="button"
+                              onClick={(e) => { e.stopPropagation(); printFaculty(r) }}
+                              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                              title="Print"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
                               onClick={(e) => { e.stopPropagation(); downloadFacultyPDF(r) }}
                               className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors"
                               title="Download PDF"
@@ -663,6 +764,16 @@ export default function EvaluationDashboard({
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); printFaculty(r) }}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
+                        title="Print"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                      </button>
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); downloadFacultyPDF(r) }}
@@ -755,6 +866,19 @@ function DetailPanel({
     return dist
   }, [students])
 
+  const averages = useMemo(() => {
+    if (students.length === 0) return null
+    const keys = [...CATEGORIES.map((c) => c.key), "generalRating"] as const
+    const sums: Record<string, number> = {}
+    for (const k of keys) sums[k] = 0
+    for (const s of students) {
+      for (const k of keys) sums[k] += (s[k] ?? 0)
+    }
+    const avg: Record<string, number> = {}
+    for (const k of keys) avg[k] = sums[k] / students.length
+    return avg
+  }, [students])
+
   return (
     <div className="mt-6">
       <h2 className="text-base font-bold text-primary mb-3">
@@ -801,6 +925,16 @@ function DetailPanel({
                 </tr>
               </thead>
               <tbody>
+                {averages && (
+                  <tr className="bg-brand-100/80 dark:bg-brand-900/30 border-t-2 border-brand-300 dark:border-brand-700 font-bold">
+                    <td className="text-primary">Average</td>
+                    {CATEGORIES.map((c) => (
+                      <td key={c.key} className="text-center text-primary">{averages[c.key]?.toFixed(2)}</td>
+                    ))}
+                    <td className="text-center font-bold text-primary">{averages.generalRating?.toFixed(2)}</td>
+                    <td className="text-tertiary text-xs italic">n={students.length}</td>
+                  </tr>
+                )}
                 {slice.map((s) => (
                   <tr key={s.id}>
                     <td className="font-semibold text-primary">{s.id}</td>
@@ -808,7 +942,14 @@ function DetailPanel({
                       <td key={c.key} className="text-center text-primary">{s[c.key] !== null ? s[c.key]!.toFixed(2) : "—"}</td>
                     ))}
                     <td className="text-center font-bold text-primary">{s.generalRating !== null ? s.generalRating.toFixed(2) : "—"}</td>
-                    <td className="text-tertiary max-w-48 truncate" title={s.comment || ""}><span className="flex items-center gap-1">{s.comment || "—"}<SentimentBadge label={s.sentimentLabel} score={s.sentimentScore} /></span></td>
+                    <td className="text-tertiary max-w-48 align-top">
+                      <div className="flex flex-col gap-1">
+                        <SentimentBadge label={s.sentimentLabel} score={s.sentimentScore} />
+                        <div className="bg-surface-muted rounded-lg px-2 py-1 text-[11px] border border-default">
+                          {s.comment ? <span className="text-tertiary line-clamp-3" title={s.comment}>{s.comment}</span> : <span className="text-tertiary">—</span>}
+                        </div>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -817,6 +958,23 @@ function DetailPanel({
 
           {/* Student breakdown — mobile cards */}
           <div className="mobile-only space-y-2">
+            {averages && (
+              <div className="rounded-xl bg-brand-100/80 dark:bg-brand-900/30 border-2 border-brand-300 dark:border-brand-700 p-3 space-y-2">
+                <p className="text-xs font-bold text-primary">Average (n={students.length})</p>
+                <div className="grid grid-cols-4 gap-1.5 text-[10px]">
+                  {CATEGORIES.map((c) => (
+                    <div key={c.key} className="text-center">
+                      <p className="font-semibold text-primary">{averages[c.key]?.toFixed(2)}</p>
+                      <p className="text-tertiary truncate">{c.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-bold text-primary">Gen: {averages.generalRating?.toFixed(2)}</span>
+                  <span className="text-tertiary text-[10px] font-semibold">n={students.length}</span>
+                </div>
+              </div>
+            )}
             {slice.map((s) => (
               <div key={s.id} className="rounded-xl bg-surface border border-default p-3 space-y-2">
                 <p className="text-xs font-semibold text-primary">{s.id}</p>
@@ -828,9 +986,14 @@ function DetailPanel({
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="font-bold text-primary">Gen: {s.generalRating !== null ? s.generalRating.toFixed(2) : "—"}</span>
-                  <span className="text-tertiary truncate max-w-[60%]" title={s.comment || ""}><span className="flex items-center gap-1">{s.comment || "—"}<SentimentBadge label={s.sentimentLabel} score={s.sentimentScore} /></span></span>
+                <div className="flex items-start justify-between gap-2 text-xs">
+                  <span className="font-bold text-primary shrink-0 pt-1">Gen: {s.generalRating !== null ? s.generalRating.toFixed(2) : "—"}</span>
+                  <div className="flex flex-col gap-1 max-w-[60%] items-end">
+                    <SentimentBadge label={s.sentimentLabel} score={s.sentimentScore} />
+                    <div className="bg-surface-muted rounded-lg px-2 py-1 text-[11px] border border-default w-full">
+                      {s.comment ? <span className="text-tertiary line-clamp-3" title={s.comment}>{s.comment}</span> : <span className="text-tertiary">—</span>}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
