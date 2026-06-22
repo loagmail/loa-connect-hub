@@ -4,6 +4,13 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { getRemark, getRemarkColor } from "./EvaluationDashboard"
 import { SentimentBadge } from "./evaluation/SentimentBadge"
 
+const SENTIMENT_THRESHOLDS = [
+  { min: 80, max: 100, grade: "Excellent", desc: "Highly favorable student feedback" },
+  { min: 60, max: 79, grade: "Good", desc: "Generally positive reception" },
+  { min: 40, max: 59, grade: "Average", desc: "Mixed feedback from students" },
+  { min: 0, max: 39, grade: "Needs Improvement", desc: "Significant critical feedback" },
+] as const
+
 interface Period {
   id: string
   name?: string
@@ -84,6 +91,7 @@ interface ReportModalProps {
   initialResults: Result[]
   initialFacultyNames: Record<string, string>
   initialStudentData: Record<string, StudentRow[]>
+  initialUniqueRespondents: number
 }
 
 function DepartmentView({
@@ -91,11 +99,13 @@ function DepartmentView({
   periodName,
   results,
   facultyNames,
+  uniqueRespondents,
 }: {
   departmentName: string
   periodName: string
   results: Result[]
   facultyNames: Record<string, string>
+  uniqueRespondents: number
 }) {
   const deptAvg = results.length > 0
     ? results.reduce((s, r) => s + (r.generalRating ?? 0), 0) / results.length
@@ -123,8 +133,8 @@ function DepartmentView({
           <p className="text-base font-bold text-primary mt-1">{deptAvg.toFixed(2)}</p>
         </div>
         <div className="bg-surface-muted rounded-xl p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-tertiary">Total Respondents</p>
-          <p className="text-base font-bold text-primary mt-1">{totalResp.toLocaleString()}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-tertiary">Unique Respondents</p>
+          <p className="text-base font-bold text-primary mt-1">{uniqueRespondents.toLocaleString()}</p>
         </div>
       </div>
 
@@ -174,11 +184,13 @@ export default function ReportModal({
   initialResults,
   initialFacultyNames,
   initialStudentData,
+  initialUniqueRespondents,
 }: ReportModalProps) {
   const [tab, setTab] = useState<"department" | "individual">("department")
   const [periodId, setPeriodId] = useState(initialPeriod)
   const [deptId, setDeptId] = useState(initialDept)
   const [results, setResults] = useState<Result[]>(initialResults)
+  const [uniqueRespondents, setUniqueRespondents] = useState(initialUniqueRespondents)
   const [facultyNames, setFacultyNames] = useState<Record<string, string>>(initialFacultyNames)
   const [facultyStudentData, setFacultyStudentData] = useState<Record<string, StudentRow[]>>(initialStudentData)
   const [facultySubjects, setFacultySubjects] = useState<Record<string, SubjectMapping[]>>({})
@@ -220,6 +232,7 @@ export default function ReportModal({
         const data = await res.json()
         setResults(data.results || [])
         setFacultyNames(data.facultyNames || {})
+        setUniqueRespondents(data.uniqueRespondents ?? 0)
         setFacultyStudentData({})
       } catch { /* ignore */ }
       setFetching(false)
@@ -346,7 +359,7 @@ export default function ReportModal({
       y += 5
       doc.text(`Department Average: ${deptAvg.toFixed(2)}`, pageW / 2, y, { align: "center" })
       y += 5
-      doc.text(`Total Respondents: ${totalResp.toLocaleString()}`, pageW / 2, y, { align: "center" })
+      doc.text(`Unique Respondents: ${uniqueRespondents.toLocaleString()}`, pageW / 2, y, { align: "center" })
       y += 8
 
       const dHead = [["Faculty", "General Rating", "Respondents", "Remark"]]
@@ -459,6 +472,45 @@ export default function ReportModal({
 
         const interpLines = doc.splitTextToSize(interp, pageW - 50)
         doc.text(interpLines, 25, y)
+        y += interpLines.length * 3.5 + 8
+
+        // Sentiment Analysis section
+        if (hasComments) {
+          const posPct = Math.round((posCount / comments.length) * 100)
+          const negPct = Math.round((negCount / comments.length) * 100)
+          const neutralPct = Math.round((neutralCount / comments.length) * 100)
+          const sentimentScore = posPct // overall positive %
+
+          let sentGrade = SENTIMENT_THRESHOLDS.find((t) => sentimentScore >= t.min && sentimentScore <= t.max)?.grade ?? "Needs Improvement"
+
+          if (y > 230) { doc.addPage(); y = 20 }
+          doc.setFontSize(9)
+          doc.text("Sentiment Analysis", pageW / 2, y, { align: "center" })
+          y += 6
+
+          doc.setFontSize(8)
+          const sentMetrics = [
+            `Overall Sentiment Score: ${sentimentScore}% Positive – ${sentGrade}`,
+            `Positive: ${posCount} (${posPct}%)  |  Neutral: ${neutralCount} (${neutralPct}%)  |  Negative: ${negCount} (${negPct}%)`,
+          ]
+          for (const line of sentMetrics) {
+            const wrapped = doc.splitTextToSize(line, pageW - 50)
+            doc.text(wrapped, 25, y)
+            y += wrapped.length * 3.5 + 1
+          }
+          y += 3
+
+          // Sentiment legend
+          doc.setFontSize(7)
+          doc.text("Sentiment Scale:", 25, y)
+          y += 3
+          for (const t of SENTIMENT_THRESHOLDS) {
+            if (y > 270) { doc.addPage(); y = 20 }
+            const range = t.min === 0 ? "Below 40%" : `${t.min}-${t.max}%`
+            doc.text(`${range} ${t.grade} – ${t.desc}`, 30, y)
+            y += 3.5
+          }
+        }
       } else {
         // Loop over all faculty — full individual report per faculty
         const renderFacultyReport = async (r: Result, isFirst: boolean) => {
@@ -586,6 +638,44 @@ export default function ReportModal({
 
           const interpLines = doc.splitTextToSize(interp, pageW - 50)
           doc.text(interpLines, 25, y)
+          y += interpLines.length * 3.5 + 8
+
+          // Sentiment Analysis section
+          if (hasComments) {
+            const posPct = Math.round((posCount / comments.length) * 100)
+            const negPct = Math.round((negCount / comments.length) * 100)
+            const neutralPct = Math.round((neutralCount / comments.length) * 100)
+            const sentimentScore = posPct
+
+            let sentGrade = SENTIMENT_THRESHOLDS.find((t) => sentimentScore >= t.min && sentimentScore <= t.max)?.grade ?? "Needs Improvement"
+
+            if (y > 230) { doc.addPage(); y = 20 }
+            doc.setFontSize(9)
+            doc.text("Sentiment Analysis", pageW / 2, y, { align: "center" })
+            y += 6
+
+            doc.setFontSize(8)
+            const sentMetrics = [
+              `Overall Sentiment Score: ${sentimentScore}% Positive – ${sentGrade}`,
+              `Positive: ${posCount} (${posPct}%)  |  Neutral: ${neutralCount} (${neutralPct}%)  |  Negative: ${negCount} (${negPct}%)`,
+            ]
+            for (const line of sentMetrics) {
+              const wrapped = doc.splitTextToSize(line, pageW - 50)
+              doc.text(wrapped, 25, y)
+              y += wrapped.length * 3.5 + 1
+            }
+            y += 3
+
+            doc.setFontSize(7)
+            doc.text("Sentiment Scale:", 25, y)
+            y += 3
+            for (const t of SENTIMENT_THRESHOLDS) {
+              if (y > 270) { doc.addPage(); y = 20 }
+              const range = t.min === 0 ? "Below 40%" : `${t.min}-${t.max}%`
+              doc.text(`${range} ${t.grade} – ${t.desc}`, 30, y)
+              y += 3.5
+            }
+          }
         }
 
         // Render first faculty on current page, rest on new pages
@@ -799,6 +889,7 @@ export default function ReportModal({
                 periodName={periodName}
                 results={deptResults}
                 facultyNames={facultyNames}
+                uniqueRespondents={uniqueRespondents}
               />
             )
           ) : (

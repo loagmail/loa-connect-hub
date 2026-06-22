@@ -45,12 +45,32 @@ export async function GET(request: NextRequest) {
         .select("id")
         .eq("departmentId", departmentId)
       const ids = (deptUsers || []).map((u) => u.id)
-      if (ids.length === 0) return NextResponse.json({ results: [], facultyNames: {} })
+      if (ids.length === 0) return NextResponse.json({ results: [], facultyNames: {}, uniqueRespondents: 0 })
       query = query.in("evaluateeId", ids)
     }
 
     const { data: evals, error: evErr } = await query
     if (evErr) throw evErr
+
+    // Count unique respondents (distinct evaluatorIds)
+    let countQuery = supabase
+      .from("evaluations")
+      .select("evaluatorId")
+      .eq("semesterId", semesterId)
+      .eq("status", "SUBMITTED")
+
+    if (departmentId) {
+      const { data: deptUsers } = await supabase
+        .from("users")
+        .select("id")
+        .eq("departmentId", departmentId)
+      const ids = (deptUsers || []).map((u) => u.id)
+      countQuery = countQuery.in("evaluateeId", ids)
+    }
+
+    const { data: allEvals, error: countErr } = await countQuery
+    if (countErr) throw countErr
+    const uniqueRespondents = new Set((allEvals || []).map((e) => e.evaluatorId)).size
 
     const facultyEvalMap = new Map<string, string[]>()
     for (const ev of evals || []) {
@@ -131,7 +151,7 @@ export async function GET(request: NextRequest) {
       visibilityMap[r.facultyId as string] = vis.get(r.facultyId as string) ?? false
     }
 
-    return NextResponse.json({ results, facultyNames, visibilityMap })
+    return NextResponse.json({ results, facultyNames, visibilityMap, uniqueRespondents })
   } catch (e) {
     console.error("Admin evaluation results error:", e)
     return NextResponse.json({ error: "Failed to fetch evaluation results" }, { status: 500 })

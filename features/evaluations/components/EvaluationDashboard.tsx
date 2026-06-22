@@ -132,6 +132,7 @@ export default function EvaluationDashboard({
   const [loading, setLoading] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<string | null>(null)
   const [studentData, setStudentData] = useState<Record<string, StudentRow[]>>({})
+  const [uniqueRespondents, setUniqueRespondents] = useState(0)
   const [loadingStudents, setLoadingStudents] = useState(false)
   const [facultyNames, setFacultyNames] = useState<Record<string, string>>({})
   const [visibilityMap, setVisibilityMap] = useState<Record<string, boolean>>({})
@@ -194,6 +195,7 @@ export default function EvaluationDashboard({
         setResults(data.results || [])
         setFacultyNames(data.facultyNames || {})
         setVisibilityMap(data.visibilityMap || {})
+        setUniqueRespondents(data.uniqueRespondents ?? 0)
       } catch {
         setErrorMessage("Failed to load evaluation results")
       }
@@ -1036,6 +1038,7 @@ export default function EvaluationDashboard({
         initialResults={results}
         initialFacultyNames={facultyNames}
         initialStudentData={studentData}
+        initialUniqueRespondents={uniqueRespondents}
       />
     </ErrorBoundary>
   )
