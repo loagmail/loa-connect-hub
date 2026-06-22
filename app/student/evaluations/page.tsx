@@ -136,7 +136,7 @@ export default function StudentEvaluationsPage() {
               <span className="inline-block ml-2">📝</span>
             </h1>
             <p className="text-sm text-tertiary mt-1">
-              {completed} of {total} completed
+              {outOfRange ? "" : `${completed} of ${total} completed`}
             </p>
           </div>
         </div>

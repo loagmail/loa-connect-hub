@@ -23,7 +23,8 @@ export function SemestersTab() {
   const [saving, setSaving] = useState(false)
 
   const [evalEditingId, setEvalEditingId] = useState<string | null>(null)
-  const [editEvalStartDate, setEditEvalStartDate] = useState("")
+  const todayStr = new Date().toISOString().split("T")[0]
+  const [editEvalStartDate, setEditEvalStartDate] = useState(todayStr)
   const [editEvalEndDate, setEditEvalEndDate] = useState("")
 
   const { data: semestersData, isLoading: semestersLoading, error: semestersErr } = useApiGet<{ data: SemesterData[] }>("/api/semesters")
@@ -70,6 +71,24 @@ export function SemestersTab() {
 
   const handleStartEvaluation = async (id: string) => {
     if (!editEvalStartDate) return
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const start = new Date(editEvalStartDate + "T00:00:00")
+
+    if (start < today) {
+      setError("Start date cannot be in the past")
+      return
+    }
+
+    if (editEvalEndDate) {
+      const end = new Date(editEvalEndDate + "T00:00:00")
+      if (end <= start) {
+        setError("End date must be after the start date")
+        return
+      }
+    }
+
     setSaving(true); setError("")
     try {
       const res = await fetch(`/api/semesters/${id}`, {
@@ -179,6 +198,7 @@ export function SemestersTab() {
                   type="date"
                   value={editEvalStartDate}
                   onChange={(e) => setEditEvalStartDate(e.target.value)}
+                  min={todayStr}
                   className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
                   required
                 />
@@ -189,6 +209,7 @@ export function SemestersTab() {
                   type="date"
                   value={editEvalEndDate}
                   onChange={(e) => setEditEvalEndDate(e.target.value)}
+                  min={editEvalStartDate ? editEvalStartDate : undefined}
                   className="w-full text-sm border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
               </div>
@@ -234,7 +255,7 @@ export function SemestersTab() {
                         {semester.evalStartDate ? (
                           <IosButton variant="plain" size="xs" onClick={() => handleEndEvaluation(semester.id)} className="!text-red-500">End Evaluation</IosButton>
                         ) : (
-                          <IosButton variant="plain" size="xs" onClick={() => { setEvalEditingId(semester.id); setEditEvalStartDate(semester.evalStartDate || ""); setEditEvalEndDate(semester.evalEndDate || "") }} className="!text-green-600">Enable Evaluation</IosButton>
+                          <IosButton variant="plain" size="xs" onClick={() => { setEvalEditingId(semester.id); setEditEvalStartDate(semester.evalStartDate || todayStr); setEditEvalEndDate(semester.evalEndDate || "") }} className="!text-green-600">Enable Evaluation</IosButton>
                         )}
                       </td>
                     </tr>
@@ -259,7 +280,7 @@ export function SemestersTab() {
                     {semester.evalStartDate ? (
                       <IosButton variant="destructive" size="sm" onClick={() => handleEndEvaluation(semester.id)} className="flex-1">End Evaluation</IosButton>
                     ) : (
-                      <IosButton variant="success" size="sm" onClick={() => { setEvalEditingId(semester.id); setEditEvalStartDate(semester.evalStartDate || ""); setEditEvalEndDate(semester.evalEndDate || "") }} className="flex-1">Enable Evaluation</IosButton>
+                      <IosButton variant="success" size="sm" onClick={() => { setEvalEditingId(semester.id); setEditEvalStartDate(semester.evalStartDate || todayStr); setEditEvalEndDate(semester.evalEndDate || "") }} className="flex-1">Enable Evaluation</IosButton>
                     )}
                   </div>
                 </div>
