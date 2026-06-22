@@ -146,8 +146,6 @@ export default function EvaluationDashboard({
   const [errorMessage, setErrorMessage] = useState("")
   const [showReportModal, setShowReportModal] = useState(false)
 
-  const departmentName = departments.find((d) => d.id === selectedDept)?.name ?? ""
-
   useEffect(() => {
     const endpoint = "/api/evaluation-periods"
     const fetchData = async () => {
@@ -264,96 +262,7 @@ export default function EvaluationDashboard({
     setToggling(false)
   }, [selectedPeriod, results, toggling, visibilityMap])
 
-  const downloadPDF = useCallback(async () => {
-    const { jsPDF } = await import("jspdf")
-    const { default: autoTable } = await import("jspdf-autotable")
-    const doc = new jsPDF("landscape")
-    const pageW = doc.internal.pageSize.getWidth()
-    const periodName = periods.find((p) => p.id === selectedPeriod)?.name || periods.find((p) => p.id === selectedPeriod)?.title || selectedPeriod
-    const deptAvg = results.length > 0 ? results.reduce((s, r) => s + (r.generalRating ?? 0), 0) / results.length : 0
-    const deptTotalResp = results.reduce((s, r) => s + r.totalRespondents, 0)
 
-    doc.setFontSize(16)
-    doc.text("Evaluation Results", pageW / 2, 15, { align: "center" })
-    doc.setFontSize(10)
-    doc.text(`Period: ${periodName}`, pageW / 2, 22, { align: "center" })
-    doc.setFontSize(8)
-    doc.text(`Average: ${deptAvg.toFixed(2)}  |  Total Respondents: ${deptTotalResp}  |  Generated: ${new Date().toLocaleDateString()}`, pageW / 2, 28, { align: "center" })
-
-    let y = 34
-    for (const r of results) {
-      if (y > 180) { doc.addPage(); y = 15 }
-      const name = facultyNames[r.facultyId] || r.facultyId
-      doc.setFontSize(11)
-      doc.text(name, 10, y)
-      y += 5
-      doc.setFontSize(7)
-      doc.text(`General: ${r.generalRating?.toFixed(2) ?? "—"}  |  Respondents: ${r.totalRespondents}  |  Remarks: ${r.remarks || "—"}`, 10, y)
-      y += 4
-      const catVals = CATEGORIES_FULL.map((c) => (r[c.key] !== null ? r[c.key]!.toFixed(2) : "—"))
-      autoTable(doc, { startY: y, head: [CATEGORIES_FULL.map((c) => c.label)], body: [{ columns: catVals }], theme: "grid", styles: { fontSize: 7 }, headStyles: { fillColor: [59, 130, 246] }, tableWidth: "wrap", margin: { left: 10 } })
-      y = doc.lastAutoTable.finalY + 5
-      const students = studentData[r.facultyId]
-      if (students?.length) {
-        doc.setFontSize(8)
-        doc.text(`Per-Student (${students.length} total — first 100):`, 10, y)
-        y += 3
-        const slice = students.slice(0, 100)
-        const stuHead = ["Student", ...CATEGORIES_FULL.map((c) => c.label === "Communication w/ Students" ? "Comm" : c.label === "Assessment & Feedback" ? "Assess." : c.label), "General", "Comment"]
-        const stuBody = slice.map((s) => [s.id, ...CATEGORIES_FULL.map((c) => (s[c.key] !== null ? s[c.key]!.toFixed(2) : "—")), s.generalRating?.toFixed(2) ?? "—", s.comment?.slice(0, 30) ?? ""])
-        if (students.length > 100) stuBody.push([`... and ${students.length - 100} more`, "", "", "", "", "", "", "", "", ""])
-        autoTable(doc, { startY: y, head: [stuHead], body: stuBody, theme: "grid", styles: { fontSize: 5.5 }, headStyles: { fillColor: [100, 100, 100] }, tableWidth: "wrap", margin: { left: 10 } })
-        y = doc.lastAutoTable.finalY + 8
-      } else { y += 4 }
-    }
-    doc.save(`${slug("department")}-${selectedPeriod}-${Date.now()}.pdf`)
-  }, [results, periods, selectedPeriod, facultyNames, studentData])
-
-  const printDepartment = useCallback(async () => {
-    const { jsPDF } = await import("jspdf")
-    const { default: autoTable } = await import("jspdf-autotable")
-    const doc = new jsPDF("landscape")
-    const pageW = doc.internal.pageSize.getWidth()
-    const periodName = periods.find((p) => p.id === selectedPeriod)?.name || periods.find((p) => p.id === selectedPeriod)?.title || selectedPeriod
-    const deptAvg = results.length > 0 ? results.reduce((s, r) => s + (r.generalRating ?? 0), 0) / results.length : 0
-    const deptTotalResp = results.reduce((s, r) => s + r.totalRespondents, 0)
-
-    doc.setFontSize(16)
-    doc.text("Evaluation Results", pageW / 2, 15, { align: "center" })
-    doc.setFontSize(10)
-    doc.text(`Period: ${periodName}`, pageW / 2, 22, { align: "center" })
-    doc.setFontSize(8)
-    doc.text(`Average: ${deptAvg.toFixed(2)}  |  Total Respondents: ${deptTotalResp}  |  Generated: ${new Date().toLocaleDateString()}`, pageW / 2, 28, { align: "center" })
-
-    let y = 34
-    for (const r of results) {
-      if (y > 180) { doc.addPage(); y = 15 }
-      const name = facultyNames[r.facultyId] || r.facultyId
-      doc.setFontSize(11)
-      doc.text(name, 10, y)
-      y += 5
-      doc.setFontSize(7)
-      doc.text(`General: ${r.generalRating?.toFixed(2) ?? "—"}  |  Respondents: ${r.totalRespondents}  |  Remarks: ${r.remarks || "—"}`, 10, y)
-      y += 4
-      const catVals = CATEGORIES_FULL.map((c) => (r[c.key] !== null ? r[c.key]!.toFixed(2) : "—"))
-      autoTable(doc, { startY: y, head: [CATEGORIES_FULL.map((c) => c.label)], body: [{ columns: catVals }], theme: "grid", styles: { fontSize: 7 }, headStyles: { fillColor: [59, 130, 246] }, tableWidth: "wrap", margin: { left: 10 } })
-      y = doc.lastAutoTable.finalY + 5
-      const students = studentData[r.facultyId]
-      if (students?.length) {
-        doc.setFontSize(8)
-        doc.text(`Per-Student (${students.length} total — first 100):`, 10, y)
-        y += 3
-        const slice = students.slice(0, 100)
-        const stuHead = ["Student", ...CATEGORIES_FULL.map((c) => c.label === "Communication w/ Students" ? "Comm" : c.label === "Assessment & Feedback" ? "Assess." : c.label), "General", "Comment"]
-        const stuBody = slice.map((s) => [s.id, ...CATEGORIES_FULL.map((c) => (s[c.key] !== null ? s[c.key]!.toFixed(2) : "—")), s.generalRating?.toFixed(2) ?? "—", s.comment?.slice(0, 30) ?? ""])
-        if (students.length > 100) stuBody.push([`... and ${students.length - 100} more`, "", "", "", "", "", "", "", "", ""])
-        autoTable(doc, { startY: y, head: [stuHead], body: stuBody, theme: "grid", styles: { fontSize: 5.5 }, headStyles: { fillColor: [100, 100, 100] }, tableWidth: "wrap", margin: { left: 10 } })
-        y = doc.lastAutoTable.finalY + 8
-      } else { y += 4 }
-    }
-    doc.autoPrint()
-    doc.output("dataurlnewwindow")
-  }, [results, periods, selectedPeriod, facultyNames, studentData])
 
   const fetchStudentsForFaculty = useCallback(async (facultyId: string): Promise<StudentRow[]> => {
     if (studentData[facultyId]) return studentData[facultyId]
@@ -675,24 +584,12 @@ export default function EvaluationDashboard({
     const a = document.createElement("a")
     a.href = url; a.download = `${slug(name)}-${selectedPeriod}-${Date.now()}.csv`; a.click()
     URL.revokeObjectURL(url)
-  }, [facultyNames, fetchStudentsForFaculty])
+  }, [facultyNames, fetchStudentsForFaculty, selectedPeriod])
 
-  const downloadBulkCSV = useCallback(() => {
-    const lines: string[] = []
-    const headers = ["Faculty Name", ...CATEGORIES_FULL.map((c) => c.label), "General Rating", "Total Respondents", "Remarks"]
-    lines.push(headers.join(","))
-    for (const r of results) {
-      const name = (facultyNames[r.facultyId] || r.facultyId).replace(/,/g, " ")
-      const vals = [name, ...CATEGORIES_FULL.map((c) => (r[c.key] !== null ? r[c.key]!.toFixed(2) : "")), r.generalRating?.toFixed(2) ?? "", String(r.totalRespondents), `"${(r.remarks ?? "").replace(/"/g, '""')}"`]
-      lines.push(vals.join(","))
-    }
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" })
-    const url = URL.createObjectURL(blob)
-    const periodName = periods.find((p) => p.id === selectedPeriod)?.name || selectedPeriod
-    const a = document.createElement("a")
-    a.href = url; a.download = `${slug("department")}-${selectedPeriod}-${Date.now()}.csv`; a.click()
-    URL.revokeObjectURL(url)
-  }, [results, facultyNames, periods, selectedPeriod])
+  const allVisible = useMemo(() => {
+    if (results.length === 0) return false
+    return results.every((r) => visibilityMap[r.facultyId] === true)
+  }, [results, visibilityMap])
 
   const departmentSummary = useMemo(() => {
     if (results.length === 0) return null
@@ -716,201 +613,275 @@ export default function EvaluationDashboard({
 
   return (
     <ErrorBoundary>
-    <div className="pb-12 animate-ios-slide-in">
-      {/* Header */}
-      <div className="w-full px-6 pt-6">
-        <h1 className="text-2xl font-bold text-primary">{title}</h1>
-        <p className="text-sm text-tertiary mt-1">{subtitle}</p>
-      </div>
-
-      {errorMessage && <ErrorState message={errorMessage} onRetry={() => { setErrorMessage(""); window.location.reload() }} />}
-
-      {!errorMessage && (
-      <>
-      {/* Filter Card */}
-      <div className="w-full px-3 sm:px-6 pt-3 sm:pt-6">
-        <div className="flex flex-wrap items-end gap-2 sm:gap-4 p-3 sm:p-5 bg-surface rounded-2xl shadow-sm">
-          {showDepartmentFilter && (
-            <div className="flex flex-col gap-1 sm:gap-1.5 w-full sm:w-auto">
-              <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-tertiary">Department</label>
-              <select
-                value={selectedDept}
-                onChange={(e) => { setSelectedDept(e.target.value); setSelectedFaculty(null) }}
-                className="w-full sm:w-auto px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm text-secondary bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all min-w-0 sm:min-w-[160px]"
-              >
-                <option value="">All Departments</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-          {showUnenrolledToggle && (
-            <div className="flex flex-col gap-1 sm:gap-1.5">
-              <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-tertiary">Unenrolled</label>
-              <button
-                type="button"
-                onClick={() => setShowUnenrolled(!showUnenrolled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
-                  showUnenrolled ? "bg-gold-500" : "bg-slate-300 dark:bg-slate-600"
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  showUnenrolled ? "translate-x-6" : "translate-x-1"
-                }`} />
-              </button>
-            </div>
-          )}
-          <div className="flex flex-col gap-1 sm:gap-1.5 w-full sm:w-auto">
-            <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-tertiary">Period</label>
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="w-full sm:w-auto px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm text-secondary bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all min-w-0 sm:min-w-[160px]"
-            >
-              {periods.map((p) => (
-                <option key={p.id} value={p.id}>{p.name || p.title || p.id}</option>
-              ))}
-            </select>
-          </div>
-          {!loading && (
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto pt-1 sm:pt-0">
-              {showVisibilityToggles && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => bulkSetVisibility(true)}
-                    disabled={results.length === 0 || toggling}
-                    className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-50"
-                  >
-                    Publish
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => bulkSetVisibility(false)}
-                    disabled={results.length === 0 || toggling}
-                    className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-amber-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-amber-600 active:scale-[0.98] transition-all disabled:opacity-50"
-                  >
-                    Hide
-                  </button>
-                </>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowReportModal(true)}
-                disabled={results.length === 0}
-                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-brand-500 text-white text-[11px] sm:text-sm font-semibold hover:bg-brand-600 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                Print Report
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="w-full px-6 pt-6 space-y-6">
-          <div className="flex flex-wrap items-end gap-4 p-5 bg-surface rounded-2xl shadow-sm animate-pulse">
-            <div className="flex flex-col gap-1.5">
-              <div className="h-3 w-16 bg-surface-tertiary rounded" />
-              <div className="h-10 w-36 bg-surface-tertiary rounded-lg" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="h-3 w-16 bg-surface-tertiary rounded" />
-              <div className="h-10 w-36 bg-surface-tertiary rounded-lg" />
-            </div>
-            <div className="h-10 w-28 bg-surface-tertiary rounded-lg" />
-          </div>
-          <SkeletonMetricGrid count={4} />
-          <div className="bg-surface rounded-xl p-4">
-            <SkeletonTable rows={7} cols={11} />
-          </div>
-        </div>
-      ) : results.length === 0 ? (
-        <p className="text-sm text-tertiary text-center pt-20">No evaluation results available for this period.</p>
-      ) : (
+      <div className="pb-12 animate-ios-slide-in">
+        {/* Header */}
         <div className="w-full px-6 pt-6">
-          {/* Summary cards */}
-          {departmentSummary && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-6">
-              <SummaryCard
-                value={departmentSummary.avg.toFixed(2)}
-                label="Average Rating"
-                color="blue"
-              />
-              <SummaryCard
-                value={departmentSummary.totalResp.toLocaleString()}
-                label="Total Respondents"
-                color="green"
-              />
-              <SummaryCard
-                value={departmentSummary.facultyCount}
-                label="Faculty Evaluated"
-                color="amber"
-              />
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-700 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.entries(departmentSummary.dist).filter(([, c]) => c > 0).map(([label, count]) => (
-                    <span key={label} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getRemarkColor(label)}`}>{label}: {count}</span>
-                  ))}
+          <h1 className="text-2xl font-bold text-primary">{title}</h1>
+          <p className="text-sm text-tertiary mt-1">{subtitle}</p>
+        </div>
+
+        {errorMessage && <ErrorState message={errorMessage} onRetry={() => { setErrorMessage(""); window.location.reload() }} />}
+
+        {!errorMessage && (
+          <>
+            {/* Filter Card */}
+            <div className="w-full px-3 sm:px-6 pt-3 sm:pt-6">
+              <div className="flex flex-wrap items-end gap-2 sm:gap-4 p-3 sm:p-5 bg-surface rounded-2xl shadow-sm">
+                {showDepartmentFilter && (
+                  <div className="flex flex-col gap-1 sm:gap-1.5 w-full sm:w-auto">
+                    <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-tertiary">Department</label>
+                    <select
+                      value={selectedDept}
+                      onChange={(e) => { setSelectedDept(e.target.value); setSelectedFaculty(null) }}
+                      className="w-full sm:w-auto px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm text-secondary bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all min-w-0 sm:min-w-[160px]"
+                    >
+                      <option value="">All Departments</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1 sm:gap-1.5 w-full sm:w-auto">
+                  <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-tertiary">Period</label>
+                  <select
+                    value={selectedPeriod}
+                    onChange={(e) => setSelectedPeriod(e.target.value)}
+                    className="w-full sm:w-auto px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm text-secondary bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all min-w-0 sm:min-w-[160px]"
+                  >
+                    {periods.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name || p.title || p.id}</option>
+                    ))}
+                  </select>
                 </div>
-                <p className="text-xs font-semibold uppercase tracking-wider mt-3 opacity-75">Remark Distribution</p>
+
+              </div>
+              <div className="p-6 flex flex-col gap-1 sm:gap-1.5 w-full sm:w-auto">
+                {showUnenrolledToggle && (
+                  <div className="flex flex-col gap-1 sm:gap-1.5">
+                    <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-tertiary">Include Miscellaneous Evals</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowUnenrolled(!showUnenrolled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${showUnenrolled ? "bg-gold-500" : "bg-slate-300 dark:bg-slate-600"
+                        }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showUnenrolled ? "translate-x-6" : "translate-x-1"
+                        }`} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          )}
 
-          {/* Main table — desktop */}
-          <div className="desktop-only bg-surface rounded-xl border border-default overflow-hidden tbl">
-            <div className="overflow-x-auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th className="text-left">Faculty</th>
-                    <th className="text-center whitespace-nowrap">General</th>
-                    <th className="text-center whitespace-nowrap">Respondents</th>
-                    <th className="text-center">Remark</th>
-                    {showVisibilityToggles && <th className="text-center whitespace-nowrap">Visible</th>}
-                    <th className="text-center w-16">Actions</th>
-                    <th className="text-center w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
+            {loading ? (
+              <div className="w-full px-6 pt-6 space-y-6">
+                <div className="flex flex-wrap items-end gap-4 p-5 bg-surface rounded-2xl shadow-sm animate-pulse">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="h-3 w-16 bg-surface-tertiary rounded" />
+                    <div className="h-10 w-36 bg-surface-tertiary rounded-lg" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="h-3 w-16 bg-surface-tertiary rounded" />
+                    <div className="h-10 w-36 bg-surface-tertiary rounded-lg" />
+                  </div>
+                  <div className="h-10 w-28 bg-surface-tertiary rounded-lg" />
+                </div>
+                <SkeletonMetricGrid count={4} />
+                <div className="bg-surface rounded-xl p-4">
+                  <SkeletonTable rows={7} cols={11} />
+                </div>
+              </div>
+            ) : results.length === 0 ? (
+              <p className="text-sm text-tertiary text-center pt-20">No evaluation results available for this period.</p>
+            ) : (
+              <div className="w-full px-6 pt-6">
+                {/* Summary cards */}
+                {departmentSummary && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-6">
+                    <SummaryCard
+                      value={departmentSummary.avg.toFixed(2)}
+                      label="Average Rating"
+                      color="blue"
+                    />
+                    <SummaryCard
+                      value={departmentSummary.totalResp.toLocaleString()}
+                      label="Total Respondents"
+                      color="green"
+                    />
+                    <SummaryCard
+                      value={departmentSummary.facultyCount}
+                      label="Faculty Evaluated"
+                      color="amber"
+                    />
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-700 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(departmentSummary.dist).filter(([, c]) => c > 0).map(([label, count]) => (
+                          <span key={label} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getRemarkColor(label)}`}>{label}: {count}</span>
+                        ))}
+                      </div>
+                      <p className="text-xs font-semibold uppercase tracking-wider mt-3 opacity-75">Remark Distribution</p>
+                    </div>
+                  </div>
+                )}
+
+                {!loading && (
+                  <div className="flex flex-wrap items-center gap-3 mb-6">
+                    <button
+                      type="button"
+                      onClick={() => setShowReportModal(true)}
+                      disabled={results.length === 0}
+                      className="px-3 sm:px-5 py-2 rounded-lg bg-brand-500 text-white text-xs sm:text-sm font-semibold hover:bg-brand-600 active:scale-[0.98] transition-all disabled:opacity-50"
+                    >
+                      Print Report
+                    </button>
+                    <div className="flex flex-wrap items-center gap-4">
+                      {showVisibilityToggles && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => bulkSetVisibility(!allVisible)}
+                            disabled={results.length === 0 || toggling}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${allVisible ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
+                              } disabled:opacity-50`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${allVisible ? "translate-x-6" : "translate-x-1"
+                              }`} />
+                          </button>
+                          <span className="text-xs sm:text-sm font-medium text-secondary">Make Reports Available to All Users</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Main table — desktop */}
+                <div className="desktop-only bg-surface rounded-xl border border-default overflow-hidden tbl">
+                  <div className="overflow-x-auto">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th className="text-left">Faculty</th>
+                          <th className="text-center whitespace-nowrap">General</th>
+                          <th className="text-center whitespace-nowrap">Respondents</th>
+                          <th className="text-center">Remark</th>
+                          {showVisibilityToggles && <th className="text-center whitespace-nowrap">Allow User To View Results</th>}
+                          {/* <th className="text-center w-16">Quick Actions</th> */}
+                          <th className="text-center w-10"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {results.map((r) => {
+                          const name = facultyNames[r.facultyId] || r.facultyId
+                          const isSelected = selectedFaculty === r.facultyId
+                          return (
+                            <tr key={r.id} className={`${isSelected ? "bg-brand-50 dark:bg-brand-500/10" : ""}`} onClick={() => selectFaculty(r.facultyId)}>
+                              <td className="font-semibold text-primary whitespace-nowrap">{name}</td>
+                              <td className="text-center font-bold text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</td>
+                              <td className="text-center text-secondary">{r.totalRespondents}</td>
+                              <td className="text-center">{r.remarks && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getRemarkColor(r.remarks)}`}>{r.remarks}</span>}</td>
+                              {showVisibilityToggles && (
+                                <td className="text-center">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); toggleVisibility(r.facultyId, !visibilityMap[r.facultyId]) }}
+                                    disabled={toggling}
+                                    className={`inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all ${visibilityMap[r.facultyId] ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200" : "bg-surface-tertiary text-tertiary hover:bg-amber-100 hover:text-amber-600"
+                                      } disabled:opacity-50`}
+                                    title={visibilityMap[r.facultyId] ? "Visible to faculty — click to hide" : "Hidden from faculty — click to show"}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      {visibilityMap[r.facultyId] ? (
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      ) : (
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                                      )}
+                                    </svg>
+                                  </button>
+                                </td>
+                              )}
+                              {/* <td className="text-center whitespace-nowrap">
+                                <div className="flex items-center justify-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); printFaculty(r) }}
+                                    className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                                    title="Print"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); downloadFacultyPDF(r) }}
+                                    className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors"
+                                    title="Download PDF"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v4a1 1 0 001 1h4" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); downloadFacultyCSV(r) }}
+                                    className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                    title="Download CSV"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </td> */}
+                              <td className="text-center">
+                                <svg className={`w-4 h-4 mx-auto text-tertiary transition-transform ${isSelected ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Main table — mobile cards */}
+                <div className="mobile-only space-y-3">
                   {results.map((r) => {
                     const name = facultyNames[r.facultyId] || r.facultyId
                     const isSelected = selectedFaculty === r.facultyId
                     return (
-                      <tr key={r.id} className={`${isSelected ? "bg-brand-50 dark:bg-brand-500/10" : ""}`} onClick={() => selectFaculty(r.facultyId)}>
-                        <td className="font-semibold text-primary whitespace-nowrap">{name}</td>
-                        <td className="text-center font-bold text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</td>
-                        <td className="text-center text-secondary">{r.totalRespondents}</td>
-                        <td className="text-center">{r.remarks && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getRemarkColor(r.remarks)}`}>{r.remarks}</span>}</td>
-                        {showVisibilityToggles && (
-                          <td className="text-center">
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); toggleVisibility(r.facultyId, !visibilityMap[r.facultyId]) }}
-                              disabled={toggling}
-                              className={`inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
-                                visibilityMap[r.facultyId] ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200" : "bg-surface-tertiary text-tertiary hover:bg-amber-100 hover:text-amber-600"
-                              } disabled:opacity-50`}
-                              title={visibilityMap[r.facultyId] ? "Visible to faculty — click to hide" : "Hidden from faculty — click to show"}
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                {visibilityMap[r.facultyId] ? (
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                ) : (
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                                )}
-                              </svg>
-                            </button>
-                          </td>
-                        )}
-                        <td className="text-center whitespace-nowrap">
-                          <div className="flex items-center justify-center gap-1">
+                      <div
+                        key={r.id}
+                        className={`rounded-xl border p-4 space-y-3 transition-all active:scale-[0.99] ${isSelected ? "bg-brand-50 dark:bg-brand-500/10 border-brand-200 dark:border-brand-700" : "bg-surface border-default"
+                          }`}
+                      >
+                        <div className="flex items-start justify-between gap-3" onClick={() => selectFaculty(r.facultyId)}>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-primary truncate">{name}</p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="text-base font-bold tabular-nums text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</span>
+                              {r.remarks && (
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getRemarkColor(r.remarks)}`}>{r.remarks}</span>
+                              )}
+                              <span className="text-xs text-tertiary">{r.totalRespondents} resp.</span>
+                            </div>
+                          </div>
+                          <svg className={`w-5 h-5 mt-0.5 shrink-0 text-tertiary transition-transform ${isSelected ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); printFaculty(r) }}
-                              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
                               title="Print"
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -920,7 +891,7 @@ export default function EvaluationDashboard({
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); downloadFacultyPDF(r) }}
-                              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
                               title="Download PDF"
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -931,7 +902,7 @@ export default function EvaluationDashboard({
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); downloadFacultyCSV(r) }}
-                              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-colors"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                               title="Download CSV"
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -939,124 +910,47 @@ export default function EvaluationDashboard({
                               </svg>
                             </button>
                           </div>
-                        </td>
-                        <td className="text-center">
-                          <svg className={`w-4 h-4 mx-auto text-tertiary transition-transform ${isSelected ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                          </svg>
-                        </td>
-                      </tr>
+                          {showVisibilityToggles && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); toggleVisibility(r.facultyId, !visibilityMap[r.facultyId]) }}
+                              disabled={toggling}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${visibilityMap[r.facultyId] ? "bg-emerald-100 text-emerald-700" : "bg-surface-tertiary text-tertiary"
+                                } disabled:opacity-50`}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                {visibilityMap[r.facultyId] ? (
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                ) : (
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                                )}
+                              </svg>
+                              {visibilityMap[r.facultyId] ? "Visible" : "Hidden"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     )
                   })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Main table — mobile cards */}
-          <div className="mobile-only space-y-3">
-            {results.map((r) => {
-              const name = facultyNames[r.facultyId] || r.facultyId
-              const isSelected = selectedFaculty === r.facultyId
-              return (
-                <div
-                  key={r.id}
-                  className={`rounded-xl border p-4 space-y-3 transition-all active:scale-[0.99] ${
-                    isSelected ? "bg-brand-50 dark:bg-brand-500/10 border-brand-200 dark:border-brand-700" : "bg-surface border-default"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3" onClick={() => selectFaculty(r.facultyId)}>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-primary truncate">{name}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-base font-bold tabular-nums text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</span>
-                        {r.remarks && (
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getRemarkColor(r.remarks)}`}>{r.remarks}</span>
-                        )}
-                        <span className="text-xs text-tertiary">{r.totalRespondents} resp.</span>
-                      </div>
-                    </div>
-                    <svg className={`w-5 h-5 mt-0.5 shrink-0 text-tertiary transition-transform ${isSelected ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); printFaculty(r) }}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
-                        title="Print"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); downloadFacultyPDF(r) }}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="Download PDF"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v4a1 1 0 001 1h4" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); downloadFacultyCSV(r) }}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
-                        title="Download CSV"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </button>
-                    </div>
-                    {showVisibilityToggles && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); toggleVisibility(r.facultyId, !visibilityMap[r.facultyId]) }}
-                        disabled={toggling}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                          visibilityMap[r.facultyId] ? "bg-emerald-100 text-emerald-700" : "bg-surface-tertiary text-tertiary"
-                        } disabled:opacity-50`}
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          {visibilityMap[r.facultyId] ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                          )}
-                        </svg>
-                        {visibilityMap[r.facultyId] ? "Visible" : "Hidden"}
-                      </button>
-                    )}
-                  </div>
                 </div>
-              )
-            })}
-          </div>
 
-          {/* Detail panel */}
-          {selectedFaculty && selectedResult && (
-            <DetailPanel
-              key={selectedFaculty}
-              name={facultyNames[selectedFaculty] || selectedFaculty}
-              result={selectedResult}
-              students={selectedStudents}
-              loading={loadingStudents}
-              page={page}
-              onPageChange={setPage}
-            />
-          )}
-        </div>
-      )}
-      </>
-      )}
-    </div>
+                {/* Detail panel */}
+                {selectedFaculty && selectedResult && (
+                  <DetailPanel
+                    key={selectedFaculty}
+                    name={facultyNames[selectedFaculty] || selectedFaculty}
+                    result={selectedResult}
+                    students={selectedStudents}
+                    loading={loadingStudents}
+                    page={page}
+                    onPageChange={setPage}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
       <ReportModal
         key={showReportModal ? "open" : "closed"}
         isOpen={showReportModal}
@@ -1077,7 +971,7 @@ export default function EvaluationDashboard({
 
 function DetailPanel({
   name,
-  result,
+  result: _result,
   students,
   loading,
   page,

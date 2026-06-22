@@ -301,7 +301,7 @@ export default function ReportModal({
   const deptFilterDisabled = initialDept !== ""
 
   const selectedResult = results.find((r) => r.facultyId === selectedId)
-  const selectedStudents = selectedId ? facultyStudentData[selectedId] || [] : []
+  const selectedStudents = useMemo(() => selectedId ? facultyStudentData[selectedId] || [] : [], [selectedId, facultyStudentData])
   const selectedSubjects = selectedId ? facultySubjects[selectedId] || [] : []
 
   // ── Print handlers ──────────────────────────────────────────
@@ -726,7 +726,7 @@ export default function ReportModal({
       pdfName = slug("all-faculty")
     }
     doc.save(`${pdfName}-${periodId}-${Date.now()}.pdf`)
-  }, [tab, deptResults, periodName, departmentName, facultyNames, selectedResult, selectedStudents, results, facultyStudentData, periodId])
+  }, [tab, deptResults, periodName, departmentName, facultyNames, selectedResult, selectedStudents, results, facultyStudentData, periodId, uniqueRespondents])
 
   const handlePrintHTML = useCallback(() => {
     window.print()
@@ -804,7 +804,7 @@ export default function ReportModal({
         URL.revokeObjectURL(url)
       }
     }
-  }, [tab, deptResults, facultyNames, periodName, selectedResult, selectedStudents, results, facultyStudentData])
+  }, [tab, deptResults, facultyNames, selectedResult, selectedStudents, results, facultyStudentData, periodId])
 
   if (!isOpen) return null
 
