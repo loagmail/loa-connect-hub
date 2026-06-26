@@ -32,7 +32,7 @@ const badgeColors: Record<string, string> = {
   GUEST: "bg-surface text-secondary",
 }
 
-const ADMIN_LOCKED_PAGES = new Set(["/admin", "/admin/users", "/admin/access-config"])
+const ADMIN_LOCKED_PAGES = new Set(["/admin", "/admin/users", "/admin/access-config", "/admin/data-management"])
 const ALWAYS_LOCKED_PAGES = new Set(["/faq", "/403", "/admin/etl-hub", "/student/evaluations/thank-you"])
 
 export default function EditAccessGroupPage() {

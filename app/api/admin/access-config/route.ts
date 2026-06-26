@@ -146,7 +146,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (groupName === "ADMIN" && pages !== undefined) {
-    const required = ["/admin", "/admin/users", "/admin/access-config"]
+    const required = ["/admin", "/admin/users", "/admin/access-config", "/admin/data-management"]
     const missing = required.filter((r) => !pages.includes(r))
     if (missing.length > 0) {
       return NextResponse.json({
