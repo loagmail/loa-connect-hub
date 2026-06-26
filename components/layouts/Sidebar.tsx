@@ -140,22 +140,22 @@ export default function Sidebar() {
 
   const allRoles = role ? role.split("|") : []
   const VALID_DASHBOARD_ROLES = ["ADMIN", "DEAN", "FACULTY", "STUDENT"]
-  const DASHBOARD_LABELS: Record<string, string> = { ADMIN: "Admin", DEAN: "Dean", FACULTY: "Faculty", STUDENT: "Student" }
-  const dashboardChildren: NavItem[] = allRoles
-    .filter((r) => VALID_DASHBOARD_ROLES.includes(r))
-    .map((r) => ({
-      href: `/${r.toLowerCase()}`,
-      label: DASHBOARD_LABELS[r],
-      icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-    }))
-  const hasMultiDash = dashboardChildren.length > 1
-  const dashboardHrefs = new Set(dashboardChildren.map((c) => c.href!))
-  const isInDashboard = hasMultiDash && dashboardHrefs.has(pathname)
+  const DASHBOARD_ICON = "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+  const dashboardRoles = allRoles.filter((r) => VALID_DASHBOARD_ROLES.includes(r))
+  const isMultiRole = dashboardRoles.length > 1
 
-  const ALL_NAV_ITEMS = useMemo<(NavItem & { group?: string })[]>(() => [
-    { href: dashHref, label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-    { href: "/student/meetings", label: "Consultations", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-    { href: "/student/history", label: "Timeline", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+  const ALL_NAV_ITEMS = useMemo<(NavItem & { group?: string })[]>(() => {
+    const items: (NavItem & { group?: string })[] = []
+    if (isMultiRole) {
+      for (const r of dashboardRoles) {
+        items.push({ href: `/${r.toLowerCase()}`, label: `${r.charAt(0) + r.slice(1).toLowerCase()} Dashboard`, icon: DASHBOARD_ICON })
+      }
+    } else {
+      items.push({ href: dashHref, label: "Dashboard", icon: DASHBOARD_ICON })
+    }
+    items.push(
+      { href: "/student/meetings", label: "Consultations", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
+      { href: "/student/history", label: "Timeline", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
     { href: "/faculty/meetings", label: "Meetings", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
     { href: "/faculty/availability", label: "Availability Rules", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
     // { href: "/faculty/reports", label: "Department Reports", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
@@ -164,7 +164,9 @@ export default function Sidebar() {
     // { href: "/faculty/upload", label: "Import Students", icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" },
     { href: "/admin/access-config", label: "Access Config", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z" },
     { href: "/admin/audit-trail", label: "Audit Trail", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
-  ], [dashHref])
+    )
+    return items
+  }, [isMultiRole, dashboardRoles, dashHref])
 
   const flatItems = useMemo(() =>
     ALL_NAV_ITEMS.filter(
@@ -176,8 +178,6 @@ export default function Sidebar() {
   const isInReports = pathname.startsWith("/admin/reports") || pathname.startsWith("/dean/reports") || pathname.startsWith("/faculty/reports")
   const reportsVisible = reportChildren.some((c) => c.href === dashHref || (allowedPages && allowedPages.includes(c.href!)))
   const reportsOpen = expandedGroups.has("reports") || isInReports
-
-  const dashboardOpen = expandedGroups.has("dashboard") || isInDashboard
 
   const isInEvaluations = pathname.startsWith("/admin/evaluations") || pathname.startsWith("/faculty/evaluations") || pathname.startsWith("/student/evaluations")
   const evaluationsVisible = evaluationChildren.some((c) => {
@@ -193,13 +193,7 @@ export default function Sidebar() {
   const dataOpen = expandedGroups.has("data") || isInData
 
   const tabItems = useMemo(() => {
-    const items: (NavItem & { group?: string })[] = []
-    if (hasMultiDash) {
-      items.push({ href: "#dashboard", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" })
-      items.push(...flatItems.slice(0, 3))
-    } else {
-      items.push(...flatItems.slice(0, 4))
-    }
+    const items = flatItems.slice(0, 4)
     if (dataVisible) {
       items.push({ href: "#data", label: "Data", icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" })
     }
@@ -217,7 +211,7 @@ export default function Sidebar() {
       }
     }
     return items
-  }, [flatItems, dataVisible, reportsVisible, evaluationsVisible, primaryRole, hasMultiDash])
+  }, [flatItems, dataVisible, reportsVisible, evaluationsVisible, primaryRole])
 
   if (status === "loading" || !session || !allowedPages) {
     return (
@@ -262,7 +256,6 @@ export default function Sidebar() {
     if (href === "#reports") return isInReports
     if (href === "#evaluations") return isInEvaluations
     if (href === "#data") return isInData
-    if (href === "#dashboard") return isInDashboard
     return pathname === href
   }
 
@@ -396,9 +389,9 @@ export default function Sidebar() {
             className="fixed bottom-16 inset-x-4 z-50 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-2"
           >
             <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-tertiary">
-              {mobilePopoverGroup === "#data" ? "Data Management" : mobilePopoverGroup === "#reports" ? "Reports" : mobilePopoverGroup === "#dashboard" ? "Dashboard" : "Evaluations"}
+              {mobilePopoverGroup === "#data" ? "Data Management" : mobilePopoverGroup === "#reports" ? "Reports" : "Evaluations"}
             </p>
-            {(mobilePopoverGroup === "#data" ? dataChildren : mobilePopoverGroup === "#reports" ? reportChildren : mobilePopoverGroup === "#dashboard" ? dashboardChildren : evaluationChildren)
+            {(mobilePopoverGroup === "#data" ? dataChildren : mobilePopoverGroup === "#reports" ? reportChildren : evaluationChildren)
               .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
               .map((child) => (
                 <Link
@@ -444,7 +437,7 @@ export default function Sidebar() {
 
           {/* DUPLICATE STUDENT-SPECIFIC TOP EVALUATIONS BLOCK REMOVED FROM HERE */}
 
-          {flatItems.filter((link) => !(hasMultiDash && link.href === dashHref)).map((link) => (
+          {flatItems.map((link) => (
             <Link
               key={link.href}
               href={link.href!}
@@ -460,71 +453,7 @@ export default function Sidebar() {
               </svg>
               {!collapsed && link.label}
             </Link>
-          )          )}
-
-          {hasMultiDash && !collapsed && (
-            <div>
-              <button
-                onClick={() => toggleGroup("dashboard")}
-                className={`w-full flex items-center gap-3 px-3 min-h-[44px] rounded-lg text-sm font-medium transition-colors ${
-                  isInDashboard
-                    ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
-                    : "text-slate-300 hover:bg-slate-800/50 hover:text-white border border-transparent"
-                }`}
-              >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span className="flex-1 text-left">Dashboard</span>
-                <svg
-                  className={`w-3.5 h-3.5 transition-transform duration-200 ${dashboardOpen ? "rotate-180" : ""}`}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {dashboardOpen && (
-                <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
-                  {dashboardChildren
-                    .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
-                    .map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href!}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          pathname === child.href
-                            ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
-                            : "text-tertiary hover:bg-slate-800/50 hover:text-white border border-transparent"
-                        }`}
-                      >
-                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d={child.icon!} />
-                        </svg>
-                        {child.label}
-                      </Link>
-                    ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {hasMultiDash && collapsed && (
-            <button
-              type="button"
-              onClick={() => setPopoverGroup(popoverGroup === "dashboard" ? null : "dashboard")}
-              className={`flex items-center justify-center w-full min-h-[44px] rounded-lg text-sm font-medium transition-colors ${
-                isInDashboard || popoverGroup === "dashboard"
-                  ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
-                  : "text-slate-300 hover:bg-slate-800/50 hover:text-white border border-transparent"
-              }`}
-              title="Dashboard"
-            >
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-            </button>
-          )}
+          ))}
 
           {dataVisible && !collapsed && (
             <div>
@@ -796,9 +725,9 @@ export default function Sidebar() {
             className="fixed left-16 top-24 z-50 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-2 min-w-48"
           >
             <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-tertiary">
-              {popoverGroup === "data" ? "Data Management" : popoverGroup === "reports" ? "Reports" : popoverGroup === "dashboard" ? "Dashboard" : "Evaluations"}
+              {popoverGroup === "data" ? "Data Management" : popoverGroup === "reports" ? "Reports" : "Evaluations"}
             </p>
-            {(popoverGroup === "data" ? dataChildren : popoverGroup === "reports" ? reportChildren : popoverGroup === "dashboard" ? dashboardChildren : evaluationChildren)
+            {(popoverGroup === "data" ? dataChildren : popoverGroup === "reports" ? reportChildren : evaluationChildren)
               .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
               .map((child) => (
                 <Link

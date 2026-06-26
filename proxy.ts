@@ -100,6 +100,8 @@ export async function proxy(request: NextRequest) {
 
   // Admin API routes require ADMIN role or Layer 1 grant above
   if (pathname.startsWith('/api/admin/')) {
+    // Access config GET is read-only — allow any authenticated user
+    if (pathname === '/api/admin/access-config' && request.method === 'GET') return NextResponse.next();
     if (isAdmin) return NextResponse.next();
     return new NextResponse(JSON.stringify({
       error: 'Forbidden',
@@ -113,6 +115,9 @@ export async function proxy(request: NextRequest) {
 
   // Standalone evaluation page — any authenticated user can access
   if (pathname.startsWith("/evaluate")) return NextResponse.next();
+
+  // Access config page — any authenticated user can view
+  if (pathname === "/admin/access-config" || pathname.startsWith("/admin/access-config/")) return NextResponse.next();
 
   // Student pages — always accessible if the user is a STUDENT
   if (group === "STUDENT" && (pathname.startsWith("/student") || pathname === "/faq")) return NextResponse.next();

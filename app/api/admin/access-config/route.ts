@@ -116,10 +116,7 @@ function buildCatalog() {
   return { pages: pageCatalog }
 }
 
-export async function GET(request: NextRequest) {
-  const authErr = await requireAdmin(request)
-  if (authErr) return authErr
-
+export async function GET() {
   const { data, error } = await supabase.from("group_access").select("*").order("groupName")
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

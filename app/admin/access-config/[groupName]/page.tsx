@@ -5,7 +5,6 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import SubmitButton from "@/components/ui/SubmitButton"
-import LockedTab from "@/components/ui/LockedTab"
 import ErrorState from "@/components/ui/ErrorState"
 import ErrorBoundary from "@/components/ui/ErrorBoundary"
 
@@ -44,31 +43,27 @@ export default function EditAccessGroupPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [lockedEndpoint, setLockedEndpoint] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
 
   const [selectedPages, setSelectedPages] = useState<string[]>([])
   const [search, setSearch] = useState("")
   const [pageTab, setPageTab] = useState<"pages" | "api">("pages")
+  const [readOnly, setReadOnly] = useState(true)
 
   useEffect(() => {
-    fetch("/api/admin/access-config")
-      .then((r) => {
-        if (r.status === 403) {
-          return r.json().then((data) => {
-            setLockedEndpoint(data.endpoint || "/api/admin/access-config")
-            throw new Error("locked")
-          })
-        }
-        return r.json()
-      })
-      .then((data) => {
+    Promise.all([
+      fetch("/api/admin/access-config").then((r) => r.json()),
+      fetch("/api/auth/me").then((r) => r.json()).catch(() => ({ user: null })),
+    ])
+      .then(([data, me]) => {
         const g = (data.groups || []).find((grp: GroupAccess) => grp.groupName === groupName)
         if (g) {
           setGroup(g)
           setSelectedPages(g.pages)
         }
         if (data.catalog) setCatalog(data.catalog)
+        const role = me?.user?.role ?? ""
+        setReadOnly(!role.split("|").includes("ADMIN"))
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -78,6 +73,7 @@ export default function EditAccessGroupPage() {
     (group?.groupName === "ADMIN" && ADMIN_LOCKED_PAGES.has(p)) || ALWAYS_LOCKED_PAGES.has(p)
 
   const togglePage = (path: string) => {
+    if (readOnly) return
     if (isLockedPage(path) && selectedPages.includes(path)) return
     setSelectedPages((prev) =>
       prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
@@ -121,14 +117,6 @@ export default function EditAccessGroupPage() {
     return (
       <div className="w-full space-y-8 pb-12">
         <Skeleton variant="card" />
-      </div>
-    )
-  }
-
-  if (lockedEndpoint) {
-    return (
-      <div className="w-full pb-12">
-        <LockedTab endpoint={lockedEndpoint} />
       </div>
     )
   }
@@ -241,7 +229,7 @@ export default function EditAccessGroupPage() {
                             type="checkbox"
                             checked={selectedPages.includes(item.path)}
                             onChange={() => togglePage(item.path)}
-                            disabled={locked}
+                            disabled={locked || readOnly}
                             className="mt-0.5 rounded border-strong text-gold-600 focus:ring-gold-500"
                           />
                           <div className="flex-1 min-w-0">
@@ -275,7 +263,7 @@ export default function EditAccessGroupPage() {
             onClick={handleSave}
             variant="primary"
             className="text-xs font-semibold px-4 py-2 rounded-lg"
-            disabled={saving || !hasChanges}
+            disabled={saving || !hasChanges || readOnly}
           >
             {saving ? "Saving…" : "Save Changes"}
           </SubmitButton>

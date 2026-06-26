@@ -72,7 +72,7 @@ export function userGroup(role: string): string {
 }
 
 export async function hasPageAccess(role: string, path: string): Promise<boolean> {
-  if (path === "/faq" || path.startsWith("/faq/") || path === "/403" || path === "/admin/etl-hub" || path.startsWith("/admin/etl-hub/") || path === "/student/evaluations/thank-you") return true
+  if (path === "/faq" || path.startsWith("/faq/") || path === "/403" || path === "/admin/etl-hub" || path.startsWith("/admin/etl-hub/") || path === "/admin/access-config" || path.startsWith("/admin/access-config/") || path === "/student/evaluations/thank-you") return true
   const config = await loadAccessConfig()
   const entry = config[userGroup(role)]
   if (!entry) return false

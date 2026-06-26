@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import SubmitButton from "@/components/ui/SubmitButton"
-import LockedTab from "@/components/ui/LockedTab"
 
 interface GroupAccess {
   groupName: string
@@ -48,7 +47,7 @@ const TABS = [
   { key: "user-permissions", label: "User Permissions" },
 ]
 
-function AdminAccessConfigPageInner() {
+function AdminAccessConfigPageInner({ readOnly }: { readOnly?: boolean }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const activeTab = searchParams.get("tab") || "rbac"
@@ -80,12 +79,12 @@ function AdminAccessConfigPageInner() {
         ))}
       </div>
 
-      {activeTab === "rbac" ? <RBACTab /> : <UserPermissionsTab />}
+      {activeTab === "rbac" ? <RBACTab readOnly={readOnly} /> : <UserPermissionsTab readOnly={readOnly} />}
     </div>
   )
 }
 
-function RBACTab() {
+function RBACTab({ readOnly }: { readOnly?: boolean }) {
   const [groups, setGroups] = useState<GroupAccess[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -154,15 +153,17 @@ function RBACTab() {
             }}
             placeholder="e.g. COORDINATOR"
             className="input text-xs flex-1 min-w-0 px-3 py-2 rounded-lg border border-strong"
+            disabled={readOnly}
           />
           <button
             onClick={handleAddGroup}
-            disabled={creating || !newGroupName.trim()}
+            disabled={creating || !newGroupName.trim() || readOnly}
             className="text-xs font-semibold px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-40 transition-colors shrink-0"
           >
             {creating ? "Adding\u2026" : "Add Group"}
           </button>
         </div>
+        {readOnly && <p className="text-[10px] text-tertiary">Only ADMIN can add or modify groups.</p>}
       </div>
 
       {groups.length === 0 && (
@@ -275,7 +276,7 @@ function prim(roles: string): string {
   return "GUEST"
 }
 
-function UserPermissionsTab() {
+function UserPermissionsTab({ readOnly: _readOnly }: { readOnly?: boolean }) {
   const [users, setUsers] = useState<UserRow[]>([])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
@@ -498,17 +499,17 @@ function UserPermissionsTab() {
 }
 
 export default function AdminAccessConfigPage() {
-  const [accessState, setAccessState] = useState<"loading" | "granted" | "locked">("loading")
+  const [accessState, setAccessState] = useState<"loading" | "granted" | "readonly">("loading")
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((j) => {
-        if (!j.user) { setAccessState("locked"); return }
+        if (!j.user) { setAccessState("readonly"); return }
         const role = j.user.role ?? ""
-        setAccessState(role.split("|").includes("ADMIN") ? "granted" : "locked")
+        setAccessState(role.split("|").includes("ADMIN") ? "granted" : "readonly")
       })
-      .catch(() => setAccessState("locked"))
+      .catch(() => setAccessState("readonly"))
   }, [])
 
   if (accessState === "loading") {
@@ -519,17 +520,9 @@ export default function AdminAccessConfigPage() {
     )
   }
 
-  if (accessState === "locked") {
-    return (
-      <div className="w-full pb-12">
-        <LockedTab endpoint="/admin/access-config" />
-      </div>
-    )
-  }
-
   return (
     <Suspense fallback={<Skeleton variant="card" />}>
-      <AdminAccessConfigPageInner />
+      <AdminAccessConfigPageInner readOnly={accessState === "readonly"} />
     </Suspense>
   )
 }
