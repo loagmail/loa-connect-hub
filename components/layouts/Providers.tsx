@@ -7,6 +7,7 @@ import { SWRConfig } from "swr"
 import { fetcher } from "@/lib/api/client"
 import { SidebarProvider } from "@/lib/contexts/sidebar"
 import { PageTitleProvider } from "@/lib/contexts/page-title"
+import ToastContainer from "@/components/ui/Toast"
 
 function RefreshListener({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -26,6 +27,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <PageTitleProvider>
             <RefreshListener>
               {children}
+              <ToastContainer />
             </RefreshListener>
           </PageTitleProvider>
         </SidebarProvider>
