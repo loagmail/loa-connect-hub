@@ -144,17 +144,6 @@ export default function Sidebar() {
   const dashboardRoles = allRoles.filter((r) => VALID_DASHBOARD_ROLES.includes(r))
   const isMultiRole = dashboardRoles.length > 1
 
-  const rolePrefix = primaryRole === "ADMIN" ? "/admin" : `/${primaryRole?.toLowerCase()}`
-  const toRoleHref = useCallback((href: string) => primaryRole !== "ADMIN" ? href.replace(/^\/admin/, rolePrefix) : href, [primaryRole, rolePrefix])
-  const roleHiddenHrefs = useMemo(() => {
-    if (primaryRole === "ADMIN") return hiddenHrefs
-    const h = new Set(hiddenHrefs)
-    for (const href of hiddenHrefs) {
-      if (href.startsWith("/admin/")) h.add(href.replace("/admin/", `${rolePrefix}/`))
-    }
-    return h
-  }, [primaryRole])
-
   const dashboardChildren = useMemo(() => {
     const children = dashboardRoles.map((r) => ({
       href: `/${r.toLowerCase()}`,
@@ -206,7 +195,7 @@ export default function Sidebar() {
 
   const flatItems = useMemo(() =>
     ALL_NAV_ITEMS.filter(
-      (item) => (allowedPages && allowedPages.includes(item.href!)) && !reportHrefs.has(item.href!) && !evaluationHrefs.has(item.href!) && !dataHrefs.has(item.href!) && !roleHiddenHrefs.has(item.href!)
+      (item) => (allowedPages && allowedPages.includes(item.href!)) && !reportHrefs.has(item.href!) && !evaluationHrefs.has(item.href!) && !dataHrefs.has(item.href!) && !hiddenHrefs.has(item.href!)
     ),
     [ALL_NAV_ITEMS, allowedPages]
   )
@@ -218,7 +207,7 @@ export default function Sidebar() {
   const isInEvaluations = pathname.startsWith("/admin/evaluations") || pathname.startsWith("/faculty/evaluations") || pathname.startsWith("/student/evaluations")
   const evaluationsVisible = evaluationChildren.some((c) => {
     if (allowedPages && allowedPages.includes(c.href!)) {
-      return !roleHiddenHrefs.has(c.href!)
+      return !hiddenHrefs.has(c.href!)
     }
     return false
   })
@@ -433,13 +422,13 @@ export default function Sidebar() {
             </p>
             {(mobilePopoverGroup === "#dashboard" ? visibleDashboardChildren : mobilePopoverGroup === "#data" ? dataChildren : mobilePopoverGroup === "#reports" ? reportChildren : evaluationChildren)
               .filter((c) => {
-                if (mobilePopoverGroup === "#dashboard") return (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!)
-                return (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!)
+                if (mobilePopoverGroup === "#dashboard") return (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!)
+                return (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!)
               })
               .map((child) => (
                 <Link
                   key={child.href}
-                  href={mobilePopoverGroup === "#dashboard" ? child.href! : toRoleHref(child.href!)}
+                  href={child.href!}
                   onClick={() => setMobilePopoverGroup(null)}
                   className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${
                     pathname === child.href
@@ -507,7 +496,7 @@ export default function Sidebar() {
                   {visibleDashboardChildren.map((child) => (
                       <Link
                         key={child.href}
-                        href={toRoleHref(child.href!)}
+                        href={child.href!}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           pathname === child.href
                             ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
@@ -585,11 +574,11 @@ export default function Sidebar() {
               {dataOpen && (
                 <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
                   {dataChildren
-                    .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!))
+                    .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                     .map((child) => (
                     <Link
                       key={child.href}
-                      href={toRoleHref(child.href!)}
+                      href={child.href!}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         pathname === child.href
                           ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
@@ -649,11 +638,11 @@ export default function Sidebar() {
               {reportsOpen && (
                 <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
                   {reportChildren
-                    .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!))
+                    .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                     .map((child) => (
                       <Link
                         key={child.href}
-                        href={toRoleHref(child.href!)}
+                        href={child.href!}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           pathname === child.href
                             ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
@@ -693,11 +682,11 @@ export default function Sidebar() {
             <div>
               {primaryRole === "STUDENT" ? (
                 evaluationChildren
-                  .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!))
+                  .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                   .map((child) => (
                     <Link
                       key={child.href}
-                      href={toRoleHref(child.href!)}
+                      href={child.href!}
                       className={`flex items-center gap-3 px-3 min-h-[44px] rounded-lg text-sm font-medium transition-colors ${
                         pathname === child.href
                           ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
@@ -747,7 +736,7 @@ export default function Sidebar() {
                   {evaluationsOpen && (
                     <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
                       {evaluationChildren
-                        .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!))
+                        .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                         .map((child) => (
                           <Link
                             key={child.href}
@@ -787,11 +776,11 @@ export default function Sidebar() {
             <>
               {primaryRole === "STUDENT" ? (
                 evaluationChildren
-                  .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!))
+                  .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                   .map((child) => (
                     <Link
                       key={child.href}
-                      href={toRoleHref(child.href!)}
+                      href={child.href!}
                       className={`flex items-center justify-center w-full min-h-[44px] rounded-lg text-sm font-medium transition-colors ${
                         pathname === child.href
                           ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
@@ -834,13 +823,13 @@ export default function Sidebar() {
             </p>
             {(popoverGroup === "dashboard" ? visibleDashboardChildren : popoverGroup === "data" ? dataChildren : popoverGroup === "reports" ? reportChildren : evaluationChildren)
               .filter((c) => {
-                if (popoverGroup === "dashboard") return (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!)
-                return (allowedPages && allowedPages.includes(c.href!)) && !roleHiddenHrefs.has(c.href!)
+                if (popoverGroup === "dashboard") return (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!)
+                return (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!)
               })
               .map((child) => (
                 <Link
                   key={child.href}
-                  href={popoverGroup === "dashboard" ? child.href! : toRoleHref(child.href!)}
+                  href={child.href!}
                   onClick={() => setPopoverGroup(null)}
                   className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${
                     pathname === child.href
