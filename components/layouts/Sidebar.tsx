@@ -16,12 +16,17 @@ interface NavItem {
   children?: NavItem[]
 }
 
-const reportChildren: NavItem[] = [
-  { href: "/admin/reports/health", label: "General Report", icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-  { href: "/admin/reports/distribution", label: "Distribution Report", icon: "M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" },
-  { href: "/admin/reports/evaluation-results", label: "Evaluation Results", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
-  { href: "/dean/reports/evaluation-results", label: "Evaluation Results", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
-]
+function getReportChildren(role: string | null): NavItem[] {
+  const base = role === "DEAN" ? "/dean" : "/admin"
+  return [
+    { href: `${base}/reports/health`, label: "General Report", icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { href: `${base}/reports/backlog`, label: "Backlog", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { href: `${base}/reports/coverage`, label: "Coverage", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
+    { href: `${base}/reports/demand`, label: "Demand", icon: "M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" },
+    { href: `${base}/reports/distribution`, label: "Distribution Report", icon: "M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" },
+    { href: `${base}/reports/responsiveness`, label: "Responsiveness", icon: "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" },
+  ]
+}
 
 const evaluationChildren: NavItem[] = [
   { href: "/student/evaluations", label: "My Evaluation", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" },
@@ -40,7 +45,6 @@ const dataChildren: NavItem[] = [
 ]
 
 const hiddenHrefs = new Set(['/admin/reports', '/admin/evaluations', '/admin/evaluations/periods', '/admin/evaluations/results', '/dean/reports'])
-const reportHrefs = new Set(reportChildren.map((c) => c.href!))
 const evaluationHrefs = new Set(evaluationChildren.map((c) => c.href!))
 const dataHrefs = new Set(dataChildren.map((c) => c.href!))
 
@@ -138,6 +142,8 @@ export default function Sidebar() {
   const role = su?.role as string | null
 
   const primaryRole = role ? getPrimaryRole(role) : null
+  const reportChildren = useMemo(() => getReportChildren(primaryRole), [primaryRole])
+  const reportHrefs = useMemo(() => new Set(reportChildren.map((c) => c.href!)), [reportChildren])
   const dashHref = primaryRole ? `/${primaryRole.toLowerCase()}` : "/"
   const allRoles = role ? role.split("|") : []
   const VALID_DASHBOARD_ROLES = ["ADMIN", "DEAN", "FACULTY", "STUDENT"]
