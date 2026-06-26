@@ -4,7 +4,7 @@ import { listStudentAppointments } from "@/features/appointments/appointments.se
 import { userRepository } from "@/lib/repositories/factory"
 import { OnboardingWalkthrough } from "@/features/users/components/OnboardingWalkthrough"
 import StudentDashboard from "@/features/users/components/StudentDashboard"
-import { hasRole } from "@/lib/utils/roles"
+
 
 interface StudentAppointment {
   id: string
@@ -20,7 +20,6 @@ interface StudentAppointment {
 export default async function StudentDashboardPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  if (!hasRole((session.user as Record<string, unknown>).role as string, "STUDENT")) redirect("/login")
 
   const userId = (session.user as Record<string, unknown>).id as string
   const dbUser = await userRepository.findById(userId)

@@ -9,7 +9,6 @@ import FacultyDeanDashboard from "@/features/appointments/components/FacultyDean
 export default async function DeanDashboard() {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  if (!hasRole((session.user as Record<string, unknown>).role as string, "DEAN")) redirect("/login")
 
   const deanId = (session.user as Record<string, unknown>).id as string
   const dbUser = await userRepository.findById(deanId)

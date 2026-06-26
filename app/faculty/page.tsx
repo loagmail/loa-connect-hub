@@ -10,7 +10,6 @@ export default async function FacultyDashboard() {
   const session = await auth()
   if (!session?.user) redirect("/login")
   const role = (session.user as Record<string, unknown>).role as string
-  if (!hasRole(role, "FACULTY") && !hasRole(role, "DEAN")) redirect("/login")
 
   const facultyId = (session.user as Record<string, unknown>).id as string
   const dbUser = await userRepository.findById(facultyId)

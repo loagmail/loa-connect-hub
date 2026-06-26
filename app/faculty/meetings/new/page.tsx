@@ -2,14 +2,13 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import StudentBooking from "@/features/appointments/components/StudentBooking"
 import { userRepository, departmentRepository } from "@/lib/repositories/factory"
-import { hasRole } from "@/lib/utils/roles"
+
 
 export default async function FacultyBookPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
 
   const role = (session.user as Record<string, unknown>).role as string
-  if (!hasRole(role, "FACULTY") && !hasRole(role, "DEAN")) redirect("/login")
 
   const currentUser = session.user as Record<string, unknown>
   const currentUserId = currentUser.id as string

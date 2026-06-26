@@ -5,7 +5,7 @@ import { FacultyAppointmentTabs } from "@/features/appointments/components/Facul
 import SearchBar from "@/components/ui/SearchBar"
 import { getMeetingsForUser } from "@/features/appointments/appointments.controller"
 import { getWeekRange, getMonthRange } from "@/lib/utils/date"
-import { hasRole } from "@/lib/utils/roles"
+
 import SegmentedControl from "@/components/ui/SegmentedControl"
 
 interface ParticipantData {
@@ -63,7 +63,6 @@ export default async function MeetingsPage(props: {
   const session = await auth()
   if (!session?.user) redirect("/login")
   const role = (session.user as Record<string, unknown>).role as string
-  if (!hasRole(role, "FACULTY") && !hasRole(role, "DEAN")) redirect("/login")
 
   const searchParams = await props.searchParams
   const hasQueryParams = !!searchParams && Object.keys(searchParams).length > 0

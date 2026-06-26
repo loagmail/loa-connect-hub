@@ -144,10 +144,29 @@ export default function Sidebar() {
   const dashboardRoles = allRoles.filter((r) => VALID_DASHBOARD_ROLES.includes(r))
   const isMultiRole = dashboardRoles.length > 1
 
+  const dashboardChildren = useMemo(
+    () =>
+      dashboardRoles.map((r) => ({
+        href: `/${r.toLowerCase()}`,
+        label: `${r.charAt(0) + r.slice(1).toLowerCase()} Dashboard`,
+        icon: DASHBOARD_ICON,
+      })),
+    [dashboardRoles]
+  )
+  const visibleDashboardChildren = useMemo(
+    () => dashboardChildren.filter((c) => allowedPages && allowedPages.includes(c.href!)),
+    [dashboardChildren, allowedPages]
+  )
+  const singleDashboard = visibleDashboardChildren.length === 1 ? visibleDashboardChildren[0] : null
+  const dashboardHrefs = useMemo(() => new Set(dashboardChildren.map((c) => c.href!)), [dashboardChildren])
+  const isInDashboard = dashboardHrefs.has(pathname)
+  const dashboardVisible = visibleDashboardChildren.length > 1
+  const dashboardOpen = expandedGroups.has("dashboard") || isInDashboard
+
   const ALL_NAV_ITEMS = useMemo<(NavItem & { group?: string })[]>(() => {
     const items: (NavItem & { group?: string })[] = []
-    if (!isMultiRole) {
-      items.push({ href: dashHref, label: "Dashboard", icon: DASHBOARD_ICON })
+    if (!isMultiRole || singleDashboard) {
+      items.push({ href: singleDashboard?.href ?? dashHref, label: "Dashboard", icon: DASHBOARD_ICON })
     }
     items.push(
       { href: "/student/meetings", label: "Consultations", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
@@ -162,36 +181,22 @@ export default function Sidebar() {
     { href: "/admin/audit-trail", label: "Audit Trail", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
     )
     return items
-  }, [isMultiRole, dashboardRoles, dashHref])
-
-  const dashboardChildren = useMemo(
-    () =>
-      dashboardRoles.map((r) => ({
-        href: `/${r.toLowerCase()}`,
-        label: `${r.charAt(0) + r.slice(1).toLowerCase()} Dashboard`,
-        icon: DASHBOARD_ICON,
-      })),
-    [dashboardRoles]
-  )
-  const dashboardHrefs = useMemo(() => new Set(dashboardChildren.map((c) => c.href!)), [dashboardChildren])
-  const isInDashboard = dashboardHrefs.has(pathname)
-  const dashboardVisible = isMultiRole
-  const dashboardOpen = expandedGroups.has("dashboard") || isInDashboard
+  }, [isMultiRole, dashboardRoles, dashHref, singleDashboard])
 
   const flatItems = useMemo(() =>
     ALL_NAV_ITEMS.filter(
-      (item) => (item.href === dashHref || (allowedPages && allowedPages.includes(item.href!))) && !reportHrefs.has(item.href!) && !evaluationHrefs.has(item.href!) && !dataHrefs.has(item.href!) && !hiddenHrefs.has(item.href!)
+      (item) => (allowedPages && allowedPages.includes(item.href!)) && !reportHrefs.has(item.href!) && !evaluationHrefs.has(item.href!) && !dataHrefs.has(item.href!) && !hiddenHrefs.has(item.href!)
     ),
-    [ALL_NAV_ITEMS, allowedPages, dashHref]
+    [ALL_NAV_ITEMS, allowedPages]
   )
 
   const isInReports = pathname.startsWith("/admin/reports") || pathname.startsWith("/dean/reports") || pathname.startsWith("/faculty/reports")
-  const reportsVisible = reportChildren.some((c) => c.href === dashHref || (allowedPages && allowedPages.includes(c.href!)))
+  const reportsVisible = reportChildren.some((c) => allowedPages && allowedPages.includes(c.href!))
   const reportsOpen = expandedGroups.has("reports") || isInReports
 
   const isInEvaluations = pathname.startsWith("/admin/evaluations") || pathname.startsWith("/faculty/evaluations") || pathname.startsWith("/student/evaluations")
   const evaluationsVisible = evaluationChildren.some((c) => {
-    if (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) {
+    if (allowedPages && allowedPages.includes(c.href!)) {
       return !hiddenHrefs.has(c.href!)
     }
     return false
@@ -199,7 +204,7 @@ export default function Sidebar() {
   const evaluationsOpen = expandedGroups.has("evaluations") || isInEvaluations
 
   const isInData = pathname.startsWith("/admin/data")
-  const dataVisible = dataChildren.some((c) => c.href === dashHref || (allowedPages && allowedPages.includes(c.href!)))
+  const dataVisible = dataChildren.some((c) => allowedPages && allowedPages.includes(c.href!))
   const dataOpen = expandedGroups.has("data") || isInData
 
   const tabItems = useMemo(() => {
@@ -405,10 +410,10 @@ export default function Sidebar() {
             <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-tertiary">
               {mobilePopoverGroup === "#dashboard" ? "Dashboard" : mobilePopoverGroup === "#data" ? "Data Management" : mobilePopoverGroup === "#reports" ? "Reports" : "Evaluations"}
             </p>
-            {(mobilePopoverGroup === "#dashboard" ? dashboardChildren : mobilePopoverGroup === "#data" ? dataChildren : mobilePopoverGroup === "#reports" ? reportChildren : evaluationChildren)
+            {(mobilePopoverGroup === "#dashboard" ? visibleDashboardChildren : mobilePopoverGroup === "#data" ? dataChildren : mobilePopoverGroup === "#reports" ? reportChildren : evaluationChildren)
               .filter((c) => {
-                if (mobilePopoverGroup === "#dashboard") return !hiddenHrefs.has(c.href!)
-                return (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!)
+                if (mobilePopoverGroup === "#dashboard") return (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!)
+                return (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!)
               })
               .map((child) => (
                 <Link
@@ -454,24 +459,6 @@ export default function Sidebar() {
 
           {/* DUPLICATE STUDENT-SPECIFIC TOP EVALUATIONS BLOCK REMOVED FROM HERE */}
 
-          {flatItems.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href!}
-              className={`flex items-center min-h-[44px] rounded-lg text-sm font-medium transition-colors ${
-                pathname === link.href
-                  ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
-                  : "text-slate-300 hover:bg-slate-800/50 hover:text-white border border-transparent"
-              } ${collapsed ? "justify-center px-0" : "gap-3 px-3"}`}
-              title={collapsed ? link.label : undefined}
-            >
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d={link.icon!} />
-              </svg>
-              {!collapsed && link.label}
-            </Link>
-          ))}
-
           {dashboardVisible && !collapsed && (
             <div>
               <button
@@ -496,9 +483,7 @@ export default function Sidebar() {
 
               {dashboardOpen && (
                 <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
-                  {dashboardChildren
-                    .filter((c) => !hiddenHrefs.has(c.href!))
-                    .map((child) => (
+                  {visibleDashboardChildren.map((child) => (
                       <Link
                         key={child.href}
                         href={child.href!}
@@ -536,6 +521,24 @@ export default function Sidebar() {
             </button>
           )}
 
+          {flatItems.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href!}
+              className={`flex items-center min-h-[44px] rounded-lg text-sm font-medium transition-colors ${
+                pathname === link.href
+                  ? "bg-gold-600/10 text-gold-400 border border-gold-500/20"
+                  : "text-slate-300 hover:bg-slate-800/50 hover:text-white border border-transparent"
+              } ${collapsed ? "justify-center px-0" : "gap-3 px-3"}`}
+              title={collapsed ? link.label : undefined}
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={link.icon!} />
+              </svg>
+              {!collapsed && link.label}
+            </Link>
+          ))}
+
           {dataVisible && !collapsed && (
             <div>
               <button
@@ -561,7 +564,7 @@ export default function Sidebar() {
               {dataOpen && (
                 <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
                   {dataChildren
-                    .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
+                    .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                     .map((child) => (
                       <Link
                         key={child.href}
@@ -625,7 +628,7 @@ export default function Sidebar() {
               {reportsOpen && (
                 <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
                   {reportChildren
-                    .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
+                    .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                     .map((child) => (
                       <Link
                         key={child.href}
@@ -669,7 +672,7 @@ export default function Sidebar() {
             <div>
               {primaryRole === "STUDENT" ? (
                 evaluationChildren
-                  .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
+                  .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                   .map((child) => (
                     <Link
                       key={child.href}
@@ -723,7 +726,7 @@ export default function Sidebar() {
                   {evaluationsOpen && (
                     <div className="ml-3 mt-1 space-y-0.5 border-l border-slate-800 pl-2">
                       {evaluationChildren
-                        .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
+                        .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                         .map((child) => (
                           <Link
                             key={child.href}
@@ -763,7 +766,7 @@ export default function Sidebar() {
             <>
               {primaryRole === "STUDENT" ? (
                 evaluationChildren
-                  .filter((c) => (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!))
+                  .filter((c) => (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!))
                   .map((child) => (
                     <Link
                       key={child.href}
@@ -808,10 +811,10 @@ export default function Sidebar() {
             <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-tertiary">
               {popoverGroup === "dashboard" ? "Dashboard" : popoverGroup === "data" ? "Data Management" : popoverGroup === "reports" ? "Reports" : "Evaluations"}
             </p>
-            {(popoverGroup === "dashboard" ? dashboardChildren : popoverGroup === "data" ? dataChildren : popoverGroup === "reports" ? reportChildren : evaluationChildren)
+            {(popoverGroup === "dashboard" ? visibleDashboardChildren : popoverGroup === "data" ? dataChildren : popoverGroup === "reports" ? reportChildren : evaluationChildren)
               .filter((c) => {
-                if (popoverGroup === "dashboard") return !hiddenHrefs.has(c.href!)
-                return (c.href === dashHref || (allowedPages && allowedPages.includes(c.href!))) && !hiddenHrefs.has(c.href!)
+                if (popoverGroup === "dashboard") return (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!)
+                return (allowedPages && allowedPages.includes(c.href!)) && !hiddenHrefs.has(c.href!)
               })
               .map((child) => (
                 <Link

@@ -30,7 +30,7 @@ function scanRoutes(): { pages: string[]; api: string[] } {
       } else if (entry.name === "page.tsx" || entry.name === "page.ts" || entry.name === "page.js") {
         const relative = path.relative(appDir, path.dirname(fullPath))
         const urlPath = "/" + relative.replace(/\\/g, "/")
-        if (!urlPath.startsWith("/api/")) pages.push(urlPath)
+        if (!urlPath.startsWith("/api/") && !urlPath.includes("/m/")) pages.push(urlPath)
       }
     }
   }
@@ -142,9 +142,13 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "pages must be an array" }, { status: 400 })
   }
 
-  if (groupName === "ADMIN" && pages !== undefined) {
+  const normalizePath = (p: string) => p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p
+  const stripMobile = (p: string) => p.includes("/m/") ? "" : p
+  const dedupedPages = pages ? [...new Set(pages.map(normalizePath).map(stripMobile).filter(Boolean))] : pages
+
+  if (groupName === "ADMIN" && dedupedPages !== undefined) {
     const required = ["/admin", "/admin/users", "/admin/access-config", "/admin/data-management"]
-    const missing = required.filter((r) => !pages.includes(r))
+    const missing = required.filter((r) => !dedupedPages.includes(r))
     if (missing.length > 0) {
       return NextResponse.json({
         error: `Cannot remove required ADMIN pages: ${missing.join(", ")}`,
@@ -152,14 +156,14 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  if (pages !== undefined && groupName !== "ADMIN") {
+  if (dedupedPages !== undefined && groupName !== "ADMIN") {
     for (const p of ["/faq", "/403", "/admin/etl-hub", "/student/evaluations/thank-you"]) {
-      if (!pages.includes(p)) pages.push(p)
+      if (!dedupedPages.includes(p)) dedupedPages.push(p)
     }
   }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date().toISOString() }
-  if (pages !== undefined) updateData.pages = pages
+  if (dedupedPages !== undefined) updateData.pages = dedupedPages
 
   const { data, error } = await supabase
     .from("group_access")

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { loadAccessConfig } from "@/lib/access"
+import { getPrimaryRole } from "@/lib/utils/roles"
 import { supabase } from "@/lib/supabase"
 
 export async function GET() {
@@ -14,15 +15,8 @@ export async function GET() {
   const userId = su.id as string
 
   const config = await loadAccessConfig()
-
-  // Collect pages from ALL user roles, not just the primary one
-  const pages = new Set<string>()
-  const roleList = role.split("|")
-  for (const r of roleList) {
-    if (config[r]?.pages) {
-      for (const p of config[r].pages) pages.add(p)
-    }
-  }
+  const topRole = role ? getPrimaryRole(role) : "GUEST"
+  const pages = new Set(config[topRole]?.pages ?? [])
 
   // Merge in user-level grants (Layer 1 overrides)
   try {

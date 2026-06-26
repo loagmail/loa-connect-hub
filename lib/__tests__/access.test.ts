@@ -7,7 +7,7 @@ vi.mock("@/lib/supabase", () => ({
 }))
 
 import { supabase } from "@/lib/supabase"
-import { hasPageAccess, userGroup, clearAccessConfigCache } from "@/lib/access"
+import { hasPageAccess, userGroup } from "@/lib/access"
 
 function mockSupabaseResponse(rows: { groupName: string; pages: string[] }[]) {
   const mockSelect = vi.fn().mockResolvedValue({ data: rows, error: null })
@@ -16,7 +16,6 @@ function mockSupabaseResponse(rows: { groupName: string; pages: string[] }[]) {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  clearAccessConfigCache()
 })
 
 describe("userGroup", () => {
@@ -61,7 +60,7 @@ describe("hasPageAccess", () => {
     await expect(hasPageAccess("NONEXISTENT", "/")).resolves.toBe(false)
   })
 
-  it("uses cached config on subsequent calls", async () => {
+  it("queries the DB on every call (no caching)", async () => {
     const select = vi.fn().mockResolvedValue({
       data: [{ groupName: "STUDENT", pages: ["/student"] }],
       error: null,
@@ -70,22 +69,6 @@ describe("hasPageAccess", () => {
 
     await hasPageAccess("STUDENT", "/student")
     await hasPageAccess("STUDENT", "/student")
-
-    expect(select).toHaveBeenCalledTimes(1)
-  })
-
-  it("falls back to cache when DB fails (after first successful load)", async () => {
-    const select = vi.fn()
-    select.mockResolvedValueOnce({
-      data: [{ groupName: "STUDENT", pages: ["/student/book"] }],
-      error: null,
-    })
-    select.mockRejectedValueOnce(new Error("Network error"))
-    ;(supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({ select })
-
-    await hasPageAccess("STUDENT", "/student/book")
-    clearAccessConfigCache()
-    await hasPageAccess("STUDENT", "/student/book")
 
     expect(select).toHaveBeenCalledTimes(2)
   })

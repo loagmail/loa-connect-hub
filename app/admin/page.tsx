@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { supabase } from "@/lib/db"
-import { hasRole } from "@/lib/utils/roles"
 import { getDatabaseSize, formatBytes, getStoragePercentage } from "@/features/admin-data/database-size.service"
 import { auditLogRepository } from "@/lib/repositories/factory"
 import type { AuditLogData } from "@/lib/types"
@@ -29,7 +28,6 @@ function StatCard({ label, value, icon, color }: StatCardProps) {
 export default async function AdminDashboard() {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  if (!hasRole((session.user as Record<string, unknown>).role as string, "ADMIN")) redirect("/login")
 
   const [dbSize, { logs: recentLogs }] = await Promise.all([
     getDatabaseSize(),

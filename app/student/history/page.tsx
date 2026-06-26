@@ -5,7 +5,7 @@ import { userRepository } from "@/lib/repositories/factory"
 import { getMyEvaluations } from "@/features/evaluations/evaluations.service"
 import { supabase } from "@/lib/db"
 import ConsultationHistory from "@/features/appointments/components/ConsultationHistory"
-import { hasRole } from "@/lib/utils/roles"
+
 
 interface HistoryAppointment {
   id: string
@@ -36,7 +36,6 @@ interface AuditEvent {
 export default async function StudentHistoryPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  if (!hasRole((session.user as Record<string, unknown>).role as string, "STUDENT")) redirect("/login")
 
   const userId = (session.user as Record<string, unknown>).id as string
   const dbUser = await userRepository.findById(userId)

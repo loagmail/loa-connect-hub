@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import StudentBooking from "@/features/appointments/components/StudentBooking"
 import { userRepository, availabilityRuleRepository, departmentRepository } from "@/lib/repositories/factory"
-import { hasRole } from "@/lib/utils/roles"
+
 import type { AvailabilityRuleData } from "@/lib/types"
 
 interface FacultyWithRules {
@@ -17,7 +17,6 @@ interface FacultyWithRules {
 export default async function StudentBookPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  if (!hasRole((session.user as Record<string, unknown>).role as string, "STUDENT")) redirect("/login")
 
   const facultyUsers = await userRepository.listByRole("FACULTY")
 const deanUsers = await userRepository.listByRole("DEAN")

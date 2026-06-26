@@ -45,7 +45,7 @@ async function checkUserPermission(userId: string, resource: string): Promise<bo
 
 const PUBLIC_PATHS = new Set([
   "/login", "/activate", "/forgot-password", "/change-password",
-  "/setup-password", "/403",
+  "/setup-password", "/403", "/faq",
 ])
 
 const PUBLIC_PREFIXES = ["/_next", "/api/auth", "/api/test-auth"]
@@ -113,16 +113,7 @@ export async function proxy(request: NextRequest) {
   // Authenticated non-admin API requests are allowed by default
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
-  // Standalone evaluation page — any authenticated user can access
-  if (pathname.startsWith("/evaluate")) return NextResponse.next();
-
-  // Access config page — any authenticated user can view
-  if (pathname === "/admin/access-config" || pathname.startsWith("/admin/access-config/")) return NextResponse.next();
-
-  // Student pages — always accessible if the user is a STUDENT
-  if (group === "STUDENT" && (pathname.startsWith("/student") || pathname === "/faq")) return NextResponse.next();
-
-  // Layer 2: DB access-config merged with defaults
+  // Layer 2: DB access-config merged with defaults — highest-priority role controls
   const config = await loadAccessConfig();
   const entry = config[group];
   const dbAccess = entry?.pages?.some((p) => pathname === p || pathname.startsWith(p + "/"));

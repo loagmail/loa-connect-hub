@@ -5,7 +5,7 @@ import { AppointmentCard } from "@/features/appointments/components/AppointmentC
 import { FacultyAppointmentTabs } from "@/features/appointments/components/FacultyAppointmentTabs"
 import { listStudentAppointments } from "@/features/appointments/appointments.service"
 import { getWeekRange, getMonthRange } from "@/lib/utils/date"
-import { hasRole } from "@/lib/utils/roles"
+
 import SegmentedControl from "@/components/ui/SegmentedControl"
 
 interface StudentAppointment {
@@ -33,7 +33,6 @@ export default async function StudentMeetings(props: {
   const session = await auth()
 
   if (!session?.user) redirect("/login")
-  if (!hasRole((session.user as Record<string, unknown>).role as string, "STUDENT")) redirect("/login")
 
   const searchParams = await props.searchParams
   const hasQueryParams = !!searchParams && Object.keys(searchParams).length > 0

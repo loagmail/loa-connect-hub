@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react"
 import { useEffect, useState, useRef } from "react"
 import { redirect } from "next/navigation"
 import { useApiGet } from "@/lib/api/client"
-import { hasRole } from "@/lib/utils/roles"
+
 import LockedTab from "@/components/ui/LockedTab"
 import ErrorState from "@/components/ui/ErrorState"
 import ErrorBoundary from "@/components/ui/ErrorBoundary"
@@ -56,7 +56,6 @@ export default function AvailabilityPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") redirect("/login")
-    if (status === "authenticated" && !hasRole((session?.user as Record<string, unknown>)?.role as string, "FACULTY") && !hasRole((session?.user as Record<string, unknown>)?.role as string, "DEAN")) redirect("/login")
   }, [status, session])
 
   const activeRules = rules.filter((r) => {

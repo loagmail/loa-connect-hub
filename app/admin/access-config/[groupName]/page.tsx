@@ -7,6 +7,7 @@ import Skeleton from "@/components/ui/Skeleton"
 import SubmitButton from "@/components/ui/SubmitButton"
 import ErrorState from "@/components/ui/ErrorState"
 import ErrorBoundary from "@/components/ui/ErrorBoundary"
+import { invalidate } from "@/lib/api/client"
 
 interface GroupAccess {
   groupName: string
@@ -80,16 +81,19 @@ export default function EditAccessGroupPage() {
     )
   }
 
+  const normalizePath = (p: string) => p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p
+
   const handleSave = async () => {
     if (!group) return
     setSaving(true)
     setSaved(false)
+    const deduped = [...new Set(selectedPages.map(normalizePath))]
 
     try {
       const res = await fetch("/api/admin/access-config", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupName: group.groupName, pages: selectedPages }),
+        body: JSON.stringify({ groupName: group.groupName, pages: deduped }),
       })
 
       if (res.ok) {
@@ -98,6 +102,7 @@ export default function EditAccessGroupPage() {
           setGroup(data.group)
           setSelectedPages(data.group.pages)
         }
+        invalidate("/api/auth/access")
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
       } else {
@@ -109,9 +114,10 @@ export default function EditAccessGroupPage() {
     }
   }
 
+  const norm = (a: string[]) => [...new Set(a.map(normalizePath))].sort()
   const hasChanges =
     group &&
-    JSON.stringify([...selectedPages].sort()) !== JSON.stringify([...group.pages].sort())
+    JSON.stringify(norm(selectedPages)) !== JSON.stringify(norm(group.pages))
 
   if (loading) {
     return (
