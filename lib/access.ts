@@ -4,7 +4,7 @@ interface GroupAccessEntry {
   pages: string[]
 }
 
-const DEFAULT_CONFIG: Record<string, GroupAccessEntry> = {
+export const DEFAULT_CONFIG: Record<string, GroupAccessEntry> = {
   ADMIN: {
     pages: ["/", "/admin", "/admin/data-management", "/admin/users", "/admin/users/deleted", "/admin/access-config", "/admin/user-permissions", "/admin/departments", "/admin/data/users", "/admin/data/academic-infrastructure", "/admin/reports", "/admin/reports/health", "/admin/reports/demand", "/admin/reports/responsiveness", "/admin/reports/backlog", "/admin/evaluations", "/admin/evaluations/results", "/admin/audit-trail"],
   },
@@ -32,7 +32,13 @@ export async function loadAccessConfig(): Promise<Record<string, GroupAccessEntr
 
     const map: Record<string, GroupAccessEntry> = { ...DEFAULT_CONFIG }
     for (const row of data || []) {
-      map[row.groupName] = { pages: row.pages || [] }
+      if (row.groupName === "ADMIN") {
+        // ADMIN access is hardcoded — only persist additional non-admin pages
+        const nonAdminPages = (row.pages || []).filter((p: string) => !p.startsWith("/admin") && p !== "/")
+        map.ADMIN = { pages: [...DEFAULT_CONFIG.ADMIN.pages, ...nonAdminPages] }
+      } else {
+        map[row.groupName] = { pages: row.pages || [] }
+      }
     }
 
     return map

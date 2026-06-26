@@ -324,12 +324,24 @@ function UserPermissionsTab({ readOnly: _readOnly }: { readOnly?: boolean }) {
 
   const handleSelectUser = (user: UserRow) => { setSelectedUser(user); loadPermissions(user.id); setSaved(false) }
 
+  const isSelectedUserAdmin = selectedUser ? prim(selectedUser.role ?? "") === "ADMIN" : false
+
   const togglePermission = (path: string) => {
+    if (isSelectedUserAdmin && path.startsWith("/admin")) return
     setPermissions((prev) => {
       const existing = prev.find((p) => p.resource_path === path)
-      if (existing && existing.grants.includes("access")) return prev.filter((p) => p.resource_path !== path)
-      const filtered = prev.filter((p) => p.resource_path !== path)
-      return [...filtered, { resource_path: path, grants: ["access"], denies: [] }]
+      if (!existing) {
+        // inherit → grant
+        return [...prev, { resource_path: path, grants: ["access"], denies: [] }]
+      }
+      if (existing.grants.includes("access")) {
+        // grant → deny
+        return prev.map((p) =>
+          p.resource_path === path ? { ...p, grants: [], denies: ["access"] } : p
+        )
+      }
+      // deny → inherit (remove)
+      return prev.filter((p) => p.resource_path !== path)
     })
   }
 
@@ -346,6 +358,9 @@ function UserPermissionsTab({ readOnly: _readOnly }: { readOnly?: boolean }) {
   }
 
   const eff = (path: string): "granted" | "denied" | "none" => {
+    const isAdminUser = selectedUser ? prim(selectedUser.role ?? "") === "ADMIN" : false
+    // ADMIN always has hardcoded access to admin paths
+    if (isAdminUser && path.startsWith("/admin")) return "granted"
     const perm = permissions.find((p) => p.resource_path === path)
     if (perm?.denies.includes("access")) return "denied"
     if (perm?.grants.includes("access")) return "granted"
@@ -470,15 +485,24 @@ function UserPermissionsTab({ readOnly: _readOnly }: { readOnly?: boolean }) {
                 <div className="space-y-0.5">
                   {paths.map((path) => {
                     const perm = permissions.find((p) => p.resource_path === path)
-                    const granted = perm?.grants.includes("access") ?? false
+                    const isAdminLocked = isSelectedUserAdmin && path.startsWith("/admin")
+                    const state = isAdminLocked ? "granted" : perm?.grants.includes("access") ? "granted" : perm?.denies.includes("access") ? "revoked" : "inherit"
                     const effective = eff(path)
                     return (
-                      <label key={path} className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-xs hover:bg-surface-hover ${granted ? "bg-amber-50 dark:bg-amber-900/10" : ""}`}>
-                        <input type="checkbox" checked={granted} onChange={() => togglePermission(path)}
-                          disabled={!selectedUser} className="rounded border-strong text-gold-600 focus:ring-gold-500 shrink-0" />
+                      <label key={path} className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-xs hover:bg-surface-hover ${selectedUser ? "" : "opacity-50 pointer-events-none"}`}>
+                        <button disabled={!selectedUser || isAdminLocked} onClick={() => togglePermission(path)}
+                          className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors ${
+                            state === "granted" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 ring-1 ring-emerald-500/40" :
+                            state === "revoked" ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 ring-1 ring-red-500/40" :
+                            "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 ring-1 ring-transparent hover:ring-slate-400/30"
+                          }`}
+                          title={isAdminLocked ? "Always granted for ADMIN role" : state === "granted" ? "Click to revoke" : state === "revoked" ? "Click to reset to inherit" : "Click to grant"}
+                        >
+                          {state === "granted" ? "GRANTED" : state === "revoked" ? "REVOKED" : "INHERIT"}
+                        </button>
                         <div className="flex-1 min-w-0">
                           <span className="block truncate">{lab(path)}</span>
-                          <span className="block text-[10px] text-tertiary font-mono truncate" title={path}>{path}</span>
+                          <span className="block text-[10px] text-tertiary font-mono break-all" title={path}>{path}</span>
                         </div>
                         {selectedUser && (
                           <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-px rounded-full ${effective === "granted" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" : effective === "denied" ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400" : "bg-surface text-tertiary"}`}>

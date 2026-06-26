@@ -32,7 +32,6 @@ const badgeColors: Record<string, string> = {
   GUEST: "bg-surface text-secondary",
 }
 
-const ADMIN_LOCKED_PAGES = new Set(["/admin", "/admin/users", "/admin/access-config", "/admin/data-management"])
 const ALWAYS_LOCKED_PAGES = new Set(["/faq", "/403", "/admin/etl-hub", "/student/evaluations/thank-you"])
 
 export default function EditAccessGroupPage() {
@@ -60,7 +59,18 @@ export default function EditAccessGroupPage() {
         const g = (data.groups || []).find((grp: GroupAccess) => grp.groupName === groupName)
         if (g) {
           setGroup(g)
-          setSelectedPages(g.pages)
+          if (g.groupName === "ADMIN" && data.catalog?.pages) {
+            // ADMIN access is hardcoded — merge all admin paths into selected as locked
+            const adminPaths: string[] = []
+            for (const items of Object.values(data.catalog.pages as Record<string, CatalogItem[]>)) {
+              for (const item of items) {
+                if (item.path.startsWith("/admin")) adminPaths.push(item.path)
+              }
+            }
+            setSelectedPages([...new Set([...g.pages, ...adminPaths])])
+          } else {
+            setSelectedPages(g.pages)
+          }
         }
         if (data.catalog) setCatalog(data.catalog)
         const role = me?.user?.role ?? ""
@@ -71,11 +81,11 @@ export default function EditAccessGroupPage() {
   }, [groupName])
 
   const isLockedPage = (p: string) =>
-    (group?.groupName === "ADMIN" && ADMIN_LOCKED_PAGES.has(p)) || ALWAYS_LOCKED_PAGES.has(p)
+    (group?.groupName === "ADMIN" && p.startsWith("/admin")) || ALWAYS_LOCKED_PAGES.has(p)
 
   const togglePage = (path: string) => {
     if (readOnly) return
-    if (isLockedPage(path) && selectedPages.includes(path)) return
+    if (isLockedPage(path)) return
     setSelectedPages((prev) =>
       prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
     )
@@ -87,7 +97,11 @@ export default function EditAccessGroupPage() {
     if (!group) return
     setSaving(true)
     setSaved(false)
-    const deduped = [...new Set(selectedPages.map(normalizePath))]
+    let deduped = [...new Set(selectedPages.map(normalizePath))]
+    // ADMIN access is hardcoded — only persist additional non-admin pages
+    if (group.groupName === "ADMIN") {
+      deduped = deduped.filter((p) => !p.startsWith("/admin"))
+    }
 
     try {
       const res = await fetch("/api/admin/access-config", {
@@ -161,38 +175,85 @@ export default function EditAccessGroupPage() {
           <span className="text-xs text-tertiary">Access Group</span>
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex gap-1 p-1 bg-surface-tertiary rounded-xl">
-              <button
-                onClick={() => setPageTab("pages")}
-                className={`shrink-0 text-xs font-semibold px-4 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
-                  pageTab === "pages"
-                    ? "bg-surface text-amber-600 shadow-ios-sm"
-                    : "text-tertiary hover:text-secondary"
-                }`}
-              >
-                Pages
-              </button>
-              <button
-                onClick={() => setPageTab("api")}
-                className={`shrink-0 text-xs font-semibold px-4 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
-                  pageTab === "api"
-                    ? "bg-surface text-amber-600 shadow-ios-sm"
-                    : "text-tertiary hover:text-secondary"
-                }`}
-              >
-                API
-              </button>
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex gap-1 p-1 bg-surface-tertiary rounded-xl">
+                <button
+                  onClick={() => setPageTab("pages")}
+                  className={`shrink-0 text-xs font-semibold px-4 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
+                    pageTab === "pages"
+                      ? "bg-surface text-amber-600 shadow-ios-sm"
+                      : "text-tertiary hover:text-secondary"
+                  }`}
+                >
+                  Pages
+                </button>
+                <button
+                  onClick={() => setPageTab("api")}
+                  className={`shrink-0 text-xs font-semibold px-4 py-1.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
+                    pageTab === "api"
+                      ? "bg-surface text-amber-600 shadow-ios-sm"
+                      : "text-tertiary hover:text-secondary"
+                  }`}
+                >
+                  API
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                {catalog && (() => {
+                  const rolePrefixes = ["/admin/", "/dean/", "/faculty/", "/student/"]
+                  const suffixAfterRolePrefix = (p: string) => {
+                    for (const prefix of rolePrefixes) {
+                      if (p.startsWith(prefix)) return p.slice(prefix.length)
+                    }
+                    return null
+                  }
+                  const isApi = (p: string) => p.startsWith("/api/")
+                  const visibleToggleable = Object.entries(catalog.pages).reduce<string[]>((acc, [category, items]) => {
+                    for (const item of items) {
+                  if (isLockedPage(item.path) || readOnly) continue
+                      if (pageTab === "api" && !isApi(item.path)) continue
+                      if (pageTab === "pages" && isApi(item.path)) continue
+                      if (search.trim()) {
+                        const q = search.toLowerCase()
+                        if (!item.label.toLowerCase().includes(q) && !item.path.toLowerCase().includes(q) && !item.description.toLowerCase().includes(q)) continue
+                      }
+                      acc.push(item.path)
+                    }
+                    return acc
+                  }, [])
+                  const allSelected = visibleToggleable.length > 0 && visibleToggleable.every((v) => selectedPages.includes(v))
+                  if (visibleToggleable.length > 0) {
+                    return (
+                      <button
+                        onClick={() => {
+                          if (allSelected) {
+                            setSelectedPages((prev) => prev.filter((p) => !visibleToggleable.includes(p)))
+                          } else {
+                            setSelectedPages((prev) => {
+                              const next = new Set(prev)
+                              for (const v of visibleToggleable) next.add(v)
+                              return Array.from(next)
+                            })
+                          }
+                        }}
+                        className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-surface text-amber-600 hover:bg-surface-hover border border-strong transition-colors"
+                      >
+                        {allSelected ? "Deselect all" : "Select all"}
+                      </button>
+                    )
+                  }
+                  return null
+                })()}
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Filter pages..."
+                  className="input text-xs w-48 px-3 py-1.5 rounded-lg border border-strong"
+                />
+              </div>
             </div>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Filter pages..."
-              className="input text-xs w-48 px-3 py-1.5 rounded-lg border border-strong"
-            />
-          </div>
 
           {catalog && (() => {
             const rolePrefixes = ["/admin/", "/dean/", "/faculty/", "/student/"]
@@ -232,7 +293,7 @@ export default function EditAccessGroupPage() {
                 if (pageTab === "api" && !isApi(item.path)) return false
                 if (pageTab === "pages" && isApi(item.path)) return false
                 if (isMirroredDuplicate(category, item.path)) return false
-                const lockedFilter = !((group.groupName === "ADMIN" && ADMIN_LOCKED_PAGES.has(item.path)) || ALWAYS_LOCKED_PAGES.has(item.path)) || selectedPages.includes(item.path)
+                const lockedFilter = !isLockedPage(item.path) || selectedPages.includes(item.path)
                 if (!lockedFilter) return false
                 if (!search.trim()) return true
                 const q = search.toLowerCase()
@@ -258,7 +319,7 @@ export default function EditAccessGroupPage() {
                       {category}
                     </p>
                     {items.map((item) => {
-                      const locked = (group.groupName === "ADMIN" && ADMIN_LOCKED_PAGES.has(item.path)) || ALWAYS_LOCKED_PAGES.has(item.path)
+                      const locked = isLockedPage(item.path)
                       return (
                         <label
                           key={item.path}

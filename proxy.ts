@@ -91,11 +91,16 @@ export async function proxy(request: NextRequest) {
     if (pathname.startsWith('/api/')) {
       return new NextResponse(JSON.stringify({
         error: 'Forbidden',
-        message: 'Access denied by user-permissions configuration.',
+        message: 'This API route is locked in the access configuration.',
         path: pathname,
       }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
     return NextResponse.redirect(new URL("/403", request.url));
+  }
+
+  // ADMIN role has hardcoded access to all /admin/* page routes (non-API)
+  if (isAdmin && (pathname === "/admin" || pathname.startsWith("/admin/"))) {
+    return NextResponse.next();
   }
 
   // Admin API routes require ADMIN role or Layer 1 grant above
@@ -105,7 +110,7 @@ export async function proxy(request: NextRequest) {
     if (isAdmin) return NextResponse.next();
     return new NextResponse(JSON.stringify({
       error: 'Forbidden',
-      message: 'This API endpoint requires the ADMIN role or a user-permissions grant for this path.',
+      message: 'This API route requires the ADMIN role or a user-permissions grant.',
       path: pathname,
     }), { status: 403, headers: { 'Content-Type': 'application/json' } });
   }
@@ -116,7 +121,10 @@ export async function proxy(request: NextRequest) {
   // Layer 2: DB access-config merged with defaults — highest-priority role controls
   const config = await loadAccessConfig();
   const entry = config[group];
-  const dbAccess = entry?.pages?.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  // Normalize role-prefixed paths (e.g. /dean/reports/health) to /admin/ equivalent
+  // since the config stores canonical /admin/ paths from the scanned catalog
+  const normalized = group !== "ADMIN" ? pathname.replace(new RegExp(`^/${group.toLowerCase()}/`), "/admin/") : pathname;
+  const dbAccess = entry?.pages?.some((p) => pathname === p || pathname.startsWith(p + "/") || normalized === p || normalized.startsWith(p + "/"));
   if (dbAccess) return NextResponse.next();
 
   // Layer 3: Hardcoded default (only reached if DB config also denies)

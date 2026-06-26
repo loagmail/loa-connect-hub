@@ -144,16 +144,11 @@ export async function PATCH(request: NextRequest) {
 
   const normalizePath = (p: string) => p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p
   const stripMobile = (p: string) => p.includes("/m/") ? "" : p
-  const dedupedPages = pages ? [...new Set(pages.map(normalizePath).map(stripMobile).filter(Boolean))] : pages
+  let dedupedPages = pages ? [...new Set(pages.map(normalizePath).map(stripMobile).filter(Boolean))] : pages
 
+  // ADMIN access is hardcoded — only persist additional non-admin pages
   if (groupName === "ADMIN" && dedupedPages !== undefined) {
-    const required = ["/admin", "/admin/users", "/admin/access-config", "/admin/data-management"]
-    const missing = required.filter((r) => !dedupedPages.includes(r))
-    if (missing.length > 0) {
-      return NextResponse.json({
-        error: `Cannot remove required ADMIN pages: ${missing.join(", ")}`,
-      }, { status: 400 })
-    }
+    dedupedPages = dedupedPages.filter((p: string) => !p.startsWith("/admin"))
   }
 
   if (dedupedPages !== undefined && groupName !== "ADMIN") {
