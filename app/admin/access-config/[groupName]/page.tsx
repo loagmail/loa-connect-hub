@@ -32,7 +32,7 @@ const badgeColors: Record<string, string> = {
   GUEST: "bg-surface text-secondary",
 }
 
-const ALWAYS_LOCKED_PAGES = new Set(["/faq", "/403", "/admin/etl-hub", "/student/evaluations/thank-you"])
+const ALWAYS_LOCKED_PAGES = new Set(["/faq", "/403", "/student/evaluations/thank-you"])
 
 export default function EditAccessGroupPage() {
   const params = useParams()
@@ -60,14 +60,15 @@ export default function EditAccessGroupPage() {
         if (g) {
           setGroup(g)
           if (g.groupName === "ADMIN" && data.catalog?.pages) {
-            // ADMIN access is hardcoded — merge all admin paths into selected as locked
-            const adminPaths: string[] = []
+            // Admin paths are mandatory (locked) — pulled from catalog.
+            // Non-admin paths come from saved DB pages (toggleable).
+            const adminCatalogPaths: string[] = []
             for (const items of Object.values(data.catalog.pages as Record<string, CatalogItem[]>)) {
               for (const item of items) {
-                if (item.path.startsWith("/admin")) adminPaths.push(item.path)
+                if (item.path.startsWith("/admin")) adminCatalogPaths.push(item.path)
               }
             }
-            setSelectedPages([...new Set([...g.pages, ...adminPaths])])
+            setSelectedPages([...new Set([...g.pages, ...adminCatalogPaths])])
           } else {
             setSelectedPages(g.pages)
           }
@@ -81,7 +82,7 @@ export default function EditAccessGroupPage() {
   }, [groupName])
 
   const isLockedPage = (p: string) =>
-    (group?.groupName === "ADMIN" && p.startsWith("/admin")) || ALWAYS_LOCKED_PAGES.has(p)
+    (group?.groupName === "ADMIN" && p.startsWith("/admin") && p !== "/admin/etl-hub") || ALWAYS_LOCKED_PAGES.has(p)
 
   const togglePage = (path: string) => {
     if (readOnly) return

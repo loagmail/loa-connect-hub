@@ -57,10 +57,21 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
-        ;(session.user as unknown as Record<string, unknown>).role = (token as unknown as Record<string, unknown>).role
-        ;(session.user as unknown as Record<string, unknown>).id = (token as unknown as Record<string, unknown>).id
-        ;(session.user as unknown as Record<string, unknown>).tokenVersion = (token as unknown as Record<string, unknown>).tokenVersion
+      if (!session?.user) return session
+      const su = session.user as unknown as Record<string, unknown>
+      su.role = (token as unknown as Record<string, unknown>).role
+      su.id = (token as unknown as Record<string, unknown>).id
+      su.tokenVersion = (token as unknown as Record<string, unknown>).tokenVersion
+
+      // Refresh role from DB so mid-session role changes take effect
+      // without re-login. Lightweight — only fetches the role field.
+      try {
+        const dbUser = await userRepository.findById(su.id as string)
+        if (dbUser && dbUser.role !== su.role) {
+          su.role = dbUser.role
+        }
+      } catch {
+        // Non-fatal — keep JWT role on DB error
       }
       return session
     },
@@ -115,6 +126,15 @@ export async function auth() {
     if (dbUser.tokenVersion !== jwtVersion) {
       console.warn(`[auth] Session user ${userId} tokenVersion mismatch (JWT: ${jwtVersion}, DB: ${dbUser.tokenVersion}) — returning null`)
       return null
+    }
+
+    // Refresh role from DB so role changes (e.g. FACULTY → ADMIN|FACULTY)
+    // take effect without requiring re-login or tokenVersion bump.
+    if (session?.user) {
+      const su = session.user as unknown as Record<string, unknown>
+      if (su.role !== dbUser.role) {
+        su.role = dbUser.role
+      }
     }
   } catch (err) {
     // DB transient error — leave session intact to avoid redirect loop

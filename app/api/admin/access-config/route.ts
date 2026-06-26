@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/route-guard"
 import { supabase } from "@/lib/supabase"
-import { clearAccessConfigCache } from "@/lib/access"
+import { clearAccessConfigCache, loadAccessConfig } from "@/lib/access"
 import fs from "fs"
 import path from "path"
 
@@ -123,8 +123,9 @@ export async function GET() {
   }
 
   const catalog = buildCatalog()
+  const mergedConfig = await loadAccessConfig()
 
-  return NextResponse.json({ groups: data || [], catalog })
+  return NextResponse.json({ groups: data || [], catalog, config: mergedConfig })
 }
 
 export async function PATCH(request: NextRequest) {

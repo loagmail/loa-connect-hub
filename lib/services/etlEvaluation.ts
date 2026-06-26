@@ -165,12 +165,15 @@ export async function importFacultySubjects(
   const missingEmails = uniqueEmails.filter((e) => !userMap.has(e))
   if (missingEmails.length > 0) {
     const createdUsers = await userRepository.createMany(
-      missingEmails.map((email) => ({
-        email,
-        name: email.split("@")[0] || email,
-        role: "FACULTY",
-        departmentId: departmentId ?? undefined,
-      })),
+      missingEmails.map((email) => {
+        const row = rows.find((r) => r.email.toLowerCase().trim() === email)
+        return {
+          email,
+          name: row?.name?.trim() || email.split("@")[0] || email,
+          role: "FACULTY",
+          departmentId: departmentId ?? undefined,
+        }
+      }),
     )
     for (const [email, user] of createdUsers) {
       userMap.set(email, user)

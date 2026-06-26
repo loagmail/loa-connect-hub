@@ -1,47 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt";
-import { supabase } from "@/lib/supabase"
-import { loadAccessConfig } from "@/lib/access"
-
-const ROLE_PRIORITY = ["ADMIN", "DEAN", "FACULTY", "STUDENT", "GUEST"]
-
-function getPrimaryRole(roles: string): string {
-  if (!roles) return "GUEST"
-  const userRoles = roles.split("|")
-  for (const p of ROLE_PRIORITY) {
-    if (userRoles.includes(p)) return p
-  }
-  return "GUEST"
-}
-
-const PERM_CACHE_TTL = 60_000
-const permCache = new Map<string, { result: boolean | null; ts: number }>()
-
-/// Returns true (allow), false (deny), or null (no explicit entry — fall through).
-/// Matches exact resource_path or prefix (e.g. grant for /api/admin/departments
-/// also covers /api/admin/departments/123).
-async function checkUserPermission(userId: string, resource: string): Promise<boolean | null> {
-  const cached = permCache.get(userId)
-  if (cached && Date.now() - cached.ts < PERM_CACHE_TTL) return cached.result
-
-  try {
-    const { data } = await supabase
-      .from('user_permissions')
-      .select('grants, denies, resource_path')
-      .eq('user_id', userId);
-    if (!data || data.length === 0) { permCache.set(userId, { result: null, ts: Date.now() }); return null; }
-    for (const row of data as { grants: string[]; denies: string[]; resource_path: string }[]) {
-      const rp: string = row.resource_path ?? '';
-      if (resource !== rp && !resource.startsWith(rp + '/')) continue;
-      const grants: string[] = row.grants ?? [];
-      const denies: string[] = row.denies ?? [];
-      if (denies.includes('access')) { permCache.set(userId, { result: false, ts: Date.now() }); return false; }
-      if (grants.includes('access')) { permCache.set(userId, { result: true, ts: Date.now() }); return true; }
-    }
-  } catch { }
-  return null;
-}
+import { getUserAccess } from "@/lib/access"
 
 const PUBLIC_PATHS = new Set([
   "/login", "/activate", "/forgot-password", "/change-password",
@@ -72,62 +32,40 @@ export async function proxy(request: NextRequest) {
   }
 
   const rawRole = (token as Record<string, unknown>).role as string | undefined
-  const group = getPrimaryRole(rawRole ?? "GUEST")
-    const userId = (token as Record<string, unknown>).id as string
-
+  const userId = (token as Record<string, unknown>).id as string
   const isAdmin = rawRole?.includes('ADMIN')
 
-  // Layer 1: User-level permission override (highest priority)
-  const userPerm = await checkUserPermission(userId, pathname);
-  if (userPerm === true) {
-    if (!isAdmin) {
-      const h = new Headers(request.headers);
-      h.set('x-auth-by', 'user_permissions');
-      return NextResponse.next({ request: { headers: h } });
-    }
-    return NextResponse.next();
-  }
-  if (userPerm === false) {
+  const access = await getUserAccess(userId, rawRole ?? "GUEST")
+
+  // Most specific path match first (longest url wins)
+  const matched = [...access]
+    .sort((a, b) => b.url.length - a.url.length)
+    .find(a => pathname === a.url || pathname.startsWith(a.url + "/"))
+
+  if (matched) {
+    if (matched.access === "granted") return NextResponse.next()
+    // Explicitly revoked
     if (pathname.startsWith('/api/')) {
       return new NextResponse(JSON.stringify({
         error: 'Forbidden',
-        message: 'This API route is locked in the access configuration.',
+        message: 'This route is locked in the access configuration.',
         path: pathname,
       }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
     return NextResponse.redirect(new URL("/403", request.url));
   }
 
-  // ADMIN role has hardcoded access to all /admin/* page routes (non-API)
-  if (isAdmin && (pathname === "/admin" || pathname.startsWith("/admin/"))) {
-    return NextResponse.next();
-  }
+  // ADMIN fallback: allow any path not explicitly tracked
+  if (isAdmin) return NextResponse.next()
 
-  // Admin API routes require ADMIN role or Layer 1 grant above
-  if (pathname.startsWith('/api/admin/')) {
-    // Access config GET is read-only — allow any authenticated user
-    if (pathname === '/api/admin/access-config' && request.method === 'GET') return NextResponse.next();
-    if (isAdmin) return NextResponse.next();
+  // Closed-by-default: deny
+  if (pathname.startsWith('/api/')) {
     return new NextResponse(JSON.stringify({
       error: 'Forbidden',
-      message: 'This API route requires the ADMIN role or a user-permissions grant.',
+      message: 'Access is not configured for this route.',
       path: pathname,
     }), { status: 403, headers: { 'Content-Type': 'application/json' } });
   }
-
-  // Authenticated non-admin API requests are allowed by default
-  if (pathname.startsWith("/api/")) return NextResponse.next();
-
-  // Layer 2: DB access-config merged with defaults — highest-priority role controls
-  const config = await loadAccessConfig();
-  const entry = config[group];
-  // Normalize role-prefixed paths (e.g. /dean/reports/health) to /admin/ equivalent
-  // since the config stores canonical /admin/ paths from the scanned catalog
-  const normalized = group !== "ADMIN" ? pathname.replace(new RegExp(`^/${group.toLowerCase()}/`), "/admin/") : pathname;
-  const dbAccess = entry?.pages?.some((p) => pathname === p || pathname.startsWith(p + "/") || normalized === p || normalized.startsWith(p + "/"));
-  if (dbAccess) return NextResponse.next();
-
-  // Layer 3: Hardcoded default (only reached if DB config also denies)
   return NextResponse.redirect(new URL("/403", request.url));
 }
 

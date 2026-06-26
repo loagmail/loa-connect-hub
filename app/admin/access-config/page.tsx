@@ -201,35 +201,6 @@ function RBACTab({ readOnly }: { readOnly?: boolean }) {
   )
 }
 
-const PAGE_ACCESS: Record<string, string[]> = {
-  ADMIN: [
-    "/", "/admin", "/admin/data-management", "/admin/users", "/admin/users/deleted",
-    "/admin/access-config", "/admin/user-permissions", "/admin/departments", "/admin/reports",
-    "/admin/reports/health", "/admin/reports/demand", "/admin/reports/responsiveness",
-    "/admin/reports/backlog", "/admin/reports/evaluation-results",
-    "/admin/etl-hub", "/admin/evaluations",
-    "/admin/data/users", "/admin/data/academic-infrastructure",
-    "/faq",
-  ],
-  DEAN: [
-    "/", "/dean", "/dean/upload", "/dean/departments",
-    "/dean/reports", "/dean/reports/evaluation-results",
-    "/dean/evaluations", "/dean/evaluations/rubrics",
-    "/dean/data/users", "/dean/data/academic-infrastructure",
-    "/dean/etl-hub",
-    "/faculty/meetings", "/faculty/availability", "/faculty/reports",
-  ],
-  FACULTY: [
-    "/", "/faculty", "/faculty/meetings", "/faculty/availability", "/faculty/upload",
-    "/faculty/evaluations", "/faculty/evaluations/results",
-  ],
-  STUDENT: [
-    "/", "/student", "/student/book", "/student/meetings", "/student/history",
-    "/student/evaluations",
-  ],
-  GUEST: [],
-}
-
 function cat(p: string): string {
   if (p === "/") return "General"
   if (p.startsWith("/api/")) return "API"
@@ -283,6 +254,7 @@ function UserPermissionsTab({ readOnly: _readOnly }: { readOnly?: boolean }) {
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [, setCatalog] = useState<Catalog | null>(null)
+  const [liveConfig, setLiveConfig] = useState<Record<string, { pages: string[] }> | null>(null)
   const [allPaths, setAllPaths] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -298,14 +270,17 @@ function UserPermissionsTab({ readOnly: _readOnly }: { readOnly?: boolean }) {
       .then(([usersData, configData, pathsData]) => {
         setUsers(usersData.users ?? [])
         if (configData.catalog) setCatalog(configData.catalog)
+        if (configData.config) setLiveConfig(configData.config)
         const s = new Set<string>()
         if (configData.catalog?.pages) {
           for (const items of Object.values(configData.catalog.pages) as CatalogItem[][]) {
             for (const item of items) s.add(item.path)
           }
         }
-        for (const pages of Object.values(PAGE_ACCESS)) {
-          for (const p of pages) s.add(p)
+        if (configData.config) {
+          for (const entry of Object.values(configData.config) as { pages: string[] }[]) {
+            for (const p of entry.pages) s.add(p)
+          }
         }
         for (const p of (pathsData.paths ?? [])) s.add(p)
         setAllPaths(Array.from(s).sort())
@@ -366,7 +341,7 @@ function UserPermissionsTab({ readOnly: _readOnly }: { readOnly?: boolean }) {
     if (perm?.grants.includes("access")) return "granted"
     if (selectedUser?.role) {
       const role = prim(selectedUser.role)
-      const rolePages = PAGE_ACCESS[role]
+      const rolePages = liveConfig?.[role]?.pages
       if (rolePages?.some((p) => path === p || path.startsWith(p + "/"))) return "granted"
     }
     return "none"
@@ -452,7 +427,7 @@ function UserPermissionsTab({ readOnly: _readOnly }: { readOnly?: boolean }) {
         )}
       </div>
 
-      <aside className="w-full lg:w-72 shrink-0 order-2 lg:order-1">
+      <aside className="w-full lg:w-96 shrink-0 order-2 lg:order-1">
         <div className="card p-4 space-y-3">
           <div className="flex gap-1 p-1 bg-surface-tertiary rounded-xl">
             <button

@@ -1,21 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 const mockGetToken = vi.hoisted(() => vi.fn())
-const mockSupabaseFrom = vi.hoisted(() => vi.fn())
-const mockLoadAccessConfig = vi.hoisted(() => vi.fn())
+const mockGetUserAccess = vi.hoisted(() => vi.fn())
 
 vi.mock("next-auth/jwt", () => ({
   getToken: mockGetToken,
 }))
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: mockSupabaseFrom,
-  },
-}))
-
 vi.mock("@/lib/access", () => ({
-  loadAccessConfig: mockLoadAccessConfig,
+  getUserAccess: mockGetUserAccess,
 }))
 
 import { proxy } from "@/proxy"
@@ -41,12 +34,7 @@ function isForbidden(res: Response): boolean {
 describe("proxy middleware", () => {
   beforeEach(async () => {
     vi.resetAllMocks()
-    mockSupabaseFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-      }),
-    })
-    mockLoadAccessConfig.mockResolvedValue({})
+    mockGetUserAccess.mockResolvedValue([])
   })
 
   it("allows public paths without token", async () => {
@@ -75,8 +63,11 @@ describe("proxy middleware", () => {
     expect(res.status).toBe(200)
   })
 
-  it("allows API routes for authenticated users", async () => {
+  it("allows API routes in user access", async () => {
     mockGetToken.mockResolvedValue({ role: "FACULTY", id: "user-1" })
+    mockGetUserAccess.mockResolvedValue([
+      { url: "/api/appointments", access: "granted", type: "api" },
+    ])
     const res = await proxy(mockRequest("/api/appointments"))
     expect(res.status).toBe(200)
   })
@@ -89,39 +80,34 @@ describe("proxy middleware", () => {
 
   it("allows admin API routes for admin users", async () => {
     mockGetToken.mockResolvedValue({ role: "ADMIN|FACULTY", id: "admin-1" })
+    mockGetUserAccess.mockResolvedValue([
+      { url: "/api/admin/users", access: "granted", type: "api" },
+    ])
     const res = await proxy(mockRequest("/api/admin/users"))
     expect(res.status).toBe(200)
   })
 
-  it("redirects to 403 when page access is denied", async () => {
+  it("blocks page access when not granted", async () => {
     mockGetToken.mockResolvedValue({ role: "STUDENT", id: "user-1" })
-    mockLoadAccessConfig.mockResolvedValue({
-      STUDENT: { pages: ["/student"] },
-    })
     const res = await proxy(mockRequest("/admin"))
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toContain("/403")
   })
 
-  it("allows page access when DB config grants it", async () => {
+  it("allows page access when granted", async () => {
     mockGetToken.mockResolvedValue({ role: "STUDENT", id: "user-1" })
-    mockLoadAccessConfig.mockResolvedValue({
-      STUDENT: { pages: ["/student", "/student/meetings"] },
-    })
+    mockGetUserAccess.mockResolvedValue([
+      { url: "/student/meetings", access: "granted", type: "ui" },
+    ])
     const res = await proxy(mockRequest("/student/meetings"))
     expect(res.status).toBe(200)
   })
 
   it("denies access via user-level permission deny", async () => {
     mockGetToken.mockResolvedValue({ role: "STUDENT", id: "user-1" })
-    mockSupabaseFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({
-          data: [{ resource_path: "/student", grants: [], denies: ["access"] }],
-          error: null,
-        }),
-      }),
-    })
+    mockGetUserAccess.mockResolvedValue([
+      { url: "/student", access: "revoked", type: "ui" },
+    ])
     const res = await proxy(mockRequest("/student"))
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toContain("/403")
