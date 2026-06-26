@@ -1,4 +1,4 @@
-import { logAuditWorkflow } from "@/lib/workflows/audit-workflows"
+import { auditLogRepository } from "@/lib/repositories/factory"
 
 export async function logAuditEvent(params: {
   userId?: string | null
@@ -6,9 +6,5 @@ export async function logAuditEvent(params: {
   action: string
   details?: string | null
 }) {
-  try {
-    await logAuditWorkflow(params)
-  } catch (error) {
-    console.error("Audit log error:", error)
-  }
+  await auditLogRepository.create(params).catch(() => {})
 }
