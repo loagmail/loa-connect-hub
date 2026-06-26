@@ -134,9 +134,18 @@ export default function Sidebar() {
     })
   }, [])
 
-  const role = session ? (session.user as Record<string, unknown>)?.role as string : null
+  const su = session?.user as Record<string, unknown> | undefined
+  const role = su?.role as string | null
+  const userName = su?.name as string | undefined
   const primaryRole = role ? getPrimaryRole(role) : null
   const dashHref = primaryRole ? `/${primaryRole.toLowerCase()}` : "/"
+  const PRIORITY = ["ADMIN", "DEAN", "FACULTY", "STUDENT", "GUEST"]
+  const sortedRoles = useMemo(() => {
+    if (!role) return []
+    const parts = role.split("|")
+    if (parts.length <= 1) return parts
+    return [...parts].sort((a, b) => PRIORITY.indexOf(a) - PRIORITY.indexOf(b))
+  }, [role])
 
   const allRoles = role ? role.split("|") : []
   const VALID_DASHBOARD_ROLES = ["ADMIN", "DEAN", "FACULTY", "STUDENT"]
@@ -858,6 +867,33 @@ export default function Sidebar() {
           </div>
         )}
 
+        <div className="border-t border-slate-800 shrink-0">
+          {collapsed ? (
+            <div className="flex justify-center py-2">
+              <span className="w-7 h-7 flex items-center justify-center rounded-full bg-gold-600/20 text-gold-400 text-[10px] font-bold">
+                {primaryRole?.[0] ?? "?"}
+              </span>
+            </div>
+          ) : (
+            <div className="px-4 py-3">
+              <p className="text-sm font-medium text-white truncate">{userName ?? "User"}</p>
+              <div className="flex flex-wrap items-baseline gap-x-1 mt-0.5">
+                {sortedRoles.map((r, i) => (
+                  <span
+                    key={r}
+                    className={
+                      i === 0
+                        ? "text-xs font-semibold text-gold-400"
+                        : "text-[11px] italic text-slate-400"
+                    }
+                  >
+                    {r}{i < sortedRoles.length - 1 ? "," : ""}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
         <div className={`border-t border-slate-800 shrink-0 space-y-1 ${collapsed ? "p-2" : "p-4"}`}>
           <button
             type="button"
