@@ -34,4 +34,16 @@ export const facultySubjectRepository: IFacultySubjectRepository = {
     }
     return data as FacultySubjectData
   },
+
+  async findBySubjectSectionAndFaculty(subject_id, section_id, faculty_id) {
+    const { data, error } = await supabase
+      .from("faculty_subjects")
+      .select("*")
+      .eq("subject_id", subject_id)
+      .eq("section_id", section_id)
+      .eq("faculty_id", faculty_id)
+      .maybeSingle()
+    if (error) throw error
+    return data as FacultySubjectData | null
+  },
 }

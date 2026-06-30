@@ -52,11 +52,11 @@ export const studentEnrollmentRepository: IStudentEnrollmentRepository = {
     const sectionIds = [...new Set(items.map((i) => i.section_id))]
     const { data: existing, error: fetchErr } = await supabase
       .from("student_enrollments")
-      .select("student_id, section_id")
+      .select("student_id, section_id, faculty_subject_id")
       .in("section_id", sectionIds)
     if (fetchErr) throw fetchErr
-    const existingSet = new Set((existing || []).map((r) => `${r.student_id}|${r.section_id}`))
-    const newItems = items.filter((i) => !existingSet.has(`${i.student_id}|${i.section_id}`))
+    const existingSet = new Set((existing || []).map((r) => `${r.student_id}|${r.section_id}|${r.faculty_subject_id ?? ""}`))
+    const newItems = items.filter((i) => !existingSet.has(`${i.student_id}|${i.section_id}|${i.faculty_subject_id ?? ""}`))
     if (newItems.length === 0) return
     const { error: insErr } = await supabase.from("student_enrollments").insert(newItems)
     if (insErr) throw insErr

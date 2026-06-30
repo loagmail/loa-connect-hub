@@ -14,6 +14,7 @@ export interface StudentCsvRow {
   subjectCode: string
   sectionName: string
   sectionProgram: string
+  facultyEmail?: string
 }
 
 export interface StudentImportResult {
@@ -51,7 +52,7 @@ export function parseStudentCsv(text: string): {
   if (lines.length === 0) return { rows, errors, headerError: "CSV file is empty" }
 
   const rawHeaders = lines[0].split(",").map((h) => h.trim().toLowerCase())
-  const expected = ["name", "email", "subject code", "section"]
+  const expected = ["name", "email", "subject code", "section", "faculty email"]
 
   if (rawHeaders.length < expected.length || rawHeaders[0] !== "name" || rawHeaders[1] !== "email") {
     return { rows, errors, headerError: `Expected headers: ${expected.join(", ")}` }
@@ -67,8 +68,9 @@ export function parseStudentCsv(text: string): {
     const displayName = cols[0].trim()
     const email = cols[1].toLowerCase().trim()
     const subjectCode = cols[2].trim()
-    const sectionRaw = cols.slice(3).join(", ").trim()
+    const sectionRaw = cols[3].trim()
     const { program, name: sectionName } = parseSectionIdentifier(sectionRaw)
+    const facultyEmail = cols[4]?.toLowerCase().trim() || ""
 
     if (!displayName) { errors.push({ row: i + 1, message: "Name is required" }); continue }
     if (!email) { errors.push({ row: i + 1, message: "Email is required" }); continue }
@@ -77,8 +79,9 @@ export function parseStudentCsv(text: string): {
     }
     if (!subjectCode) { errors.push({ row: i + 1, message: "Subject code is required" }); continue }
     if (!sectionName) { errors.push({ row: i + 1, message: "Section is required" }); continue }
+    if (!facultyEmail) { errors.push({ row: i + 1, message: "Faculty email is required" }); continue }
 
-    rows.push({ email, name: displayName, subjectCode, sectionName, sectionProgram: program })
+    rows.push({ email, name: displayName, subjectCode, sectionName, sectionProgram: program, facultyEmail })
   }
 
   return { rows, errors }
@@ -129,7 +132,18 @@ export async function importStudents(
     if (s) sections.set(key, s)
   }
 
-  const toEnroll: { student_id: string; section_id: string; semesterId?: string | null }[] = []
+  const uniqueFacultyEmails = [...new Set(rows.filter((r) => r.facultyEmail).map((r) => r.facultyEmail!.toLowerCase().trim()))]
+  const facultyUserMap = new Map<string, { id: string; name: string }>()
+  if (uniqueFacultyEmails.length > 0) {
+    const facultyUsers = await userRepository.findManyByEmail(uniqueFacultyEmails)
+    for (const [email, user] of facultyUsers) {
+      if (user.role.includes("FACULTY") || user.role.includes("DEAN") || user.role.includes("ADMIN")) {
+        facultyUserMap.set(email, user)
+      }
+    }
+  }
+
+  const toEnroll: { student_id: string; section_id: string; faculty_subject_id?: string | null; semesterId?: string | null }[] = []
 
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i]
@@ -145,10 +159,28 @@ export async function importStudents(
     const section = sections.get(`${r.sectionName}|${r.sectionProgram}`)
     if (!section) { failed.push({ row: rowNum, email: r.email, subjectCode: r.subjectCode, section: sectionLabel, remark: `Section "${sectionLabel}" not found` }); continue }
 
-    const mapping = await facultySubjectRepository.findBySubjectAndSection(subject.id, section.id)
-    if (!mapping) { failed.push({ row: rowNum, email: r.email, subjectCode: r.subjectCode, section: sectionLabel, remark: `No faculty assigned to ${r.subjectCode} in ${sectionLabel}` }); continue }
+    let mapping: { id: string } | null = null
+    if (r.facultyEmail) {
+      const facEmail = r.facultyEmail.toLowerCase().trim()
+      const facUser = facultyUserMap.get(facEmail)
+      if (!facUser) {
+        failed.push({ row: rowNum, email: r.email, subjectCode: r.subjectCode, section: sectionLabel, remark: `Faculty "${facEmail}" not found` })
+        continue
+      }
+      mapping = await facultySubjectRepository.findBySubjectSectionAndFaculty(subject.id, section.id, facUser.id)
+      if (!mapping) {
+        failed.push({ row: rowNum, email: r.email, subjectCode: r.subjectCode, section: sectionLabel, remark: `${facEmail} not assigned to ${r.subjectCode} in ${sectionLabel}` })
+        continue
+      }
+    } else {
+      mapping = await facultySubjectRepository.findBySubjectAndSection(subject.id, section.id)
+      if (!mapping) {
+        failed.push({ row: rowNum, email: r.email, subjectCode: r.subjectCode, section: sectionLabel, remark: `No faculty assigned to ${r.subjectCode} in ${sectionLabel}` })
+        continue
+      }
+    }
 
-    toEnroll.push({ student_id: user.id, section_id: section.id, semesterId })
+    toEnroll.push({ student_id: user.id, section_id: section.id, faculty_subject_id: mapping.id, semesterId })
     enrolled++
   }
 
@@ -158,7 +190,7 @@ export async function importStudents(
 
   const successRows = rows
     .filter((r) => !failed.some((f) => f.email === r.email && f.subjectCode === r.subjectCode && f.section === `${r.sectionProgram}-${r.sectionName}`))
-    .map((r) => ({ name: r.name, email: r.email, "subject code": r.subjectCode, section: `${r.sectionProgram}-${r.sectionName}` }))
+    .map((r) => ({ name: r.name, email: r.email, "subject code": r.subjectCode, section: `${r.sectionProgram}-${r.sectionName}`, "faculty email": r.facultyEmail || "" }))
 
   const failureRows = failed.map((f) => ({
     name: rows.find((r) => r.email === f.email && r.subjectCode === f.subjectCode)?.name ?? "",
@@ -173,14 +205,14 @@ export async function importStudents(
     enrolled,
     failed,
     parseErrors: [],
-    successCsv: toCsv(successRows, ["name", "email", "subject code", "section"]),
+    successCsv: toCsv(successRows, ["name", "email", "subject code", "section", "faculty email"]),
     failureCsv: toCsv(failureRows, ["name", "email", "subject code", "section", "remarks"]),
     totalRows: rows.length,
   }
 }
 
 export function getStudentCsvTemplate(): string {
-  const headers = "name, email, subject code, section"
-  const sample = "Alice Student, alice.student@itmlyceumalabang.onmicrosoft.com, CS101, BSIT-32A3\nBob Martinez, bob.martinez@itmlyceumalabang.onmicrosoft.com, MATH201, BSCS-21B"
+  const headers = "name, email, subject code, section, faculty email"
+  const sample = "Alice Student, alice.student@itmlyceumalabang.onmicrosoft.com, CS101, BSIT-32A3, juan.delacruz@lyceumalabang.edu.ph\nBob Martinez, bob.martinez@itmlyceumalabang.onmicrosoft.com, MATH201, BSCS-21B, maria.santos@lyceumalabang.edu.ph"
   return `${headers}\n${sample}\n`
 }

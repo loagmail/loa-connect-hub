@@ -1,13 +1,20 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 
 interface FacultyCsvRow {
   row: number
   email: string
   name: string
   subjectCode: string
+  subjectName: string
   section: string
+}
+
+interface CsvRowWithFlags extends FacultyCsvRow {
+  isNewSubject: boolean
+  isNewSection: boolean
+  isNewTeacher: boolean
 }
 
 interface FacultyImportResult {
@@ -18,8 +25,8 @@ interface FacultyImportResult {
   parseErrors?: { row: number; message: string }[]
 }
 
-const TEMPLATE_HEADERS = "faculty email, name, subject code, section"
-const TEMPLATE_SAMPLE = "juan.delacruz@lyceumalabang.edu.ph, Juan Dela Cruz, CS101, BSIT-32A3\nmaria.santos@lyceumalabang.edu.ph, Maria Santos, MATH201, BSCS-21B"
+const TEMPLATE_HEADERS = "faculty email, name, section, subject code, subject name"
+const TEMPLATE_SAMPLE = "juan.delacruz@lyceumalabang.edu.ph, Juan Dela Cruz, BSIT-32A3, CS101, Introduction to Computer Science\nmaria.santos@lyceumalabang.edu.ph, Maria Santos, BSCS-21B, MATH201, Calculus II"
 
 function downloadBlob(csv: string, filename: string) {
   const blob = new Blob([csv], { type: "text/csv" })
@@ -36,11 +43,7 @@ function parseClientCsv(text: string): { rows: FacultyCsvRow[]; error?: string }
   if (lines.length < 2) return { rows: [], error: "CSV file is empty" }
 
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
-  const hasName = headers.length > 1 && headers[1] === "name"
-  const expected = hasName
-    ? ["faculty email", "name", "subject code", "section"]
-    : ["faculty email", "subject code", "section"]
-
+  const expected = ["faculty email", "name", "section", "subject code", "subject name"]
   if (headers.length < expected.length) {
     return { rows: [], error: `Expected headers: ${expected.join(", ")}` }
   }
@@ -53,13 +56,14 @@ function parseClientCsv(text: string): { rows: FacultyCsvRow[]; error?: string }
   const rows: FacultyCsvRow[] = []
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(",").map((c) => c.trim())
-    if (cols.length < expected.length) continue
+    if (cols.length < 5) continue
     rows.push({
       row: i + 1,
       email: cols[0],
-      name: hasName ? cols[1] : "",
-      subjectCode: hasName ? cols[2] : cols[1],
-      section: cols.slice(hasName ? 3 : 2).join(", "),
+      name: cols[1],
+      subjectCode: cols[3],
+      section: cols[2],
+      subjectName: cols[4],
     })
   }
   return { rows }
@@ -69,13 +73,32 @@ const PREVIEW_PAGE_SIZE = 50
 
 export default function BulkFacultyImport({ departmentId, semesterId }: { departmentId?: string | null; semesterId?: string | null }) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const [previewRows, setPreviewRows] = useState<FacultyCsvRow[] | null>(null)
+  const [previewRows, setPreviewRows] = useState<CsvRowWithFlags[] | null>(null)
   const [previewPage, setPreviewPage] = useState(0)
   const [previewError, setPreviewError] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [importResult, setImportResult] = useState<FacultyImportResult | null>(null)
   const [importing, setImporting] = useState(false)
+
+  const [existingSubjects, setExistingSubjects] = useState<{ code: string }[]>([])
+  const [existingSections, setExistingSections] = useState<{ name: string; program: string }[]>([])
+  const [existingFacultyEmails, setExistingFacultyEmails] = useState<string[]>([])
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/data/evaluation-mappings?type=subjects").then((r) => r.json()),
+      fetch("/api/data/evaluation-mappings?type=sections").then((r) => r.json()),
+      fetch("/api/admin/users").then((r) => r.json()),
+    ]).then(([subjectsRes, sectionsRes, usersRes]) => {
+      setExistingSubjects((subjectsRes.data || []).map((s: { code: string }) => ({ code: s.code })))
+      setExistingSections((sectionsRes.data || []).map((s: { name: string; program: string }) => ({ name: s.name, program: s.program })))
+      const faculties = (usersRes.users || []).filter(
+        (u: { role: string }) => u.role.includes("FACULTY") || u.role.includes("DEAN"),
+      )
+      setExistingFacultyEmails(faculties.map((f: { email: string }) => f.email.toLowerCase()))
+    }).catch(() => {})
+  }, [])
 
   const paginatedRows = previewRows
     ? previewRows.slice(previewPage * PREVIEW_PAGE_SIZE, (previewPage + 1) * PREVIEW_PAGE_SIZE)
@@ -91,14 +114,34 @@ export default function BulkFacultyImport({ departmentId, semesterId }: { depart
     const { rows, error: parseError } = parseClientCsv(text)
     if (parseError) { setPreviewError(parseError); return }
     if (rows.length === 0) { setPreviewError("No valid rows found in CSV"); return }
-    setPreviewRows(rows)
+    const withFlags: CsvRowWithFlags[] = rows.map((r) => {
+      const idx = r.section.indexOf("-")
+      const sectionProgram = idx === -1 ? "" : r.section.slice(0, idx).trim()
+      const sectionName = idx === -1 ? r.section : r.section.slice(idx + 1).trim()
+      return {
+        ...r,
+        isNewSubject: !existingSubjects.some((s) => s.code === r.subjectCode),
+        isNewSection: !existingSections.some((s) => s.name === sectionName && s.program === sectionProgram),
+        isNewTeacher: !existingFacultyEmails.some((e) => e === r.email.toLowerCase()),
+      }
+    })
+    setPreviewRows(withFlags)
     setPreviewPage(0)
   }
 
-  const handleFieldChange = (index: number, field: "name" | "subjectCode" | "section", value: string) => {
+  const handleFieldChange = (index: number, field: "name" | "subjectCode" | "subjectName" | "section", value: string) => {
     if (!previewRows) return
     const next = [...previewRows]
-    next[index] = { ...next[index], [field]: value }
+    const updated = { ...next[index], [field]: value }
+    if (field === "subjectCode") {
+      updated.isNewSubject = !existingSubjects.some((s) => s.code === value)
+    } else if (field === "section") {
+      const idx = value.indexOf("-")
+      const sectionProgram = idx === -1 ? "" : value.slice(0, idx).trim()
+      const sectionName = idx === -1 ? value : value.slice(idx + 1).trim()
+      updated.isNewSection = !existingSections.some((s) => s.name === sectionName && s.program === sectionProgram)
+    }
+    next[index] = updated
     setPreviewRows(next)
   }
 
@@ -129,6 +172,7 @@ export default function BulkFacultyImport({ departmentId, semesterId }: { depart
             name: r.name,
             subjectCode: r.subjectCode,
             section: r.section,
+            subjectName: r.subjectName,
           })),
         }),
       })
@@ -216,6 +260,11 @@ export default function BulkFacultyImport({ departmentId, semesterId }: { depart
               <span className="text-[11px] text-tertiary">{TEMPLATE_HEADERS}</span>
             </div>
 
+            <p className="text-[11px] text-tertiary/70 italic">
+              Items marked <span className="badge-amber not-italic">amber</span> will be newly created;
+              existing subjects, sections, and faculty are reused as-is.
+            </p>
+
             {error && <p className="text-xs font-medium text-red-600">{error}</p>}
 
             <div className="max-h-72 overflow-y-auto tbl-container tbl">
@@ -225,8 +274,10 @@ export default function BulkFacultyImport({ departmentId, semesterId }: { depart
                     <th className="w-8">#</th>
                     <th>Email</th>
                     <th>Name</th>
-                    <th>Subject</th>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
                     <th>Section</th>
+                    <th>Will Create</th>
                     <th className="w-12"></th>
                   </tr>
                 </thead>
@@ -253,10 +304,27 @@ export default function BulkFacultyImport({ departmentId, semesterId }: { depart
                         </td>
                         <td>
                           <input
+                            value={r.subjectName}
+                            onChange={(e) => handleFieldChange(absIdx, "subjectName", e.target.value)}
+                            disabled={!r.isNewSubject}
+                            className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px] disabled:opacity-60"
+                            title={!r.isNewSubject ? "Subject exists — name is read-only" : undefined}
+                          />
+                        </td>
+                        <td>
+                          <input
                             value={r.section}
                             onChange={(e) => handleFieldChange(absIdx, "section", e.target.value)}
                             className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px]"
                           />
+                        </td>
+                        <td className="whitespace-nowrap">
+                          <div className="flex flex-wrap gap-1">
+                            {r.isNewSubject && <span className="badge-amber">Subject</span>}
+                            {r.isNewSection && <span className="badge-amber">Section</span>}
+                            {r.isNewTeacher && <span className="badge-amber">Teacher</span>}
+                            {!r.isNewSubject && !r.isNewSection && !r.isNewTeacher && <span className="badge-emerald">Faculty Loading Only</span>}
+                          </div>
                         </td>
                         <td className="text-center">
                           <button

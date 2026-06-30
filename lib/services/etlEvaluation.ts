@@ -13,15 +13,18 @@ function parseSectionIdentifier(raw: string): { name: string; program: string } 
 }
 
 // ── Faculty-Subject CSV ──────────────────────────────────
-// Columns: faculty email, subject code, section (e.g., "BSIT-32A3")
+// Required columns: faculty email, name, section, subject code, subject name
 
 interface FacultySubjectCsvRow {
   email: string
   name: string
   subjectCode: string
+  subjectName: string
   sectionName: string
   sectionProgram: string
 }
+
+export const FACULTY_CSV_HEADERS = ["faculty email", "name", "section", "subject code", "subject name"]
 
 export interface FacultySubjectImportResult {
   matched: number
@@ -46,38 +49,11 @@ export function parseFacultySubjectCsv(text: string): {
   const headerLine = lines[0]
   const rawHeaders = headerLine.split(",").map((h) => h.trim().toLowerCase())
 
-  const hasName = rawHeaders.length > 1 && rawHeaders[1] === "name"
-  const minCols = hasName ? 4 : 3
-
-  if (rawHeaders.length < minCols) {
+  if (rawHeaders.length < 5 || rawHeaders[0] !== "faculty email" || rawHeaders[1] !== "name" || rawHeaders[2] !== "section" || rawHeaders[3] !== "subject code" || rawHeaders[4] !== "subject name") {
     return {
       rows,
       errors,
-      headerError: `Expected at least ${minCols} columns (faculty email${hasName ? ", name" : ""}, subject code, section), got ${rawHeaders.length}.`,
-    }
-  }
-
-  if (rawHeaders[0] !== "faculty email") {
-    return {
-      rows,
-      errors,
-      headerError: `Expected headers: faculty email${hasName ? ", name" : ""}, subject code, section — got: ${rawHeaders.join(", ")}`,
-    }
-  }
-
-  if (hasName && rawHeaders[2] !== "subject code") {
-    return {
-      rows,
-      errors,
-      headerError: `Expected headers: faculty email, name, subject code, section — got: ${rawHeaders.join(", ")}`,
-    }
-  }
-
-  if (!hasName && rawHeaders[1] !== "subject code") {
-    return {
-      rows,
-      errors,
-      headerError: `Expected headers: faculty email, subject code, section — got: ${rawHeaders.join(", ")}`,
+      headerError: `Expected headers: faculty email, name, section, subject code, subject name — got: ${rawHeaders.join(", ")}`,
     }
   }
 
@@ -85,16 +61,17 @@ export function parseFacultySubjectCsv(text: string): {
     const line = lines[i]
     const cols = line.split(",").map((c) => c.trim())
 
-    if (cols.length < minCols) {
-      errors.push({ row: i + 1, message: `Expected at least ${minCols} columns, got ${cols.length}` })
+    if (cols.length < 5) {
+      errors.push({ row: i + 1, message: `Expected at least 5 columns, got ${cols.length}` })
       continue
     }
 
     const email = cols[0].toLowerCase().trim()
-    const displayName = hasName ? cols[1].trim() : ""
-    const subjectCode = hasName ? cols[2].trim() : cols[1].trim()
-    const sectionRaw = cols.slice(hasName ? 3 : 2).join(", ").trim()
-    const { program, name: sectionName } = parseSectionIdentifier(sectionRaw)
+    const displayName = cols[1].trim()
+    const sectionRaw = cols[2]
+    const subjectCode = cols[3].trim()
+    const subjectName = cols[4].trim()
+    const { program, name: sectionName } = parseSectionIdentifier(sectionRaw.trim())
 
     if (email.length === 0) {
       errors.push({ row: i + 1, message: "Faculty email is required" })
@@ -111,7 +88,7 @@ export function parseFacultySubjectCsv(text: string): {
       continue
     }
 
-    rows.push({ email, name: displayName, subjectCode, sectionName, sectionProgram: program })
+    rows.push({ email, name: displayName, subjectCode, subjectName, sectionName, sectionProgram: program })
   }
 
   return { rows, errors }
@@ -133,7 +110,10 @@ export async function importFacultySubjects(
 
   // ── Upsert subjects ──
   const uniqueSubjectCodes = [...new Set(rows.map((r) => r.subjectCode))]
-  const subjectItems = uniqueSubjectCodes.map((code) => ({ code, name: code }))
+  const subjectItems = uniqueSubjectCodes.map((code) => {
+    const row = rows.find((r) => r.subjectCode === code)
+    return { code, name: row?.subjectName || code }
+  })
   const { data: subjects, created: createdSubjects } = await subjectRepository.upsertMany(subjectItems)
   result.createdSubjects = createdSubjects
 

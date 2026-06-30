@@ -52,7 +52,13 @@ function FacultyTab() {
   // ── CSV Import state ──────────────────────────────────────
   const [importDeptId, setImportDeptId] = useState("")
   const csvFileRef = useRef<HTMLInputElement>(null)
-  const [csvRows, setCsvRows] = useState<{ email: string; name: string; subjectCode: string; section: string }[] | null>(null)
+  type CsvRow = { email: string; name: string; subjectCode: string; subjectName: string; section: string }
+  interface CsvRowWithFlags extends CsvRow {
+    isNewSubject: boolean
+    isNewSection: boolean
+    isNewTeacher: boolean
+  }
+  const [csvRows, setCsvRows] = useState<CsvRowWithFlags[] | null>(null)
   const [csvImporting, setCsvImporting] = useState(false)
   const [csvImportResult, setCsvImportResult] = useState<{
     matched: number
@@ -65,8 +71,8 @@ function FacultyTab() {
   const [csvPreviewPage, setCsvPreviewPage] = useState(0)
   const PREVIEW_PAGE_SIZE = 50
 
-  const TEMPLATE_HEADERS = "faculty email, name, subject code, section"
-  const TEMPLATE_SAMPLE = "juan.delacruz@lyceumalabang.edu.ph, Juan Dela Cruz, CS101, BSIT-32A3\nmaria.santos@lyceumalabang.edu.ph, Maria Santos, MATH201, BSCS-21B"
+  const TEMPLATE_HEADERS = "faculty email, name, section, subject code, subject name"
+  const TEMPLATE_SAMPLE = "juan.delacruz@lyceumalabang.edu.ph, Juan Dela Cruz, BSIT-32A3, CS101, Introduction to Computer Science\nmaria.santos@lyceumalabang.edu.ph, Maria Santos, BSCS-21B, MATH201, Calculus II"
 
   // ── Department filter ────────────────────────────────────
   const [deptFilter, setDeptFilter] = useState("all")
@@ -200,27 +206,41 @@ function FacultyTab() {
     URL.revokeObjectURL(url)
   }
 
-  function parseFacultyCsv(text: string): { rows: { email: string; name: string; subjectCode: string; section: string }[]; error?: string } {
+  function parseFacultyCsv(text: string): { rows: CsvRow[]; error?: string } {
     const lines = text.split(/\r?\n/).filter((l) => l.trim())
     if (lines.length < 2) return { rows: [], error: "CSV file is empty" }
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
-    const hasName = headers.length > 1 && headers[1] === "name"
-    const expected = hasName ? ["faculty email", "name", "subject code", "section"] : ["faculty email", "subject code", "section"]
-    if (headers.length < expected.length || headers[0] !== "faculty email") {
+    const expected = ["faculty email", "name", "section", "subject code", "subject name"]
+    if (headers.length < expected.length || headers.join(",") !== expected.join(",")) {
       return { rows: [], error: `Expected headers: ${expected.join(", ")}` }
     }
-    const rows: { email: string; name: string; subjectCode: string; section: string }[] = []
+    const rows: CsvRow[] = []
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(",").map((c) => c.trim())
-      if (cols.length < expected.length) continue
+      if (cols.length < 5) continue
       rows.push({
         email: cols[0].toLowerCase().trim(),
-        name: hasName ? cols[1] : "",
-        subjectCode: hasName ? cols[2] : cols[1],
-        section: cols.slice(hasName ? 3 : 2).join(", "),
+        name: cols[1],
+        subjectCode: cols[3],
+        section: cols[2],
+        subjectName: cols[4],
       })
     }
     return { rows }
+  }
+
+  function deriveCsvFlags(rows: CsvRow[]): CsvRowWithFlags[] {
+    return rows.map((r) => {
+      const idx = r.section.indexOf("-")
+      const sectionProgram = idx === -1 ? "" : r.section.slice(0, idx).trim()
+      const sectionName = idx === -1 ? r.section : r.section.slice(idx + 1).trim()
+      return {
+        ...r,
+        isNewSubject: !subjects.some((s) => s.code === r.subjectCode),
+        isNewSection: !sections.some((s) => s.name === sectionName && s.program === sectionProgram),
+        isNewTeacher: !faculties.some((f) => f.email === r.email),
+      }
+    })
   }
 
   const handleCsvFile = (file: File) => {
@@ -232,7 +252,7 @@ function FacultyTab() {
       const { rows, error } = parseFacultyCsv(text)
       if (error) { setCsvError(error); return }
       if (rows.length === 0) { setCsvError("No valid rows found"); return }
-      setCsvRows(rows)
+      setCsvRows(deriveCsvFlags(rows))
       setCsvPreviewPage(0)
     }
     reader.readAsText(file)
@@ -256,10 +276,19 @@ function FacultyTab() {
     finally { setCsvImporting(false) }
   }
 
-  const handleCsvFieldChange = (index: number, field: "name" | "subjectCode" | "section", value: string) => {
+  const handleCsvFieldChange = (index: number, field: "name" | "subjectCode" | "subjectName" | "section", value: string) => {
     if (!csvRows) return
     const next = [...csvRows]
-    next[index] = { ...next[index], [field]: value }
+    const updated = { ...next[index], [field]: value }
+    if (field === "subjectCode") {
+      updated.isNewSubject = !subjects.some((s) => s.code === value)
+    } else if (field === "section") {
+      const idx = value.indexOf("-")
+      const sectionProgram = idx === -1 ? "" : value.slice(0, idx).trim()
+      const sectionName = idx === -1 ? value : value.slice(idx + 1).trim()
+      updated.isNewSection = !sections.some((s) => s.name === sectionName && s.program === sectionProgram)
+    }
+    next[index] = updated
     setCsvRows(next)
   }
 
@@ -479,6 +508,11 @@ function FacultyTab() {
                       <span className="text-[11px] text-tertiary">{TEMPLATE_HEADERS}</span>
                     </div>
 
+                    <p className="text-[11px] text-tertiary/70 italic">
+                      Items marked <span className="badge-amber not-italic">amber</span> will be newly created;
+                      existing subjects, sections, and faculty are reused as-is.
+                    </p>
+
                     {csvError && <p className="text-xs font-medium text-red-600">{csvError}</p>}
 
                     <div className="max-h-72 overflow-y-auto tbl-container tbl">
@@ -488,8 +522,10 @@ function FacultyTab() {
                             <th className="w-8">#</th>
                             <th>Email</th>
                             <th>Name</th>
-                            <th>Subject</th>
+                            <th>Subject Code</th>
+                            <th>Subject Name</th>
                             <th>Section</th>
+                            <th>Will Create</th>
                             <th className="w-12"></th>
                           </tr>
                         </thead>
@@ -518,11 +554,28 @@ function FacultyTab() {
                                 </td>
                                 <td>
                                   <input
+                                    value={row.subjectName}
+                                    onChange={(e) => handleCsvFieldChange(absIdx, "subjectName", e.target.value)}
+                                    disabled={csvImporting || !row.isNewSubject}
+                                    className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px] disabled:opacity-60"
+                                    title={!row.isNewSubject ? "Subject exists — name is read-only" : undefined}
+                                  />
+                                </td>
+                                <td>
+                                  <input
                                     value={row.section}
                                     onChange={(e) => handleCsvFieldChange(absIdx, "section", e.target.value)}
                                     disabled={csvImporting}
                                     className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px] disabled:opacity-60"
                                   />
+                                </td>
+                                <td className="whitespace-nowrap">
+                                  <div className="flex flex-wrap gap-1">
+                                    {row.isNewSubject && <span className="badge-amber">Subject</span>}
+                                    {row.isNewSection && <span className="badge-amber">Section</span>}
+                                    {row.isNewTeacher && <span className="badge-amber">Teacher</span>}
+                                    {!row.isNewSubject && !row.isNewSection && !row.isNewTeacher && <span className="badge-emerald">Faculty Loading Only</span>}
+                                  </div>
                                 </td>
                                 <td className="text-center">
                                   <button

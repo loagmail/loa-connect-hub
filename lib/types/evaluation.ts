@@ -259,12 +259,13 @@ export interface IFacultySubjectRepository {
   list(filters?: { faculty_id?: string; section_id?: string; semesterId?: string }): Promise<FacultySubjectData[]>
   replaceBySection(section_id: string, items: { faculty_id: string; subject_id: string; semesterId?: string | null }[]): Promise<void>
   findBySubjectAndSection(subject_id: string, section_id: string): Promise<FacultySubjectData | null>
+  findBySubjectSectionAndFaculty(subject_id: string, section_id: string, faculty_id: string): Promise<FacultySubjectData | null>
 }
 
 export interface IStudentEnrollmentRepository {
   list(filters?: { student_id?: string; section_id?: string; semesterId?: string }): Promise<StudentEnrollmentData[]>
   replaceBySection(section_id: string, items: { student_id: string; semesterId?: string | null }[]): Promise<void>
-  addEnrollments(items: { student_id: string; section_id: string; semesterId?: string | null }[]): Promise<void>
+  addEnrollments(items: { student_id: string; section_id: string; faculty_subject_id?: string | null; semesterId?: string | null }[]): Promise<void>
   findExisting(student_id: string, faculty_subject_id: string, semesterId?: string | null): Promise<StudentEnrollmentData | null>
   create(data: { student_id: string; faculty_subject_id: string; section_id: string; semesterId?: string | null }): Promise<StudentEnrollmentData>
   getDistinctFaculty(student_id: string, semesterId?: string): Promise<string[]>
