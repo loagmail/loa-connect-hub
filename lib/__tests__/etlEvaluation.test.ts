@@ -9,19 +9,28 @@ vi.mock("@/lib/repositories/factory", () => ({
   studentEnrollmentRepository: { replaceBySection: vi.fn() },
 }))
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockResolvedValue({
-        data: [
-          { id: "course-bsit", code: "BSIT" },
-          { id: "course-bscs", code: "BSCS" },
-        ],
-        error: null,
-      }),
-    })),
-  },
-}))
+vi.mock("@/lib/supabase", () => {
+  const tableData: Record<string, { id: string; code: string }[]> = {
+    department_courses: [
+      { id: "course-bsit", code: "BSIT" },
+      { id: "course-bscs", code: "BSCS" },
+    ],
+    departments: [
+      { id: "dept-ccs", code: "CCS" },
+      { id: "dept-cas", code: "CAS" },
+    ],
+  }
+  return {
+    supabase: {
+      from: vi.fn((table: string) => ({
+        select: vi.fn().mockResolvedValue({
+          data: tableData[table] || [],
+          error: null,
+        }),
+      })),
+    },
+  }
+})
 
 import { parseFacultySubjectCsv, parseStudentEnrollmentCsv, importFacultySubjects, importStudentEnrollments } from "@/lib/services/etlEvaluation"
 import * as factory from "@/lib/repositories/factory"
@@ -51,12 +60,12 @@ const seRepo = () => factory.studentEnrollmentRepository.replaceBySection as Ret
 // ── parseFacultySubjectCsv ─────────────────────────────────
 
 describe("parseFacultySubjectCsv", () => {
-  const validHeaders = "faculty email, name, section, subject code, subject name"
+  const validHeaders = "faculty email, name, section, subject code, subject name, department code"
 
   it("parses valid rows", () => {
     const csv = `${validHeaders}
-juan.delacruz@example.com, Juan Dela Cruz, BSIT-32A3, CS101, Introduction to Computer Science
-maria.santos@example.com, Maria Santos, BSCS-21B, MATH201, Calculus II`
+juan.delacruz@example.com, Juan Dela Cruz, BSIT-32A3, CS101, Introduction to Computer Science, CCS
+maria.santos@example.com, Maria Santos, BSCS-21B, MATH201, Calculus II, CAS`
     const result = parseFacultySubjectCsv(csv)
     expect(result.headerError).toBeUndefined()
     expect(result.rows).toHaveLength(2)
@@ -68,6 +77,7 @@ maria.santos@example.com, Maria Santos, BSCS-21B, MATH201, Calculus II`
       subjectName: "Introduction to Computer Science",
       sectionName: "32A3",
       sectionProgram: "BSIT",
+      departmentCode: "CCS",
     })
     expect(result.rows[1]).toEqual({
       email: "maria.santos@example.com",
@@ -76,12 +86,13 @@ maria.santos@example.com, Maria Santos, BSCS-21B, MATH201, Calculus II`
       subjectName: "Calculus II",
       sectionName: "21B",
       sectionProgram: "BSCS",
+      departmentCode: "CAS",
     })
   })
 
   it("parses section without program prefix", () => {
     const csv = `${validHeaders}
-juan.delacruz@example.com, Juan, 32A3, CS101, Intro`
+juan.delacruz@example.com, Juan, 32A3, CS101, Intro, CCS`
     const result = parseFacultySubjectCsv(csv)
     expect(result.rows).toHaveLength(1)
     expect(result.rows[0].sectionName).toBe("32A3")
@@ -95,8 +106,8 @@ juan.delacruz@example.com, Juan, 32A3, CS101, Intro`
   })
 
   it("rejects wrong headers", () => {
-    const csv = `email, name, section, subject code, subject name
-juan@example.com, Juan, BSIT-32A3, CS101, Intro`
+    const csv = `email, name, section, subject code, subject name, department code
+juan@example.com, Juan, BSIT-32A3, CS101, Intro, CCS`
     const result = parseFacultySubjectCsv(csv)
     expect(result.headerError).toContain("faculty email")
   })
@@ -108,9 +119,16 @@ juan@example.com, Juan, BSIT-32A3, CS101`
     expect(result.headerError).toContain("subject name")
   })
 
+  it("rejects missing department code column", () => {
+    const csv = `faculty email, name, section, subject code, subject name
+juan@example.com, Juan, BSIT-32A3, CS101, Intro`
+    const result = parseFacultySubjectCsv(csv)
+    expect(result.headerError).toContain("department code")
+  })
+
   it("rejects misordered columns", () => {
-    const csv = `faculty email, name, subject code, section, subject name
-juan@example.com, Juan, CS101, BSIT-32A3, Intro`
+    const csv = `faculty email, name, subject code, section, subject name, department code
+juan@example.com, Juan, CS101, BSIT-32A3, Intro, CCS`
     const result = parseFacultySubjectCsv(csv)
     expect(result.headerError).toContain("Expected headers")
   })
@@ -124,18 +142,18 @@ juan@example.com, Juan, BSIT-32A3`
 
   it("collects row-level errors for short rows", () => {
     const csv = `${validHeaders}
-juan@example.com, Juan, BSIT-32A3, CS101, Intro
+juan@example.com, Juan, BSIT-32A3, CS101, Intro, CCS
 incomplete`
     const result = parseFacultySubjectCsv(csv)
     expect(result.rows).toHaveLength(1)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].row).toBe(3)
-    expect(result.errors[0].message).toContain("5 columns")
+    expect(result.errors[0].message).toContain("6 columns")
   })
 
   it("rejects missing email", () => {
     const csv = `${validHeaders}
-, Juan, BSIT-32A3, CS101, Intro`
+, Juan, BSIT-32A3, CS101, Intro, CCS`
     const result = parseFacultySubjectCsv(csv)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].message).toContain("email is required")
@@ -143,7 +161,7 @@ incomplete`
 
   it("rejects missing subject code", () => {
     const csv = `${validHeaders}
-juan@example.com, Juan, BSIT-32A3,, Intro`
+juan@example.com, Juan, BSIT-32A3,, Intro, CCS`
     const result = parseFacultySubjectCsv(csv)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].message).toContain("Subject code")
@@ -151,7 +169,7 @@ juan@example.com, Juan, BSIT-32A3,, Intro`
 
   it("rejects missing section", () => {
     const csv = `${validHeaders}
-juan@example.com, Juan,, CS101, Intro`
+juan@example.com, Juan,, CS101, Intro, CCS`
     const result = parseFacultySubjectCsv(csv)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].message).toContain("Section is required")
@@ -159,7 +177,7 @@ juan@example.com, Juan,, CS101, Intro`
 
   it("trims whitespace from values", () => {
     const csv = `${validHeaders}
-  juan@example.com  ,  Juan  ,  BSIT-32A3  ,  CS101  ,  Intro  `
+  juan@example.com  ,  Juan  ,  BSIT-32A3  ,  CS101  ,  Intro  ,  CCS  `
     const result = parseFacultySubjectCsv(csv)
     expect(result.rows).toHaveLength(1)
     expect(result.rows[0].email).toBe("juan@example.com")
@@ -168,12 +186,13 @@ juan@example.com, Juan,, CS101, Intro`
     expect(result.rows[0].subjectName).toBe("Intro")
     expect(result.rows[0].sectionProgram).toBe("BSIT")
     expect(result.rows[0].sectionName).toBe("32A3")
+    expect(result.rows[0].departmentCode).toBe("CCS")
   })
 
   it("handles duplicate rows by keeping both", () => {
     const csv = `${validHeaders}
-juan@example.com, Juan, BSIT-32A3, CS101, Intro
-juan@example.com, Juan, BSIT-32A3, CS101, Intro`
+juan@example.com, Juan, BSIT-32A3, CS101, Intro, CCS
+juan@example.com, Juan, BSIT-32A3, CS101, Intro, CCS`
     const result = parseFacultySubjectCsv(csv)
     expect(result.rows).toHaveLength(2)
     expect(result.errors).toHaveLength(0)
@@ -272,7 +291,7 @@ describe("importFacultySubjects", () => {
     mockCreateUsers(new Map([["juan@example.com", { id: "user-1", email: "juan@example.com", name: "Juan", role: "FACULTY" }]]))
 
     const result = await importFacultySubjects([
-      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT" },
+      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT", departmentCode: "CCS" },
     ])
 
     expect(result.matched).toBe(1)
@@ -281,7 +300,7 @@ describe("importFacultySubjects", () => {
     expect(result.createdSections).toBe(1)
     expect(userCreateRepo()).toHaveBeenCalledWith(
       expect.arrayContaining([
-        expect.objectContaining({ email: "juan@example.com", name: "Juan", role: "FACULTY" }),
+        expect.objectContaining({ email: "juan@example.com", name: "Juan", role: "FACULTY", departmentId: "dept-ccs" }),
       ]),
     )
     expect(fsRepo()).toHaveBeenCalledWith("sec-1", [{ faculty_id: "user-1", subject_id: "subj-1" }])
@@ -294,7 +313,7 @@ describe("importFacultySubjects", () => {
     mockCreateUsers(new Map([["juan@example.com", { id: "user-1", email: "juan@example.com", name: "juan", role: "FACULTY" }]]))
 
     await importFacultySubjects([
-      { email: "juan@example.com", name: "", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT" },
+      { email: "juan@example.com", name: "", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT", departmentCode: "CCS" },
     ])
 
     expect(userCreateRepo()).toHaveBeenCalledWith(
@@ -310,7 +329,7 @@ describe("importFacultySubjects", () => {
     mockFindUsers(new Map([["juan@example.com", { id: "user-1", email: "juan@example.com", name: "Juan", role: "FACULTY" }]]))
 
     const result = await importFacultySubjects([
-      { email: "juan@example.com", name: "Juan", subjectCode: "NONEXISTENT", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT" },
+      { email: "juan@example.com", name: "Juan", subjectCode: "NONEXISTENT", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT", departmentCode: "CCS" },
     ])
 
     expect(result.matched).toBe(0)
@@ -324,12 +343,27 @@ describe("importFacultySubjects", () => {
     mockFindUsers(new Map([["juan@example.com", { id: "user-1", email: "juan@example.com", name: "Juan", role: "FACULTY" }]]))
 
     const result = await importFacultySubjects([
-      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT" },
+      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT", departmentCode: "CCS" },
     ])
 
     expect(result.matched).toBe(0)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].message).toContain("could not be created or found")
+  })
+
+  it("reports error for unknown department code", async () => {
+    mockSubjectUpsert(new Map([["CS101", { id: "subj-1" }]]), 0)
+    mockSectionUpsert(new Map([["32A3|BSIT", { id: "sec-1" }]]), 0)
+    mockFindUsers(new Map())
+
+    const result = await importFacultySubjects([
+      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT", departmentCode: "UNKNOWN" },
+    ])
+
+    expect(result.matched).toBe(0)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].message).toContain("not found")
+    expect(userCreateRepo()).not.toHaveBeenCalled()
   })
 
   it("handles duplicate emails without re-creating users", async () => {
@@ -339,8 +373,8 @@ describe("importFacultySubjects", () => {
     mockCreateUsers(new Map())
 
     const result = await importFacultySubjects([
-      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT" },
-      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT" },
+      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT", departmentCode: "CCS" },
+      { email: "juan@example.com", name: "Juan", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT", departmentCode: "CCS" },
     ])
 
     expect(result.matched).toBe(2)
@@ -363,7 +397,7 @@ describe("importFacultySubjects", () => {
     mockCreateUsers(new Map())
 
     const result = await importFacultySubjects([
-      { email: "nobody@example.com", name: "Nobody", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT" },
+      { email: "nobody@example.com", name: "Nobody", subjectCode: "CS101", subjectName: "", sectionName: "32A3", sectionProgram: "BSIT", departmentCode: "CCS" },
     ])
 
     expect(result.matched).toBe(0)

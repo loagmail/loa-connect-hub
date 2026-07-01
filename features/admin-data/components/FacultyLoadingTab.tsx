@@ -50,13 +50,13 @@ function FacultyTab() {
   const tableRef = useRef<HTMLDivElement>(null)
 
   // ── CSV Import state ──────────────────────────────────────
-  const [importDeptId, setImportDeptId] = useState("")
   const csvFileRef = useRef<HTMLInputElement>(null)
-  type CsvRow = { email: string; name: string; subjectCode: string; subjectName: string; section: string }
+  type CsvRow = { email: string; name: string; subjectCode: string; subjectName: string; section: string; departmentCode: string }
   interface CsvRowWithFlags extends CsvRow {
     isNewSubject: boolean
     isNewSection: boolean
     isNewTeacher: boolean
+    isInvalidDept: boolean
     isExistingMapping: boolean
   }
   const [csvRows, setCsvRows] = useState<CsvRowWithFlags[] | null>(null)
@@ -77,7 +77,7 @@ function FacultyTab() {
 
   const csvProblemRows = useMemo(() => {
     if (!csvRows) return []
-    return csvRows.filter((r) => r.isNewSubject || r.isNewSection || r.isNewTeacher)
+    return csvRows.filter((r) => r.isNewSubject || r.isNewSection || r.isNewTeacher || r.isInvalidDept)
   }, [csvRows])
 
   const blockedCsvRows = useMemo(() => {
@@ -85,17 +85,22 @@ function FacultyTab() {
     return csvRows.filter((r) => r.isExistingMapping)
   }, [csvRows])
 
+  const invalidDeptRows = useMemo(() => {
+    if (!csvRows) return []
+    return csvRows.filter((r) => r.isInvalidDept)
+  }, [csvRows])
+
   const csvVisibleRows = csvRows
     ? csvRows.filter((r) => {
-        if (csvProblemFilter && csvBlockedFilter) return r.isNewSubject || r.isNewSection || r.isNewTeacher || r.isExistingMapping
-        if (csvProblemFilter) return r.isNewSubject || r.isNewSection || r.isNewTeacher
+        if (csvProblemFilter && csvBlockedFilter) return r.isNewSubject || r.isNewSection || r.isNewTeacher || r.isInvalidDept || r.isExistingMapping
+        if (csvProblemFilter) return r.isNewSubject || r.isNewSection || r.isNewTeacher || r.isInvalidDept
         if (csvBlockedFilter) return r.isExistingMapping
         return true
       })
     : []
 
-  const TEMPLATE_HEADERS = "faculty email, name, section, subject code, subject name"
-  const TEMPLATE_SAMPLE = "juan.delacruz@lyceumalabang.edu.ph, Juan Dela Cruz, BSIT-32A3, CS101, Introduction to Computer Science\nmaria.santos@lyceumalabang.edu.ph, Maria Santos, BSCS-21B, MATH201, Calculus II"
+  const TEMPLATE_HEADERS = "faculty email, name, section, subject code, subject name, department code"
+  const TEMPLATE_SAMPLE = "juan.delacruz@lyceumalabang.edu.ph, Juan Dela Cruz, BSIT-32A3, CS101, Introduction to Computer Science, CCS\nmaria.santos@lyceumalabang.edu.ph, Maria Santos, BSCS-21B, MATH201, Calculus II, CCS"
 
   // ── Department filter ────────────────────────────────────
   const [deptFilter, setDeptFilter] = useState("all")
@@ -233,20 +238,21 @@ function FacultyTab() {
     const lines = text.split(/\r?\n/).filter((l) => l.trim())
     if (lines.length < 2) return { rows: [], error: "CSV file is empty" }
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase())
-    const expected = ["faculty email", "name", "section", "subject code", "subject name"]
+    const expected = ["faculty email", "name", "section", "subject code", "subject name", "department code"]
     if (headers.length < expected.length || headers.join(",") !== expected.join(",")) {
       return { rows: [], error: `Expected headers: ${expected.join(", ")}` }
     }
     const rows: CsvRow[] = []
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(",").map((c) => c.trim())
-      if (cols.length < 5) continue
+      if (cols.length < 6) continue
       rows.push({
         email: cols[0].toLowerCase().trim(),
         name: cols[1],
         subjectCode: cols[3],
         section: cols[2],
         subjectName: cols[4],
+        departmentCode: cols[5].toUpperCase().trim(),
       })
     }
     return { rows }
@@ -256,6 +262,7 @@ function FacultyTab() {
     const existingKeys = new Set(
       (data ?? []).map((m) => `${m.faculty.email}|${m.subject.code}|${m.section.program}-${m.section.name}`)
     )
+    const validDeptCodes = new Set(departments.map((d) => d.code))
     return rows.map((r) => {
       const idx = r.section.indexOf("-")
       const sectionProgram = idx === -1 ? "" : r.section.slice(0, idx).trim()
@@ -265,6 +272,7 @@ function FacultyTab() {
         isNewSubject: !subjects.some((s) => s.code === r.subjectCode),
         isNewSection: !sections.some((s) => s.name === sectionName && s.program === sectionProgram),
         isNewTeacher: !faculties.some((f) => f.email === r.email),
+        isInvalidDept: !validDeptCodes.has(r.departmentCode),
         isExistingMapping: existingKeys.has(`${r.email}|${r.subjectCode}|${r.section}`),
       }
     })
@@ -287,13 +295,12 @@ function FacultyTab() {
 
   const handleCsvImport = async () => {
     if (!csvRows || csvRows.length === 0) return
-    if (!importDeptId) { setCsvError("Please select a department"); return }
     setCsvImporting(true); setCsvImportResult(null); setCsvError("")
     try {
       const res = await fetch("/api/import/faculties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ departmentId: importDeptId, semesterId: activeSemesterId || null, rows: csvRows }),
+        body: JSON.stringify({ semesterId: activeSemesterId || null, rows: csvRows }),
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Import failed") }
       const result = await res.json()
@@ -303,7 +310,7 @@ function FacultyTab() {
     finally { setCsvImporting(false) }
   }
 
-  const handleCsvFieldChange = (index: number, field: "name" | "subjectCode" | "subjectName" | "section", value: string) => {
+  const handleCsvFieldChange = (index: number, field: "name" | "subjectCode" | "subjectName" | "section" | "departmentCode", value: string) => {
     if (!csvRows) return
     const existingKeys = new Set(
       (data ?? []).map((m) => `${m.faculty.email}|${m.subject.code}|${m.section.program}-${m.section.name}`)
@@ -318,6 +325,9 @@ function FacultyTab() {
       const sectionProgram = idx === -1 ? "" : value.slice(0, idx).trim()
       const sectionName = idx === -1 ? value : value.slice(idx + 1).trim()
       updated.isNewSection = !sections.some((s) => s.name === sectionName && s.program === sectionProgram)
+    } else if (field === "departmentCode") {
+      const validDeptCodes = new Set(departments.map((d) => d.code))
+      updated.isInvalidDept = !validDeptCodes.has(value.toUpperCase().trim())
     }
     const row = updated as CsvRowWithFlags
     updated.isExistingMapping = existingKeys.has(`${row.email}|${row.subjectCode}|${row.section}`)
@@ -328,7 +338,7 @@ function FacultyTab() {
   const handleCsvRowRemove = (index: number) => {
     if (!csvRows) return
     const removed = csvRows[index]
-    setRemovedCsvRows((prev) => [...prev, { email: removed.email, name: removed.name, subjectCode: removed.subjectCode, subjectName: removed.subjectName, section: removed.section }])
+    setRemovedCsvRows((prev) => [...prev, { email: removed.email, name: removed.name, subjectCode: removed.subjectCode, subjectName: removed.subjectName, section: removed.section, departmentCode: removed.departmentCode }])
     const next = csvRows.filter((_, i) => i !== index)
     if (next.length === 0) {
       setRemovedCsvRows([])
@@ -465,18 +475,6 @@ function FacultyTab() {
       <div className="card p-4 sm:p-6 bg-surface space-y-6">
         <h2 className="text-sm font-bold text-secondary">Bulk Import Faculty via CSV</h2>
 
-        <div>
-          <label className="block text-xs font-semibold text-tertiary mb-1">Department</label>
-          <select
-            value={importDeptId}
-            onChange={(e) => { setImportDeptId(e.target.value); setCsvRows(null); setCsvImportResult(null); setCsvPreviewPage(0); setCsvError(""); if (csvFileRef.current) csvFileRef.current.value = "" }}
-            className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-          >
-            <option value="">Select department...</option>
-            {departments.map((d) => (<option key={d.id} value={d.id}>{d.name}</option>))}
-          </select>
-        </div>
-
         {!activeSemesterId && (
           <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2.5">
             <span>⚠️</span>
@@ -484,15 +482,7 @@ function FacultyTab() {
           </div>
         )}
 
-        {!importDeptId && (
-          <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3">
-            Select a department above to begin.
-          </p>
-        )}
-
-        {importDeptId && (
-          <>
-            <div className="space-y-4 pt-2 border-t border-default/60">
+        <div className="space-y-4 border-t border-default/60 pt-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-secondary">Upload CSV</h3>
                 {!csvRows && !csvImportResult && (
@@ -596,6 +586,7 @@ function FacultyTab() {
                             <th>Faculty</th>
                             <th>Subject</th>
                             <th>Section</th>
+                            <th>Dept</th>
                             <th>Will Create</th>
                             <th className="w-12"></th>
                           </tr>
@@ -620,13 +611,22 @@ function FacultyTab() {
                                     className="w-full bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px] disabled:opacity-60"
                                   />
                                 </td>
-                                  <td className="whitespace-nowrap">
+                                <td>
+                                  <input
+                                    value={row.departmentCode}
+                                    onChange={(e) => handleCsvFieldChange(absIdx, "departmentCode", e.target.value)}
+                                    disabled={csvImporting}
+                                    className={`w-16 bg-surface-dim/50 border border-transparent focus:border-gold-400 rounded-lg px-2 py-1.5 outline-none text-[13px] uppercase disabled:opacity-60 ${row.isInvalidDept ? "text-red-600" : ""}`}
+                                  />
+                                </td>
+                                <td className="whitespace-nowrap">
                                     <div className="flex flex-wrap gap-1">
-                                      {row.isNewSubject && <span className="badge-amber">Subject</span>}
-                                      {row.isNewSection && <span className="badge-amber">Section</span>}
-                                      {row.isNewTeacher && <span className="badge-amber">Teacher</span>}
-                                      {!row.isNewSubject && !row.isNewSection && !row.isNewTeacher && row.isExistingMapping && <span className="badge-red">Already loaded</span>}
-                                      {!row.isNewSubject && !row.isNewSection && !row.isNewTeacher && !row.isExistingMapping && <span className="badge-emerald">Faculty Loading Only</span>}
+                                      {row.isInvalidDept && <span className="badge-red">Dept code</span>}
+                                      {!row.isInvalidDept && row.isNewSubject && <span className="badge-amber">Subject</span>}
+                                      {!row.isInvalidDept && row.isNewSection && <span className="badge-amber">Section</span>}
+                                      {!row.isInvalidDept && row.isNewTeacher && <span className="badge-amber">Teacher</span>}
+                                      {!row.isNewSubject && !row.isNewSection && !row.isNewTeacher && !row.isInvalidDept && row.isExistingMapping && <span className="badge-red">Already loaded</span>}
+                                      {!row.isNewSubject && !row.isNewSection && !row.isNewTeacher && !row.isInvalidDept && !row.isExistingMapping && <span className="badge-emerald">Faculty Loading Only</span>}
                                     </div>
                                   </td>
                                 <td className="text-center">
@@ -678,8 +678,8 @@ function FacultyTab() {
 
                   <div className="sticky bottom-0 pt-4 pb-1 bg-white dark:bg-surface-dim flex items-center gap-3">
                     <IosButton variant="gray" type="button" disabled={csvImporting} onClick={handleCsvReset} className="flex-1">Cancel</IosButton>
-                    <IosButton variant="primary" type="button" disabled={csvImporting || csvRows.length === 0 || !importDeptId || blockedCsvRows.length > 0} onClick={handleCsvImport} className={`flex-1 ${blockedCsvRows.length > 0 ? "!bg-red-400 !text-white" : ""}`}>
-                      {csvImporting ? "Importing..." : blockedCsvRows.length > 0 ? `${blockedCsvRows.length} Already loaded — Remove to import` : `Import ${csvRows.length} Row${csvRows.length !== 1 ? "s" : ""}`}
+                    <IosButton variant="primary" type="button" disabled={csvImporting || csvRows.length === 0 || blockedCsvRows.length > 0 || invalidDeptRows.length > 0} onClick={handleCsvImport} className={`flex-1 ${blockedCsvRows.length > 0 || invalidDeptRows.length > 0 ? "!bg-red-400 !text-white" : ""}`}>
+                      {csvImporting ? "Importing..." : blockedCsvRows.length > 0 ? `${blockedCsvRows.length} Already loaded — Remove to import` : invalidDeptRows.length > 0 ? `${invalidDeptRows.length} Invalid dept code — Fix to import` : `Import ${csvRows.length} Row${csvRows.length !== 1 ? "s" : ""}`}
                     </IosButton>
                   </div>
                 </div>
@@ -743,8 +743,6 @@ function FacultyTab() {
                 </div>
               )}
             </div>
-          </>
-        )}
       </div>
 
       {/* Department Filter */}

@@ -13,7 +13,7 @@ function parseSectionIdentifier(raw: string): { name: string; program: string } 
 }
 
 // ── Faculty-Subject CSV ──────────────────────────────────
-// Required columns: faculty email, name, section, subject code, subject name
+// Required columns: faculty email, name, section, subject code, subject name, department code
 
 interface FacultySubjectCsvRow {
   email: string
@@ -22,9 +22,10 @@ interface FacultySubjectCsvRow {
   subjectName: string
   sectionName: string
   sectionProgram: string
+  departmentCode: string
 }
 
-export const FACULTY_CSV_HEADERS = ["faculty email", "name", "section", "subject code", "subject name"]
+export const FACULTY_CSV_HEADERS = ["faculty email", "name", "section", "subject code", "subject name", "department code"]
 
 export interface FacultySubjectImportResult {
   matched: number
@@ -49,11 +50,11 @@ export function parseFacultySubjectCsv(text: string): {
   const headerLine = lines[0]
   const rawHeaders = headerLine.split(",").map((h) => h.trim().toLowerCase())
 
-  if (rawHeaders.length < 5 || rawHeaders[0] !== "faculty email" || rawHeaders[1] !== "name" || rawHeaders[2] !== "section" || rawHeaders[3] !== "subject code" || rawHeaders[4] !== "subject name") {
+  if (rawHeaders.length < 6 || rawHeaders[0] !== "faculty email" || rawHeaders[1] !== "name" || rawHeaders[2] !== "section" || rawHeaders[3] !== "subject code" || rawHeaders[4] !== "subject name" || rawHeaders[5] !== "department code") {
     return {
       rows,
       errors,
-      headerError: `Expected headers: faculty email, name, section, subject code, subject name — got: ${rawHeaders.join(", ")}`,
+      headerError: `Expected headers: faculty email, name, section, subject code, subject name, department code — got: ${rawHeaders.join(", ")}`,
     }
   }
 
@@ -61,8 +62,8 @@ export function parseFacultySubjectCsv(text: string): {
     const line = lines[i]
     const cols = line.split(",").map((c) => c.trim())
 
-    if (cols.length < 5) {
-      errors.push({ row: i + 1, message: `Expected at least 5 columns, got ${cols.length}` })
+    if (cols.length < 6) {
+      errors.push({ row: i + 1, message: `Expected at least 6 columns, got ${cols.length}` })
       continue
     }
 
@@ -71,6 +72,7 @@ export function parseFacultySubjectCsv(text: string): {
     const sectionRaw = cols[2]
     const subjectCode = cols[3].trim()
     const subjectName = cols[4].trim()
+    const departmentCode = cols[5].trim().toUpperCase()
     const { program, name: sectionName } = parseSectionIdentifier(sectionRaw.trim())
 
     if (email.length === 0) {
@@ -88,7 +90,12 @@ export function parseFacultySubjectCsv(text: string): {
       continue
     }
 
-    rows.push({ email, name: displayName, subjectCode, subjectName, sectionName, sectionProgram: program })
+    if (departmentCode.length === 0) {
+      errors.push({ row: i + 1, message: "Department code is required" })
+      continue
+    }
+
+    rows.push({ email, name: displayName, subjectCode, subjectName, sectionName, sectionProgram: program, departmentCode })
   }
 
   return { rows, errors }
@@ -96,7 +103,6 @@ export function parseFacultySubjectCsv(text: string): {
 
 export async function importFacultySubjects(
   rows: FacultySubjectCsvRow[],
-  departmentId?: string | null,
   semesterId?: string | null,
 ): Promise<FacultySubjectImportResult> {
   const result: FacultySubjectImportResult = {
@@ -108,10 +114,25 @@ export async function importFacultySubjects(
 
   if (rows.length === 0) return result
 
+  // ── Resolve department codes → ids ──
+  const uniqueDeptCodes = [...new Set(rows.map((r) => r.departmentCode))]
+  const { data: allDepts } = await supabase.from("departments").select("id, code")
+  const deptCodeToId = new Map((allDepts || []).map((d: { id: string; code: string }) => [d.code.toUpperCase(), d.id]))
+  const deptCodeErrors = new Set<string>()
+  for (const code of uniqueDeptCodes) {
+    if (!deptCodeToId.has(code)) {
+      deptCodeErrors.add(code)
+      result.errors.push({ row: 0, message: `Department code "${code}" not found` })
+    }
+  }
+
+  // ── Filter out rows with invalid department codes ──
+  const validRows = rows.filter((r) => !deptCodeErrors.has(r.departmentCode))
+
   // ── Upsert subjects ──
-  const uniqueSubjectCodes = [...new Set(rows.map((r) => r.subjectCode))]
+  const uniqueSubjectCodes = [...new Set(validRows.map((r) => r.subjectCode))]
   const subjectItems = uniqueSubjectCodes.map((code) => {
-    const row = rows.find((r) => r.subjectCode === code)
+    const row = validRows.find((r) => r.subjectCode === code)
     return { code, name: row?.subjectName || code }
   })
   const { data: subjects, created: createdSubjects } = await subjectRepository.upsertMany(subjectItems)
@@ -124,7 +145,7 @@ export async function importFacultySubjects(
   const { data: allCourses } = await supabase.from("department_courses").select("id, code")
   const courseCodeToId = new Map((allCourses || []).map((c: { code: string; id: string }) => [c.code, c.id]))
 
-  for (const r of rows) {
+  for (const r of validRows) {
     const key = `${r.sectionName}|${r.sectionProgram}`
     if (!sectionKeys.has(key)) {
       sectionKeys.add(key)
@@ -140,18 +161,19 @@ export async function importFacultySubjects(
   result.createdSections = createdSections
 
   // ── Resolve users (batch lookup + batch create) ──
-  const uniqueEmails = [...new Set(rows.map((r) => r.email.toLowerCase().trim()))]
+  const uniqueEmails = [...new Set(validRows.map((r) => r.email.toLowerCase().trim()))]
   const userMap = await userRepository.findManyByEmail(uniqueEmails)
   const missingEmails = uniqueEmails.filter((e) => !userMap.has(e))
   if (missingEmails.length > 0) {
     const createdUsers = await userRepository.createMany(
       missingEmails.map((email) => {
-        const row = rows.find((r) => r.email.toLowerCase().trim() === email)
+        const row = validRows.find((r) => r.email.toLowerCase().trim() === email)
+        const deptId = row ? deptCodeToId.get(row.departmentCode) ?? undefined : undefined
         return {
           email,
           name: row?.name?.trim() || email.split("@")[0] || email,
           role: "FACULTY",
-          departmentId: departmentId ?? undefined,
+          departmentId: deptId,
         }
       }),
     )
@@ -162,8 +184,8 @@ export async function importFacultySubjects(
 
   // ── Build mappings ──
   const fsItems: { faculty_id: string; subject_id: string; section_id: string; semesterId?: string | null }[] = []
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]
+  for (let i = 0; i < validRows.length; i++) {
+    const row = validRows[i]
     const rowNum = i + 1
 
     const user = userMap.get(row.email.toLowerCase().trim())

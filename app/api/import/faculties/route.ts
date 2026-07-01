@@ -16,29 +16,26 @@ export async function POST(request: NextRequest) {
 
   const session = await auth()
 
-  let importRows: { email: string; name: string; subjectCode: string; subjectName: string; sectionName: string; sectionProgram: string }[]
+  let importRows: { email: string; name: string; subjectCode: string; subjectName: string; sectionName: string; sectionProgram: string; departmentCode: string }[]
   let parseErrors: { row: number; message: string }[] = []
-  let departmentId: string | null = null
   let semesterId: string | null = null
 
   const contentType = request.headers.get("content-type") || ""
 
   if (contentType.includes("application/json")) {
     const body = await request.json()
-    departmentId = body.departmentId || null
     semesterId = body.semesterId || null
-    const rawRows = body.rows as { email: string; name?: string; subjectCode: string; subjectName?: string; section: string }[] | undefined
+    const rawRows = body.rows as { email: string; name?: string; subjectCode: string; subjectName?: string; section: string; departmentCode?: string }[] | undefined
     if (!rawRows || !Array.isArray(rawRows) || rawRows.length === 0) {
       return NextResponse.json({ error: "Rows array is required" }, { status: 400 })
     }
     importRows = rawRows.map((r) => {
       const { program, name: sectionName } = parseSectionIdentifier(r.section || "")
-      return { email: r.email.toLowerCase().trim(), name: r.name || "", subjectCode: r.subjectCode.trim(), subjectName: r.subjectName || "", sectionName, sectionProgram: program }
+      return { email: r.email.toLowerCase().trim(), name: r.name || "", subjectCode: r.subjectCode.trim(), subjectName: r.subjectName || "", sectionName, sectionProgram: program, departmentCode: (r.departmentCode || "").trim().toUpperCase() }
     })
   } else {
     const formData = await request.formData()
     const file = formData.get("file") as File | null
-    departmentId = (formData.get("departmentId") as string) || null
     if (!file) {
       return NextResponse.json({ error: "CSV file is required" }, { status: 400 })
     }
@@ -55,7 +52,7 @@ export async function POST(request: NextRequest) {
     parseErrors = parsed.errors
   }
 
-    const result = await importFacultySubjects(importRows, departmentId, semesterId)
+    const result = await importFacultySubjects(importRows, semesterId)
 
   await logAuditEvent({
     userId: (session!.user as Record<string, unknown>).id as string,
