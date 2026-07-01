@@ -7,6 +7,7 @@ import { SkeletonTable } from "@/components/ui/Skeleton"
 import IosButton from "@/components/ui/IosButton"
 import LockedTab from "@/components/ui/LockedTab"
 import { SegmentedControl, SearchInput } from "./shared"
+import BulkSectionImport from "@/features/users/components/bulk-import/BulkSectionImport"
 import type { DepartmentData } from "@/lib/types"
 import type { SubjectTab, Subject, Section, DepartmentCourse } from "./types"
 
@@ -457,6 +458,11 @@ function SectionsTab() {
         )}
         <div><IosButton type="submit" loading={saving} variant="primary">Add Section</IosButton></div>
       </form>
+
+      <div className="card p-4 sm:p-6 bg-surface space-y-6">
+        <h2 className="text-sm font-bold text-secondary">Bulk Import Sections via CSV</h2>
+        <BulkSectionImport onImportComplete={() => fetchData(true)} />
+      </div>
 
       <div className="card p-4 sm:p-6 bg-surface space-y-4">
         <SearchInput value={search} onChange={setSearch} placeholder="Search by section name, program, or department..." />
