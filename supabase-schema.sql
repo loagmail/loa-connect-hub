@@ -1365,6 +1365,35 @@ DO $$ BEGIN
 END $$;
 
 -- =========================================================
+-- Migration 28: Update rubric items for Communication with Students
+-- =========================================================
+-- Replaces the 3 generic items with 6 detailed items.
+-- Updates existing item texts (preserves FK references) and
+-- inserts 3 new items.
+
+DO $$
+DECLARE
+  _cat_id TEXT := 'e0000000-0000-0000-0000-000000000002';
+BEGIN
+  -- Update existing item texts
+  UPDATE rubric_items SET text = 'The professors appropriately/immediately responds when students communicate (timely response to the students).', weight = 1.00
+  WHERE id = 'e0000002-0000-0000-0000-000000000001' AND "categoryId" = _cat_id;
+
+  UPDATE rubric_items SET text = 'He/she gives positive and specific feedback to students, which reinforces behaviour and helps them understand how to improve and makes progress.', weight = 1.00
+  WHERE id = 'e0000002-0000-0000-0000-000000000002' AND "categoryId" = _cat_id;
+
+  UPDATE rubric_items SET text = 'He/she guides the direction of the discussion.', weight = 1.00
+  WHERE id = 'e0000002-0000-0000-0000-000000000003' AND "categoryId" = _cat_id;
+
+  -- Insert new items (idempotent)
+  INSERT INTO rubric_items (id, "categoryId", text, "displayOrder", weight) VALUES
+    ('e0000002-0000-0000-0000-000000000004', _cat_id, 'He/she specifies how learning tasks will be evaluated (if appropriate).', 4, 1.00),
+    ('e0000002-0000-0000-0000-000000000005', _cat_id, 'He/she seeks feedback from students on lesson and on ease of online technology and accessibility of course.', 5, 1.00),
+    ('e0000002-0000-0000-0000-000000000006', _cat_id, 'He/she shows good subject knowledge and understanding which engages students'' creativity and sense of humor during the discussion.', 6, 1.00)
+  ON CONFLICT (id) DO NOTHING;
+END $$;
+
+-- =========================================================
 -- SEED DATA
 --    Uses fixed UUIDs for idempotent re-runs.
 --    Placed after all migrations so all tables and
@@ -1446,16 +1475,19 @@ BEGIN
     ('e0000000-0000-0000-0000-000000000008', _sem_id, 'Assessment and Feedback',          8)
   ON CONFLICT (id) DO NOTHING;
 
-  -- ── RUBRIC ITEMS (24 total, 3 per category) ────────────
+  -- ── RUBRIC ITEMS (27 total, 3-6 per category) ────────────
   INSERT INTO rubric_items (id, "categoryId", text, "displayOrder", weight) VALUES
     -- Professional Manner
     ('e0000001-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'Demonstrates professionalism in conduct and appearance', 1, 1.00),
     ('e0000001-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'Shows enthusiasm and dedication to teaching', 2, 1.00),
     ('e0000001-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000001', 'Maintains ethical standards in dealing with students', 3, 1.00),
     -- Communication with Students
-    ('e0000002-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000002', 'Communicates course expectations and requirements clearly', 1, 1.00),
-    ('e0000002-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000002', 'Provides clear explanations of lessons and concepts', 2, 1.00),
-    ('e0000002-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000002', 'Is approachable and responsive to student concerns', 3, 1.00),
+    ('e0000002-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000002', 'The professors appropriately/immediately responds when students communicate (timely response to the students).', 1, 1.00),
+    ('e0000002-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000002', 'He/she gives positive and specific feedback to students, which reinforces behaviour and helps them understand how to improve and makes progress.', 2, 1.00),
+    ('e0000002-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000002', 'He/she guides the direction of the discussion.', 3, 1.00),
+    ('e0000002-0000-0000-0000-000000000004', 'e0000000-0000-0000-0000-000000000002', 'He/she specifies how learning tasks will be evaluated (if appropriate).', 4, 1.00),
+    ('e0000002-0000-0000-0000-000000000005', 'e0000000-0000-0000-0000-000000000002', 'He/she seeks feedback from students on lesson and on ease of online technology and accessibility of course.', 5, 1.00),
+    ('e0000002-0000-0000-0000-000000000006', 'e0000000-0000-0000-0000-000000000002', 'He/she shows good subject knowledge and understanding which engages students'' creativity and sense of humor during the discussion.', 6, 1.00),
     -- Student Engagement
     ('e0000003-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000003', 'Encourages student participation and classroom interaction', 1, 1.00),
     ('e0000003-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000003', 'Uses teaching methods that promote active learning', 2, 1.00),
