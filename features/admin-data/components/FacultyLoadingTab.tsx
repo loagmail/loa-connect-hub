@@ -9,7 +9,7 @@ import LockedTab from "@/components/ui/LockedTab"
 import { SegmentedControl, SearchInput } from "./shared"
 import { EnrollmentsTab } from "./EnrollmentsTab"
 import type { DepartmentData } from "@/lib/types"
-import type { FacEnrollTab, Subject, Section, FacultyMapping } from "./types"
+import type { FacEnrollTab, FacViewTab, Subject, Section, FacultyMapping, Enrollment } from "./types"
 
 export function FacultyLoadingTab() {
   const [facEnrollTab, setFacEnrollTab] = useState<FacEnrollTab>("faculty")
@@ -152,7 +152,7 @@ function FacultyTab() {
   const { data: subjectsData } = useApiGet<{ data: Subject[] }>("/api/data/evaluation-mappings?type=subjects")
   const { data: sectionsData } = useApiGet<{ data: Section[] }>("/api/data/evaluation-mappings?type=sections")
 
-  const { data: enrollmentsData } = useApiGet<{ data: { id: string; faculty_subject_id: string | null }[] }>("/api/data/evaluation-mappings?type=student")
+  const { data: enrollmentsData } = useApiGet<{ data: Enrollment[] }>("/api/data/evaluation-mappings?type=student")
 
   const faculties = (allUsers?.users ?? []).filter((u) => (u.role.includes("FACULTY") || u.role.includes("DEAN")) && u.id !== "a0000000-0000-0000-0000-000000000001")
   const subjects = subjectsData?.data ?? []
@@ -173,16 +173,6 @@ function FacultyTab() {
     ? faculties.find((f) => f.id === formFaculty)?.name ?? ""
     : ""
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(e.target as Node)) {
-        setFacultyDropdownOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
   const enrollmentCountByFsId = useMemo(() => {
     const map = new Map<string, number>()
     for (const e of enrollmentsData?.data ?? []) {
@@ -192,6 +182,59 @@ function FacultyTab() {
     }
     return map
   }, [enrollmentsData])
+
+  const enrolledStudentsByFsId = useMemo(() => {
+    const map = new Map<string, Enrollment[]>()
+    for (const e of enrollmentsData?.data ?? []) {
+      if (e.faculty_subject_id) {
+        const list = map.get(e.faculty_subject_id)
+        if (list) list.push(e)
+        else map.set(e.faculty_subject_id, [e])
+      }
+    }
+    return map
+  }, [enrollmentsData])
+
+  // ── Subject-Section Detail Modal state ───────────────────
+  const [selectedSsMapping, setSelectedSsMapping] = useState<FacultyMapping | null>(null)
+  const [reassignFacultyId, setReassignFacultyId] = useState("")
+  const [reassignFacultySearch, setReassignFacultySearch] = useState("")
+  const [reassignDropdownOpen, setReassignDropdownOpen] = useState(false)
+  const reassignDropdownRef = useRef<HTMLDivElement>(null)
+  const [reassignSaving, setReassignSaving] = useState(false)
+  const [reassignError, setReassignError] = useState("")
+  const [reassignSuccess, setReassignSuccess] = useState("")
+
+  const handleReassign = async () => {
+    if (!selectedSsMapping || !reassignFacultyId) return
+    setReassignSaving(true); setReassignError(""); setReassignSuccess("")
+    try {
+      const res = await fetch("/api/admin/faculty-subjects/reassign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldFacultySubjectId: selectedSsMapping.id, newFacultyId: reassignFacultyId }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Reassignment failed") }
+      setReassignSuccess("Faculty reassigned! Students will see the new faculty on their next page load.")
+      setReassignFacultyId(""); setReassignFacultySearch("")
+      setTimeout(() => { setSelectedSsMapping(null); setReassignSuccess("") }, 2000)
+      fetchData(true)
+    } catch (err) { setReassignError((err as Error).message) }
+    finally { setReassignSaving(false) }
+  }
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(e.target as Node)) {
+        setFacultyDropdownOpen(false)
+      }
+      if (reassignDropdownRef.current && !reassignDropdownRef.current.contains(e.target as Node)) {
+        setReassignDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -380,6 +423,8 @@ function FacultyTab() {
     )
   })
 
+  const [viewTab, setViewTab] = useState<FacViewTab>("by_faculty")
+
   const groupedFaculty = useMemo(() => {
     const map = new Map<string, { faculty: FacultyMapping["faculty"]; mappings: FacultyMapping[] }>()
     for (const m of filtered) {
@@ -391,7 +436,18 @@ function FacultyTab() {
     return Array.from(map.values())
   }, [filtered])
 
+  const flatData = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const c = a.subject.code.localeCompare(b.subject.code)
+      if (c !== 0) return c
+      const secA = `${a.section.program}-${a.section.name}`
+      const secB = `${b.section.program}-${b.section.name}`
+      return secA.localeCompare(secB)
+    })
+  }, [filtered])
+
   const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(groupedFaculty, 25)
+  const ssPagination = usePagination(flatData, 25)
 
   const [selectedFacultyLoad, setSelectedFacultyLoad] = useState<FacultyMapping[] | null>(null)
   const facultyLoadPagination = usePagination(selectedFacultyLoad ?? [], 25)
@@ -769,18 +825,40 @@ function FacultyTab() {
           })}
         </div>
 
+        <div className="flex items-center gap-2">
+          {[
+            { key: "by_faculty" as FacViewTab, label: "By Faculty" },
+            { key: "by_subject_section" as FacViewTab, label: "By Subject & Section" },
+          ].map((pill) => {
+            const active = viewTab === pill.key
+            return (
+              <button
+                key={pill.key}
+                onClick={() => setViewTab(pill.key)}
+                className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                  active
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                    : "bg-surface text-tertiary border-default hover:border-amber-300 hover:text-secondary"
+                }`}
+              >
+                {pill.label}
+              </button>
+            )
+          })}
+        </div>
+
         {hasNullSemesterId && (
           <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-2.5">
             <span>⚠️</span>
             <span>Some mappings are missing semesterId — affected faculty will not appear in student evaluations.</span>
           </div>
         )}
-        <SearchInput value={search} onChange={(v) => { setSearch(v) }} placeholder="Search by faculty name, email, subject code, or section..." />
+        <SearchInput value={search} onChange={(v) => { setSearch(v) }} placeholder={viewTab === "by_faculty" ? "Search by faculty name, email, subject code, or section..." : "Search by subject code, subject name, section, or faculty..."} />
         {loading && !data ? (
-          <SkeletonTable rows={4} cols={3} />
-        ) : groupedFaculty.length === 0 ? (
+          <SkeletonTable rows={4} cols={viewTab === "by_faculty" ? 4 : 6} />
+        ) : filtered.length === 0 ? (
           <p className="text-xs text-tertiary text-center py-8">No mappings found.</p>
-        ) : (
+        ) : viewTab === "by_faculty" ? (
           <>
             <div ref={tableRef} className="desktop-only max-h-96 overflow-y-auto tbl-container tbl">
               <table>
@@ -835,9 +913,184 @@ function FacultyTab() {
             </div>
             <Paginator page={page} totalPages={totalPages} pageSize={pageSize} totalItems={groupedFaculty.length} setPage={setPage} setPageSize={setPageSize} />
           </>
+        ) : (
+          <>
+            <div className="desktop-only max-h-96 overflow-y-auto tbl-container tbl">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
+                    <th>Section</th>
+                    <th>Faculty</th>
+                    <th>Email</th>
+                    <th className="text-center">Headcount</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ssPagination.paginatedItems.map((m) => {
+                    const hc = enrollmentCountByFsId.get(m.id) ?? 0
+                    return (
+                      <tr key={m.id}>
+                        <td className="font-mono text-xs font-semibold text-secondary">{m.subject.code}</td>
+                        <td className="text-secondary">{m.subject.name}</td>
+                        <td className="text-secondary">{m.section.program}-{m.section.name}</td>
+                        <td className="font-medium text-secondary">{m.faculty.name}</td>
+                        <td className="text-tertiary">{m.faculty.email}</td>
+                        <td className="text-center font-semibold text-secondary">{hc}</td>
+                        <td>
+                          <IosButton variant="plain" size="xs" onClick={() => setSelectedSsMapping(m)}>View Students</IosButton>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="mobile-only space-y-2">
+              {ssPagination.paginatedItems.map((m) => {
+                const hc = enrollmentCountByFsId.get(m.id) ?? 0
+                return (
+                  <div key={m.id} className="p-4 rounded-xl bg-surface border border-default">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-primary truncate">{m.subject.code} - {m.subject.name}</p>
+                        <p className="text-xs text-tertiary truncate">{m.section.program}-{m.section.name}</p>
+                        <p className="text-xs text-secondary truncate mt-1">{m.faculty.name}</p>
+                        <p className="text-xs text-tertiary truncate">{m.faculty.email}</p>
+                      </div>
+                      <div className="shrink-0 text-right flex flex-col items-end gap-1">
+                        <span className="text-xs font-semibold text-secondary">{hc} student{hc !== 1 ? "s" : ""}</span>
+                        <IosButton variant="plain" size="xs" onClick={() => setSelectedSsMapping(m)}>View</IosButton>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <Paginator page={ssPagination.page} totalPages={ssPagination.totalPages} pageSize={ssPagination.pageSize} totalItems={flatData.length} setPage={ssPagination.setPage} setPageSize={ssPagination.setPageSize} />
+          </>
         )}
-        {data && <p className="text-xs text-tertiary">{groupedFaculty.length} facult{groupedFaculty.length !== 1 ? "ies" : "y"} ({filtered.length} mapping{filtered.length !== 1 ? "s" : ""}){deptFilter !== "all" ? ` (${byDept.length} in department)` : ""}</p>}
+        {data && (
+          <p className="text-xs text-tertiary">
+            {viewTab === "by_faculty"
+              ? `${groupedFaculty.length} facult${groupedFaculty.length !== 1 ? "ies" : "y"} (${filtered.length} mapping${filtered.length !== 1 ? "s" : ""})`
+              : `${flatData.length} record${flatData.length !== 1 ? "s" : ""}`
+            }
+            {deptFilter !== "all" ? ` (${byDept.length} in department)` : ""}
+          </p>
+        )}
       </div>
+
+      {/* ── Subject-Section Detail Modal ────────────────────── */}
+      {selectedSsMapping && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 bg-black/60" onClick={() => { setSelectedSsMapping(null); setReassignError(""); setReassignSuccess("") }}>
+          <div className="bg-white dark:bg-surface-dim rounded-2xl w-full max-w-2xl mx-4 shadow-2xl border border-default overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-default">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-secondary truncate">{selectedSsMapping.subject.code} - {selectedSsMapping.subject.name}</p>
+                <p className="text-xs text-tertiary truncate">{selectedSsMapping.section.program}-{selectedSsMapping.section.name} · {selectedSsMapping.faculty.name}</p>
+              </div>
+              <IosButton variant="gray" size="xs" onClick={() => { setSelectedSsMapping(null); setReassignError(""); setReassignSuccess("") }}>
+                <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </IosButton>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-y-auto space-y-4">
+              {/* Enrolled Students */}
+              <div>
+                <h3 className="text-sm font-semibold text-secondary mb-2">Enrolled Students ({(enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []).length})</h3>
+                {(() => {
+                  const enrolled = enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []
+                  if (enrolled.length === 0) {
+                    return <p className="text-xs text-tertiary text-center py-4">No enrolled students.</p>
+                  }
+                  return (
+                    <div className="tbl max-h-48 overflow-y-auto">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th className="w-8">#</th>
+                            <th>Student</th>
+                            <th>Email</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {enrolled.map((e, i) => (
+                            <tr key={e.id}>
+                              <td className="text-tertiary">{i + 1}</td>
+                              <td className="font-medium text-secondary">{e.student.name}</td>
+                              <td className="text-tertiary">{e.student.email}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              {/* Re-assign Faculty */}
+              <div className="border-t border-default pt-4 space-y-3">
+                <h3 className="text-sm font-semibold text-secondary">Re-assign Faculty</h3>
+                {reassignError && <p className="text-xs font-medium text-red-600 bg-red-50 p-2 rounded">{reassignError}</p>}
+                {reassignSuccess && <p className="text-xs font-medium text-green-600 bg-green-50 p-2 rounded">{reassignSuccess}</p>}
+                <div className="relative" ref={reassignDropdownRef}>
+                  <label className="block text-xs font-semibold text-tertiary mb-1">New Faculty</label>
+                  <input
+                    value={reassignFacultySearch || (reassignFacultyId ? faculties.find((f) => f.id === reassignFacultyId)?.name ?? "" : "")}
+                    onChange={(e) => { setReassignFacultySearch(e.target.value); setReassignFacultyId(""); setReassignDropdownOpen(true) }}
+                    onFocus={() => setReassignDropdownOpen(true)}
+                    placeholder="Search faculty..."
+                    className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    autoComplete="off"
+                  />
+                  {reassignDropdownOpen && (
+                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl max-h-52 overflow-y-auto">
+                      {filteredFaculties.length === 0 ? (
+                        <p className="text-xs text-tertiary text-center py-4">No faculty found</p>
+                      ) : (
+                        filteredFaculties
+                          .filter((f) => f.id !== selectedSsMapping.faculty.id)
+                          .map((f) => (
+                            <button
+                              key={f.id}
+                              type="button"
+                              onClick={() => { setReassignFacultyId(f.id); setReassignFacultySearch(""); setReassignDropdownOpen(false) }}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-hover transition-colors ${reassignFacultyId === f.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
+                            >
+                              <span className="text-primary">{f.name}</span>
+                              <span className="text-tertiary ml-1 text-xs">{f.email}</span>
+                            </button>
+                          ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                {reassignFacultyId && !reassignSuccess && (
+                  <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2.5">
+                    <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span>Proceeding will update which faculty is assigned to this subject-section. Students will see a new pending evaluation for the new faculty, and any existing evaluations for the old faculty will be invalidated. This action cannot be undone.</span>
+                  </div>
+                )}
+                <IosButton
+                  variant="primary"
+                  type="button"
+                  loading={reassignSaving}
+                  disabled={!reassignFacultyId}
+                  onClick={handleReassign}
+                >
+                  {reassignSaving ? "Re-assigning..." : "Confirm Re-assignment"}
+                </IosButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Faculty Load Modal ─────────────────────────────── */}
       {selectedFacultyLoad && (

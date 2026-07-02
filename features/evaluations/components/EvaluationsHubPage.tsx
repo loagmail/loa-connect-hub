@@ -30,6 +30,13 @@ export default function EvaluationsHubPage({ basePath = "/admin" }: { basePath?:
           <h3 className="text-sm font-bold text-primary">Reports</h3>
           <p className="text-xs text-tertiary mt-1">Analytics and sentiment analysis</p>
         </Link>
+        <Link
+          href={`${basePath}/evaluations/disabled`}
+          className="block bg-white rounded-xl border border-slate-200 p-6 hover:border-blue-200 hover:shadow-sm transition-all"
+        >
+          <h3 className="text-sm font-bold text-primary">Invalidated Evaluations</h3>
+          <p className="text-xs text-tertiary mt-1">View disabled evaluations from disputes, re-assignments, and stale mappings</p>
+        </Link>
       </div>
     </div>
   )

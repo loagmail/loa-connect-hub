@@ -2,6 +2,7 @@ export type MainTab = "semesters" | "departments" | "subjects" | "faculty_enroll
 export type InfraTab = "departments" | "courses"
 export type SubjectTab = "subjects" | "sections"
 export type FacEnrollTab = "faculty" | "enrollments"
+export type FacViewTab = "by_faculty" | "by_subject_section"
 
 export interface Subject {
   id: string; code: string; name: string; isDisabled: boolean
