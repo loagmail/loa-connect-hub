@@ -22,14 +22,24 @@ interface RubricCategory {
 
 function FacultyHeader({
   evaluateeName,
+  subjectName,
+  subjectCode,
+  sectionName,
+  disputeLoading,
+  onDispute,
   onExit,
 }: {
   evaluateeName: string
+  subjectName?: string
+  subjectCode?: string
+  sectionName?: string
+  disputeLoading?: boolean
+  onDispute?: () => void
   onExit: () => void
 }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 dark:bg-black/90 backdrop-blur-lg shadow-lg">
-      <div className="flex items-center justify-between px-4 sm:px-6 h-14 sm:h-16">
+      <div className="flex items-start justify-between px-4 sm:px-6 py-3 sm:py-4 min-h-14 sm:min-h-16">
         <button
           type="button"
           onClick={onExit}
@@ -48,9 +58,31 @@ function FacultyHeader({
               <div className="h-2.5 w-32 bg-slate-700/40 rounded-full animate-pulse ml-auto" />
             </div>
           ) : (
-            <p className="text-sm font-semibold text-white truncate">
-              Evaluating: <span className="text-brand-400">{evaluateeName}</span>
-            </p>
+            <div className="text-white">
+              <h1 className="text-base font-bold leading-tight">
+                Evaluation for <span className="text-brand-400">{subjectName || subjectCode || "this subject"}</span>
+              </h1>
+              <p className="text-sm font-medium text-white/70 mt-0.5">
+                {subjectCode && <span className="text-white/50">{subjectCode}</span>}
+                {subjectCode && sectionName && <span className="text-white/40 mx-1">·</span>}
+                {sectionName && <span className="text-white/50">Section {sectionName}</span>}
+              </p>
+              <p className="text-base font-bold text-white">
+                Professor: <span className="text-brand-300 font-semibold">{evaluateeName}</span>
+              </p>
+              {onDispute && (
+                <p className="text-right">
+                  <button
+                    type="button"
+                    onClick={onDispute}
+                    disabled={disputeLoading}
+                    className="text-[11px] text-red-400 hover:text-red-300 underline decoration-dotted underline-offset-2 opacity-70 hover:opacity-100 transition-opacity disabled:opacity-30"
+                  >
+                    {disputeLoading ? "Reporting..." : "Wrong faculty? Report"}
+                  </button>
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -77,8 +109,10 @@ export default function StandaloneEvaluationPage() {
   const [facultySubjectId, setFacultySubjectId] = useState("")
   const [subjectName, setSubjectName] = useState("")
   const [subjectCode, setSubjectCode] = useState("")
+  const [sectionName, setSectionName] = useState("")
   const [disputeLoading, setDisputeLoading] = useState(false)
   const [disputeMessage, setDisputeMessage] = useState("")
+  const [showDisputeModal, setShowDisputeModal] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -101,6 +135,7 @@ export default function StandaloneEvaluationPage() {
         setFacultySubjectId(ev.facultySubjectId || "")
         setSubjectName(ev.subjectName || "")
         setSubjectCode(ev.subjectCode || "")
+        setSectionName(ev.sectionName || "")
 
         const ratingsRes = await fetch(`/api/evaluations/${ev.id}/ratings`)
         if (ratingsRes.status === 403) { setLockedEndpoint(`/api/evaluations/${ev.id}/ratings`); return }
@@ -137,7 +172,10 @@ export default function StandaloneEvaluationPage() {
 
   async function handleDispute() {
     if (!facultySubjectId) return
-    if (!confirm(`Report "${evaluateeName}" as the wrong faculty for "${subjectName || subjectCode}"?\n\nThis evaluation will be disabled and an admin will review the assignment.`)) return
+    setShowDisputeModal(true)
+  }
+
+  async function confirmDispute() {
     setDisputeLoading(true)
     try {
       const res = await fetch("/api/evaluations/dispute", {
@@ -155,7 +193,7 @@ export default function StandaloneEvaluationPage() {
         setDisputeMessage(data.error || "Failed to report dispute")
         return
       }
-      setDisputeMessage(`Dispute reported for "${subjectName || subjectCode}". An admin will review.`)
+      router.replace("/student/evaluations")
     } catch {
       setDisputeMessage("Failed to report dispute")
     } finally {
@@ -241,7 +279,7 @@ export default function StandaloneEvaluationPage() {
   if (lockedEndpoint) {
     return (
       <div className="h-dvh flex flex-col">
-        <FacultyHeader evaluateeName={evaluateeName} onExit={handleExit} />
+        <FacultyHeader evaluateeName={evaluateeName} subjectName={subjectName} subjectCode={subjectCode} sectionName={sectionName} disputeLoading={disputeLoading} onDispute={handleDispute} onExit={handleExit} />
         <div className="flex-1 flex items-start justify-center pt-24 px-4 overflow-y-auto">
           <LockedTab endpoint={lockedEndpoint} />
         </div>
@@ -262,7 +300,7 @@ export default function StandaloneEvaluationPage() {
             </div>
           </div>
         </header>
-        <div className="flex-1 pt-20 sm:pt-22 pb-12 animate-pulse overflow-y-auto">
+        <div className="flex-1 pt-28 sm:pt-32 pb-12 animate-pulse overflow-y-auto">
           <div className="w-full px-4 sm:px-8">
             <div className="mb-8 space-y-2">
               <div className="h-7 w-72 bg-surface-tertiary rounded-full" />
@@ -296,11 +334,11 @@ export default function StandaloneEvaluationPage() {
 
   // ── Fill form ──
   const fillContent = errorMessage ? (
-    <div className="pt-20 sm:pt-22 pb-12 w-full px-4 sm:px-8">
+    <div className="pt-28 sm:pt-32 pb-12 w-full px-4 sm:px-8">
       <ErrorState message={errorMessage} onRetry={() => window.location.reload()} />
     </div>
   ) : (
-    <div className="pt-20 sm:pt-22 pb-12">
+    <div className="pt-28 sm:pt-32 pb-12">
       <>
       <div className="md:hidden w-full px-4 sm:px-8 mb-4">
         <div className="flex items-center justify-between mb-2">
@@ -403,14 +441,14 @@ export default function StandaloneEvaluationPage() {
                   type="button"
                   onClick={() => { handleDispute(); setMobileStepperOpen(false) }}
                   disabled={disputeLoading}
-                  className="text-[11px] text-red-500 hover:text-red-700 underline decoration-dotted underline-offset-2 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
-                >
-                  {disputeLoading ? "Reporting..." : "Wrong faculty? Report"}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+                   className="text-sm text-red-600 hover:text-red-800 underline decoration-dotted underline-offset-2 opacity-80 hover:opacity-100 transition-opacity disabled:opacity-30"
+                 >
+                   {disputeLoading ? "Reporting..." : "Wrong faculty? Report"}
+                 </button>
+               </div>
+             )}
+           </div>
+         </div>
       )}
 
       <div className="w-full flex gap-0 px-4 sm:px-8">
@@ -522,18 +560,6 @@ export default function StandaloneEvaluationPage() {
                                 )
               })}
             </div>
-            {evaluateeId && (
-              <div className="mt-6 pl-3">
-                <button
-                  type="button"
-                  onClick={handleDispute}
-                  disabled={disputeLoading}
-                  className="text-[11px] text-red-500 hover:text-red-700 underline decoration-dotted underline-offset-2 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
-                >
-                  {disputeLoading ? "Reporting..." : "Wrong faculty? Report"}
-                </button>
-              </div>
-            )}
           </div>
                         </div>
                       ))}
@@ -672,7 +698,7 @@ export default function StandaloneEvaluationPage() {
                     type="button"
                     onClick={handleDispute}
                     disabled={disputeLoading}
-                    className="text-xs text-red-500 hover:text-red-700 underline decoration-dotted underline-offset-2 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
+                    className="text-sm font-semibold text-red-600 hover:text-red-800 underline decoration-dotted underline-offset-2 opacity-90 hover:opacity-100 transition-opacity disabled:opacity-40"
                   >
                     {disputeLoading ? "Reporting..." : "Wrong faculty? Report incorrect assignment"}
                   </button>
@@ -706,10 +732,47 @@ export default function StandaloneEvaluationPage() {
   return (
     <ErrorBoundary>
       <div className="h-dvh bg-surface-muted flex flex-col">
-        <FacultyHeader evaluateeName={evaluateeName} onExit={handleExit} />
+        <FacultyHeader evaluateeName={evaluateeName} subjectName={subjectName} subjectCode={subjectCode} sectionName={sectionName} disputeLoading={disputeLoading} onDispute={handleDispute} onExit={handleExit} />
         <div className="flex-1 overflow-y-auto">
           {fillContent}
         </div>
+
+        {showDisputeModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDisputeModal(false)} />
+            <div className="relative bg-surface rounded-2xl shadow-2xl border border-default max-w-sm w-full p-6 animate-ios-slide-in">
+              <h2 className="text-lg font-bold text-primary">Report incorrect assignment</h2>
+              <p className="text-sm text-secondary mt-3 leading-relaxed">
+                You are reporting that{" "}
+                <strong>{evaluateeName}</strong> is not the correct faculty for{" "}
+                <strong>{subjectName || subjectCode}</strong>.
+              </p>
+              <p className="text-xs text-tertiary mt-3 leading-relaxed">
+                Your identity will be included with this report. An admin will review and take appropriate action.
+              </p>
+              <div className="flex items-center gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowDisputeModal(false)}
+                  className="btn-ios-gray flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setShowDisputeModal(false)
+                    await confirmDispute()
+                  }}
+                  disabled={disputeLoading}
+                  className="btn-ios-primary flex-1 !bg-red-600 hover:!bg-red-700 disabled:opacity-40"
+                >
+                  {disputeLoading ? "Reporting..." : "Report"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   )

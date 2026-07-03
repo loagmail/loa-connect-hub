@@ -1671,3 +1671,15 @@ END $$;
 -- true = granted, false = denied, absent = inherit from page selection
 -- =========================================================
 ALTER TABLE group_access ADD COLUMN IF NOT EXISTS "api_overrides" JSONB NOT NULL DEFAULT '{}';
+
+-- =========================================================
+-- Migration 23: Add INVALID status and remarks to evaluations
+-- =========================================================
+DO $$ BEGIN
+  ALTER TABLE evaluations DROP CONSTRAINT IF EXISTS evaluations_status_check;
+  ALTER TABLE evaluations ADD CONSTRAINT evaluations_status_check CHECK (status IN ('DRAFT', 'SUBMITTED', 'INVALID'));
+EXCEPTION WHEN OTHERS THEN
+  -- constraint may have already been updated
+END $$;
+
+ALTER TABLE evaluations ADD COLUMN IF NOT EXISTS "remarks" TEXT;

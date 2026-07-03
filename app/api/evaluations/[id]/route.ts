@@ -16,21 +16,26 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const [facultyRes, fsRes] = await Promise.all([
       supabase.from("users").select("name").eq("id", evaluation.evaluateeId).single(),
       evaluation.facultySubjectId
-        ? supabase.from("faculty_subjects").select("subject_id").eq("id", evaluation.facultySubjectId).single()
+        ? supabase.from("faculty_subjects").select("subject_id, section_id").eq("id", evaluation.facultySubjectId).single()
         : Promise.resolve({ data: null }),
     ])
 
     let subjectCode = ""
     let subjectName = ""
+    let sectionName = ""
     if (fsRes.data?.subject_id) {
-      const { data: subj } = await supabase
-        .from("subjects")
-        .select("code, name")
-        .eq("id", fsRes.data.subject_id)
-        .single()
-      if (subj) {
-        subjectCode = subj.code
-        subjectName = subj.name
+      const [subj, sec] = await Promise.all([
+        supabase.from("subjects").select("code, name").eq("id", fsRes.data.subject_id).single(),
+        fsRes.data.section_id
+          ? supabase.from("sections").select("name").eq("id", fsRes.data.section_id).single()
+          : Promise.resolve({ data: null }),
+      ])
+      if (subj.data) {
+        subjectCode = subj.data.code
+        subjectName = subj.data.name
+      }
+      if (sec.data) {
+        sectionName = sec.data.name
       }
     }
 
@@ -41,6 +46,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         subjectId: fsRes.data?.subject_id || "",
         subjectCode,
         subjectName,
+        sectionName,
       },
     })
   } catch {

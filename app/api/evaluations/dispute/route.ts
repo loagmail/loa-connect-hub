@@ -46,13 +46,14 @@ export async function POST(request: Request) {
     }
 
     const existing = await evaluationRepository.findByComposite(activeSemester.id, userId, facultySubjectId)
+    const remarks = `Reported as wrong section/subject : ${subjectName || "Unknown"} for Faculty: ${evaluateeName || evaluateeId}`
     if (existing) {
-      await supabase.from("evaluations").update({ isDisabled: true }).eq("id", existing.id)
+      await supabase.from("evaluations").update({ isDisabled: true, status: "INVALID", remarks }).eq("id", existing.id)
     } else {
       await evaluationRepository.create(activeSemester.id, userId, evaluateeId, facultySubjectId, "dispute")
       await supabase
         .from("evaluations")
-        .update({ isDisabled: true, status: "DRAFT" })
+        .update({ isDisabled: true, status: "INVALID", remarks })
         .eq("evaluatorId", userId)
         .eq("facultySubjectId", facultySubjectId)
     }

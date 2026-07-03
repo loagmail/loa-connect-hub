@@ -60,11 +60,12 @@ export interface Evaluation {
   evaluatorId: string
   evaluateeId: string
   facultySubjectId: string
-  status: "DRAFT" | "SUBMITTED"
+  status: "DRAFT" | "SUBMITTED" | "INVALID"
   submittedAt: Date | null
   createdAt: Date
   updatedAt: Date
   source: string | null
+  remarks: string | null
 }
 
 export interface EvaluationRating {
@@ -172,11 +173,12 @@ export interface EvaluationData {
   evaluatorId: string
   evaluateeId: string
   facultySubjectId: string
-  status: "DRAFT" | "SUBMITTED"
+  status: "DRAFT" | "SUBMITTED" | "INVALID"
   submittedAt: Date | null
   createdAt: Date
   updatedAt: Date
   source: string | null
+  remarks: string | null
 }
 
 export interface PendingEvaluationItem {
