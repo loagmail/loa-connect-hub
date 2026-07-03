@@ -50,9 +50,9 @@ export default function StudentEvaluationsPage() {
   const [errorMessage, setErrorMessage] = useState("")
   const evalTabRef = useRef<Window | null>(null)
   const evalTabIdRef = useRef<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<SearchFacultyResult[]>([])
-  const [searching, setSearching] = useState(false)
+  // const [searchQuery, setSearchQuery] = useState("")
+  // const [searchResults, setSearchResults] = useState<SearchFacultyResult[]>([])
+  // const [searching, setSearching] = useState(false)
   const [activeSemesterId, setActiveSemesterId] = useState("")
   const [disputingFsId, setDisputingFsId] = useState<string | null>(null)
   const [disputeMessage, setDisputeMessage] = useState("")
@@ -114,11 +114,11 @@ export default function StudentEvaluationsPage() {
         setEvaluations(evalData.evaluations || [])
         if (active?.id) {
           setActiveSemesterId(active.id)
-          // Fetch enrolled faculty suggestions for search
-          fetch(`/api/faculty/search?semesterId=${active.id}`)
-            .then((r) => r.json())
-            .then((d) => { if (d.faculty) setSearchResults(d.faculty) })
-            .catch(() => {})
+          // // Fetch enrolled faculty suggestions for search
+          // fetch(`/api/faculty/search?semesterId=${active.id}`)
+          //   .then((r) => r.json())
+          //   .then((d) => { if (d.faculty) setSearchResults(d.faculty) })
+          //   .catch(() => {})
         }
       } catch {
         setErrorMessage("Failed to load evaluations")
@@ -135,27 +135,27 @@ export default function StudentEvaluationsPage() {
     } catch {}
   }, [])
 
-  useEffect(() => {
-    const q = searchQuery.trim()
-    if (q.length < 2) return // keep current suggestions when not typing
-    const timer = setTimeout(() => {
-      Promise.resolve().then(async () => {
-        setSearching(true)
-        try {
-          const params = new URLSearchParams({ q })
-          if (activeSemesterId) params.set("semesterId", activeSemesterId)
-          const res = await fetch(`/api/faculty/search?${params}`)
-          if (res.ok) {
-            const data = await res.json()
-            setSearchResults(data.faculty || [])
-          }
-        } catch {} finally {
-          setSearching(false)
-        }
-      })
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery, activeSemesterId])
+  // useEffect(() => {
+  //   const q = searchQuery.trim()
+  //   if (q.length < 2) return // keep current suggestions when not typing
+  //   const timer = setTimeout(() => {
+  //     Promise.resolve().then(async () => {
+  //       setSearching(true)
+  //       try {
+  //         const params = new URLSearchParams({ q })
+  //         if (activeSemesterId) params.set("semesterId", activeSemesterId)
+  //         const res = await fetch(`/api/faculty/search?${params}`)
+  //         if (res.ok) {
+  //           const data = await res.json()
+  //           setSearchResults(data.faculty || [])
+  //         }
+  //       } catch {} finally {
+  //         setSearching(false)
+  //       }
+  //     })
+  //   }, 300)
+  //   return () => clearTimeout(timer)
+  // }, [searchQuery, activeSemesterId])
 
   async function startUnenrolledEval(evaluateeId: string, facultySubjectId: string, isEnrolled: boolean) {
     setNavigatingId(evaluateeId)
@@ -208,7 +208,7 @@ export default function StudentEvaluationsPage() {
   const completed = evaluations.length
   const pendingIds = new Set(pending.map((p) => p.evaluateeId))
   const submittedIds = new Set(evaluations.filter((e) => e.status === "SUBMITTED").map((e) => e.evaluateeId))
-  const filteredSearchResults = searchResults.filter((f) => !pendingIds.has(f.id) && !submittedIds.has(f.id))
+  // const filteredSearchResults = searchResults.filter((f) => !pendingIds.has(f.id) && !submittedIds.has(f.id))
 
   if (lockedEndpoint) {
     return (
@@ -371,7 +371,7 @@ export default function StudentEvaluationsPage() {
         </div>
       )}
 
-      {!outOfRange && (
+      {/* {!outOfRange && (
         <div className="animate-fade-in" style={{ animationDelay: "0.22s" }}>
           <h2 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
             <span>🔍</span> Search Faculty to Evaluate
@@ -435,7 +435,7 @@ export default function StudentEvaluationsPage() {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       {!outOfRange && evaluations.length > 0 && (
         <div className="animate-fade-in" style={{ animationDelay: "0.25s" }}>
