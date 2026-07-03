@@ -29,6 +29,8 @@ export default function InvalidatedEvaluationsPage() {
   const [error, setError] = useState("")
   const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
 
   const fetchData = useCallback(async (isRefresh?: boolean) => {
     if (isRefresh) { setLoading(true); setError("") }
@@ -65,6 +67,74 @@ export default function InvalidatedEvaluationsPage() {
 
   const { page, totalPages, pageSize, paginatedItems, setPage, setPageSize } = usePagination(sorted, 25)
 
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const pageIds = paginatedItems.map((ev) => ev.id)
+      const allSelected = pageIds.every((id) => prev.has(id))
+      if (allSelected) {
+        const next = new Set(prev)
+        pageIds.forEach((id) => next.delete(id))
+        return next
+      } else {
+        const next = new Set(prev)
+        pageIds.forEach((id) => next.add(id))
+        return next
+      }
+    })
+  }, [paginatedItems])
+
+  const deleteSelected = useCallback(async () => {
+    if (selectedIds.size === 0) return
+    if (!confirm(`Delete ${selectedIds.size} selected invalidated evaluation${selectedIds.size > 1 ? "s" : ""}? This cannot be undone.`)) return
+    setDeleting(true)
+    try {
+      const res = await fetch("/api/admin/evaluations/disabled", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...selectedIds] }),
+      })
+      if (res.status === 403) { setLocked("/api/admin/evaluations/disabled"); return }
+      if (!res.ok) throw new Error("Failed to delete")
+      setSelectedIds(new Set())
+      setDeleting(false)
+      fetchData(true)
+    } catch {
+      setDeleting(false)
+      setError("Failed to delete selected evaluations")
+    }
+  }, [selectedIds, fetchData])
+
+  const deleteAll = useCallback(async () => {
+    if (!sorted.length) return
+    if (!confirm(`Delete ALL ${sorted.length} invalidated evaluation${sorted.length > 1 ? "s" : ""}? This cannot be undone.`)) return
+    if (!confirm("Are you sure? This action cannot be undone.")) return
+    setDeleting(true)
+    try {
+      const res = await fetch("/api/admin/evaluations/disabled", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      })
+      if (res.status === 403) { setLocked("/api/admin/evaluations/disabled"); return }
+      if (!res.ok) throw new Error("Failed to delete")
+      setSelectedIds(new Set())
+      setDeleting(false)
+      fetchData(true)
+    } catch {
+      setDeleting(false)
+      setError("Failed to delete all evaluations")
+    }
+  }, [sorted.length, fetchData])
+
   if (locked) {
     return (
       <div className="w-full pb-12 px-4 sm:px-0">
@@ -85,9 +155,31 @@ export default function InvalidatedEvaluationsPage() {
       {error && <p className="text-xs font-medium text-red-600">{error}</p>}
 
       <div className="card p-4 sm:p-6 bg-surface space-y-3">
-        <SearchInput value={search} onChange={(v) => { setSearch(v) }} placeholder="Search by student, faculty, subject, or section..." />
+        <div className="flex items-center gap-2 flex-wrap">
+          <SearchInput value={search} onChange={(v) => { setSearch(v) }} placeholder="Search by student, faculty, subject, or section..." />
+          {sorted.length > 0 && (
+            <div className="flex items-center gap-2 ml-auto">
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={deleteSelected}
+                  disabled={deleting}
+                  className="text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 px-3 py-1.5 rounded-full transition-colors disabled:opacity-40"
+                >
+                  {deleting ? "Deleting..." : `Delete Selected (${selectedIds.size})`}
+                </button>
+              )}
+              <button
+                onClick={deleteAll}
+                disabled={deleting}
+                className="text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 px-3 py-1.5 rounded-full transition-colors disabled:opacity-40"
+              >
+                {deleting ? "Deleting..." : "Delete All"}
+              </button>
+            </div>
+          )}
+        </div>
         {loading && !data ? (
-          <SkeletonTable rows={6} cols={6} />
+          <SkeletonTable rows={6} cols={7} />
         ) : sorted.length === 0 ? (
           <p className="text-xs text-tertiary text-center py-8">No invalidated evaluations found.</p>
         ) : (
@@ -96,6 +188,14 @@ export default function InvalidatedEvaluationsPage() {
               <table>
                 <thead>
                   <tr>
+                    <th className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={paginatedItems.length > 0 && paginatedItems.every((ev) => selectedIds.has(ev.id))}
+                        onChange={toggleSelectAll}
+                        className="accent-gold-600"
+                      />
+                    </th>
                     <th>Student</th>
                     <th>Faculty (Evaluatee)</th>
                     <th>Subject</th>
@@ -108,7 +208,15 @@ export default function InvalidatedEvaluationsPage() {
                 <tbody>
                   {paginatedItems.map((ev) => {
                     return (
-                      <tr key={ev.id}>
+                      <tr key={ev.id} className={`${selectedIds.has(ev.id) ? "bg-gold-50 dark:bg-gold-900/10" : ""}`}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(ev.id)}
+                            onChange={() => toggleSelect(ev.id)}
+                            className="accent-gold-600"
+                          />
+                        </td>
                         <td className="font-medium text-secondary">{ev.evaluator?.name ?? <span className="text-tertiary italic">Deleted</span>}</td>
                         <td className="text-secondary">{ev.evaluatee?.name ?? <span className="text-tertiary italic">Deleted</span>}</td>
                         <td className="text-secondary">
@@ -138,16 +246,28 @@ export default function InvalidatedEvaluationsPage() {
             </div>
             <div className="mobile-only space-y-2">
               {paginatedItems.map((ev) => {
+                const selected = selectedIds.has(ev.id)
                 return (
-                  <div key={ev.id} className="p-4 rounded-xl bg-surface border border-default">
+                  <div
+                    key={ev.id}
+                    className={`p-4 rounded-xl bg-surface border border-default ${selected ? "ring-2 ring-gold-500/50 bg-gold-50 dark:bg-gold-900/10" : ""}`}
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-primary truncate">{ev.evaluator?.name ?? "Deleted student"}</p>
-                        <p className="text-xs text-tertiary truncate">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => toggleSelect(ev.id)}
+                            className="accent-gold-600 shrink-0"
+                          />
+                          <p className="text-sm font-bold text-primary truncate">{ev.evaluator?.name ?? "Deleted student"}</p>
+                        </div>
+                        <p className="text-xs text-tertiary truncate mt-1 ml-6">
                           {ev.evaluatee?.name ?? "Deleted faculty"}
                           {ev.faculty_subject?.subject ? <> · {ev.faculty_subject.subject.code}</> : ""}
                         </p>
-                        <p className="text-xs text-tertiary truncate mt-0.5">
+                        <p className="text-xs text-tertiary truncate mt-0.5 ml-6">
                           {ev.faculty_subject?.section
                             ? <>{ev.faculty_subject.section.program}-{ev.faculty_subject.section.name}</>
                             : "No section"}

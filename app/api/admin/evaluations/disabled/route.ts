@@ -30,3 +30,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch disabled evaluations" }, { status: 500 })
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const authErr = await requireAdmin(request)
+  if (authErr) return authErr
+
+  try {
+    const body = await request.json()
+    let query = supabase.from("evaluations").delete().eq("isDisabled", true)
+
+    if (body.all) {
+      // delete all disabled evaluations
+    } else if (body.ids && Array.isArray(body.ids) && body.ids.length > 0) {
+      query = query.in("id", body.ids)
+    } else {
+      return NextResponse.json({ error: "No ids provided" }, { status: 400 })
+    }
+
+    const { error } = await query
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: "Failed to delete evaluations" }, { status: 500 })
+  }
+}
