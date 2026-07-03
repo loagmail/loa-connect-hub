@@ -207,6 +207,16 @@ function FacultyTab() {
   const [reassignError, setReassignError] = useState("")
   const [reassignSuccess, setReassignSuccess] = useState("")
 
+  const [studentFilter, setStudentFilter] = useState("")
+  const [removingEnrollmentId, setRemovingEnrollmentId] = useState<string | null>(null)
+  const [addStudentQuery, setAddStudentQuery] = useState("")
+  const [addStudentId, setAddStudentId] = useState("")
+  const [addStudentDropdownOpen, setAddStudentDropdownOpen] = useState(false)
+  const addStudentDropdownRef = useRef<HTMLDivElement>(null)
+  const [addingStudent, setAddingStudent] = useState(false)
+  const [addStudentError, setAddStudentError] = useState("")
+  const [addStudentSuccess, setAddStudentSuccess] = useState("")
+
   const reassignFaculties = useMemo(() => {
     if (!selectedSsMapping) return []
     return faculties.filter((f) => f.departmentId === selectedSsMapping.faculty.departmentId && f.id !== selectedSsMapping.faculty.id)
@@ -217,6 +227,22 @@ function FacultyTab() {
     const q = reassignFacultySearch.toLowerCase()
     return reassignFaculties.filter((f) => f.name.toLowerCase().includes(q) || f.email.toLowerCase().includes(q))
   }, [reassignFaculties, reassignFacultySearch])
+
+  const allStudents = useMemo(() =>
+    (allUsers?.users ?? []).filter((u) => u.role.includes("STUDENT")),
+    [allUsers]
+  )
+
+  const filteredAddStudents = useMemo(() => {
+    if (!addStudentQuery.trim()) return []
+    const enrolledIds = selectedSsMapping
+      ? new Set((enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []).map((e) => e.student.id))
+      : new Set<string>()
+    const q = addStudentQuery.toLowerCase()
+    return allStudents
+      .filter((u) => !enrolledIds.has(u.id) && (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)))
+      .slice(0, 20)
+  }, [allStudents, addStudentQuery, selectedSsMapping, enrolledStudentsByFsId])
 
   const handleReassign = async () => {
     if (!selectedSsMapping || !reassignFacultyId) return
@@ -236,6 +262,40 @@ function FacultyTab() {
     finally { setReassignSaving(false) }
   }
 
+  const handleRemoveStudent = async (enrollmentId: string) => {
+    setRemovingEnrollmentId(enrollmentId)
+    try {
+      const res = await fetch(`/api/admin/student-enrollments/${enrollmentId}`, { method: "DELETE" })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to remove student") }
+      fetchData(true)
+    } catch (err) { alert((err as Error).message) }
+    finally { setRemovingEnrollmentId(null) }
+  }
+
+  const handleAddStudent = async () => {
+    if (!selectedSsMapping || !addStudentId) return
+    setAddingStudent(true); setAddStudentError(""); setAddStudentSuccess("")
+    try {
+      const res = await fetch("/api/admin/student-enrollments", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ faculty_subject_id: selectedSsMapping.id, student_id: addStudentId, semesterId: activeSemesterId || null }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to add student") }
+      setAddStudentSuccess("Student added!")
+      setAddStudentId(""); setAddStudentQuery("")
+      setTimeout(() => setAddStudentSuccess(""), 3000)
+      fetchData(true)
+    } catch (err) { setAddStudentError((err as Error).message) }
+    finally { setAddingStudent(false) }
+  }
+
+  const closeSubjectSectionModal = () => {
+    setSelectedSsMapping(null)
+    setReassignError(""); setReassignSuccess(""); setReassignFacultyId(""); setReassignFacultySearch("")
+    setStudentFilter(""); setAddStudentQuery(""); setAddStudentId("")
+    setAddStudentError(""); setAddStudentSuccess("")
+  }
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(e.target as Node)) {
@@ -243,6 +303,9 @@ function FacultyTab() {
       }
       if (reassignDropdownRef.current && !reassignDropdownRef.current.contains(e.target as Node)) {
         setReassignDropdownOpen(false)
+      }
+      if (addStudentDropdownRef.current && !addStudentDropdownRef.current.contains(e.target as Node)) {
+        setAddStudentDropdownOpen(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -1233,7 +1296,7 @@ function FacultyTab() {
                         <td className="text-tertiary">{m.faculty.email}</td>
                         <td className="text-center font-semibold text-secondary">{hc}</td>
                         <td>
-                          <IosButton variant="plain" size="xs" onClick={() => setSelectedSsMapping(m)}>View Students</IosButton>
+                          <IosButton variant="plain" size="xs" onClick={() => setSelectedSsMapping(m)}>Edit</IosButton>
                         </td>
                       </tr>
                     )
@@ -1255,7 +1318,7 @@ function FacultyTab() {
                       </div>
                       <div className="shrink-0 text-right flex flex-col items-end gap-1">
                         <span className="text-xs font-semibold text-secondary">{hc} student{hc !== 1 ? "s" : ""}</span>
-                        <IosButton variant="plain" size="xs" onClick={() => setSelectedSsMapping(m)}>View</IosButton>
+                        <IosButton variant="plain" size="xs" onClick={() => setSelectedSsMapping(m)}>Edit</IosButton>
                       </div>
                     </div>
                   </div>
@@ -1278,14 +1341,14 @@ function FacultyTab() {
 
       {/* ── Subject-Section Detail Modal ────────────────────── */}
       {selectedSsMapping && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 bg-black/60" onClick={() => { setSelectedSsMapping(null); setReassignError(""); setReassignSuccess("") }}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 bg-black/60" onClick={closeSubjectSectionModal}>
           <div className="bg-white dark:bg-surface-dim rounded-2xl w-full max-w-2xl mx-4 shadow-2xl border border-default overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-default">
               <div className="min-w-0">
                 <p className="text-sm font-bold text-secondary truncate">{selectedSsMapping.subject.code} - {selectedSsMapping.subject.name}</p>
                 <p className="text-xs text-tertiary truncate">{selectedSsMapping.section.program}-{selectedSsMapping.section.name} · {selectedSsMapping.faculty.name}</p>
               </div>
-              <IosButton variant="gray" size="xs" onClick={() => { setSelectedSsMapping(null); setReassignError(""); setReassignSuccess("") }}>
+              <IosButton variant="gray" size="xs" onClick={closeSubjectSectionModal}>
                 <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -1294,35 +1357,122 @@ function FacultyTab() {
             <div className="p-4 max-h-[60vh] overflow-y-auto space-y-4">
               {/* Enrolled Students */}
               <div>
-                <h3 className="text-sm font-semibold text-secondary mb-2">Enrolled Students ({(enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []).length})</h3>
+                <h3 className="text-sm font-semibold text-secondary mb-2">
+                  Enrolled Students ({(enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []).length})
+                </h3>
                 {(() => {
                   const enrolled = enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []
+                  const filteredEnrolled = studentFilter.trim()
+                    ? enrolled.filter((e) =>
+                        e.student.name.toLowerCase().includes(studentFilter.toLowerCase()) ||
+                        e.student.email.toLowerCase().includes(studentFilter.toLowerCase())
+                      )
+                    : enrolled
                   if (enrolled.length === 0) {
                     return <p className="text-xs text-tertiary text-center py-4">No enrolled students.</p>
                   }
                   return (
-                    <div className="tbl max-h-48 overflow-y-auto">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th className="w-8">#</th>
-                            <th>Student</th>
-                            <th>Email</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {enrolled.map((e, i) => (
-                            <tr key={e.id}>
-                              <td className="text-tertiary">{i + 1}</td>
-                              <td className="font-medium text-secondary">{e.student.name}</td>
-                              <td className="text-tertiary">{e.student.email}</td>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={studentFilter}
+                        onChange={(e) => setStudentFilter(e.target.value)}
+                        placeholder="Search students..."
+                        className="input text-xs w-full px-3 py-2 rounded-lg border border-strong"
+                      />
+                      <div className="tbl max-h-48 overflow-y-auto">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th className="w-8">#</th>
+                              <th>Student</th>
+                              <th>Email</th>
+                              <th className="w-10"></th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {filteredEnrolled.map((e, i) => (
+                              <tr key={e.id}>
+                                <td className="text-tertiary">{i + 1}</td>
+                                <td className="font-medium text-secondary">{e.student.name}</td>
+                                <td className="text-tertiary">{e.student.email}</td>
+                                <td className="text-center">
+                                  <button
+                                    type="button"
+                                    disabled={removingEnrollmentId === e.id}
+                                    onClick={() => handleRemoveStudent(e.id)}
+                                    className="w-6 h-6 inline-flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
+                                    title="Remove from section"
+                                  >
+                                    {removingEnrollmentId === e.id ? (
+                                      <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin block" />
+                                    ) : (
+                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {filteredEnrolled.length === 0 && studentFilter && (
+                        <p className="text-xs text-tertiary text-center py-2">No students match &ldquo;{studentFilter}&rdquo;</p>
+                      )}
                     </div>
                   )
                 })()}
+              </div>
+
+              {/* Add Student */}
+              <div className="border-t border-default pt-4 space-y-3">
+                <h3 className="text-sm font-semibold text-secondary">Add Student</h3>
+                {addStudentError && <p className="text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{addStudentError}</p>}
+                {addStudentSuccess && <p className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded">{addStudentSuccess}</p>}
+
+                <div className="relative" ref={addStudentDropdownRef}>
+                  <input
+                    type="text"
+                    value={addStudentQuery}
+                    onChange={(e) => { setAddStudentQuery(e.target.value); setAddStudentId(""); setAddStudentDropdownOpen(true) }}
+                    onFocus={() => setAddStudentDropdownOpen(true)}
+                    placeholder="Search by name or email..."
+                    className="input text-xs w-full px-3 py-2 rounded-lg border border-strong"
+                    autoComplete="off"
+                  />
+                  {addStudentDropdownOpen && filteredAddStudents.length > 0 && (
+                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                      {filteredAddStudents.map((u) => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => { setAddStudentId(u.id); setAddStudentQuery(u.name); setAddStudentDropdownOpen(false) }}
+                          className={`w-full text-left px-3 py-2 text-xs hover:bg-surface-hover transition-colors ${addStudentId === u.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
+                        >
+                          <span className="font-medium text-primary">{u.name}</span>
+                          <span className="text-tertiary ml-1">{u.email}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {addStudentDropdownOpen && addStudentQuery.trim() && filteredAddStudents.length === 0 && (
+                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl">
+                      <p className="text-xs text-tertiary text-center py-3">No students found.</p>
+                    </div>
+                  )}
+                </div>
+
+                <IosButton
+                  variant="primary"
+                  type="button"
+                  loading={addingStudent}
+                  disabled={addingStudent || !addStudentId}
+                  onClick={handleAddStudent}
+                >
+                  {addingStudent ? "Adding..." : "Add Student"}
+                </IosButton>
               </div>
 
               {/* Re-assign Faculty */}
@@ -1345,18 +1495,17 @@ function FacultyTab() {
                       {filteredReassignFaculties.length === 0 ? (
                         <p className="text-xs text-tertiary text-center py-4">No other faculty in this department</p>
                       ) : (
-                        filteredReassignFaculties
-                          .map((f) => (
-                            <button
-                              key={f.id}
-                              type="button"
-                              onClick={() => { setReassignFacultyId(f.id); setReassignFacultySearch(""); setReassignDropdownOpen(false) }}
-                              className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-hover transition-colors ${reassignFacultyId === f.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
-                            >
-                              <span className="text-primary">{f.name}</span>
-                              <span className="text-tertiary ml-1 text-xs">{f.email}</span>
-                            </button>
-                          ))
+                        filteredReassignFaculties.map((f) => (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => { setReassignFacultyId(f.id); setReassignFacultySearch(""); setReassignDropdownOpen(false) }}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-hover transition-colors ${reassignFacultyId === f.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
+                          >
+                            <span className="text-primary">{f.name}</span>
+                            <span className="text-tertiary ml-1 text-xs">{f.email}</span>
+                          </button>
+                        ))
                       )}
                     </div>
                   )}
