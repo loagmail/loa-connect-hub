@@ -80,7 +80,6 @@ function pageLabel(p: string): string {
     "/admin": "Admin Dashboard",
     "/admin/users": "Manage Users",
     "/admin/access-config": "Access Configuration",
-    "/admin/etl-hub": "ETL Hub",
     "/student": "Student Dashboard",
     "/student/book": "Book Consultation",
     "/student/meetings": "Student Consultations",

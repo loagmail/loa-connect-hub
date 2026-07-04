@@ -39,7 +39,7 @@ const ADMIN_MIRROR_STUBS = new Set([
   "/dean/data/users",
   "/dean/data/users/deleted",
   "/dean/data/academic-infrastructure",
-  "/dean/etl-hub",
+
   "/dean/reports",
   "/dean/reports/health",
   "/dean/reports/demand",
@@ -214,6 +214,13 @@ export default function EditAccessGroupPage() {
         category,
         items.filter((item) => !ADMIN_MIRROR_STUBS.has(item.path)),
       ] as [string, typeof items]).filter(([, items]) => items.length > 0)
+    }
+    if (group?.groupName === "STUDENT") {
+      entries.sort(([a], [b]) => {
+        if (a === "Student") return -1
+        if (b === "Student") return 1
+        return a.localeCompare(b)
+      })
     }
     return entries
   }, [catalog, group])

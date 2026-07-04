@@ -209,7 +209,6 @@ function lab(p: string): string {
     "/admin/data-management": "Data Management", "/admin/data/academic-infrastructure": "Academic Configurations",
     "/admin/reports/health": "Health Report", "/admin/reports/demand": "Demand Report",
     "/admin/reports/responsiveness": "Responsiveness Report", "/admin/reports/backlog": "Backlog Report",
-    "/admin/etl-hub": "ETL Hub",
     "/admin/evaluations": "Evaluations", "/admin/data/users": "Data Users",
     "/student": "Student Dashboard", "/student/book": "Book Consultation",
     "/student/meetings": "Student Consultations", "/student/history": "Consultation History",
