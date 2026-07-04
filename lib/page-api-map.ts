@@ -274,15 +274,30 @@ export const pageApiMap: Record<string, PageApiEntry> = {
   // ── Faculty ──
   "/faculty": {
     label: "Faculty Dashboard",
-    apis: ["/api/appointments/[id]/decline", "/api/appointments/[id]/accept", "/api/appointments/[id]/teams-link", "/api/auth/onboarding"],
+    apis: ["/api/appointments/[id]/decline", "/api/appointments/[id]/accept", "/api/appointments/[id]/teams-link", "/api/auth/onboarding", "/api/semesters"],
   },
   "/faculty/meetings": {
     label: "Faculty Meetings",
-    apis: [],
+    apis: [
+      "/api/appointments/[id]",
+      "/api/appointments/[id]/accept",
+      "/api/appointments/[id]/decline",
+      "/api/appointments/[id]/teams-link",
+      "/api/appointments/slots/[slotId]/teams-link",
+      "/api/appointments/[id]/complete",
+      "/api/appointments/[id]/files",
+      "/api/appointments/[id]/retry-sync",
+    ],
   },
   "/faculty/meetings/new": {
     label: "New Meeting",
-    apis: ["/api/appointments/batch"],
+    apis: [
+      "/api/appointments/batch",
+      "/api/appointments/faculty-booked",
+      "/api/users/primary",
+      "/api/users/attendees",
+      "/api/availability-rules",
+    ],
   },
   "/faculty/availability": {
     label: "Availability Settings",
@@ -305,29 +320,34 @@ export const pageApiMap: Record<string, PageApiEntry> = {
     apis: [
       "/api/faculty/evaluation-results",
       "/api/data/evaluation-mappings",
+      "/api/evaluation-periods",
+      "/api/dean/evaluation-results/details",
+      "/api/admin/evaluation-results/visibility",
+      "/api/admin/evaluation-results/invalidate",
+      "/api/admin/departments",
     ],
   },
 
   // ── Student ──
   "/student": {
     label: "Student Dashboard",
-    apis: ["/api/auth/onboarding"],
+    apis: ["/api/auth/onboarding", "/api/semesters"],
   },
   "/student/book": {
     label: "Book Consultation",
-    apis: ["/api/appointments/batch", "/api/auth/users"],
+    apis: [
+      "/api/appointments/batch",
+      "/api/appointments/faculty-booked",
+      "/api/users/primary",
+      "/api/users/attendees",
+      "/api/availability-rules",
+    ],
   },
   "/student/meetings": {
     label: "Student Meetings",
     apis: [
-      "/api/appointments/[id]/accept",
-      "/api/appointments/[id]/decline",
+      "/api/appointments/[id]",
       "/api/appointments/[id]/student-cancel",
-      "/api/appointments/[id]/retry-sync",
-      "/api/appointments/[id]/teams-link",
-      "/api/appointments/[id]/files",
-      "/api/appointments/[id]/complete",
-      "/api/appointments/slots/[slotId]/teams-link",
     ],
   },
   "/student/history": {

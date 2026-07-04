@@ -216,9 +216,20 @@ export default function EditAccessGroupPage() {
       ] as [string, typeof items]).filter(([, items]) => items.length > 0)
     }
     if (group?.groupName === "STUDENT") {
+      entries = entries.map(([category, items]) => [
+        category,
+        items.filter((item) => item.path !== "/evaluate"),
+      ] as [string, typeof items]).filter(([, items]) => items.length > 0)
       entries.sort(([a], [b]) => {
         if (a === "Student") return -1
         if (b === "Student") return 1
+        return a.localeCompare(b)
+      })
+    }
+    if (group?.groupName === "FACULTY") {
+      entries.sort(([a], [b]) => {
+        if (a === "Faculty") return -1
+        if (b === "Faculty") return 1
         return a.localeCompare(b)
       })
     }

@@ -600,13 +600,20 @@ INSERT INTO group_access ("groupName", pages) VALUES
    '["/admin","/admin/data-management","/admin/users","/admin/users/deleted","/admin/access-config","/admin/departments","/admin/reports","/admin/etl-hub","/faq"]'::JSONB),
   ('DEAN',
    '["/dean","/dean/upload","/dean/departments","/faculty/meetings","/faculty/availability","/faculty/reports","/faq"]'::JSONB),
-  ('FACULTY',
-   '["/faculty","/faculty/meetings","/faculty/availability","/faculty/upload","/faq"]'::JSONB),
+   ('FACULTY',
+    '["/","/403","/faq","/faculty","/faculty/availability","/faculty/evaluations","/faculty/evaluations/results","/faculty/meetings","/faculty/meetings/new","/faculty/reports","/faculty/upload","/api/admin/departments","/api/admin/evaluation-results/invalidate","/api/admin/evaluation-results/visibility","/api/appointments/[id]","/api/appointments/[id]/accept","/api/appointments/[id]/complete","/api/appointments/[id]/decline","/api/appointments/[id]/files","/api/appointments/[id]/retry-sync","/api/appointments/[id]/teams-link","/api/appointments/batch","/api/appointments/faculty-booked","/api/appointments/slots/[slotId]/teams-link","/api/auth/onboarding","/api/availability-rules","/api/data/evaluation-mappings","/api/dean/evaluation-results/details","/api/evaluation-periods","/api/faculty/evaluation-results","/api/semesters","/api/users/attendees","/api/users/primary"]'::JSONB),
    ('STUDENT',
-    '["/student","/student/book","/student/meetings","/student/history","/faq"]'::JSONB),
+    '["/","/student","/student/book","/student/meetings","/student/history","/student/evaluations","/student/evaluations/history","/student/evaluations/thank-you","/faq","/403","/api/auth/onboarding","/api/appointments/batch","/api/appointments/faculty-booked","/api/appointments/[id]","/api/appointments/[id]/student-cancel","/api/users/primary","/api/users/attendees","/api/availability-rules","/api/evaluation-periods","/api/evaluation-periods/[id]/rubric","/api/evaluations/pending","/api/evaluations","/api/evaluations/[id]/ratings","/api/evaluations/[id]/comments","/api/evaluations/[id]/submit","/api/evaluations/dispute","/api/semesters"]'::JSONB),
   ('GUEST',
    '[]'::JSONB)
 ON CONFLICT ("groupName") DO NOTHING;
+
+-- Migration 9a: Update STUDENT group_access with full page and API paths
+-- (for existing databases where STUDENT row was inserted with minimal paths)
+UPDATE group_access SET pages = '["/","/student","/student/book","/student/meetings","/student/history","/student/evaluations","/student/evaluations/history","/student/evaluations/thank-you","/faq","/403","/api/auth/onboarding","/api/appointments/batch","/api/appointments/faculty-booked","/api/appointments/[id]","/api/appointments/[id]/student-cancel","/api/users/primary","/api/users/attendees","/api/availability-rules","/api/evaluation-periods","/api/evaluation-periods/[id]/rubric","/api/evaluations/pending","/api/evaluations","/api/evaluations/[id]/ratings","/api/evaluations/[id]/comments","/api/evaluations/[id]/submit","/api/evaluations/dispute","/api/semesters"]'::JSONB WHERE "groupName" = 'STUDENT';
+
+-- Migration 9b: Update FACULTY group_access with full page and API paths
+UPDATE group_access SET pages = '["/","/403","/faq","/faculty","/faculty/availability","/faculty/evaluations","/faculty/evaluations/results","/faculty/meetings","/faculty/meetings/new","/faculty/reports","/faculty/upload","/api/admin/departments","/api/admin/evaluation-results/invalidate","/api/admin/evaluation-results/visibility","/api/appointments/[id]","/api/appointments/[id]/accept","/api/appointments/[id]/complete","/api/appointments/[id]/decline","/api/appointments/[id]/files","/api/appointments/[id]/retry-sync","/api/appointments/[id]/teams-link","/api/appointments/batch","/api/appointments/faculty-booked","/api/appointments/slots/[slotId]/teams-link","/api/auth/onboarding","/api/availability-rules","/api/data/evaluation-mappings","/api/dean/evaluation-results/details","/api/evaluation-periods","/api/faculty/evaluation-results","/api/semesters","/api/users/attendees","/api/users/primary"]'::JSONB WHERE "groupName" = 'FACULTY';
 
 -- =========================================================
 -- Migration 10: RPC for database size checking
