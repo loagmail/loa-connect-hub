@@ -9,7 +9,7 @@ export const DEFAULT_CONFIG: Record<string, GroupAccessEntry> = {
     pages: ["/", "/admin", "/admin/data-management", "/admin/users", "/admin/data/users/deleted", "/admin/access-config", "/admin/user-permissions", "/admin/departments", "/admin/data/users", "/admin/data/academic-infrastructure", "/admin/reports", "/admin/reports/health", "/admin/reports/demand", "/admin/reports/responsiveness", "/admin/reports/backlog", "/admin/reports/coverage", "/admin/reports/distribution", "/admin/evaluations", "/admin/evaluations/results", "/admin/evaluations/rubrics", "/admin/evaluations/disabled", "/admin/audit-trail"],
   },
   DEAN: {
-    pages: ["/", "/dean", "/dean/upload", "/dean/departments", "/dean/reports", "/dean/evaluations", "/dean/evaluations/results", "/dean/data/users", "/dean/data/academic-infrastructure", "/dean/etl-hub", "/faculty/meetings", "/faculty/availability", "/faculty/reports"],
+    pages: ["/", "/dean", "/dean/upload", "/dean/departments", "/dean/reports", "/dean/evaluations", "/dean/evaluations/results", "/dean/data/users", "/dean/data/academic-infrastructure", "/faculty/meetings", "/faculty/availability", "/faculty/reports"],
   },
   FACULTY: {
     pages: ["/", "/faculty", "/faculty/meetings", "/faculty/availability", "/faculty/upload", "/faculty/evaluations", "/faculty/evaluations/results"],
@@ -132,8 +132,8 @@ export async function getUserAccess(userId: string, role: string): Promise<Acces
           type: pathType(p.resource_path)
         }
         if (p.denies?.includes('access')) {
-          // ADMIN cannot be denied on /admin/ paths (mandatory), except /admin/etl-hub (decommissioning)
-          if (isAdmin && p.resource_path.startsWith('/admin/') && p.resource_path !== '/admin/etl-hub') {
+          // ADMIN cannot be denied on /admin/ paths (mandatory)
+          if (isAdmin && p.resource_path.startsWith('/admin/')) {
             // skip deny — admin paths are mandatory
           } else {
             existing.access = "revoked"

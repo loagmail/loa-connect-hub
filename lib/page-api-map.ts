@@ -85,20 +85,6 @@ export const pageApiMap: Record<string, PageApiEntry> = {
       "/api/import/faculties",
     ],
   },
-  "/admin/etl-hub": {
-    label: "ETL Hub",
-    apis: [
-      "/api/data/evaluation-mappings",
-      "/api/admin/departments",
-      "/api/semesters",
-      "/api/admin/users",
-      "/api/admin/department-courses",
-      "/api/admin/reset-data",
-      "/api/import/faculties",
-      "/api/import/students",
-      "/api/import/departments-courses",
-    ],
-  },
   "/admin/evaluations": {
     label: "Evaluations",
     apis: [],
@@ -222,20 +208,6 @@ export const pageApiMap: Record<string, PageApiEntry> = {
       "/api/evaluation-periods",
       "/api/auth/me",
       "/api/import/faculties",
-    ],
-  },
-  "/dean/etl-hub": {
-    label: "ETL Hub",
-    apis: [
-      "/api/data/evaluation-mappings",
-      "/api/admin/departments",
-      "/api/semesters",
-      "/api/admin/users",
-      "/api/admin/department-courses",
-      "/api/admin/reset-data",
-      "/api/import/faculties",
-      "/api/import/students",
-      "/api/import/departments-courses",
     ],
   },
   "/dean/upload": {
