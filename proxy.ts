@@ -8,7 +8,7 @@ const PUBLIC_PATHS = new Set([
   "/setup-password", "/faq",
 ])
 
-const PUBLIC_PREFIXES = ["/_next", "/api/auth", "/api/test-auth", "/api/audit"]
+const PUBLIC_PREFIXES = ["/_next", "/api/auth", "/api/audit"]
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl

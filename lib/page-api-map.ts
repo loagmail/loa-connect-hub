@@ -339,10 +339,6 @@ export const pageApiMap: Record<string, PageApiEntry> = {
       "/api/evaluations/dispute",
     ],
   },
-  "/student/evaluations/history": {
-    label: "Evaluation History",
-    apis: ["/api/evaluation-periods", "/api/evaluations"],
-  },
   "/student/evaluations/thank-you": {
     label: "Evaluation Thank You",
     apis: [],
