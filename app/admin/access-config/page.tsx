@@ -434,7 +434,7 @@ function UserPermissionsTab({ readOnly }: { readOnly?: boolean }) {
                   bySection.get(section)!.push(item)
                 }
               }
-              const sectionOrder = ["Root", "Dashboard", "Data", "Reports", "Evaluations", "Hidden"]
+              const sectionOrder = ["Root", "Dashboard", "Evaluations", "Data", "Reports", "Hidden"]
               const sectionColors: Record<string, string> = {
                 Root: "text-slate-500", Dashboard: "text-purple-500", Data: "text-blue-500",
                 Reports: "text-amber-500", Evaluations: "text-emerald-500", Hidden: "text-red-400",

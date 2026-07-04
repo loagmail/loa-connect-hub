@@ -230,7 +230,7 @@ export default function EditAccessGroupPage() {
     (JSON.stringify(norm(selectedPages)) !== JSON.stringify(norm((group.pages || []).filter((p) => !isApiPath(p)))) ||
       JSON.stringify(overrides) !== JSON.stringify(group.api_overrides || {}))
 
-  const SECTION_ORDER = ["Root", "Dashboard", "Data", "Reports", "Evaluations", "Hidden"] as const
+  const SECTION_ORDER = ["Root", "Dashboard", "Evaluations", "Data", "Reports", "Hidden"] as const
 
   const catalogSections = useMemo(() => {
     if (!catalog) return []
