@@ -264,7 +264,7 @@ export default function EditAccessGroupPage() {
     }
 
     return entries
-  }, [catalog, group, defaultPageSet, SECTION_ORDER])
+  }, [catalog, group, defaultPageSet])
 
   const defaultCatalogItems = useMemo(() => {
     if (!catalog || defaultPageSet.size === 0) return []

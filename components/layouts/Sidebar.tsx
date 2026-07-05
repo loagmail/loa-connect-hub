@@ -213,7 +213,7 @@ export default function Sidebar() {
       }
     }
     return children
-  }, [dashboardRoles, allowedPages, VALID_DASHBOARD_ROLES])
+  }, [dashboardRoles, allowedPages])
   const visibleDashboardChildren = useMemo<NavItem[]>(
     () => dashboardChildren.filter((c) => allowedPages && allowedPages.includes(c.href!)),
     [dashboardChildren, allowedPages]
