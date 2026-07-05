@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
 export default function UserPermissionsPage() {
-  redirect("/admin/access-config?tab=user-permissions")
+  redirect("/admin/system/access-config?tab=user-permissions")
 }

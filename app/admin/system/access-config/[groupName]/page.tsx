@@ -101,7 +101,7 @@ export default function EditAccessGroupPage() {
   const defaultPageSet = useMemo(() => group ? new Set(getDefaultUIPages(group.groupName)) : new Set<string>(), [group])
 
   const isLockedPage = (p: string) =>
-    defaultPageSet.has(p) || (group?.groupName === "ADMIN" && (p === "/admin/access-config" || p === "/admin/user-permissions")) || ALWAYS_LOCKED_PAGES.has(p)
+    defaultPageSet.has(p) || (group?.groupName === "ADMIN" && (p === "/admin/system/access-config" || p === "/admin/system/user-permissions")) || ALWAYS_LOCKED_PAGES.has(p)
 
   const togglePage = (path: string) => {
     if (readOnly || isLockedPage(path)) return
@@ -172,7 +172,7 @@ export default function EditAccessGroupPage() {
     setSaved(false)
     let deduped = [...new Set(selectedPages.map(normalizePath))]
     if (group.groupName === "ADMIN") {
-      deduped = deduped.filter((p) => p !== "/admin/access-config" && p !== "/admin/user-permissions")
+      deduped = deduped.filter((p) => p !== "/admin/system/access-config" && p !== "/admin/system/user-permissions")
     }
     // Strip irrevocable defaults before sending (they are never stored in DB)
     deduped = deduped.filter((p) => !defaultPageSet.has(p))
@@ -220,7 +220,7 @@ export default function EditAccessGroupPage() {
       })
       if (res.ok) {
         invalidate("/api/auth/access")
-        router.push("/admin/access-config")
+        router.push("/admin/system/access-config")
       } else {
         const data = await res.json()
         setErrorMessage(data.error || "Failed to delete group")
@@ -288,7 +288,7 @@ export default function EditAccessGroupPage() {
   if (!group) {
     return (
       <div className="w-full space-y-8 pb-12">
-        <Link href="/admin/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
+        <Link href="/admin/system/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
         <p className="text-sm text-tertiary text-center py-8">Group not found.</p>
       </div>
     )
@@ -367,7 +367,7 @@ export default function EditAccessGroupPage() {
     <ErrorBoundary>
     <div className="w-full space-y-8 pb-12">
       <div>
-        <Link href="/admin/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
+        <Link href="/admin/system/access-config" className="text-xs text-gold-600 hover:underline">&larr; Back to groups</Link>
       </div>
 
       <div className="card p-5 space-y-4">

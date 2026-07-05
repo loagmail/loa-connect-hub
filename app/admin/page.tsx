@@ -84,7 +84,7 @@ export default async function AdminDashboard() {
         <div className="lg:col-span-2 rounded-2xl border border-slate-200/70 bg-surface shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-primary">Recent Activity</h2>
-            <Link href="/admin/audit-trail" className="text-xs text-gold-600 hover:text-gold-700 font-medium">
+            <Link href="/admin/system/audit-trail" className="text-xs text-gold-600 hover:text-gold-700 font-medium">
               View all →
             </Link>
           </div>

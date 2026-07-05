@@ -7,7 +7,7 @@ interface GroupAccessEntry {
 
 export const DEFAULT_CONFIG: Record<string, GroupAccessEntry> = {
   ADMIN: {
-    pages: ["/", "/admin", "/admin/data/maintenance", "/admin/data/users/deleted", "/admin/access-config", "/admin/user-permissions", "/admin/data/users", "/admin/data/academic-infrastructure", "/admin/reports", "/admin/reports/health", "/admin/reports/demand", "/admin/reports/responsiveness", "/admin/reports/backlog", "/admin/reports/coverage", "/admin/reports/distribution", "/admin/evaluations", "/admin/evaluations/results", "/admin/evaluations/rubrics", "/admin/evaluations/disabled", "/admin/audit-trail"],
+    pages: ["/", "/admin", "/admin/data/maintenance", "/admin/data/users/deleted", "/admin/system/access-config", "/admin/system/user-permissions", "/admin/data/users", "/admin/data/academic-infrastructure", "/admin/reports", "/admin/reports/health", "/admin/reports/demand", "/admin/reports/responsiveness", "/admin/reports/backlog", "/admin/reports/coverage", "/admin/reports/distribution", "/admin/evaluations", "/admin/evaluations/results", "/admin/evaluations/rubrics", "/admin/evaluations/disabled", "/admin/system/audit-trail"],
   },
   DEAN: {
     pages: ["/", "/dean", "/dean/upload", "/dean/departments", "/dean/reports", "/dean/evaluations", "/dean/evaluations/results", "/dean/data/users", "/dean/data/academic-infrastructure", "/faculty/meetings", "/faculty/availability", "/faculty/reports", "/api/dean/evaluation-results", "/api/dean/evaluation-results/details", "/api/evaluation-periods"],
@@ -50,7 +50,7 @@ export async function loadAccessConfig(): Promise<Record<string, GroupAccessEntr
     const { data, error } = await supabase.from("group_access").select("*")
     if (error) throw error
 
-    const ALWAYS_SAFE = new Set(["/", "/admin", "/admin/access-config", "/admin/user-permissions"])
+    const ALWAYS_SAFE = new Set(["/", "/admin", "/admin/system/access-config", "/admin/system/user-permissions"])
 
     const map: Record<string, GroupAccessEntry> = { ...DEFAULT_CONFIG }
     for (const row of data || []) {

@@ -69,7 +69,7 @@ function AdminAccessConfigPageInner({ readOnly }: { readOnly?: boolean }) {
           <button
             key={tab.key}
             onClick={() => {
-              router.push(tab.key === "rbac" ? "/admin/access-config" : `/admin/access-config?tab=${tab.key}`)
+              router.push(tab.key === "rbac" ? "/admin/system/access-config" : `/admin/system/access-config?tab=${tab.key}`)
             }}
             className={`shrink-0 text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap transition-all duration-200 ${
               activeTab === tab.key
@@ -187,7 +187,7 @@ function RBACTab({ readOnly }: { readOnly?: boolean }) {
           return (
             <Link
               key={group.groupName}
-              href={`/admin/access-config/${group.groupName}`}
+              href={`/admin/system/access-config/${group.groupName}`}
               className="block card p-3 hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between">

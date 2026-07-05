@@ -79,7 +79,7 @@ function pageCategory(p: string): string {
 
 function pageSection(p: string): string {
   if (p === "/admin/reports" || p === "/admin/evaluations" || p === "/dean/reports") return "Hidden"
-  if (p === "/" || p === "/403" || p === "/faq" || p === "/student/meetings" || p === "/student/history" || p === "/faculty/meetings" || p === "/faculty/availability" || p === "/admin/access-config" || p === "/admin/audit-trail") return "Root"
+  if (p === "/" || p === "/403" || p === "/faq" || p === "/student/meetings" || p === "/student/history" || p === "/faculty/meetings" || p === "/faculty/availability" || p.startsWith("/admin/system/") || p === "/admin/access-config" || p === "/admin/audit-trail" || p === "/admin/user-permissions") return "System"
   if (p === "/admin" || p === "/dean" || p === "/faculty" || p === "/student") return "Dashboard"
   if (p.startsWith("/admin/data/") || p.startsWith("/dean/data/") || p === "/dean/departments" || p === "/admin/data/maintenance") return "Data"
   if ((p.startsWith("/admin/reports") || p.startsWith("/dean/reports") || p.startsWith("/faculty/reports")) && p !== "/admin/reports" && p !== "/dean/reports") return "Reports"
@@ -91,7 +91,10 @@ function pageLabel(p: string): string {
   const map: Record<string, string> = {
     "/": "Dashboard (root)",
     "/admin": "Admin Dashboard",
-    "/admin/access-config": "Access Configuration",
+    "/admin/system/access-config": "Access Configuration",
+    "/admin/access-config": "Access Configuration (legacy)",
+    "/admin/system/user-permissions": "User Permissions",
+    "/admin/system/audit-trail": "Audit Trail",
     "/student": "Student Dashboard",
     "/student/book": "Book Consultation",
     "/student/meetings": "Student Consultations",
@@ -194,9 +197,9 @@ export async function PATCH(request: NextRequest) {
     }
     let dedupedPages = [...new Set(pages.map(normalizePath).map(stripMobile).filter(Boolean))]
 
-    // ADMIN access is hardcoded — /admin/access-config and /admin/user-permissions are always granted
+    // ADMIN access is hardcoded — /admin/system/access-config and /admin/system/user-permissions are always granted
     if (groupName === "ADMIN") {
-      dedupedPages = dedupedPages.filter((p: string) => p !== "/admin/access-config" && p !== "/admin/user-permissions")
+      dedupedPages = dedupedPages.filter((p: string) => p !== "/admin/system/access-config" && p !== "/admin/system/user-permissions" && p !== "/admin/access-config" && p !== "/admin/user-permissions")
     }
 
     if (groupName !== "ADMIN") {

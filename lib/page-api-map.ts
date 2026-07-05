@@ -29,7 +29,7 @@ export const pageApiMap: Record<string, PageApiEntry> = {
     label: "Deleted Users",
     apis: ["/api/admin/users/deleted", "/api/admin/users/[id]/restore"],
   },
-  "/admin/access-config": {
+  "/admin/system/access-config": {
     label: "Access Configuration",
     apis: [
       "/api/admin/access-config",
@@ -39,7 +39,7 @@ export const pageApiMap: Record<string, PageApiEntry> = {
       "/api/auth/me",
     ],
   },
-  "/admin/user-permissions": {
+  "/admin/system/user-permissions": {
     label: "User Permissions",
     apis: [
       "/api/admin/access-config",
@@ -49,7 +49,7 @@ export const pageApiMap: Record<string, PageApiEntry> = {
       "/api/auth/me",
     ],
   },
-  "/admin/audit-trail": {
+  "/admin/system/audit-trail": {
     label: "Audit Trail",
     apis: ["/api/admin/audit-logs"],
   },
