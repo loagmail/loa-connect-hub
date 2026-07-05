@@ -217,7 +217,7 @@ export default function DeletedUsersPage() {
                     </div>
                     {s.count > 0 && relatedData.related[s.table] && relatedData.related[s.table].length > 0 && (
                       <div className="ml-3 mt-1 space-y-0.5">
-                        {relatedData.related[s.table].slice(0, 10).map((row: Record<string, unknown>, i) => (
+                        {(relatedData.related[s.table] as unknown[]).slice(0, 10).map((row, i) => (
                           <div key={i} className="text-[11px] text-red-600 pl-3 border-l-2 border-red-200 py-0.5">
                             {JSON.stringify(row).length > 120
                               ? JSON.stringify(row).slice(0, 120) + "..."

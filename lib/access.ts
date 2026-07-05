@@ -54,12 +54,13 @@ export async function loadAccessConfig(): Promise<Record<string, GroupAccessEntr
 
     const map: Record<string, GroupAccessEntry> = { ...DEFAULT_CONFIG }
     for (const row of data || []) {
+      const pages = Array.isArray(row.pages) ? row.pages.filter((page: unknown): page is string => typeof page === "string") : []
       if (row.groupName === "ADMIN") {
-        const dbPages = new Set(row.pages || [])
+        const dbPages = new Set<string>(pages)
         for (const p of ALWAYS_SAFE) dbPages.add(p)
         map.ADMIN = { pages: Array.from(dbPages) }
       } else {
-        map[row.groupName] = { pages: row.pages || [] }
+        map[row.groupName] = { pages }
       }
     }
 

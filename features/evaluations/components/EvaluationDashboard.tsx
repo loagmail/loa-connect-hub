@@ -211,7 +211,7 @@ export default function EvaluationDashboard({
       }
       setLoading(false)
     })
-  }, [selectedPeriod, selectedDept, showUnenrolled, apiBase])
+  }, [selectedPeriod, selectedDept, showUnenrolled, apiBase, perSubject])
 
   const selectFaculty = useCallback(async (facultyId: string) => {
     if (selectedFaculty === facultyId) { setSelectedFaculty(null); return }
@@ -814,7 +814,7 @@ export default function EvaluationDashboard({
                             <tr key={r.id} className={`${isSelected ? "bg-brand-50 dark:bg-brand-500/10" : ""}`} onClick={() => selectFaculty(r.facultyId)}>
                               <td className="font-semibold text-primary whitespace-nowrap">{name}</td>
                               {perSubject && (
-                                <td className="text-secondary max-w-xs truncate">{(r as any).facultySubjectId ?? "—"}</td>
+                                <td className="text-secondary max-w-xs truncate">{r.facultySubjectId ?? "—"}</td>
                               )}
                               <td className="text-center font-bold text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</td>
                               <td className="text-center text-secondary">{r.totalRespondents}</td>
@@ -916,7 +916,7 @@ export default function EvaluationDashboard({
                           <div className="min-w-0 flex-1">
                               <p className="text-sm font-bold text-primary truncate">{name}</p>
                               {perSubject && (
-                                <p className="text-xs text-tertiary truncate mt-1">{(r as any).facultySubjectId ?? "—"}</p>
+                                <p className="text-xs text-tertiary truncate mt-1">{r.facultySubjectId ?? "—"}</p>
                               )}
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <span className="text-base font-bold tabular-nums text-primary">{r.generalRating !== null ? r.generalRating.toFixed(2) : "—"}</span>

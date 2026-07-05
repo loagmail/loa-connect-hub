@@ -196,8 +196,8 @@ export default function Sidebar() {
   const dashboardRoles = allRoles.filter((r) => VALID_DASHBOARD_ROLES.includes(r))
   const isMultiRole = dashboardRoles.length > 1
 
-  const dashboardChildren = useMemo(() => {
-    const children = dashboardRoles.map((r) => ({
+  const dashboardChildren = useMemo<NavItem[]>(() => {
+    const children: NavItem[] = dashboardRoles.map((r) => ({
       href: `/${r.toLowerCase()}`,
       label: `${r.charAt(0) + r.slice(1).toLowerCase()} Dashboard`,
       icon: DASHBOARD_ICON,
@@ -215,7 +215,7 @@ export default function Sidebar() {
     }
     return children
   }, [dashboardRoles, allowedPages])
-  const visibleDashboardChildren = useMemo(
+  const visibleDashboardChildren = useMemo<NavItem[]>(
     () => dashboardChildren.filter((c) => allowedPages && allowedPages.includes(c.href!)),
     [dashboardChildren, allowedPages]
   )

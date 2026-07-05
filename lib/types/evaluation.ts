@@ -66,6 +66,7 @@ export interface Evaluation {
   updatedAt: Date
   source: string | null
   remarks: string | null
+  isDisabled?: boolean
 }
 
 export interface EvaluationRating {
@@ -179,6 +180,7 @@ export interface EvaluationData {
   updatedAt: Date
   source: string | null
   remarks: string | null
+  isDisabled?: boolean
 }
 
 export interface PendingEvaluationItem {

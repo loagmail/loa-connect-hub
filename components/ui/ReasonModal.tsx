@@ -15,7 +15,9 @@ export default function ReasonModal({ isOpen, title = "Confirm action", initialR
   const [reason, setReason] = useState(initialReason)
 
   useEffect(() => {
-    if (isOpen) setReason(initialReason)
+    if (!isOpen) return
+    const timeoutId = window.setTimeout(() => setReason(initialReason), 0)
+    return () => window.clearTimeout(timeoutId)
   }, [isOpen, initialReason])
 
   const handleKey = useCallback((e: KeyboardEvent) => {

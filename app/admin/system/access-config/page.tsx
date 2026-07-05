@@ -108,7 +108,11 @@ function RBACTab({ readOnly }: { readOnly?: boolean }) {
   }
 
   useEffect(() => {
-    loadGroups().finally(() => setLoading(false))
+    const run = async () => {
+      await loadGroups()
+      setLoading(false)
+    }
+    Promise.resolve().then(run)
   }, [])
 
   const handleAddGroup = async () => {
