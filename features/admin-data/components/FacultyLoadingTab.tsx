@@ -74,7 +74,6 @@ function FacultyTab() {
   const [csvPreviewPage, setCsvPreviewPage] = useState(0)
   const [csvProblemFilter, setCsvProblemFilter] = useState(false)
   const [csvBlockedFilter, setCsvBlockedFilter] = useState(false)
-  const [removedCsvRows, setRemovedCsvRows] = useState<CsvRow[]>([])
   const PREVIEW_PAGE_SIZE = 50
 
   const csvProblemRows = useMemo(() => {
@@ -456,11 +455,8 @@ function FacultyTab() {
 
   const handleCsvRowRemove = (index: number) => {
     if (!csvRows) return
-    const removed = csvRows[index]
-    setRemovedCsvRows((prev) => [...prev, { email: removed.email, name: removed.name, subjectCode: removed.subjectCode, subjectName: removed.subjectName, section: removed.section, departmentCode: removed.departmentCode }])
     const next = csvRows.filter((_, i) => i !== index)
     if (next.length === 0) {
-      setRemovedCsvRows([])
       handleCsvReset()
     } else {
       setCsvRows(next)

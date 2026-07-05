@@ -67,6 +67,7 @@ function getSystemChildren(): NavItem[] {
 }
 
 const hiddenHrefs = new Set(['/admin/reports', '/admin/evaluations', '/dean/reports', '/admin/system'])
+const VALID_DASHBOARD_ROLES = ["ADMIN", "DEAN", "FACULTY", "STUDENT"] as const
 
 export default function Sidebar() {
   const { data: session, status } = useSession()
@@ -191,10 +192,8 @@ export default function Sidebar() {
   const systemHrefs = useMemo(() => new Set(systemChildren.map((c) => c.href!)), [systemChildren])
   const dashHref = primaryRole ? `/${primaryRole.toLowerCase()}` : "/"
   const allRoles = role ? role.split("|") : []
-  const VALID_DASHBOARD_ROLES = ["ADMIN", "DEAN", "FACULTY", "STUDENT"]
   const DASHBOARD_ICON = "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
   const dashboardRoles = allRoles.filter((r) => VALID_DASHBOARD_ROLES.includes(r))
-  const isMultiRole = dashboardRoles.length > 1
 
   const dashboardChildren = useMemo<NavItem[]>(() => {
     const children: NavItem[] = dashboardRoles.map((r) => ({
@@ -214,7 +213,7 @@ export default function Sidebar() {
       }
     }
     return children
-  }, [dashboardRoles, allowedPages])
+  }, [dashboardRoles, allowedPages, VALID_DASHBOARD_ROLES])
   const visibleDashboardChildren = useMemo<NavItem[]>(
     () => dashboardChildren.filter((c) => allowedPages && allowedPages.includes(c.href!)),
     [dashboardChildren, allowedPages]
@@ -243,7 +242,7 @@ export default function Sidebar() {
     ALL_NAV_ITEMS.filter(
       (item) => (allowedPages && allowedPages.includes(item.href!)) && !reportHrefs.has(item.href!) && !evaluationHrefs.has(item.href!) && !dataHrefs.has(item.href!) && !systemHrefs.has(item.href!) && !hiddenHrefs.has(item.href!)
     ),
-    [ALL_NAV_ITEMS, allowedPages]
+    [ALL_NAV_ITEMS, allowedPages, reportHrefs, evaluationHrefs, dataHrefs, systemHrefs]
   )
 
   const isInReports = pathname.startsWith("/admin/reports") || pathname.startsWith("/dean/reports") || pathname.startsWith("/faculty/reports")
@@ -296,7 +295,7 @@ export default function Sidebar() {
       }
     }
     return items
-  }, [flatItems, dashboardVisible, dataVisible, systemVisible, reportsVisible, evaluationsVisible, primaryRole])
+  }, [flatItems, dashboardVisible, dataVisible, systemVisible, reportsVisible, evaluationsVisible, primaryRole, evaluationChildren])
 
   if (status === "loading" || !session || !allowedPages) {
     return (

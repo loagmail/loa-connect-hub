@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useEffect, useState, useCallback, useMemo } from "react"
-import { getPrimaryRole } from "@/lib/utils/roles"
 
 const LABELS: Record<string, string> = {
   admin: "Admin",
@@ -41,7 +40,6 @@ export default function NavigationBar(_props: { title?: string }) {
   const [mounted, setMounted] = useState(false)
   const [dark, setDark] = useState(false)
   const role = (session?.user as Record<string, unknown> | undefined)?.role as string | undefined
-  const primaryRole = role ? getPrimaryRole(role) : null
   const sortedRoles = useMemo(() => {
     if (!role) return []
     const parts = role.split("|")

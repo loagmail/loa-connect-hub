@@ -32,13 +32,6 @@ interface ExistingEvaluation {
 }
 
 
-interface SearchFacultyResult {
-  id: string
-  name: string
-  email: string
-  isEnrolled: boolean
-}
-
 export default function StudentEvaluationsPage() {
   const router = useRouter()
   const [pending, setPending] = useState<PendingItem[]>([])
@@ -51,9 +44,8 @@ export default function StudentEvaluationsPage() {
   const evalTabRef = useRef<Window | null>(null)
   const evalTabIdRef = useRef<string | null>(null)
   // const [searchQuery, setSearchQuery] = useState("")
-  // const [searchResults, setSearchResults] = useState<SearchFacultyResult[]>([])
+  // const [searchResults, setSearchResults] = useState([])
   // const [searching, setSearching] = useState(false)
-  const [activeSemesterId, setActiveSemesterId] = useState("")
   const [disputingFsId, setDisputingFsId] = useState<string | null>(null)
   const [disputeMessage, setDisputeMessage] = useState("")
 
@@ -112,14 +104,6 @@ export default function StudentEvaluationsPage() {
         const [pendingData, evalData] = await Promise.all([pendingRes.json(), evalRes.json()])
         setPending(pendingData.pending || [])
         setEvaluations(evalData.evaluations || [])
-        if (active?.id) {
-          setActiveSemesterId(active.id)
-          // // Fetch enrolled faculty suggestions for search
-          // fetch(`/api/faculty/search?semesterId=${active.id}`)
-          //   .then((r) => r.json())
-          //   .then((d) => { if (d.faculty) setSearchResults(d.faculty) })
-          //   .catch(() => {})
-        }
       } catch {
         setErrorMessage("Failed to load evaluations")
       } finally {
@@ -157,25 +141,6 @@ export default function StudentEvaluationsPage() {
   //   return () => clearTimeout(timer)
   // }, [searchQuery, activeSemesterId])
 
-  async function startUnenrolledEval(evaluateeId: string, facultySubjectId: string, isEnrolled: boolean) {
-    setNavigatingId(evaluateeId)
-    try {
-      const body = isEnrolled
-        ? { evaluateeId, facultySubjectId }
-        : { evaluateeId, facultySubjectId, source: "unenrolled" }
-      const res = await fetch("/api/evaluations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-      if (res.status === 403) { setLockedEndpoint("/api/evaluations"); setNavigatingId(null); return }
-      const data = await res.json()
-      if (data.evaluation?.id) { openEvalTab(data.evaluation.id); setNavigatingId(null) }
-    } catch {
-      setNavigatingId(null)
-    }
-  }
-
   async function handleDispute(item: PendingItem) {
     if (!confirm(`Report "${item.evaluateeName}" as the wrong faculty for "${item.subjectName || item.subjectCode}"?\n\nThis evaluation will be disabled and an admin will review the assignment.`)) return
     setDisputingFsId(item.facultySubjectId)
@@ -206,9 +171,6 @@ export default function StudentEvaluationsPage() {
 
   const total = pending.length + evaluations.length
   const completed = evaluations.length
-  const pendingIds = new Set(pending.map((p) => p.evaluateeId))
-  const submittedIds = new Set(evaluations.filter((e) => e.status === "SUBMITTED").map((e) => e.evaluateeId))
-  // const filteredSearchResults = searchResults.filter((f) => !pendingIds.has(f.id) && !submittedIds.has(f.id))
 
   if (lockedEndpoint) {
     return (

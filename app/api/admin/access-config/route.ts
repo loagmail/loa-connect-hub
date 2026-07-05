@@ -163,7 +163,7 @@ function expandApiPaths(
     }
   }
   // Apply overrides: false → remove, true → add
-  for (const [_pagePath, overrides] of Object.entries(api_overrides)) {
+  for (const [, overrides] of Object.entries(api_overrides)) {
     for (const [apiPath, value] of Object.entries(overrides)) {
       if (value === true) {
         paths.add(apiPath)

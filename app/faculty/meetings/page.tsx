@@ -62,7 +62,6 @@ export default async function MeetingsPage(props: {
 }) {
   const session = await auth()
   if (!session?.user) redirect("/login")
-  const role = (session.user as Record<string, unknown>).role as string
 
   const searchParams = await props.searchParams
   const hasQueryParams = !!searchParams && Object.keys(searchParams).length > 0

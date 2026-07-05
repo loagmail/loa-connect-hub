@@ -28,6 +28,8 @@ interface Catalog {
   pages: Record<string, CatalogItem[]>
 }
 
+const SECTION_ORDER = ["Root", "Dashboard", "Evaluations", "Data", "Reports", "Hidden"] as const
+
 const badgeColors: Record<string, string> = {
   ADMIN: "bg-purple-100 text-purple-700",
   DEAN: "bg-amber-100 text-amber-700",
@@ -237,8 +239,6 @@ export default function EditAccessGroupPage() {
     (JSON.stringify(norm(selectedPages)) !== JSON.stringify(norm((group.pages || []).filter((p) => !isApiPath(p) && !defaultPageSet.has(p)))) ||
       JSON.stringify(overrides) !== JSON.stringify(group.api_overrides || {}))
 
-  const SECTION_ORDER = ["Root", "Dashboard", "Evaluations", "Data", "Reports", "Hidden"] as const
-
   const catalogSections = useMemo(() => {
     if (!catalog) return []
 
@@ -264,7 +264,7 @@ export default function EditAccessGroupPage() {
     }
 
     return entries
-  }, [catalog, group, defaultPageSet])
+  }, [catalog, group, defaultPageSet, SECTION_ORDER])
 
   const defaultCatalogItems = useMemo(() => {
     if (!catalog || defaultPageSet.size === 0) return []
