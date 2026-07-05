@@ -12,6 +12,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const evaluation = await getEvaluation(id)
     if (!evaluation) return NextResponse.json({ error: "Not found" }, { status: 404 })
     if (evaluation.evaluatorId !== userId) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    if (evaluation.status !== "SUBMITTED") return NextResponse.json({ error: "Not found" }, { status: 404 })
+    if (evaluation.isDisabled) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
     const [facultyRes, fsRes] = await Promise.all([
       supabase.from("users").select("name").eq("id", evaluation.evaluateeId).single(),
@@ -49,7 +51,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         sectionName,
       },
     }
-    console.log("[EVAL API]", { facultySubjectId: evaluation.facultySubjectId, fsResData: fsRes.data, subjectCode, subjectName })
     return NextResponse.json(responseBody)
   } catch (err) {
     console.error("[EVAL API ERROR]", err)

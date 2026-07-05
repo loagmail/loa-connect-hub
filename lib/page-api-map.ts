@@ -21,17 +21,6 @@ export const pageApiMap: Record<string, PageApiEntry> = {
     label: "Admin Dashboard",
     apis: [],
   },
-  "/admin/users": {
-    label: "Manage Users",
-    apis: [
-      "/api/admin/users",
-      "/api/admin/access-config",
-      "/api/admin/user-permissions/paths",
-      "/api/admin/user-permissions/[userId]",
-      "/api/auth/me",
-      "/api/auth/activate",
-    ],
-  },
   "/admin/data/users": {
     label: "Data Users",
     apis: ["/api/admin/users", "/api/auth/activate"],
@@ -64,8 +53,8 @@ export const pageApiMap: Record<string, PageApiEntry> = {
     label: "Audit Trail",
     apis: ["/api/admin/audit-logs"],
   },
-  "/admin/data-management": {
-    label: "Data Management",
+  "/admin/data/maintenance": {
+    label: "Maintenance",
     apis: ["/api/admin/data/delete-students", "/api/admin/data/export-consultations"],
   },
   "/admin/data/academic-infrastructure": {

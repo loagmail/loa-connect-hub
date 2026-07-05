@@ -34,18 +34,18 @@ describe("userGroup", () => {
 describe("hasPageAccess", () => {
   it("allows access to exact matching pages", async () => {
     mockSupabaseResponse([
-      { groupName: "ADMIN", pages: ["/admin", "/admin/users"] },
+      { groupName: "ADMIN", pages: ["/admin", "/admin/data/users"] },
     ])
     await expect(hasPageAccess("ADMIN", "/admin")).resolves.toBe(true)
-    await expect(hasPageAccess("ADMIN", "/admin/users")).resolves.toBe(true)
+    await expect(hasPageAccess("ADMIN", "/admin/data/users")).resolves.toBe(true)
   })
 
   it("allows access to sub-paths of allowed pages", async () => {
     mockSupabaseResponse([
-      { groupName: "ADMIN", pages: ["/admin/users"] },
+      { groupName: "ADMIN", pages: ["/admin/data/users"] },
     ])
-    await expect(hasPageAccess("ADMIN", "/admin/users/create")).resolves.toBe(true)
-    await expect(hasPageAccess("ADMIN", "/admin/users/123/edit")).resolves.toBe(true)
+    await expect(hasPageAccess("ADMIN", "/admin/data/users/create")).resolves.toBe(true)
+    await expect(hasPageAccess("ADMIN", "/admin/data/users/123/edit")).resolves.toBe(true)
   })
 
   it("denies access to non-matching pages", async () => {

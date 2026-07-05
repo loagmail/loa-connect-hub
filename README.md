@@ -218,13 +218,13 @@ Pages use one of three patterns depending on interactivity needs:
 | `/admin/evaluations/rubrics` | Client | Rubric CRUD |
 | `/admin/evaluations/reports` | Server | Reports hub |
 | `/admin/evaluations/reports/sentiment` | Client | Sentiment analysis chart |
-| `/admin/data/users` | Client | User management |
+| `/admin/data/users` | Client | User management (replaces old `/admin/users`) |
 | `/admin/data/users/deleted` | Client | Deleted users list |
 | `/admin/data/academic-infrastructure` | Client | Multi-tab data manager |
 | `/admin/audit-trail` | Client | Audit log viewer |
 | `/admin/access-config` | Client | Access config list |
 | `/admin/access-config/[groupName]` | Client | Group detail editor |
-| `/admin/data-management` | Client | Data purge/management |
+| `/admin/data/maintenance` | Client | Data purge/management (moved from `/admin/data-management`) |
 | `/admin/etl-hub` | Client | ETL import with preview |
 | `/admin/user-permissions` | Redirect | → `/admin/access-config` |
 | `/dean` | Server | Dashboard — imports services |

@@ -81,7 +81,7 @@ function pageSection(p: string): string {
   if (p === "/admin/reports" || p === "/admin/evaluations" || p === "/dean/reports") return "Hidden"
   if (p === "/" || p === "/403" || p === "/faq" || p === "/student/meetings" || p === "/student/history" || p === "/faculty/meetings" || p === "/faculty/availability" || p === "/admin/access-config" || p === "/admin/audit-trail") return "Root"
   if (p === "/admin" || p === "/dean" || p === "/faculty" || p === "/student") return "Dashboard"
-  if (p.startsWith("/admin/data/") || p.startsWith("/dean/data/") || p === "/dean/departments" || p === "/admin/data-management") return "Data"
+  if (p.startsWith("/admin/data/") || p.startsWith("/dean/data/") || p === "/dean/departments" || p === "/admin/data/maintenance") return "Data"
   if ((p.startsWith("/admin/reports") || p.startsWith("/dean/reports") || p.startsWith("/faculty/reports")) && p !== "/admin/reports" && p !== "/dean/reports") return "Reports"
   if (p.startsWith("/admin/evaluations") || p.startsWith("/dean/evaluations") || p.startsWith("/faculty/evaluations") || p.startsWith("/student/evaluations")) return "Evaluations"
   return ""
@@ -91,7 +91,6 @@ function pageLabel(p: string): string {
   const map: Record<string, string> = {
     "/": "Dashboard (root)",
     "/admin": "Admin Dashboard",
-    "/admin/users": "Manage Users",
     "/admin/access-config": "Access Configuration",
     "/student": "Student Dashboard",
     "/student/book": "Book Consultation",

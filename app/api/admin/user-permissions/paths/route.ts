@@ -14,6 +14,6 @@ export async function GET() {
       g.pages.forEach((p: string) => pathsSet.add(p));
     }
   });
-  const adminExclusive = new Set(["/admin/data-management"])
+  const adminExclusive = new Set(["/admin/data/maintenance"])
   return NextResponse.json({ paths: Array.from(pathsSet).filter((p) => !adminExclusive.has(p)) });
 }
