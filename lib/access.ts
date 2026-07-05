@@ -78,10 +78,11 @@ export function userGroup(role: string): string {
 
 export async function hasPageAccess(role: string, path: string): Promise<boolean> {
   const topRole = userGroup(role)
-  const defaultPages = getDefaultPages(topRole)
-  if (defaultPages.some((p: string) => path === p || path.startsWith(p + "/"))) return true
   const config = await loadAccessConfig()
   const entry = config[topRole]
+  const defaultPages = getDefaultPages(topRole)
+  const hasDefault = defaultPages.some((p: string) => path === p || path.startsWith(p + "/"))
+  if (hasDefault) return true
   if (!entry) return false
   return entry.pages.some((p: string) => path === p || path.startsWith(p + "/"))
 }
