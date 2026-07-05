@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from("evaluations")
-      .select("id, evaluateeId, source")
+      .select("id, evaluateeId, source, facultySubjectId")
       .eq("semesterId", semesterId)
       .eq("status", "SUBMITTED")
 
