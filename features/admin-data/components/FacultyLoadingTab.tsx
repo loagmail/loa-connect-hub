@@ -1,13 +1,15 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
-import { useApiGet, invalidate } from "@/lib/api/client"
+import Link from "next/link"
+import { useApiGet } from "@/lib/api/client"
 import { usePagination, Paginator } from "@/components/ui/Paginator"
 import { SkeletonTable } from "@/components/ui/Skeleton"
 import IosButton from "@/components/ui/IosButton"
 import LockedTab from "@/components/ui/LockedTab"
 import { SegmentedControl, SearchInput } from "./shared"
 import { EnrollmentsTab } from "./EnrollmentsTab"
+import { FacultySubjectDetail } from "./FacultySubjectDetail"
 import type { DepartmentData } from "@/lib/types"
 import type { FacEnrollTab, FacViewTab, Subject, Section, FacultyMapping, Enrollment } from "./types"
 
@@ -184,143 +186,16 @@ function FacultyTab() {
     return map
   }, [enrollmentsData])
 
-  const enrolledStudentsByFsId = useMemo(() => {
-    const map = new Map<string, Enrollment[]>()
-    for (const e of enrollmentsData?.data ?? []) {
-      if (e.faculty_subject_id) {
-        const list = map.get(e.faculty_subject_id)
-        if (list) list.push(e)
-        else map.set(e.faculty_subject_id, [e])
-      }
-    }
-    return map
-  }, [enrollmentsData])
-
-  // ── Subject-Section Detail Modal state ───────────────────
   const [selectedSsMapping, setSelectedSsMapping] = useState<FacultyMapping | null>(null)
-  const [reassignFacultyId, setReassignFacultyId] = useState("")
-  const [reassignFacultySearch, setReassignFacultySearch] = useState("")
-  const [reassignDropdownOpen, setReassignDropdownOpen] = useState(false)
-  const reassignDropdownRef = useRef<HTMLDivElement>(null)
-  const [reassignSaving, setReassignSaving] = useState(false)
-  const [reassignError, setReassignError] = useState("")
-  const [reassignSuccess, setReassignSuccess] = useState("")
-
-  const [studentFilter, setStudentFilter] = useState("")
-
-  const filteredEnrolled = useMemo(() => {
-    if (!selectedSsMapping) return []
-    const enrolled = enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []
-    if (!studentFilter.trim()) return enrolled
-    const q = studentFilter.toLowerCase()
-    return enrolled.filter((e) =>
-      e.student.name.toLowerCase().includes(q) ||
-      e.student.email.toLowerCase().includes(q)
-    )
-  }, [selectedSsMapping, studentFilter, enrolledStudentsByFsId])
-
-  const enrolledPagination = usePagination(filteredEnrolled, 15)
-
-  const [removingEnrollmentId, setRemovingEnrollmentId] = useState<string | null>(null)
-  const [addStudentQuery, setAddStudentQuery] = useState("")
-  const [addStudentId, setAddStudentId] = useState("")
-  const [addStudentDropdownOpen, setAddStudentDropdownOpen] = useState(false)
-  const addStudentDropdownRef = useRef<HTMLDivElement>(null)
-  const [addingStudent, setAddingStudent] = useState(false)
-  const [addStudentError, setAddStudentError] = useState("")
-  const [addStudentSuccess, setAddStudentSuccess] = useState("")
-
-  const reassignFaculties = useMemo(() => {
-    if (!selectedSsMapping) return []
-    return faculties.filter((f) => f.departmentId === selectedSsMapping.faculty.departmentId && f.id !== selectedSsMapping.faculty.id)
-  }, [faculties, selectedSsMapping])
-
-  const filteredReassignFaculties = useMemo(() => {
-    if (!reassignFacultySearch) return reassignFaculties
-    const q = reassignFacultySearch.toLowerCase()
-    return reassignFaculties.filter((f) => f.name.toLowerCase().includes(q) || f.email.toLowerCase().includes(q))
-  }, [reassignFaculties, reassignFacultySearch])
-
-  const allStudents = useMemo(() =>
-    (allUsers?.users ?? []).filter((u) => u.role.includes("STUDENT")),
-    [allUsers]
-  )
-
-  const filteredAddStudents = useMemo(() => {
-    if (!addStudentQuery.trim()) return []
-    const enrolledIds = selectedSsMapping
-      ? new Set((enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []).map((e) => e.student.id))
-      : new Set<string>()
-    const q = addStudentQuery.toLowerCase()
-    return allStudents
-      .filter((u) => !enrolledIds.has(u.id) && (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)))
-      .slice(0, 20)
-  }, [allStudents, addStudentQuery, selectedSsMapping, enrolledStudentsByFsId])
-
-  const handleReassign = async () => {
-    if (!selectedSsMapping || !reassignFacultyId) return
-    setReassignSaving(true); setReassignError(""); setReassignSuccess("")
-    try {
-      const res = await fetch("/api/admin/faculty-subjects/reassign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oldFacultySubjectId: selectedSsMapping.id, newFacultyId: reassignFacultyId }),
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Reassignment failed") }
-      setReassignSuccess("Faculty reassigned! Students will see the new faculty on their next page load.")
-      setReassignFacultyId(""); setReassignFacultySearch("")
-      setTimeout(() => { setSelectedSsMapping(null); setReassignSuccess("") }, 2000)
-      fetchData(true)
-    } catch (err) { setReassignError((err as Error).message) }
-    finally { setReassignSaving(false) }
-  }
-
-  const handleRemoveStudent = async (enrollmentId: string) => {
-    setRemovingEnrollmentId(enrollmentId)
-    try {
-      const res = await fetch(`/api/admin/student-enrollments/${enrollmentId}`, { method: "DELETE" })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to remove student") }
-      fetchData(true)
-      invalidate("/api/data/evaluation-mappings?type=student")
-    } catch (err) { alert((err as Error).message) }
-    finally { setRemovingEnrollmentId(null) }
-  }
-
-  const handleAddStudent = async () => {
-    if (!selectedSsMapping || !addStudentId) return
-    setAddingStudent(true); setAddStudentError(""); setAddStudentSuccess("")
-    try {
-      const res = await fetch("/api/admin/student-enrollments", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ faculty_subject_id: selectedSsMapping.id, student_id: addStudentId, semesterId: activeSemesterId || null }),
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to add student") }
-      setAddStudentSuccess("Student added!")
-      setAddStudentId(""); setAddStudentQuery("")
-      setTimeout(() => setAddStudentSuccess(""), 3000)
-      fetchData(true)
-      invalidate("/api/data/evaluation-mappings?type=student")
-    } catch (err) { setAddStudentError((err as Error).message) }
-    finally { setAddingStudent(false) }
-  }
 
   const closeSubjectSectionModal = () => {
     setSelectedSsMapping(null)
-    setReassignError(""); setReassignSuccess(""); setReassignFacultyId(""); setReassignFacultySearch("")
-    setStudentFilter(""); setAddStudentQuery(""); setAddStudentId("")
-    setAddStudentError(""); setAddStudentSuccess("")
   }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(e.target as Node)) {
         setFacultyDropdownOpen(false)
-      }
-      if (reassignDropdownRef.current && !reassignDropdownRef.current.contains(e.target as Node)) {
-        setReassignDropdownOpen(false)
-      }
-      if (addStudentDropdownRef.current && !addStudentDropdownRef.current.contains(e.target as Node)) {
-        setAddStudentDropdownOpen(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -1087,199 +962,25 @@ function FacultyTab() {
                 <p className="text-sm font-bold text-secondary truncate">{selectedSsMapping.subject.code} - {selectedSsMapping.subject.name}</p>
                 <p className="text-xs text-tertiary truncate">{selectedSsMapping.section.program}-{selectedSsMapping.section.name} · {selectedSsMapping.faculty.name}</p>
               </div>
-              <IosButton variant="gray" size="xs" onClick={closeSubjectSectionModal}>
-                <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </IosButton>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/admin/data/academic-infrastructure/faculty-enroll/${selectedSsMapping.id}`}
+                  className="text-xs text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Edit in page
+                </Link>
+                <IosButton variant="gray" size="xs" onClick={closeSubjectSectionModal}>
+                  <svg className="w-4 h-4 text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </IosButton>
+              </div>
             </div>
-            <div className="p-4 max-h-[80vh] overflow-y-auto space-y-4">
-              {/* Re-assign Faculty */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-secondary">Re-assign Faculty</h3>
-                {reassignError && <p className="text-xs font-medium text-red-600 bg-red-50 p-2 rounded">{reassignError}</p>}
-                {reassignSuccess && <p className="text-xs font-medium text-green-600 bg-green-50 p-2 rounded">{reassignSuccess}</p>}
-                <div className="relative" ref={reassignDropdownRef}>
-                  <label className="block text-xs font-semibold text-tertiary mb-1">New Faculty</label>
-                  <input
-                    value={reassignFacultySearch || (reassignFacultyId ? reassignFaculties.find((f) => f.id === reassignFacultyId)?.name ?? "" : "")}
-                    onChange={(e) => { setReassignFacultySearch(e.target.value); setReassignFacultyId(""); setReassignDropdownOpen(true) }}
-                    onFocus={() => setReassignDropdownOpen(true)}
-                    placeholder="Search faculty in same department..."
-                    className="w-full text-sm bg-surface border border-strong rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                    autoComplete="off"
-                  />
-                  {reassignDropdownOpen && (
-                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl max-h-52 overflow-y-auto">
-                      {filteredReassignFaculties.length === 0 ? (
-                        <p className="text-xs text-tertiary text-center py-4">No other faculty in this department</p>
-                      ) : (
-                        filteredReassignFaculties.map((f) => (
-                          <button
-                            key={f.id}
-                            type="button"
-                            onClick={() => { setReassignFacultyId(f.id); setReassignFacultySearch(""); setReassignDropdownOpen(false) }}
-                            className={`w-full text-left px-3 py-2 text-sm hover:bg-surface-hover transition-colors ${reassignFacultyId === f.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
-                          >
-                            <span className="text-primary">{f.name}</span>
-                            <span className="text-tertiary ml-1 text-xs">{f.email}</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-                {reassignFacultyId && !reassignSuccess && (
-                  <div className="rounded-lg border border-default bg-surface-dim/50 px-3 py-2.5 space-y-1">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="font-semibold text-tertiary">From:</span>
-                      <span className="font-medium text-secondary">{selectedSsMapping.faculty.name}</span>
-                      <span className="text-tertiary">({selectedSsMapping.faculty.email})</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="font-semibold text-tertiary">To:</span>
-                      <span className="font-medium text-emerald-600 dark:text-emerald-400">{reassignFaculties.find((f) => f.id === reassignFacultyId)?.name}</span>
-                      <span className="text-tertiary">({reassignFaculties.find((f) => f.id === reassignFacultyId)?.email})</span>
-                    </div>
-                  </div>
-                )}
-                {reassignFacultyId && !reassignSuccess && (
-                  <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2.5">
-                    <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                    <span>Proceeding will update which faculty is assigned to this subject-section. Students will see a new pending evaluation for the new faculty, and any existing evaluations for the old faculty will be invalidated. This action cannot be undone.</span>
-                  </div>
-                )}
-                <IosButton
-                  variant="primary"
-                  type="button"
-                  loading={reassignSaving}
-                  disabled={!reassignFacultyId}
-                  onClick={handleReassign}
-                >
-                  {reassignSaving ? "Re-assigning..." : "Confirm Re-assignment"}
-                </IosButton>
-              </div>
-
-              <div className="border-t border-default pt-4" />
-
-              {/* Enrolled Students */}
-              <div>
-                <h3 className="text-sm font-semibold text-secondary mb-2">
-                  Enrolled Students ({(enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []).length})
-                </h3>
-                {(() => {
-                  const enrolled = enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []
-                  if (enrolled.length === 0) {
-                    return <p className="text-xs text-tertiary text-center py-4">No enrolled students.</p>
-                  }
-                  return (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={studentFilter}
-                        onChange={(e) => { setStudentFilter(e.target.value); enrolledPagination.setPage(0) }}
-                        placeholder="Search students..."
-                        className="input text-xs w-full px-3 py-2 rounded-lg border border-strong"
-                      />
-                      <div className="tbl max-h-48 overflow-y-auto">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th className="w-8">#</th>
-                              <th>Student</th>
-                              <th>Email</th>
-                              <th className="w-10"></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {enrolledPagination.paginatedItems.map((e, i) => (
-                              <tr key={e.id}>
-                                <td className="text-tertiary">{enrolledPagination.page * enrolledPagination.pageSize + i + 1}</td>
-                                <td className="font-medium text-secondary">{e.student.name}</td>
-                                <td className="text-tertiary">{e.student.email}</td>
-                                <td className="text-center">
-                                  <button
-                                    type="button"
-                                    disabled={removingEnrollmentId === e.id}
-                                    onClick={() => handleRemoveStudent(e.id)}
-                                    className="w-6 h-6 inline-flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
-                                    title="Remove from section"
-                                  >
-                                    {removingEnrollmentId === e.id ? (
-                                      <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin block" />
-                                    ) : (
-                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                      </svg>
-                                    )}
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      {filteredEnrolled.length === 0 && studentFilter && (
-                        <p className="text-xs text-tertiary text-center py-2">No students match &ldquo;{studentFilter}&rdquo;</p>
-                      )}
-                      {filteredEnrolled.length > 15 && (
-                        <Paginator page={enrolledPagination.page} totalPages={enrolledPagination.totalPages} pageSize={enrolledPagination.pageSize} totalItems={filteredEnrolled.length} setPage={enrolledPagination.setPage} setPageSize={enrolledPagination.setPageSize} showSizeSelector={false} />
-                      )}
-                    </div>
-                  )
-                })()}
-              </div>
-
-              {/* Search and Add */}
-              <div className="border-t border-default pt-4 space-y-3">
-                <h3 className="text-sm font-semibold text-secondary">Search and Add</h3>
-                {addStudentError && <p className="text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{addStudentError}</p>}
-                {addStudentSuccess && <p className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded">{addStudentSuccess}</p>}
-
-                <div className="relative" ref={addStudentDropdownRef}>
-                  <input
-                    type="text"
-                    value={addStudentQuery}
-                    onChange={(e) => { setAddStudentQuery(e.target.value); setAddStudentId(""); setAddStudentDropdownOpen(true) }}
-                    onFocus={() => setAddStudentDropdownOpen(true)}
-                    placeholder="Search existing students for this semester..."
-                    className="input text-xs w-full px-3 py-2 rounded-lg border border-strong"
-                    autoComplete="off"
-                  />
-                  {addStudentDropdownOpen && filteredAddStudents.length > 0 && (
-                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                      {filteredAddStudents.map((u) => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => { setAddStudentId(u.id); setAddStudentQuery(u.name); setAddStudentDropdownOpen(false) }}
-                          className={`w-full text-left px-3 py-2 text-xs hover:bg-surface-hover transition-colors ${addStudentId === u.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
-                        >
-                          <span className="font-medium text-primary">{u.name}</span>
-                          <span className="text-tertiary ml-1">{u.email}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {addStudentDropdownOpen && addStudentQuery.trim() && filteredAddStudents.length === 0 && (
-                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl">
-                      <p className="text-xs text-tertiary text-center py-3">No students found.</p>
-                    </div>
-                  )}
-                </div>
-
-                <IosButton
-                  variant="primary"
-                  type="button"
-                  loading={addingStudent}
-                  disabled={addingStudent || !addStudentId}
-                  onClick={handleAddStudent}
-                >
-                  {addingStudent ? "Adding..." : "Add Student"}
-                </IosButton>
-              </div>
+            <div className="p-4 max-h-[80vh] overflow-y-auto">
+              <FacultySubjectDetail mapping={selectedSsMapping} onClose={() => { setSelectedSsMapping(null); fetchData(true) }} />
             </div>
           </div>
         </div>
@@ -1308,6 +1009,7 @@ function FacultyTab() {
                     <th>Subject</th>
                     <th>Section</th>
                     <th className="text-center">HeadCount</th>
+                    <th className="w-20 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1325,6 +1027,9 @@ function FacultyTab() {
                           {hc}
                           {!m.semesterId && <span className="ml-1.5 text-[10px] font-semibold text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full">no semester</span>}
                         </td>
+                        <td className="text-center">
+                          <Link href={`/admin/data/academic-infrastructure/faculty-enroll/${m.id}`} className="text-xs text-amber-600 hover:text-amber-700 font-semibold">Edit</Link>
+                        </td>
                       </tr>
                     )
                   })}
@@ -1341,6 +1046,7 @@ function FacultyTab() {
                         <p className="text-tertiary truncate">{m.section.program}-{m.section.name}</p>
                       </div>
                         <span className="shrink-0 text-right text-xs font-semibold text-secondary">{hc} student{hc !== 1 ? "s" : ""}{!m.semesterId && <span className="ml-1 text-[10px] font-semibold text-amber-600">⚠️</span>}</span>
+                        <Link href={`/admin/data/academic-infrastructure/faculty-enroll/${m.id}`} className="shrink-0 text-xs text-amber-600 hover:text-amber-700 font-semibold ml-1">Edit</Link>
                     </div>
                   )
                 })}

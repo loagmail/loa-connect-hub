@@ -12,12 +12,23 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
   const { id } = await params
 
-  const { error: fetchErr } = await supabase
+  const { data: enrollment, error: fetchErr } = await supabase
     .from("student_enrollments")
-    .select("id")
+    .select("id, faculty_subject_id, student_id")
     .eq("id", id)
     .single()
-  if (fetchErr) return NextResponse.json({ error: "Enrollment not found" }, { status: 404 })
+  if (fetchErr || !enrollment) return NextResponse.json({ error: "Enrollment not found" }, { status: 404 })
+
+  // Invalidate any evaluation for this faculty_subject + student
+  if (enrollment.faculty_subject_id) {
+    const adminName = (session!.user as Record<string, unknown>).name as string || "Unknown"
+    const remarks = `Invalidated by user: ${adminName} - student removed from enrollment`
+    await supabase
+      .from("evaluations")
+      .update({ status: "INVALID", remarks, isDisabled: true, updatedAt: new Date().toISOString() })
+      .eq("facultySubjectId", enrollment.faculty_subject_id)
+      .eq("evaluatorId", enrollment.student_id)
+  }
 
   const { error } = await supabase.from("student_enrollments").delete().eq("id", id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -26,7 +37,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   await logAuditEvent({
     userId: currentUserId,
     action: "DELETE_ENROLLMENT",
-    details: `Deleted enrollment ${id}`,
+    details: `Deleted enrollment ${id} (faculty_subject: ${enrollment.faculty_subject_id}, student: ${enrollment.student_id})`,
   })
 
   return NextResponse.json({ success: true })
