@@ -7,6 +7,14 @@ import IosButton from "@/components/ui/IosButton"
 import LockedTab from "@/components/ui/LockedTab"
 import type { SemesterData } from "@/lib/types"
 
+interface Impacts {
+  facultySubjects: number
+  enrollments: number
+  evaluations: number
+  results: number
+  sections: number
+}
+
 export function SemestersTab() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -27,9 +35,14 @@ export function SemestersTab() {
   const [editEvalStartDate, setEditEvalStartDate] = useState(todayStr)
   const [editEvalEndDate, setEditEvalEndDate] = useState("")
 
+  const [activateTarget, setActivateTarget] = useState<string | null>(null)
+  const [impacts, setImpacts] = useState<Impacts | null>(null)
+  const [loadingImpacts, setLoadingImpacts] = useState(false)
+
   const { data: semestersData, isLoading: semestersLoading, error: semestersErr } = useApiGet<{ data: SemesterData[] }>("/api/semesters")
 
   const semesters = semestersData?.data ?? []
+  const activeCount = semesters.filter((s) => s.isActive).length
   const loading = semestersLoading
   const fetchError = semestersErr
   const locked = (fetchError?.message?.includes("Forbidden") || fetchError?.message?.includes("API endpoint requires")) ? "/api/semesters" : ""
@@ -102,6 +115,51 @@ export function SemestersTab() {
       invalidate("/api/semesters")
     } catch (err) { setError((err as Error).message) }
     finally { setSaving(false) }
+  }
+
+  const handleActivate = async (id: string) => {
+    setSaving(true); setError(""); setActivateTarget(null); setImpacts(null)
+    try {
+      const res = await fetch(`/api/semesters/${id}`, { method: "POST" })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
+      showSuccessMessage("Semester activated!")
+      invalidate("/api/semesters")
+    } catch (err) { setError((err as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const handleDeactivate = async (id: string) => {
+    if (activeCount <= 1) return
+    setSaving(true); setError("")
+    try {
+      const res = await fetch(`/api/semesters/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: false }),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
+      showSuccessMessage("Semester deactivated!")
+      invalidate("/api/semesters")
+    } catch (err) { setError((err as Error).message) }
+    finally { setSaving(false) }
+  }
+
+  const promptActivate = async (id: string) => {
+    if (activeCount === 0) {
+      await handleActivate(id)
+      return
+    }
+    setActivateTarget(id)
+    setImpacts(null)
+    setLoadingImpacts(true)
+    try {
+      const res = await fetch(`/api/semesters/${id}/impacts`)
+      if (res.ok) {
+        const data = await res.json()
+        setImpacts(data)
+      }
+    } catch { /* ignore */ }
+    setLoadingImpacts(false)
   }
 
   const handleEndEvaluation = async (id: string) => {
@@ -184,6 +242,45 @@ export function SemestersTab() {
         </div>
       )}
 
+      {activateTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-bold text-primary">Activate Semester</h2>
+            </div>
+            <div className="space-y-3 text-xs text-tertiary">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                <p className="font-semibold text-amber-800">This will:</p>
+                <ul className="list-disc list-inside space-y-1 text-amber-700">
+                  <li>Set all other active semesters as inactive</li>
+                  <li>Set this semester as the active semester</li>
+                </ul>
+              </div>
+              <p className="font-medium text-primary">Proceed with caution.</p>
+              <p>This change affects everything that depends on the active semester — evaluations, consultations, reports, and dashboards will switch to reference this semester. No data will be deleted.</p>
+              {loadingImpacts ? (
+                <p className="text-tertiary">Loading related data counts...</p>
+              ) : impacts ? (
+                <div className="bg-slate-50 rounded-lg p-3 space-y-1.5">
+                  <p className="font-semibold text-primary">Affected data in this semester:</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <span className="text-tertiary">Faculty-Subject mappings:</span><span className="font-semibold text-right">{impacts.facultySubjects}</span>
+                    <span className="text-tertiary">Student Enrollments:</span><span className="font-semibold text-right">{impacts.enrollments}</span>
+                    <span className="text-tertiary">Sections:</span><span className="font-semibold text-right">{impacts.sections}</span>
+                    <span className="text-tertiary">Evaluations:</span><span className="font-semibold text-right">{impacts.evaluations}</span>
+                    <span className="text-tertiary">Evaluation Results:</span><span className="font-semibold text-right">{impacts.results}</span>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <IosButton variant="gray" onClick={() => { setActivateTarget(null); setImpacts(null) }}>Cancel</IosButton>
+              <IosButton type="button" loading={saving} variant="primary" onClick={() => handleActivate(activateTarget)}>Confirm Activation</IosButton>
+            </div>
+          </div>
+        </div>
+      )}
+
       {evalEditingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
@@ -252,6 +349,20 @@ export function SemestersTab() {
                       </td>
                       <td className="px-6 py-4 space-x-3 text-center">
                         <IosButton variant="plain" size="xs" onClick={() => { setEditTitle(semester.title); setEditingId(semester.id) }}>Edit</IosButton>
+                        {semester.isActive ? (
+                          <IosButton
+                            variant="plain" size="xs"
+                            disabled={activeCount <= 1}
+                            onClick={() => handleDeactivate(semester.id)}
+                            className={activeCount <= 1 ? "!text-tertiary/40" : "!text-red-500"}
+                          >
+                            Disable
+                          </IosButton>
+                        ) : (
+                          <IosButton variant="plain" size="xs" onClick={() => promptActivate(semester.id)} className="!text-green-600">
+                            Enable
+                          </IosButton>
+                        )}
                         {semester.evalStartDate ? (
                           <IosButton variant="plain" size="xs" onClick={() => handleEndEvaluation(semester.id)} className="!text-red-500">End Evaluation</IosButton>
                         ) : (
@@ -275,8 +386,22 @@ export function SemestersTab() {
                   <div className="text-xs space-y-1 mt-2">
                     <p className="text-tertiary">Period: {semester.evalStartDate} to {semester.evalEndDate || 'N/A'}</p>
                   </div>
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2 pt-2 flex-wrap">
                     <IosButton variant="tinted" size="sm" onClick={() => { setEditTitle(semester.title); setEditingId(semester.id) }} className="flex-1">Edit</IosButton>
+                    {semester.isActive ? (
+                      <IosButton
+                        variant="destructive" size="sm"
+                        disabled={activeCount <= 1}
+                        onClick={() => handleDeactivate(semester.id)}
+                        className="flex-1"
+                      >
+                        Disable
+                      </IosButton>
+                    ) : (
+                      <IosButton variant="success" size="sm" onClick={() => promptActivate(semester.id)} className="flex-1">
+                        Enable
+                      </IosButton>
+                    )}
                     {semester.evalStartDate ? (
                       <IosButton variant="destructive" size="sm" onClick={() => handleEndEvaluation(semester.id)} className="flex-1">End Evaluation</IosButton>
                     ) : (

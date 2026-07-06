@@ -8,7 +8,25 @@ const PUBLIC_PATHS = new Set([
   "/setup-password", "/faq",
 ])
 
-const PUBLIC_PREFIXES = ["/_next", "/api/auth", "/api/audit"]
+const PUBLIC_PREFIXES = ["/_next", "/api/auth", "/api/audit", "/api/semesters/count-active"]
+
+const SEMESTER_LOCKED_PATH = "/admin/data/academic-infrastructure"
+
+async function activeSemesterCount(origin: string): Promise<number> {
+  try {
+    const res = await fetch(`${origin}/api/semesters/count-active`)
+    if (!res.ok) return 1
+    const { count } = await res.json()
+    return count ?? 0
+  } catch {
+    return 1
+  }
+}
+
+const ALLOWED_ON_LOCKED = new Set([
+  SEMESTER_LOCKED_PATH,
+  "/login", "/activate", "/forgot-password", "/change-password", "/setup-password",
+])
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -34,6 +52,17 @@ export async function proxy(request: NextRequest) {
   const rawRole = (token as Record<string, unknown>).role as string | undefined
   const userId = (token as Record<string, unknown>).id as string
   const isAdmin = rawRole?.includes('ADMIN')
+
+  // Enforce exactly 1 active semester — only /admin/data/academic-infrastructure is accessible otherwise
+  // API routes are exempt (they return JSON errors independently)
+  if (!pathname.startsWith("/api/")) {
+    const activeCount = await activeSemesterCount(request.nextUrl.origin)
+    if (activeCount !== 1) {
+      if (!ALLOWED_ON_LOCKED.has(pathname) && !pathname.startsWith(SEMESTER_LOCKED_PATH + "/")) {
+        return NextResponse.redirect(new URL(SEMESTER_LOCKED_PATH, request.url))
+      }
+    }
+  }
 
   const access = await getUserAccess(userId, rawRole ?? "GUEST")
 

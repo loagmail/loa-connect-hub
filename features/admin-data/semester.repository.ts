@@ -20,12 +20,10 @@ export const semesterRepository: ISemesterRepository = {
   },
 
   async findActive() {
-    const { data, error } = await supabase.from("semesters").select("*").eq("isActive", true).single()
-    if (error) {
-      if (error.code === "PGRST116") return null
-      throw error
-    }
-    return data as SemesterData
+    const { data, error } = await supabase.from("semesters").select("*").eq("isActive", true)
+    if (error) throw error
+    if (data.length !== 1) return null
+    return data[0] as SemesterData
   },
 
   async create(input: CreateSemesterInput) {

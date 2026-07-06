@@ -34,6 +34,7 @@ interface Period {
   id: string
   name?: string
   title?: string
+  isActive?: boolean
 }
 
 interface StudentRow {
@@ -159,7 +160,8 @@ export default function EvaluationDashboard({
         const data = await res.json()
         const list = data.periods || []
         setPeriods(list)
-        if (list.length > 0) setSelectedPeriod(list[0].id)
+        const active = list.find((p: Period) => p.isActive)
+        setSelectedPeriod(active?.id || list[0]?.id || "")
       } catch {
         setErrorMessage("Failed to load evaluation periods")
       }

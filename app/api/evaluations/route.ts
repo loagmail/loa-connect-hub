@@ -54,7 +54,10 @@ export async function GET() {
 
   try {
     const activeSemester = await getActiveSemester()
-    const evaluations = await getMyEvaluations(userId, activeSemester?.id)
+    if (!activeSemester) {
+      return NextResponse.json({ error: "No active semester" }, { status: 400 })
+    }
+    const evaluations = await getMyEvaluations(userId, activeSemester.id)
     const result = await Promise.all(evaluations.map(enrichEvaluation))
     return NextResponse.json({ evaluations: result })
   } catch {
