@@ -212,6 +212,17 @@ export const userRepository: IUserRepository = {
     if (error) throw error
     if (user) await logUserAction(user.email, "DISABLE_USER", `Soft-deleted user: ${user.name}`)
   },
+  async bulkSoftDelete(ids) {
+    if (ids.length === 0) return
+    const { data: users } = await supabase.from("users").select("id, email, name").in("id", ids)
+    const { error } = await supabase.from("users").update({ deletedAt: new Date().toISOString() }).in("id", ids)
+    if (error) throw error
+    if (users) {
+      for (const u of users as { email: string; name: string }[]) {
+        await logUserAction(u.email, "DISABLE_USER", `Soft-deleted user: ${u.name}`)
+      }
+    }
+  },
   async restore(id) {
     const user = await this.findById(id)
     const { error } = await supabase.from("users").update({ deletedAt: null }).eq("id", id)

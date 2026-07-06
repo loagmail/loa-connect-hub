@@ -128,7 +128,7 @@ export default function BulkUserImport({
     }
   }, [])
 
-  useEffect(() => { fetchReferenceData() }, [fetchReferenceData])
+  useEffect(() => { Promise.resolve().then(() => fetchReferenceData()) }, [fetchReferenceData])
 
   const blockedRows = useMemo(() => {
     if (!previewRows) return []

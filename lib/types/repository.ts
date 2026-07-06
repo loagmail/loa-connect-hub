@@ -60,6 +60,7 @@ export interface IUserRepository {
   listAll(options?: ListUsersOptions): Promise<UserData[]>
   update(id: string, data: Partial<UserData>): Promise<UserData>
   softDelete(id: string): Promise<void>
+  bulkSoftDelete(ids: string[]): Promise<void>
   restore(id: string): Promise<void>
   permanentDelete(id: string): Promise<void>
   listDeleted(): Promise<UserData[]>

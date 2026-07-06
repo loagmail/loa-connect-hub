@@ -48,10 +48,9 @@ export default function DataUsersPage() {
   const [departments, setDepartments] = useState<DepartmentData[]>([])
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [roleFilter] = useState("all")
+  const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
   const [deptFilter, setDeptFilter] = useState("all")
-  const [excludeStudents, setExcludeStudents] = useState(true)
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0])
   const [changingRole, setChangingRole] = useState<string | null>(null)
@@ -61,6 +60,7 @@ export default function DataUsersPage() {
 
   // Soft-delete confirmation
   const [removeUser, setRemoveUser] = useState<UserData | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   // Edit modal state
   const [editUser, setEditUser] = useState<UserData | null>(null)
@@ -142,6 +142,30 @@ export default function DataUsersPage() {
       } else {
         const data = await res.json()
         alert(data.error || "Failed to delete user")
+      }
+    } finally {
+      pendingRef.current = false
+    }
+  }
+
+  const handleBulkSoftDelete = async () => {
+    const ids = [...selectedIds]
+    if (ids.length === 0 || pendingRef.current) return
+    pendingRef.current = true
+    try {
+      const res = await fetch("/api/admin/users/bulk-soft-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      })
+      if (res.status === 403) { setLockedEndpoint("/api/admin/users"); return }
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => !selectedIds.has(u.id)))
+        setSelectedIds(new Set())
+        setRemoveUser(null)
+      } else {
+        const data = await res.json()
+        alert(data.error || "Failed to delete users")
       }
     } finally {
       pendingRef.current = false
@@ -323,7 +347,7 @@ export default function DataUsersPage() {
   const filtered = useMemo(() => {
     return users.filter((u) => {
       if (roleFilter !== "all" && !hasRole(u.role, roleFilter)) return false
-      if (excludeStudents && hasRole(u.role, "STUDENT")) return false
+      if (deptFilter !== "all" && u.departmentId !== deptFilter) return false
       if (statusFilter === "active" && u.isDisabled) return false
       if (statusFilter === "disabled" && !u.isDisabled) return false
       if (statusFilter === "activated" && !u.hasLoggedInBefore) return false
@@ -336,7 +360,7 @@ export default function DataUsersPage() {
       
       return true
     })
-  }, [users, roleFilter, statusFilter, debouncedSearch,excludeStudents])
+  }, [users, roleFilter, deptFilter, statusFilter, debouncedSearch])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages - 1)
@@ -411,20 +435,17 @@ export default function DataUsersPage() {
                 <option key={d.id} value={d.id}>{d.name}</option>
               ))}
             </select>
+            <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="input text-xs py-1.5 flex-1 sm:flex-none sm:w-auto min-w-0">
+              <option value="all">All Roles</option>
+              <option value="STUDENT">STUDENT</option>
+              <option value="FACULTY">FACULTY</option>
+            </select>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="input text-xs py-1.5 flex-1 sm:flex-none sm:w-auto min-w-0">
               <option value="all">All</option>
               <option value="disabled">Disabled</option>
               <option value="activated">Activated</option>
               <option value="pending">Pending</option>
             </select>
-            <label className="flex items-center gap-1.5 text-[11px] shrink-0 cursor-pointer" title="Exclude students from view">
-              <div className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" checked={excludeStudents} onChange={(e) => setExcludeStudents(e.target.checked)} className="sr-only peer" />
-                <div className="w-9 h-5 rounded-full bg-gray-200 peer-checked:bg-[var(--color-brand-600)] transition-colors" />
-                <div className="absolute left-0.5 top-0.5 w-4 h-4 rounded-full bg-white peer-checked:translate-x-4 transition-transform" />
-              </div>
-              Exclude Students
-            </label>
           </div>
         </div>
 
@@ -448,6 +469,18 @@ export default function DataUsersPage() {
       <div className="card bg-surface overflow-hidden">
         <div className="px-6 py-4 border-b border-default bg-surface"><h3 className="text-sm font-bold text-primary">Users Directory</h3></div>
 
+        {selectedIds.size > 0 && (
+          <div className="px-3 py-2 border-b border-default bg-amber-50 dark:bg-amber-900/20 flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">{selectedIds.size} selected</p>
+            <button
+              onClick={() => setRemoveUser({ id: "bulk", name: `${selectedIds.size} users` } as unknown as UserData)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+            >
+              Remove Selected
+            </button>
+          </div>
+        )}
+
         {/* Empty state */}
         {paginated.length === 0 ? (
           <p className="text-sm text-tertiary text-center py-8">No users found.</p>
@@ -458,6 +491,23 @@ export default function DataUsersPage() {
               <table>
                 <thead>
                   <tr >
+                    <th className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={paginated.length > 0 && paginated.every((u) => selectedIds.has(u.id))}
+                        onChange={() => {
+                          const allSelected = paginated.every((u) => selectedIds.has(u.id))
+                          if (allSelected) {
+                            setSelectedIds(new Set([...selectedIds].filter((id) => !paginated.some((u) => u.id === id))))
+                          } else {
+                            const next = new Set(selectedIds)
+                            for (const u of paginated) next.add(u.id)
+                            setSelectedIds(next)
+                          }
+                        }}
+                        className="w-4 h-4 text-gold-600 focus:ring-gold-500 rounded"
+                      />
+                    </th>
                     <th>User</th>
                     <th>User Type / Grants</th>
                     <th>Department</th>
@@ -476,6 +526,21 @@ export default function DataUsersPage() {
 
                     return (
                       <tr key={u.id} >
+                        <td className="w-10">
+                          {!isDefaultAdmin && (
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(u.id)}
+                              onChange={() => {
+                                const next = new Set(selectedIds)
+                                if (next.has(u.id)) next.delete(u.id)
+                                else next.add(u.id)
+                                setSelectedIds(next)
+                              }}
+                              className="w-4 h-4 text-gold-600 focus:ring-gold-500 rounded"
+                            />
+                          )}
+                        </td>
                         <td>
                           <p className="text-primary font-medium">{u.name}</p>
                           <p className="text-tertiary text-xs">{u.email}</p>
@@ -983,9 +1048,15 @@ export default function DataUsersPage() {
       {removeUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 border border-amber-200">
-            <h3 className="text-lg font-bold text-primary mb-2">Remove {removeUser.name}?</h3>
+            <h3 className="text-lg font-bold text-primary mb-2">
+              {removeUser.id === "bulk" ? `Remove ${removeUser.name}?` : `Remove ${removeUser.name}?`}
+            </h3>
             <p className="text-sm text-secondary mb-4">
-              This user will be soft-deleted and moved to <strong>Deleted Users</strong>. They can be restored later from that page. Their appointments, evaluations, and other data will be preserved.
+              {removeUser.id === "bulk" ? (
+                <>These {selectedIds.size} users will be soft-deleted and moved to <strong>Deleted Users</strong>. They can be restored later from that page. Their appointments, evaluations, and other data will be preserved.</>
+              ) : (
+                <>This user will be soft-deleted and moved to <strong>Deleted Users</strong>. They can be restored later from that page. Their appointments, evaluations, and other data will be preserved.</>
+              )}
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:justify-end">
               <button
@@ -995,7 +1066,7 @@ export default function DataUsersPage() {
                 Cancel
               </button>
               <button
-                onClick={() => handleSoftDelete(removeUser.id)}
+                onClick={() => removeUser.id === "bulk" ? handleBulkSoftDelete() : handleSoftDelete(removeUser.id)}
                 className="px-4 py-3 sm:py-2 rounded-xl bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-all w-full sm:w-auto"
               >
                 Remove
