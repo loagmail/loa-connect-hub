@@ -56,7 +56,6 @@ interface EvaluationDashboardProps {
   apiBase: string
   showDepartmentFilter?: boolean
   showVisibilityToggles?: boolean
-  showUnenrolledToggle?: boolean
   title: string
   subtitle: string
   perSubject?: boolean
@@ -126,7 +125,6 @@ export default function EvaluationDashboard({
   apiBase,
   showDepartmentFilter = false,
   showVisibilityToggles = false,
-  showUnenrolledToggle = false,
   title,
   subtitle,
   perSubject = false,
@@ -135,7 +133,7 @@ export default function EvaluationDashboard({
   const [selectedPeriod, setSelectedPeriod] = useState("")
   const [departments, setDepartments] = useState<DepartmentData[]>([])
   const [selectedDept, setSelectedDept] = useState("")
-  const [showUnenrolled, setShowUnenrolled] = useState(false)
+  const [showUnenrolled] = useState(false)
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<string | null>(null)
