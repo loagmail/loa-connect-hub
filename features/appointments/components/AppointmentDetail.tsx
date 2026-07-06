@@ -8,7 +8,7 @@ import SubmitButton from "@/components/ui/SubmitButton"
 import TeamsLinkForm from "@/features/appointments/components/TeamsLinkForm"
 import AppointmentDetailSkeleton from "@/features/appointments/components/AppointmentDetailSkeleton"
 import type { AppointmentDetailDto } from "@/lib/types"
-import { useApiGet } from "@/lib/api/client"
+import { useApiGet, invalidate } from "@/lib/api/client"
 import { hasRole } from "@/lib/utils/roles"
 
 function getInitial(name: string) {
@@ -96,6 +96,7 @@ export default function AppointmentDetail() {
           "retry-sync": appointment?.status || "",
         }
         setLocalStatus(statusMap[action] || null)
+        invalidate("/api/appointments")
       } else {
         try {
           const data = JSON.parse(text)
@@ -180,6 +181,7 @@ export default function AppointmentDetail() {
         setShowTeamsLinkForm(false)
         setSingleLink("")
         setSlotLinks({})
+        invalidate("/api/appointments")
       } else {
         try {
           const data = JSON.parse(text)
@@ -268,6 +270,7 @@ export default function AppointmentDetail() {
         setShowCompleteForm(false)
         setActionTaken("")
         setCompleteFiles([])
+        invalidate("/api/appointments")
       } else {
         try {
           const data = JSON.parse(text)

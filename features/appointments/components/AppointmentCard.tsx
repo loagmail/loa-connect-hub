@@ -7,6 +7,7 @@ import Link from "next/link"
 import SubmitButton from "@/components/ui/SubmitButton"
 import SwipeableRow from "@/components/ui/SwipeableRow"
 import { hasRole } from "@/lib/utils/roles"
+import { invalidate } from "@/lib/api/client"
 
 interface TimeSlot {
   id: string
@@ -93,19 +94,20 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
 
       const data = await res.json()
 
-      if (res.ok) {
-        const statusMap: Record<string, string> = {
-          accept: "APPROVED",
-          approve: "APPROVED",
-          decline: "REJECTED",
-          reject: "REJECTED",
-          complete: "COMPLETED",
-          cancel: "CANCELLED",
-        }
-        setLocalStatus(statusMap[action] || null)
-        setMessage(`Appointment ${action}d!`)
-        setTimeout(() => setMessage(""), 3000)
-      } else {
+if (res.ok) {
+      const statusMap: Record<string, string> = {
+        accept: "APPROVED",
+        approve: "APPROVED",
+        decline: "REJECTED",
+        reject: "REJECTED",
+        complete: "COMPLETED",
+        cancel: "CANCELLED",
+      }
+      setLocalStatus(statusMap[action] || null)
+      setMessage(`Appointment ${action}d!`)
+      setTimeout(() => setMessage(""), 3000)
+      invalidate("/api/appointments")
+    } else {
         setMessage(data.error || "Action failed")
       }
     } catch {
@@ -134,13 +136,14 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
         setLoading("cancel")
         setMessage("")
         try {
-          const res = await fetch(`/api/appointments/${appointment.id}/student-cancel`, { method: "POST" })
-          const data = await res.json()
-          if (res.ok) {
-            setLocalStatus("CANCELLED")
-            setMessage("Appointment cancelled!")
-            setTimeout(() => setMessage(""), 3000)
-          } else {
+const res = await fetch(`/api/appointments/${appointment.id}/student-cancel`, { method: "POST" })
+    const data = await res.json()
+    if (res.ok) {
+      setLocalStatus("CANCELLED")
+      setMessage("Appointment cancelled!")
+      setTimeout(() => setMessage(""), 3000)
+      invalidate("/api/appointments")
+    } else {
             setMessage(data.error || "Failed to cancel")
           }
         } catch {
@@ -218,6 +221,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                   setLocalStatus("CANCELLED")
                   setMessage("Appointment cancelled!")
                   setTimeout(() => setMessage(""), 3000)
+                  invalidate("/api/appointments")
                 } else {
                   setMessage(data.error || "Failed to cancel")
                 }
@@ -290,6 +294,7 @@ export function AppointmentCard({ appointment, role }: AppointmentCardProps) {
                     setLocalSyncStatus("UNWRITTEN")
                     setMessage("Sync retry queued!")
                     setTimeout(() => setMessage(""), 3000)
+                    invalidate("/api/appointments")
                   } else {
                     setMessage(data.error || "Retry failed")
                   }
