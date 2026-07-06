@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
-import { useApiGet } from "@/lib/api/client"
+import { useApiGet, invalidate } from "@/lib/api/client"
 import { usePagination, Paginator } from "@/components/ui/Paginator"
 import { SkeletonTable } from "@/components/ui/Skeleton"
 import IosButton from "@/components/ui/IosButton"
@@ -207,6 +207,20 @@ function FacultyTab() {
   const [reassignSuccess, setReassignSuccess] = useState("")
 
   const [studentFilter, setStudentFilter] = useState("")
+
+  const filteredEnrolled = useMemo(() => {
+    if (!selectedSsMapping) return []
+    const enrolled = enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []
+    if (!studentFilter.trim()) return enrolled
+    const q = studentFilter.toLowerCase()
+    return enrolled.filter((e) =>
+      e.student.name.toLowerCase().includes(q) ||
+      e.student.email.toLowerCase().includes(q)
+    )
+  }, [selectedSsMapping, studentFilter, enrolledStudentsByFsId])
+
+  const enrolledPagination = usePagination(filteredEnrolled, 15)
+
   const [removingEnrollmentId, setRemovingEnrollmentId] = useState<string | null>(null)
   const [addStudentQuery, setAddStudentQuery] = useState("")
   const [addStudentId, setAddStudentId] = useState("")
@@ -267,6 +281,7 @@ function FacultyTab() {
       const res = await fetch(`/api/admin/student-enrollments/${enrollmentId}`, { method: "DELETE" })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to remove student") }
       fetchData(true)
+      invalidate("/api/data/evaluation-mappings?type=student")
     } catch (err) { alert((err as Error).message) }
     finally { setRemovingEnrollmentId(null) }
   }
@@ -284,6 +299,7 @@ function FacultyTab() {
       setAddStudentId(""); setAddStudentQuery("")
       setTimeout(() => setAddStudentSuccess(""), 3000)
       fetchData(true)
+      invalidate("/api/data/evaluation-mappings?type=student")
     } catch (err) { setAddStudentError((err as Error).message) }
     finally { setAddingStudent(false) }
   }
@@ -1064,8 +1080,8 @@ function FacultyTab() {
 
       {/* ── Subject-Section Detail Modal ────────────────────── */}
       {selectedSsMapping && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 bg-black/60" onClick={closeSubjectSectionModal}>
-          <div className="bg-white dark:bg-surface-dim rounded-2xl w-full max-w-2xl mx-4 shadow-2xl border border-default overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 sm:pt-12 bg-black/60" onClick={closeSubjectSectionModal}>
+          <div className="bg-white dark:bg-surface-dim rounded-2xl w-full max-w-4xl mx-4 shadow-2xl border border-default overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-default">
               <div className="min-w-0">
                 <p className="text-sm font-bold text-secondary truncate">{selectedSsMapping.subject.code} - {selectedSsMapping.subject.name}</p>
@@ -1077,129 +1093,9 @@ function FacultyTab() {
                 </svg>
               </IosButton>
             </div>
-            <div className="p-4 max-h-[60vh] overflow-y-auto space-y-4">
-              {/* Enrolled Students */}
-              <div>
-                <h3 className="text-sm font-semibold text-secondary mb-2">
-                  Enrolled Students ({(enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []).length})
-                </h3>
-                {(() => {
-                  const enrolled = enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []
-                  const filteredEnrolled = studentFilter.trim()
-                    ? enrolled.filter((e) =>
-                        e.student.name.toLowerCase().includes(studentFilter.toLowerCase()) ||
-                        e.student.email.toLowerCase().includes(studentFilter.toLowerCase())
-                      )
-                    : enrolled
-                  if (enrolled.length === 0) {
-                    return <p className="text-xs text-tertiary text-center py-4">No enrolled students.</p>
-                  }
-                  return (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={studentFilter}
-                        onChange={(e) => setStudentFilter(e.target.value)}
-                        placeholder="Search students..."
-                        className="input text-xs w-full px-3 py-2 rounded-lg border border-strong"
-                      />
-                      <div className="tbl max-h-48 overflow-y-auto">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th className="w-8">#</th>
-                              <th>Student</th>
-                              <th>Email</th>
-                              <th className="w-10"></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredEnrolled.map((e, i) => (
-                              <tr key={e.id}>
-                                <td className="text-tertiary">{i + 1}</td>
-                                <td className="font-medium text-secondary">{e.student.name}</td>
-                                <td className="text-tertiary">{e.student.email}</td>
-                                <td className="text-center">
-                                  <button
-                                    type="button"
-                                    disabled={removingEnrollmentId === e.id}
-                                    onClick={() => handleRemoveStudent(e.id)}
-                                    className="w-6 h-6 inline-flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
-                                    title="Remove from section"
-                                  >
-                                    {removingEnrollmentId === e.id ? (
-                                      <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin block" />
-                                    ) : (
-                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                      </svg>
-                                    )}
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      {filteredEnrolled.length === 0 && studentFilter && (
-                        <p className="text-xs text-tertiary text-center py-2">No students match &ldquo;{studentFilter}&rdquo;</p>
-                      )}
-                    </div>
-                  )
-                })()}
-              </div>
-
-              {/* Add Student */}
-              <div className="border-t border-default pt-4 space-y-3">
-                <h3 className="text-sm font-semibold text-secondary">Add Student</h3>
-                {addStudentError && <p className="text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{addStudentError}</p>}
-                {addStudentSuccess && <p className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded">{addStudentSuccess}</p>}
-
-                <div className="relative" ref={addStudentDropdownRef}>
-                  <input
-                    type="text"
-                    value={addStudentQuery}
-                    onChange={(e) => { setAddStudentQuery(e.target.value); setAddStudentId(""); setAddStudentDropdownOpen(true) }}
-                    onFocus={() => setAddStudentDropdownOpen(true)}
-                    placeholder="Search by name or email..."
-                    className="input text-xs w-full px-3 py-2 rounded-lg border border-strong"
-                    autoComplete="off"
-                  />
-                  {addStudentDropdownOpen && filteredAddStudents.length > 0 && (
-                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                      {filteredAddStudents.map((u) => (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => { setAddStudentId(u.id); setAddStudentQuery(u.name); setAddStudentDropdownOpen(false) }}
-                          className={`w-full text-left px-3 py-2 text-xs hover:bg-surface-hover transition-colors ${addStudentId === u.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
-                        >
-                          <span className="font-medium text-primary">{u.name}</span>
-                          <span className="text-tertiary ml-1">{u.email}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {addStudentDropdownOpen && addStudentQuery.trim() && filteredAddStudents.length === 0 && (
-                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl">
-                      <p className="text-xs text-tertiary text-center py-3">No students found.</p>
-                    </div>
-                  )}
-                </div>
-
-                <IosButton
-                  variant="primary"
-                  type="button"
-                  loading={addingStudent}
-                  disabled={addingStudent || !addStudentId}
-                  onClick={handleAddStudent}
-                >
-                  {addingStudent ? "Adding..." : "Add Student"}
-                </IosButton>
-              </div>
-
+            <div className="p-4 max-h-[80vh] overflow-y-auto space-y-4">
               {/* Re-assign Faculty */}
-              <div className="border-t border-default pt-4 space-y-3">
+              <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-secondary">Re-assign Faculty</h3>
                 {reassignError && <p className="text-xs font-medium text-red-600 bg-red-50 p-2 rounded">{reassignError}</p>}
                 {reassignSuccess && <p className="text-xs font-medium text-green-600 bg-green-50 p-2 rounded">{reassignSuccess}</p>}
@@ -1263,6 +1159,125 @@ function FacultyTab() {
                   onClick={handleReassign}
                 >
                   {reassignSaving ? "Re-assigning..." : "Confirm Re-assignment"}
+                </IosButton>
+              </div>
+
+              <div className="border-t border-default pt-4" />
+
+              {/* Enrolled Students */}
+              <div>
+                <h3 className="text-sm font-semibold text-secondary mb-2">
+                  Enrolled Students ({(enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []).length})
+                </h3>
+                {(() => {
+                  const enrolled = enrolledStudentsByFsId.get(selectedSsMapping.id) ?? []
+                  if (enrolled.length === 0) {
+                    return <p className="text-xs text-tertiary text-center py-4">No enrolled students.</p>
+                  }
+                  return (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={studentFilter}
+                        onChange={(e) => { setStudentFilter(e.target.value); enrolledPagination.setPage(0) }}
+                        placeholder="Search students..."
+                        className="input text-xs w-full px-3 py-2 rounded-lg border border-strong"
+                      />
+                      <div className="tbl max-h-48 overflow-y-auto">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th className="w-8">#</th>
+                              <th>Student</th>
+                              <th>Email</th>
+                              <th className="w-10"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {enrolledPagination.paginatedItems.map((e, i) => (
+                              <tr key={e.id}>
+                                <td className="text-tertiary">{enrolledPagination.page * enrolledPagination.pageSize + i + 1}</td>
+                                <td className="font-medium text-secondary">{e.student.name}</td>
+                                <td className="text-tertiary">{e.student.email}</td>
+                                <td className="text-center">
+                                  <button
+                                    type="button"
+                                    disabled={removingEnrollmentId === e.id}
+                                    onClick={() => handleRemoveStudent(e.id)}
+                                    className="w-6 h-6 inline-flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40"
+                                    title="Remove from section"
+                                  >
+                                    {removingEnrollmentId === e.id ? (
+                                      <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin block" />
+                                    ) : (
+                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {filteredEnrolled.length === 0 && studentFilter && (
+                        <p className="text-xs text-tertiary text-center py-2">No students match &ldquo;{studentFilter}&rdquo;</p>
+                      )}
+                      {filteredEnrolled.length > 15 && (
+                        <Paginator page={enrolledPagination.page} totalPages={enrolledPagination.totalPages} pageSize={enrolledPagination.pageSize} totalItems={filteredEnrolled.length} setPage={enrolledPagination.setPage} setPageSize={enrolledPagination.setPageSize} showSizeSelector={false} />
+                      )}
+                    </div>
+                  )
+                })()}
+              </div>
+
+              {/* Search and Add */}
+              <div className="border-t border-default pt-4 space-y-3">
+                <h3 className="text-sm font-semibold text-secondary">Search and Add</h3>
+                {addStudentError && <p className="text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{addStudentError}</p>}
+                {addStudentSuccess && <p className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded">{addStudentSuccess}</p>}
+
+                <div className="relative" ref={addStudentDropdownRef}>
+                  <input
+                    type="text"
+                    value={addStudentQuery}
+                    onChange={(e) => { setAddStudentQuery(e.target.value); setAddStudentId(""); setAddStudentDropdownOpen(true) }}
+                    onFocus={() => setAddStudentDropdownOpen(true)}
+                    placeholder="Search existing students for this semester..."
+                    className="input text-xs w-full px-3 py-2 rounded-lg border border-strong"
+                    autoComplete="off"
+                  />
+                  {addStudentDropdownOpen && filteredAddStudents.length > 0 && (
+                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                      {filteredAddStudents.map((u) => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => { setAddStudentId(u.id); setAddStudentQuery(u.name); setAddStudentDropdownOpen(false) }}
+                          className={`w-full text-left px-3 py-2 text-xs hover:bg-surface-hover transition-colors ${addStudentId === u.id ? "bg-amber-50 dark:bg-amber-900/20 font-semibold" : ""}`}
+                        >
+                          <span className="font-medium text-primary">{u.name}</span>
+                          <span className="text-tertiary ml-1">{u.email}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {addStudentDropdownOpen && addStudentQuery.trim() && filteredAddStudents.length === 0 && (
+                    <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-surface border border-strong rounded-lg shadow-xl">
+                      <p className="text-xs text-tertiary text-center py-3">No students found.</p>
+                    </div>
+                  )}
+                </div>
+
+                <IosButton
+                  variant="primary"
+                  type="button"
+                  loading={addingStudent}
+                  disabled={addingStudent || !addStudentId}
+                  onClick={handleAddStudent}
+                >
+                  {addingStudent ? "Adding..." : "Add Student"}
                 </IosButton>
               </div>
             </div>
