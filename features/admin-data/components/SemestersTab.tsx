@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useApiGet, invalidate } from "@/lib/api/client"
+
+const INVALIDATE_KEYS = ["/api/semesters", "/api/semesters/count-active"]
 import { SkeletonTable } from "@/components/ui/Skeleton"
 import IosButton from "@/components/ui/IosButton"
 import LockedTab from "@/components/ui/LockedTab"
@@ -60,7 +62,7 @@ export function SemestersTab() {
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       setNewTitle("")
       showSuccessMessage("Semester created!")
-      invalidate("/api/semesters")
+      invalidate(...INVALIDATE_KEYS)
     } catch (err) { setError((err as Error).message) }
     finally { setSaving(false) }
   }
@@ -77,7 +79,7 @@ export function SemestersTab() {
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       setEditingId(null)
       showSuccessMessage("Semester updated!")
-      invalidate("/api/semesters")
+      invalidate(...INVALIDATE_KEYS)
     } catch (err) { setError((err as Error).message) }
     finally { setSaving(false) }
   }
@@ -112,7 +114,7 @@ export function SemestersTab() {
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       setEvalEditingId(null)
       showSuccessMessage("Evaluation period started!")
-      invalidate("/api/semesters")
+      invalidate(...INVALIDATE_KEYS)
     } catch (err) { setError((err as Error).message) }
     finally { setSaving(false) }
   }
@@ -123,7 +125,7 @@ export function SemestersTab() {
       const res = await fetch(`/api/semesters/${id}`, { method: "POST" })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       showSuccessMessage("Semester activated!")
-      invalidate("/api/semesters")
+      invalidate(...INVALIDATE_KEYS)
     } catch (err) { setError((err as Error).message) }
     finally { setSaving(false) }
   }
@@ -139,7 +141,7 @@ export function SemestersTab() {
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       showSuccessMessage("Semester deactivated!")
-      invalidate("/api/semesters")
+      invalidate(...INVALIDATE_KEYS)
     } catch (err) { setError((err as Error).message) }
     finally { setSaving(false) }
   }
@@ -172,7 +174,7 @@ export function SemestersTab() {
       })
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed") }
       showSuccessMessage("Evaluation period ended!")
-      invalidate("/api/semesters")
+      invalidate(...INVALIDATE_KEYS)
     } catch (err) { setError((err as Error).message) }
     finally { setSaving(false) }
   }

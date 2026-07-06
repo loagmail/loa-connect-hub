@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { SegmentedControl } from "@/features/admin-data/components/shared"
 import { SemestersTab } from "@/features/admin-data/components/SemestersTab"
 import { DepartmentsCoursesTab } from "@/features/admin-data/components/DepartmentsCoursesTab"
 import { SubjectsSectionsTab } from "@/features/admin-data/components/SubjectsSectionsTab"
 import { FacultyLoadingTab } from "@/features/admin-data/components/FacultyLoadingTab"
+import { useApiGet } from "@/lib/api/client"
 import type { MainTab } from "@/features/admin-data/components/types"
 
 const allTabs: { key: MainTab; label: string }[] = [
@@ -17,21 +18,8 @@ const allTabs: { key: MainTab; label: string }[] = [
 
 export default function AcademicInfrastructurePage() {
   const [mainTab, setMainTab] = useState<MainTab>("semesters")
-  const [semesterLocked, setSemesterLocked] = useState(false)
-  const [checking, setChecking] = useState(true)
-
-  useEffect(() => {
-    Promise.resolve().then(async () => {
-      try {
-        const res = await fetch("/api/semesters/count-active")
-        const { count } = await res.json()
-        setSemesterLocked(count !== 1)
-      } catch {
-        setSemesterLocked(false)
-      }
-      setChecking(false)
-    })
-  }, [])
+  const { data: countData } = useApiGet<{ count: number }>("/api/semesters/count-active")
+  const semesterLocked = (countData?.count ?? 1) !== 1
 
   const tabs = semesterLocked
     ? allTabs.map((t) => ({ ...t, disabled: t.key !== "semesters" }))
@@ -44,7 +32,7 @@ export default function AcademicInfrastructurePage() {
         <p className="text-xs sm:text-sm text-tertiary mt-0.5 sm:mt-1">
           Manage departments, courses, subjects, sections, faculty mappings, student enrollments, and semesters.
         </p>
-        {!checking && semesterLocked && (
+        {semesterLocked && (
           <p className="text-xs text-red-600 dark:text-red-400 mt-2 font-semibold">
             No active semester or multiple active semesters detected. Please set exactly one semester as active before accessing other modules.
           </p>
