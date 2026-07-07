@@ -107,6 +107,10 @@ export const pageApiMap: Record<string, PageApiEntry> = {
     label: "Sentiment Analysis",
     apis: ["/api/evaluation-periods", "/api/evaluation-comments"],
   },
+  "/admin/evaluations/reports/detail": {
+    label: "Evaluation Reports Detail",
+    apis: ["/api/dean/evaluation-results/details"],
+  },
   "/admin/reports/health": {
     label: "Health Report",
     apis: [],
@@ -170,6 +174,10 @@ export const pageApiMap: Record<string, PageApiEntry> = {
   "/dean/evaluations/reports/sentiment": {
     label: "Sentiment Analysis",
     apis: ["/api/evaluation-periods", "/api/evaluation-comments"],
+  },
+  "/dean/evaluations/reports/detail": {
+    label: "Evaluation Reports Detail",
+    apis: ["/api/dean/evaluation-results/details"],
   },
   "/dean/departments": {
     label: "Departments",
@@ -288,6 +296,10 @@ export const pageApiMap: Record<string, PageApiEntry> = {
       "/api/admin/evaluation-results/invalidate",
       "/api/admin/departments",
     ],
+  },
+  "/faculty/evaluations/reports": {
+    label: "Evaluation Reports",
+    apis: ["/api/dean/evaluation-results/details"],
   },
 
   // ── Student ──

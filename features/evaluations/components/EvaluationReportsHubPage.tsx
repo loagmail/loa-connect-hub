@@ -3,7 +3,7 @@ import Link from "next/link"
 export default function EvaluationReportsHubPage({ basePath = "/admin" }: { basePath?: string }) {
   const cards = [
     { href: `${basePath}/evaluations/reports/sentiment`, title: "Sentiment Analysis", desc: "View sentiment distribution across evaluation comments" },
-    { href: "#", title: "Export Reports", desc: "Download evaluation data as CSV or PDF", disabled: true },
+    { href: `${basePath}/evaluations/reports/detail`, title: "Export Reports", desc: "Download evaluation data as CSV or PDF" },
     { href: "#", title: "Trend Analysis", desc: "Compare evaluation results across periods", disabled: true },
   ]
 
