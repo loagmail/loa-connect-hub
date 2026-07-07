@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect, useState, useCallback } from "react"
+import { Suspense, useEffect, useState, useCallback, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
@@ -54,6 +54,60 @@ function AdminAccessConfigPageInner({ readOnly }: { readOnly?: boolean }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const activeTab = searchParams.get("tab") || "rbac"
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importing, setImporting] = useState(false)
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch("/api/admin/access-config/export")
+      if (!res.ok) { alert("Export failed"); return }
+      const data = await res.json()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `access-config-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert("Export failed")
+    }
+  }
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      if (!data.groups || !data.userPermissions) {
+        alert("Invalid export file format: missing groups or userPermissions array.")
+        return
+      }
+      const confirmed = window.confirm(
+        `Import will overwrite ALL existing RBAC group configurations and user permissions for ALL roles and users. This cannot be undone. Are you sure?`
+      )
+      if (!confirmed) return
+      const res = await fetch("/api/admin/access-config/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      const result = await res.json()
+      if (res.ok) {
+        alert(`Import successful: ${result.importedGroups} groups, ${result.importedPermissions} user permissions imported. Refreshing...`)
+        router.refresh()
+      } else {
+        alert(result.error || "Import failed")
+      }
+    } catch {
+      alert("Import failed: invalid JSON or network error")
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
 
   return (
     <div className="w-full space-y-8 pb-12">
@@ -64,22 +118,47 @@ function AdminAccessConfigPageInner({ readOnly }: { readOnly?: boolean }) {
         </p>
       </div>
 
-      <div className="flex gap-1 p-1 bg-surface-tertiary rounded-xl w-fit">
-        {TABS.map((tab) => (
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex gap-1 p-1 bg-surface-tertiary rounded-xl w-fit">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => {
+                router.push(tab.key === "rbac" ? "/admin/system/access-config" : `/admin/system/access-config?tab=${tab.key}`)
+              }}
+              className={`shrink-0 text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap transition-all duration-200 ${
+                activeTab === tab.key
+                  ? "bg-surface text-amber-600 shadow-ios-sm"
+                  : "text-tertiary hover:text-secondary"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 ml-auto">
           <button
-            key={tab.key}
-            onClick={() => {
-              router.push(tab.key === "rbac" ? "/admin/system/access-config" : `/admin/system/access-config?tab=${tab.key}`)
-            }}
-            className={`shrink-0 text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap transition-all duration-200 ${
-              activeTab === tab.key
-                ? "bg-surface text-amber-600 shadow-ios-sm"
-                : "text-tertiary hover:text-secondary"
-            }`}
+            onClick={handleExport}
+            disabled={readOnly}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-strong text-secondary hover:bg-surface-hover disabled:opacity-40 transition-colors"
           >
-            {tab.label}
+            Export JSON
           </button>
-        ))}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={readOnly || importing}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-strong text-secondary hover:bg-surface-hover disabled:opacity-40 transition-colors"
+          >
+            {importing ? "Importing\u2026" : "Import JSON"}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="hidden"
+          />
+        </div>
       </div>
 
       {activeTab === "rbac" ? <RBACTab readOnly={readOnly} /> : <UserPermissionsTab readOnly={readOnly} />}
