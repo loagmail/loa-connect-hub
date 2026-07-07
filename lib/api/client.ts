@@ -40,6 +40,8 @@ async function patchedFetch(input: RequestInfo | URL, init?: RequestInit): Promi
             body: JSON.stringify({ path: url, method, message: m }),
           }).catch(() => {})
           const isAdmin = currentRole?.includes("ADMIN")
+          const isFacultyEvalResults = url.includes("/api/faculty/evaluation-results")
+          if (isFacultyEvalResults && !isAdmin) return
           dispatch403(url, isAdmin ? m : "Access denied. Contact an administrator.", method)
         })
         .catch(() => {

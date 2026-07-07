@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     // Check visibility
     const visMap = await evaluationResultRepository.getVisibilityMap(periodId)
     if (!visMap.get(userId)) {
-      return NextResponse.json({ results: [], facultyNames: {} })
+      return NextResponse.json({ error: "Results are not visible yet. Admin has not enabled 'Allow User To View Results' for this evaluation period." }, { status: 403 })
     }
 
     // Get evaluations for this faculty
