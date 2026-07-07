@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import ErrorState from "@/components/ui/ErrorState"
 import { getRemarkColor, CATEGORY_KEYS, CATEGORY_LABELS } from "@/lib/evaluation-utils"
@@ -80,6 +81,15 @@ export default function FacultySubjectDetailPage() {
 
   return (
     <div className="w-full space-y-8 pb-12">
+      <div>
+        <Link
+          href={`/faculty/evaluations/results?semesterId=${encodeURIComponent(semesterId)}`}
+          className="text-xs text-amber-600 hover:underline"
+        >
+          &larr; Back to Evaluations
+        </Link>
+      </div>
+
       <div className="card p-5 space-y-3">
         <div className="grid grid-cols-2 gap-4">
           <div>

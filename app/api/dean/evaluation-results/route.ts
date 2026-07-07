@@ -70,7 +70,9 @@ export async function GET(request: NextRequest) {
       "Student Engagement": "studentEngagement",
       "Learning Materials": "learningMaterials",
       "Time Management": "timeManagement",
+      "Experiential Learning Provided to Students": "experientialLearning",
       "Experiential Learning": "experientialLearning",
+      "Respect the Uniqueness of the Students": "respectUniqueness",
       "Respect for Uniqueness": "respectUniqueness",
       "Assessment and Feedback": "assessmentAndFeedback",
     }

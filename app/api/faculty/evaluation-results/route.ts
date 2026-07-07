@@ -9,7 +9,9 @@ const CATEGORY_NAMES: Record<string, string> = {
   "Student Engagement": "studentEngagement",
   "Learning Materials": "learningMaterials",
   "Time Management": "timeManagement",
+  "Experiential Learning Provided to Students": "experientialLearning",
   "Experiential Learning": "experientialLearning",
+  "Respect the Uniqueness of the Students": "respectUniqueness",
   "Respect for Uniqueness": "respectUniqueness",
   "Assessment and Feedback": "assessmentAndFeedback",
 }

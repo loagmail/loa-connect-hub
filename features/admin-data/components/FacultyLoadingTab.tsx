@@ -719,7 +719,7 @@ function FacultyTab() {
                   {departments.map((d) => (<option key={d.id} value={d.id}>{d.name}</option>))}
                 </select>
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-semibold text-tertiary mb-1">Faculty</label>
                 <input
                   value={facultySearch || selectedFacultyName}
