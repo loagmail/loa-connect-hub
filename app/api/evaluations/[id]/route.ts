@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const evaluation = await getEvaluation(id)
     if (!evaluation) return NextResponse.json({ error: "Not found" }, { status: 404 })
     if (evaluation.evaluatorId !== userId) return NextResponse.json({ error: "Not found" }, { status: 404 })
-    if (evaluation.status !== "SUBMITTED") return NextResponse.json({ error: "Not found" }, { status: 404 })
+    if (evaluation.status !== "SUBMITTED" && evaluation.status !== "DRAFT") return NextResponse.json({ error: "Not found" }, { status: 404 })
     if (evaluation.isDisabled) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
     const [facultyRes, fsRes] = await Promise.all([
