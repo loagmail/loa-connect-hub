@@ -91,6 +91,10 @@ function pathType(url: string): "ui" | "api" {
   return url.startsWith("/api/") ? "api" : "ui"
 }
 
+const HIDDEN_DEFAULTS: Record<string, string[]> = {
+  FACULTY: ["/faculty/evaluations/reports"],
+}
+
 export async function getUserAccess(userId: string, role: string): Promise<AccessEntry[]> {
   const cached = accessCache.get(userId)
   if (cached && Date.now() - cached.ts < ACCESS_CACHE_TTL) return cached.entries
@@ -98,7 +102,7 @@ export async function getUserAccess(userId: string, role: string): Promise<Acces
   const config = await loadAccessConfig()
   const isAdmin = role?.includes("ADMIN")
   const topRole = role ? getPrimaryRole(role) : "GUEST"
-  const defaultPaths = getDefaultPages(topRole)
+  const defaultPaths = getDefaultPages(topRole).filter((p) => !(HIDDEN_DEFAULTS[topRole] ?? []).includes(p))
 
   const allPaths = new Map<string, "ui" | "api">()
   for (const group of Object.values(config)) {
