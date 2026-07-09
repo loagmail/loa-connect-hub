@@ -53,18 +53,22 @@ export default function DeanGroupDetailPage() {
 
   useEffect(() => {
     if (!semesterId) return
-    setLoading(true)
-    setError("")
-    fetch(
-      `/api/dean/evaluation-results/departments/${encodeURIComponent(departmentId)}/groups/${encodeURIComponent(facultySubjectId)}?semesterId=${encodeURIComponent(semesterId)}`,
-    )
-      .then((r) => r.json())
-      .then((d) => {
+    Promise.resolve().then(async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const r = await fetch(
+          `/api/dean/evaluation-results/departments/${encodeURIComponent(departmentId)}/groups/${encodeURIComponent(facultySubjectId)}?semesterId=${encodeURIComponent(semesterId)}`,
+        )
+        const d = await r.json()
         if (d.error) throw new Error(d.error)
         setData(d)
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      } catch (err) {
+        setError((err as Error).message)
+      } finally {
+        setLoading(false)
+      }
+    })
   }, [departmentId, facultySubjectId, semesterId])
 
   const formatScore = (v: number | null) => (v !== null ? v.toFixed(2) : "\u2014")

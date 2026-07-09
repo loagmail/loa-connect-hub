@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
     const generalRatings: number[] = []
     const sentimentScores: number[] = []
 
-    for (const [facId, evalIds] of facEvalMap) {
+    for (const [, evalIds] of facEvalMap) {
       facultyCount++
       totalRespondents += evalIds.length
 

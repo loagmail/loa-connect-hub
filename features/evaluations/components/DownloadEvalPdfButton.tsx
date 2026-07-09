@@ -2,8 +2,7 @@
 
 import { useCallback } from "react"
 import { downloadEvalDetailPdf } from "@/lib/evaluation-pdf"
-import type { RubricKey } from "@/lib/evaluation-utils"
-import { CATEGORY_KEYS } from "@/lib/evaluation-utils"
+
 
 interface EvalRow {
   evaluationId: string

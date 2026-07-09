@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import ErrorState from "@/components/ui/ErrorState"
 import { getRemarkColor } from "@/lib/evaluation-utils"
@@ -53,16 +52,20 @@ export default function AdminEvaluationResultsPage() {
 
   useEffect(() => {
     if (!selectedPeriod) return
-    setLoading(true)
-    setError("")
-    fetch(`/api/admin/evaluation-results?semesterId=${encodeURIComponent(selectedPeriod)}`)
-      .then((r) => r.json())
-      .then((data) => {
+    Promise.resolve().then(async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const r = await fetch(`/api/admin/evaluation-results?semesterId=${encodeURIComponent(selectedPeriod)}`)
+        const data = await r.json()
         if (data.error) throw new Error(data.error)
         setDepartments(data.departments ?? [])
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      } catch (err) {
+        setError((err as Error).message)
+      } finally {
+        setLoading(false)
+      }
+    })
   }, [selectedPeriod])
 
   const sortedDepartments = useMemo(() => {

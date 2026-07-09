@@ -125,7 +125,7 @@ export default function DepartmentSubjectView({ subjects, departmentId, semester
 
   const apiPrefix = basePath.startsWith("/dean") ? "/api/dean" : "/api/admin"
 
-  const handleConsolidatedPdf = useCallback(async (facultyId: string, facultyName: string, facultyEmail: string) => {
+  const handleConsolidatedPdf = useCallback(async (facultyId: string, _facultyName: string, _facultyEmail: string) => {
     try {
       const res = await fetch(
         `${apiPrefix}/evaluation-results/departments/${encodeURIComponent(departmentId)}/faculty/${encodeURIComponent(facultyId)}?semesterId=${encodeURIComponent(semesterId)}`,

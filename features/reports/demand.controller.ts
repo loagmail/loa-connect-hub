@@ -1,5 +1,5 @@
 import { reportsRepository, departmentRepository } from "@/lib/repositories/factory"
-import type { DailyFrequencyData, WeeklyFrequencyData, DepartmentFrequencyEntry } from "@/lib/types"
+
 import { mergeDaily, mergeWeekly, mergeMonthly } from "./demand.service"
 import type { DemandReportResult } from "./demand.service"
 

@@ -128,17 +128,21 @@ export default function DeanDepartmentDetailPage() {
 
   useEffect(() => {
     if (!semesterId) return
-    setLoading(true)
-    setError("")
-    fetch(`/api/dean/evaluation-results/departments/${encodeURIComponent(departmentId)}?semesterId=${encodeURIComponent(semesterId)}`)
-      .then((r) => r.json())
-      .then((data) => {
+    Promise.resolve().then(async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const r = await fetch(`/api/dean/evaluation-results/departments/${encodeURIComponent(departmentId)}?semesterId=${encodeURIComponent(semesterId)}`)
+        const data = await r.json()
         if (data.error) throw new Error(data.error)
         setDepartment(data.department)
         setSubjects(data.subjects ?? [])
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      } catch (err) {
+        setError((err as Error).message)
+      } finally {
+        setLoading(false)
+      }
+    })
   }, [departmentId, semesterId])
 
   return (

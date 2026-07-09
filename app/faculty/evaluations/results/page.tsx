@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
 import { getRemarkColor } from "@/lib/evaluation-utils"
@@ -53,22 +53,24 @@ export default function FacultyEvaluationResultsPage() {
 
   useEffect(() => {
     if (!selectedSemester) return
-    setLoading(true)
-    setError("")
-    fetch(`/api/faculty/evaluation-results/subjects?semesterId=${encodeURIComponent(selectedSemester)}`)
-      .then(async (r) => {
+    Promise.resolve().then(async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const r = await fetch(`/api/faculty/evaluation-results/subjects?semesterId=${encodeURIComponent(selectedSemester)}`)
         if (r.status === 403) {
           const body = await r.json()
           throw new Error(body.error || "Results are not visible yet")
         }
-        return r.json()
-      })
-      .then((data) => {
+        const data = await r.json()
         if (data.error) throw new Error(data.error)
         setSubjects(data.subjects ?? [])
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      } catch (err) {
+        setError((err as Error).message)
+      } finally {
+        setLoading(false)
+      }
+    })
   }, [selectedSemester])
 
   const handlePeriodChange = (id: string) => {

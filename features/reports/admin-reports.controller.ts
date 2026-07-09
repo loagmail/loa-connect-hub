@@ -1,5 +1,4 @@
 import { departmentRepository, reportsRepository } from "@/lib/repositories/factory"
-import type { FacultyStatsData, RawAppointmentData, ConsultationSummaryData, DepartmentFrequencyEntry, FacultyFrequencyData, DepartmentYearlyEntry, FacultyYearlyData, DepartmentSummary } from "@/lib/types"
 import {
   getDepartmentSummary,
   mergeStats,

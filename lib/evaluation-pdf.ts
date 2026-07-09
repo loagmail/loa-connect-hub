@@ -1,5 +1,6 @@
 import type { RubricKey } from "./evaluation-utils"
 import { CATEGORY_LABELS, getRemark } from "./evaluation-utils"
+import type { jsPDF } from "jspdf"
 
 const CATEGORY_DISPLAY: Record<string, string> = {
   professionalManner: "Professional Manner",
@@ -66,7 +67,7 @@ function slug(text: string): string {
     .replace(/^_|_$/g, "")
 }
 
-async function addPdfHeader(doc: any) {
+async function addPdfHeader(doc: jsPDF) {
   const pageW = doc.internal.pageSize.getWidth()
   let y = 12
 
@@ -155,7 +156,7 @@ export async function downloadEvalDetailPdf(data: PdfData) {
     columnStyles: { 0: { halign: "left", fontStyle: "bold", cellWidth: 80 }, 1: { cellWidth: 40 } },
     margin: { left: 20, right: 20 },
   })
-  y = (doc as any).lastAutoTable.finalY + 8
+  y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8
 
   // ── Overall Rating ──
   const remark = data.summary.remarks ?? getRemark(data.summary.avgRating) ?? "\u2014"
