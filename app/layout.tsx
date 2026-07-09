@@ -1,7 +1,22 @@
 import type { Metadata, Viewport } from "next"
+import { Inter, Plus_Jakarta_Sans } from "next/font/google"
 import "./globals.css"
 import Providers from "@/components/layouts/Providers"
 import AppShell from "@/components/layouts/AppShell"
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-inter",
+})
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-display",
+})
 
 export const metadata: Metadata = {
   title: "LOA Connect Hub",
@@ -26,12 +41,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${plusJakartaSans.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{
           __html: `(function(){try{var p=location.pathname;if(p==="/login"||p==="/activate"||p==="/forgot-password"||p.startsWith("/change-password")||p.startsWith("/setup-password"))return;var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()`
         }} />

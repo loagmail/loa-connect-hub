@@ -3,9 +3,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
 
+  --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   /* Brand colors (Lyceum of Alabang) */
   --color-brand-50: #fffbe6;
   --color-brand-100: #fff5c0;

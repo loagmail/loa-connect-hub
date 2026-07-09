@@ -27,12 +27,17 @@ function LoginForm() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="flex justify-center mb-8">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-blk.png"
-              alt="Lyceum of Alabang"
-              className="h-16 sm:h-20 object-contain"
-            />
+            <picture>
+              <source srcSet="/logo-blk.webp" type="image/webp" />
+              <img
+                src="/logo-blk.png"
+                alt="Lyceum of Alabang"
+                width={244}
+                height={112}
+                fetchPriority="high"
+                className="h-16 sm:h-20 object-contain"
+              />
+            </picture>
           </div>
 
           <h1 className="text-[34px] font-bold text-primary text-center tracking-tight leading-tight">Sign In</h1>
