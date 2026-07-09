@@ -17,12 +17,15 @@ export async function getResponsivenessReportData(
 
   const departments = await departmentRepository.listAll()
 
+  const respResults = await Promise.all(
+    departments.map((dept) => reportsRepository.getDepartmentResponseTimes(dept.id, filters))
+  )
+
   let mergedStats: ResponseTimeStats | null = null
   const allByFaculty: FacultyResponseTime[][] = []
   const allDistributions: ResponseTimeDistribution[][] = []
 
-  for (const dept of departments) {
-    const { stats, byFaculty, distribution } = await reportsRepository.getDepartmentResponseTimes(dept.id, filters)
+  for (const { stats, byFaculty, distribution } of respResults) {
     allByFaculty.push(byFaculty)
     allDistributions.push(distribution)
 

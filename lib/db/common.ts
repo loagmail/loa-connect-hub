@@ -51,6 +51,6 @@ export const appointmentSelect = `
   *,
   student:users!appointments_studentId_fkey(${USER_BRIEF}),
   faculty:users!appointments_facultyId_fkey(${USER_BRIEF}),
-  attendees:appointment_attendees(*, user:users(${USER_BRIEF})),
-  timeSlots:appointment_time_slots(*)
+  attendees:appointment_attendees(id, appointmentId, userId, status, isMandatory, user:users(${USER_BRIEF})),
+  timeSlots:appointment_time_slots(id, appointmentId, date, startTime, endTime)
 `

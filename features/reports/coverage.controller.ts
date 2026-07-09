@@ -14,11 +14,9 @@ export async function getConsultationCoverageData(
 
   const departments = await departmentRepository.listAll()
 
-  const allResults: CoverageReportData[] = []
-  for (const dept of departments) {
-    const result = await reportsRepository.getConsultationCoverageData(dept.id, filters)
-    allResults.push(result)
-  }
+  const allResults: CoverageReportData[] = await Promise.all(
+    departments.map((dept) => reportsRepository.getConsultationCoverageData(dept.id, filters))
+  )
 
   const totalStudents = allResults.reduce((s, r) => s + r.overall.totalStudents, 0)
   const studentsWithConsultations = allResults.reduce((s, r) => s + r.overall.studentsWithConsultations, 0)

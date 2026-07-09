@@ -22,20 +22,19 @@ export async function getDemandReportData(
 
   const departments = await departmentRepository.listAll()
 
-  const allDaily: DailyFrequencyData[][] = []
-  const allWeekly: WeeklyFrequencyData[][] = []
-  const allMonthly: DepartmentFrequencyEntry[][] = []
+  const demandResults = await Promise.all(
+    departments.map((dept) =>
+      Promise.all([
+        reportsRepository.getDepartmentDailyFrequency(dept.id, filters),
+        reportsRepository.getDepartmentWeeklyFrequency(dept.id, filters),
+        reportsRepository.getDepartmentFrequency(dept.id, filters),
+      ])
+    )
+  )
 
-  for (const dept of departments) {
-    const [daily, weekly, monthly] = await Promise.all([
-      reportsRepository.getDepartmentDailyFrequency(dept.id, filters),
-      reportsRepository.getDepartmentWeeklyFrequency(dept.id, filters),
-      reportsRepository.getDepartmentFrequency(dept.id, filters),
-    ])
-    allDaily.push(daily)
-    allWeekly.push(weekly)
-    allMonthly.push(monthly)
-  }
+  const allDaily = demandResults.map((r) => r[0])
+  const allWeekly = demandResults.map((r) => r[1])
+  const allMonthly = demandResults.map((r) => r[2])
 
   const daily = mergeDaily(allDaily)
   const weekly = mergeWeekly(allWeekly)

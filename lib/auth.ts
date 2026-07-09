@@ -1,5 +1,6 @@
 import { NextAuthOptions, getServerSession } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import { supabase } from "@/lib/db"
 import { userRepository } from "@/lib/repositories/factory"
 import { compare } from "bcryptjs"
 import { hasRole } from "@/lib/utils/roles"
@@ -62,17 +63,6 @@ export const authOptions: NextAuthOptions = {
       su.role = (token as unknown as Record<string, unknown>).role
       su.id = (token as unknown as Record<string, unknown>).id
       su.tokenVersion = (token as unknown as Record<string, unknown>).tokenVersion
-
-      // Refresh role from DB so mid-session role changes take effect
-      // without re-login. Lightweight — only fetches the role field.
-      try {
-        const dbUser = await userRepository.findById(su.id as string)
-        if (dbUser && dbUser.role !== su.role) {
-          su.role = dbUser.role
-        }
-      } catch {
-        // Non-fatal — keep JWT role on DB error
-      }
       return session
     },
     async redirect({ url, baseUrl }) {
@@ -98,38 +88,36 @@ export async function auth() {
   if (!userId) return session
 
   try {
-    const dbUser = await userRepository.findById(userId)
+    const { data: dbUser, error } = await supabase
+      .from("users")
+      .select("id, \"isDisabled\", role, \"tokenVersion\", \"deletedAt\"")
+      .eq("id", userId)
+      .single()
 
-    // User doesn't exist in DB (deleted, DB reset, etc.)
-    if (!dbUser) {
-      console.warn(`[auth] Session user ${userId} not found in DB — returning null`)
-      return null
+    if (error || !dbUser) {
+      if (error?.code === "PGRST116") {
+        console.warn(`[auth] Session user ${userId} not found in DB — returning null`)
+        return null
+      }
+      throw error
     }
 
-    // User was disabled mid-session
     if (dbUser.isDisabled) {
       console.warn(`[auth] Session user ${userId} is disabled — returning null`)
       return null
     }
 
-    // User was demoted to GUEST mid-session
     if (hasRole(dbUser.role, "GUEST")) {
       console.warn(`[auth] Session user ${userId} is GUEST — returning null`)
       return null
     }
 
-    // Token version mismatch (token revoked by admin / DB reset).
-    // For old JWTs that lack tokenVersion, treat as version 0 and
-    // compare against the DB so a reset (which resets to 0 for all
-    // users) or a disable (which increments) is still caught.
     const jwtVersion = ((session?.user as unknown as Record<string, unknown>)?.tokenVersion as number) ?? 0
     if (dbUser.tokenVersion !== jwtVersion) {
       console.warn(`[auth] Session user ${userId} tokenVersion mismatch (JWT: ${jwtVersion}, DB: ${dbUser.tokenVersion}) — returning null`)
       return null
     }
 
-    // Refresh role from DB so role changes (e.g. FACULTY → ADMIN|FACULTY)
-    // take effect without requiring re-login or tokenVersion bump.
     if (session?.user) {
       const su = session.user as unknown as Record<string, unknown>
       if (su.role !== dbUser.role) {

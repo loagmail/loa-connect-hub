@@ -2,14 +2,29 @@ import { supabase } from "@/lib/db"
 import type { FacultyStatsData, DailyFrequencyData, WeeklyFrequencyData, FacultyResponseTime, ResponseTimeStats, ResponseTimeDistribution, BacklogEntry, BacklogAgingBucket, BacklogSummary, IReportsRepository, CoverageData, CoverageTrendEntry, WorkloadDistributionEntry, AdminConsultationRow } from "@/lib/types"
 import { userRepository } from "@/lib/repositories/factory"
 import type { DbRecord } from "@/lib/db/common"
+import { cache } from "react"
+
+const getFacultyUsers = cache(async (departmentId: string) => {
+  const users = await userRepository.listByDepartment(departmentId)
+  return users
+    .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
+    .map(({ id, name }) => ({ id, name }))
+})
+
+const getFacultyIds = cache(async (departmentId: string) => {
+  const users = await getFacultyUsers(departmentId)
+  return users.map((u) => u.id)
+})
+
+const getFacultyNameMap = cache(async (departmentId: string) => {
+  const users = await getFacultyUsers(departmentId)
+  return new Map(users.map((u) => [u.id, u.name]))
+})
 
 export const reportsRepository: IReportsRepository = {
   async getDepartmentConsultationStats(departmentId, filters) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyUsers = await getFacultyUsers(departmentId)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
     let query = supabase
@@ -90,14 +105,10 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getDepartmentConsultationAppointments(departmentId, filters) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
-    const facultyNameMap = new Map(facultyUsers.map((u) => [u.id, u.name]))
+    const facultyNameMap = await getFacultyNameMap(departmentId)
 
     let query = supabase
       .from("appointments")
@@ -140,14 +151,10 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getConsultationSummaries(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
-    const facultyNameMap = new Map(facultyUsers.map((u) => [u.id, u.name]))
+    const facultyNameMap = await getFacultyNameMap(departmentId)
 
     let query = supabase
       .from("appointments")
@@ -212,11 +219,7 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getDepartmentBacklog(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) {
       return {
         entries: [],
@@ -225,7 +228,7 @@ export const reportsRepository: IReportsRepository = {
       }
     }
 
-    const facultyNameMap = new Map(facultyUsers.map((u) => [u.id, u.name]))
+    const facultyNameMap = await getFacultyNameMap(departmentId)
 
     let query = supabase
       .from("appointments")
@@ -337,16 +340,12 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getDepartmentResponseTimes(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) {
       return { stats: { averageHours: 0, medianHours: 0, fastestHours: 0, slowestHours: 0, totalResponded: 0 }, byFaculty: [], distribution: [] }
     }
 
-    const facultyNameMap = new Map(facultyUsers.map((u) => [u.id, u.name]))
+    const facultyNameMap = await getFacultyNameMap(departmentId)
 
     let query = supabase
       .from("appointments")
@@ -458,11 +457,7 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getDepartmentFrequency(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
     let query = supabase
@@ -516,14 +511,10 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getFacultyFrequency(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
-    const facultyNameMap = new Map(facultyUsers.map((u) => [u.id, u.name]))
+    const facultyNameMap = await getFacultyNameMap(departmentId)
 
     let query = supabase
       .from("appointments")
@@ -590,11 +581,7 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getDepartmentYearlyFrequency(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
     let query = supabase
@@ -640,11 +627,7 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getDepartmentDailyFrequency(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
     let query = supabase
@@ -696,11 +679,7 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getDepartmentWeeklyFrequency(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
     let query = supabase
@@ -761,14 +740,10 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getFacultyYearlyFrequency(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyIds = await getFacultyIds(departmentId)
     if (facultyIds.length === 0) return []
 
-    const facultyNameMap = new Map(facultyUsers.map((u) => [u.id, u.name]))
+    const facultyNameMap = await getFacultyNameMap(departmentId)
 
     let query = supabase
       .from("appointments")
@@ -930,11 +905,8 @@ export const reportsRepository: IReportsRepository = {
   },
 
   async getWorkloadDistribution(departmentId, filters?) {
-    const facultyUsers = (await userRepository.listByDepartment(departmentId))
-      .filter((u) => u.role.includes("FACULTY") || u.role.includes("DEAN"))
-      .map(({ id, name }) => ({ id, name }))
-
-    const facultyIds = facultyUsers.map((u) => u.id)
+    const facultyUsers = await getFacultyUsers(departmentId)
+    const facultyIds = await getFacultyIds(departmentId)
     const dept = await supabase.from("departments").select("name").eq("id", departmentId).single()
     const departmentName = (dept.data as DbRecord)?.name as string || "Unknown"
 

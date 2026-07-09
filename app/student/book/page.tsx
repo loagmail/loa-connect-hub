@@ -24,12 +24,16 @@ const deanUsers = await userRepository.listByRole("DEAN")
   const departments = await departmentRepository.listAll()
   const deptMap = new Map(departments.map((d) => [d.id, d.name]))
 
-  const facultyWithRules = await Promise.all(
-    allFaculty.map(async (f) => {
-      const rules = await availabilityRuleRepository.listByFaculty(f.id)
-      return { id: f.id, name: f.name, email: f.email, hasLoggedInBefore: f.hasLoggedInBefore, department: f.departmentId ? deptMap.get(f.departmentId) || null : null, rules }
-    })
-  )
+  const rulesMap = await availabilityRuleRepository.listByFaculties(allFaculty.map((f) => f.id))
+
+  const facultyWithRules = allFaculty.map((f) => ({
+    id: f.id,
+    name: f.name,
+    email: f.email,
+    hasLoggedInBefore: f.hasLoggedInBefore,
+    department: f.departmentId ? deptMap.get(f.departmentId) || null : null,
+    rules: rulesMap.get(f.id) || [],
+  }))
 
   return (
     <div className="w-full space-y-8 pb-12">

@@ -38,23 +38,66 @@ export const evaluationResultRepository: IEvaluationResultRepository = {
     if (evErr) throw evErr
     if (!evals || evals.length === 0) return
 
-    const grouped = new Map<string, string[]>()
+    const facEvalMap = new Map<string, string[]>()
+    const allEvalIds: string[] = []
     for (const ev of evals) {
-      if (!grouped.has(ev.evaluateeId)) grouped.set(ev.evaluateeId, [])
-      grouped.get(ev.evaluateeId)!.push(ev.id)
+      allEvalIds.push(ev.id)
+      if (!facEvalMap.has(ev.evaluateeId)) facEvalMap.set(ev.evaluateeId, [])
+      facEvalMap.get(ev.evaluateeId)!.push(ev.id)
     }
 
-    for (const [facId, evaluationIds] of grouped) {
-      if (evaluationIds.length === 0) continue
+    const allFacultyIds = Array.from(facEvalMap.keys())
 
-      const { data: ratings, error: rErr } = await supabase
+    const [ratingsResult, usersResult, existingResult] = await Promise.all([
+      supabase
         .from("evaluation_ratings")
         .select("evaluationId, itemId, rating, rubric_items!inner(categoryId, rubric_categories!inner(name))")
-        .in("evaluationId", evaluationIds)
-      if (rErr) throw rErr
+        .in("evaluationId", allEvalIds),
+      supabase.from("users").select("id, departmentId").in("id", allFacultyIds),
+      supabase
+        .from("evaluation_results")
+        .select("id, facultyId")
+        .eq("semesterId", semesterId)
+        .in("facultyId", allFacultyIds),
+    ])
+    if (ratingsResult.error) throw ratingsResult.error
+    if (usersResult.error) throw usersResult.error
+    if (existingResult.error) throw existingResult.error
+
+    const ratings = ratingsResult.data || []
+    const users = usersResult.data || []
+    const existingResults = existingResult.data || []
+
+    const evalRatingsMap = new Map<string, typeof ratings>()
+    for (const r of ratings) {
+      if (!evalRatingsMap.has(r.evaluationId)) evalRatingsMap.set(r.evaluationId, [])
+      evalRatingsMap.get(r.evaluationId)!.push(r)
+    }
+
+    const userDeptMap = new Map(users.map((u) => [u.id, u.departmentId]))
+    const existingMap = new Map(existingResults.map((r) => [r.facultyId, r.id]))
+
+    const nameToColumn: Record<string, string> = {
+      "Professional Manner": "professionalManner",
+      "Communication with Students": "communicationWithStudent",
+      "Student Engagement": "studentEngagement",
+      "Learning Materials": "learningMaterials",
+      "Time Management": "timeManagement",
+      "Experiential Learning Provided to Students": "experientialLearning",
+      "Respect the Uniqueness of the Students": "respectUniqueness",
+      "Assessment and Feedback": "assessmentAndFeedback",
+    }
+
+    const toUpdate: Array<{ id: string; data: Record<string, unknown> }> = []
+    const toInsert: Array<Record<string, unknown>> = []
+
+    for (const [facId, evaluationIds] of facEvalMap) {
+      if (evaluationIds.length === 0) continue
+
+      const facRatings = evaluationIds.flatMap((eid) => evalRatingsMap.get(eid) || [])
 
       const catRatings: Record<string, number[]> = {}
-      for (const r of ratings as unknown as Array<{ rating: number; rubric_items: { categoryId: string; rubric_categories: { name: string } } }>) {
+      for (const r of facRatings as unknown as Array<{ rating: number; rubric_items: { categoryId: string; rubric_categories: { name: string } } }>) {
         const catName = r.rubric_items.rubric_categories.name
         if (!catRatings[catName]) catRatings[catName] = []
         catRatings[catName].push(r.rating)
@@ -78,30 +121,12 @@ export const evaluationResultRepository: IEvaluationResultRepository = {
         else remarks = "Poor"
       }
 
-      const { data: userRow, error: uErr } = await supabase
-        .from("users")
-        .select("departmentId")
-        .eq("id", facId)
-        .single()
-      if (uErr) throw uErr
-
       const updateData: Record<string, unknown> = {
         totalRespondents: evaluationIds.length,
         generalRating: general ? Math.round(general * 100) / 100 : null,
         remarks,
-        departmentId: userRow?.departmentId ?? null,
+        departmentId: userDeptMap.get(facId) ?? null,
         computedAt: new Date().toISOString(),
-      }
-
-      const nameToColumn: Record<string, string> = {
-        "Professional Manner": "professionalManner",
-        "Communication with Students": "communicationWithStudent",
-        "Student Engagement": "studentEngagement",
-        "Learning Materials": "learningMaterials",
-        "Time Management": "timeManagement",
-        "Experiential Learning Provided to Students": "experientialLearning",
-        "Respect the Uniqueness of the Students": "respectUniqueness",
-        "Assessment and Feedback": "assessmentAndFeedback",
       }
 
       for (const [catName, avg] of Object.entries(catAverages)) {
@@ -111,23 +136,20 @@ export const evaluationResultRepository: IEvaluationResultRepository = {
         }
       }
 
-      const { data: existing, error: exErr } = await supabase
-        .from("evaluation_results")
-        .select("id")
-        .eq("semesterId", semesterId)
-        .eq("facultyId", facId)
-        .single()
-      if (exErr && exErr.code !== "PGRST116") throw exErr
-
-      if (existing) {
-        const { error: upErr } = await supabase.from("evaluation_results").update(updateData).eq("id", existing.id)
-        if (upErr) throw upErr
+      const existingId = existingMap.get(facId)
+      if (existingId) {
+        toUpdate.push({ id: existingId, data: updateData })
       } else {
-        const { error: insErr } = await supabase
-          .from("evaluation_results")
-          .insert({ semesterId, facultyId: facId, ...updateData })
-        if (insErr) throw insErr
+        toInsert.push({ semesterId, facultyId: facId, ...updateData })
       }
+    }
+
+    const results = await Promise.all([
+      ...toUpdate.map(({ id, data }) => supabase.from("evaluation_results").update(data).eq("id", id)),
+      ...(toInsert.length > 0 ? [supabase.from("evaluation_results").insert(toInsert)] : []),
+    ])
+    for (const res of results) {
+      if (res.error) throw res.error
     }
   },
 
@@ -193,10 +215,21 @@ export async function getStudentBreakdownsForFaculty(
   semesterId: string,
   facultyId: string,
 ): Promise<StudentBreakdownItem[]> {
+  const result = await getStudentBreakdownsForFaculties(semesterId, [facultyId])
+  return result.get(facultyId) || []
+}
+
+async function getStudentBreakdownsForFaculties(
+  semesterId: string,
+  facultyIds: string[],
+): Promise<Map<string, StudentBreakdownItem[]>> {
+  if (facultyIds.length === 0) return new Map()
+
   const { data: evals, error: evErr } = await supabase
     .from("evaluations")
     .select(`
       id,
+      evaluateeId,
       evaluation_ratings(
         rating,
         rubric_items!inner(
@@ -207,14 +240,18 @@ export async function getStudentBreakdownsForFaculty(
       evaluation_comments(comment, sentimentLabel, sentimentScore)
     `)
     .eq("semesterId", semesterId)
-    .eq("evaluateeId", facultyId)
+    .in("evaluateeId", facultyIds)
     .eq("status", "SUBMITTED")
     .eq("isDisabled", false)
     .not("facultySubjectId", "is", null)
   if (evErr) throw evErr
-  if (!evals || evals.length === 0) return []
+  if (!evals || evals.length === 0) return new Map()
 
-  return evals.map((ev: Record<string, unknown>) => {
+  const result = new Map<string, StudentBreakdownItem[]>()
+  for (const facultyId of facultyIds) result.set(facultyId, [])
+
+  for (const ev of evals as Array<Record<string, unknown>>) {
+    const evaluateeId = ev.evaluateeId as string
     const ratings = (ev.evaluation_ratings || []) as Array<{
       rating: number
       rubric_items: { categoryId: string; rubric_categories: { name: string } }
@@ -258,8 +295,10 @@ export async function getStudentBreakdownsForFaculty(
       item.generalRating = Math.round((catAvgSum / catCount) * 100) / 100
     }
 
-    return item
-  })
+    result.get(evaluateeId)!.push(item)
+  }
+
+  return result
 }
 
 export async function getDeanDetails(
@@ -283,25 +322,22 @@ export async function getDeanDetails(
   if (uErr) throw uErr
   const nameMap = new Map((users || []).map((u) => [u.id, u.name]))
 
-  const details: FacultyEvalDetail[] = []
-  for (const r of results) {
-    const students = await getStudentBreakdownsForFaculty(semesterId, r.facultyId)
-    details.push({
-      facultyId: r.facultyId,
-      facultyName: nameMap.get(r.facultyId) || r.facultyId,
-      totalRespondents: r.totalRespondents,
-      generalRating: r.generalRating,
-      remarks: r.remarks,
-      professionalManner: r.professionalManner,
-      communicationWithStudent: r.communicationWithStudent,
-      studentEngagement: r.studentEngagement,
-      learningMaterials: r.learningMaterials,
-      timeManagement: r.timeManagement,
-      experientialLearning: r.experientialLearning,
-      respectUniqueness: r.respectUniqueness,
-      assessmentAndFeedback: r.assessmentAndFeedback,
-      students,
-    })
-  }
+  const studentsMap = await getStudentBreakdownsForFaculties(semesterId, facultyIds)
+  const details: FacultyEvalDetail[] = results.map((r) => ({
+    facultyId: r.facultyId,
+    facultyName: nameMap.get(r.facultyId) || r.facultyId,
+    totalRespondents: r.totalRespondents,
+    generalRating: r.generalRating,
+    remarks: r.remarks,
+    professionalManner: r.professionalManner,
+    communicationWithStudent: r.communicationWithStudent,
+    studentEngagement: r.studentEngagement,
+    learningMaterials: r.learningMaterials,
+    timeManagement: r.timeManagement,
+    experientialLearning: r.experientialLearning,
+    respectUniqueness: r.respectUniqueness,
+    assessmentAndFeedback: r.assessmentAndFeedback,
+    students: studentsMap.get(r.facultyId) || [],
+  }))
   return details
 }

@@ -11,6 +11,21 @@ export const availabilityRuleRepository: IAvailabilityRuleRepository = {
     if (error) throw error
     return data as AvailabilityRuleData[]
   },
+  async listByFaculties(facultyIds) {
+    if (facultyIds.length === 0) return new Map()
+    const { data, error } = await supabase
+      .from("faculty_availability_rules")
+      .select("*")
+      .in("facultyId", facultyIds)
+      .order("dayOfWeek", { ascending: true })
+    if (error) throw error
+    const map = new Map<string, AvailabilityRuleData[]>()
+    for (const facultyId of facultyIds) map.set(facultyId, [])
+    for (const rule of (data || []) as AvailabilityRuleData[]) {
+      map.get(rule.facultyId)!.push(rule)
+    }
+    return map
+  },
   async findByFacultyAndDay(facultyId, dayOfWeek, startDate) {
     if (!startDate) return null
     const { data, error } = await supabase

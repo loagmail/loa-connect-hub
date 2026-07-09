@@ -1690,3 +1690,29 @@ EXCEPTION WHEN OTHERS THEN
 END $$;
 
 ALTER TABLE evaluations ADD COLUMN IF NOT EXISTS "remarks" TEXT;
+
+-- ── Performance Indexes ──────────────────────────────────
+
+CREATE INDEX IF NOT EXISTS idx_appointments_meetingType_facultyId
+  ON appointments("meetingType", "facultyId");
+
+CREATE INDEX IF NOT EXISTS idx_appointments_date_status
+  ON appointments("date", "status");
+
+CREATE INDEX IF NOT EXISTS idx_appointments_meetingType_studentId
+  ON appointments("meetingType", "studentId");
+
+CREATE INDEX IF NOT EXISTS idx_appointments_teamsSyncStatus_status
+  ON appointments("teamsSyncStatus", "status");
+
+CREATE INDEX IF NOT EXISTS idx_appointments_sessionGroupId
+  ON appointments("sessionGroupId");
+
+CREATE INDEX IF NOT EXISTS idx_appointment_time_slots_date_time
+  ON appointment_time_slots("date", "startTime", "endTime");
+
+CREATE INDEX IF NOT EXISTS idx_evaluation_results_semesterId_departmentId
+  ON evaluation_results("semesterId", "departmentId");
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_email
+  ON password_reset_tokens("email");

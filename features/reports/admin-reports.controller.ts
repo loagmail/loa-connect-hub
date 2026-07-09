@@ -16,47 +16,38 @@ export async function getAdminReportData(
 ): Promise<AdminReportResult> {
   const departments = await departmentRepository.listAll()
 
-  const departmentSummaries: DepartmentSummary[] = []
-  for (const dept of departments) {
-    if (selectedDepartmentId && dept.id !== selectedDepartmentId) continue
-    const summary = await getDepartmentSummary(dept.id, dept.name, filters)
-    departmentSummaries.push(summary)
-  }
+  const deptCandidates = selectedDepartmentId
+    ? departments.filter((d) => d.id === selectedDepartmentId)
+    : departments
 
-  let targetDepts = departments
-  if (selectedDepartmentId) {
-    targetDepts = departments.filter((d) => d.id === selectedDepartmentId)
-  }
+  const departmentSummaries = await Promise.all(
+    deptCandidates.map((dept) => getDepartmentSummary(dept.id, dept.name, filters))
+  )
 
-  const allStats: FacultyStatsData[][] = []
-  const allRaw: RawAppointmentData[][] = []
-  const allSummaries: ConsultationSummaryData[][] = []
-  const allDeptFreq: DepartmentFrequencyEntry[][] = []
-  const allFacFreq: FacultyFrequencyData[][] = []
-  const allDeptYrFreq: DepartmentYearlyEntry[][] = []
-  const allFacYrFreq: FacultyYearlyData[][] = []
+  const allResults = await Promise.all(
+    deptCandidates.map((dept) =>
+      Promise.all([
+        reportsRepository.getDepartmentConsultationStats(dept.id, filters),
+        reportsRepository.getDepartmentConsultationAppointments(dept.id, filters),
+        reportsRepository.getConsultationSummaries(dept.id, filters),
+        reportsRepository.getDepartmentFrequency(dept.id, filters),
+        reportsRepository.getFacultyFrequency(dept.id, filters),
+        reportsRepository.getDepartmentYearlyFrequency(dept.id, filters),
+        reportsRepository.getFacultyYearlyFrequency(dept.id, filters),
+      ])
+    )
+  )
 
-  for (const dept of targetDepts) {
-    const [stats, raw, summaries, deptFreq, facFreq, deptYrFreq, facYrFreq] = await Promise.all([
-      reportsRepository.getDepartmentConsultationStats(dept.id, filters),
-      reportsRepository.getDepartmentConsultationAppointments(dept.id, filters),
-      reportsRepository.getConsultationSummaries(dept.id, filters),
-      reportsRepository.getDepartmentFrequency(dept.id, filters),
-      reportsRepository.getFacultyFrequency(dept.id, filters),
-      reportsRepository.getDepartmentYearlyFrequency(dept.id, filters),
-      reportsRepository.getFacultyYearlyFrequency(dept.id, filters),
-    ])
-    allStats.push(stats)
-    allRaw.push(raw)
-    allSummaries.push(summaries)
-    allDeptFreq.push(deptFreq)
-    allFacFreq.push(facFreq)
-    allDeptYrFreq.push(deptYrFreq)
-    allFacYrFreq.push(facYrFreq)
-  }
+  const allStats = allResults.map((r) => r[0])
+  const allRaw = allResults.map((r) => r[1])
+  const allSummaries = allResults.map((r) => r[2])
+  const allDeptFreq = allResults.map((r) => r[3])
+  const allFacFreq = allResults.map((r) => r[4])
+  const allDeptYrFreq = allResults.map((r) => r[5])
+  const allFacYrFreq = allResults.map((r) => r[6])
 
   const departmentName = selectedDepartmentId
-    ? targetDepts[0]?.name || "Unknown"
+    ? deptCandidates[0]?.name || "Unknown"
     : "All Departments"
 
   const departmentId = selectedDepartmentId || null

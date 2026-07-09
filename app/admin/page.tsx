@@ -36,10 +36,16 @@ export default async function AdminDashboard() {
 
   const storagePercent = getStoragePercentage(dbSize.estimatedTotalBytes)
 
-  const { count: userCount } = await supabase.from("users").select("*", { count: "exact", head: true }).is("deletedAt", null) || { count: 0 }
-  const { count: facultyCount } = await supabase.from("userrole").select("*", { count: "exact", head: true }).eq("roleName", "FACULTY") || { count: 0 }
-  const { count: studentCount } = await supabase.from("userrole").select("*", { count: "exact", head: true }).eq("roleName", "STUDENT") || { count: 0 }
-  const { count: deptCount } = await supabase.from("departments").select("*", { count: "exact", head: true }).eq("isDisabled", false) || { count: 0 }
+  const [userCountResult, facultyCountResult, studentCountResult, deptCountResult] = await Promise.all([
+    supabase.from("users").select("*", { count: "exact", head: true }).is("deletedAt", null),
+    supabase.from("userrole").select("*", { count: "exact", head: true }).eq("roleName", "FACULTY"),
+    supabase.from("userrole").select("*", { count: "exact", head: true }).eq("roleName", "STUDENT"),
+    supabase.from("departments").select("*", { count: "exact", head: true }).eq("isDisabled", false),
+  ])
+  const userCount = userCountResult.count ?? 0
+  const facultyCount = facultyCountResult.count ?? 0
+  const studentCount = studentCountResult.count ?? 0
+  const deptCount = deptCountResult.count ?? 0
 
   return (
     <div className="w-full pb-12 space-y-8">

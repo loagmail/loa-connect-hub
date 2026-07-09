@@ -19,14 +19,12 @@ export async function getBacklogReportData(
 
   const departments = await departmentRepository.listAll()
 
-  const allEntries: BacklogEntry[] = []
-  const allBuckets: BacklogAgingBucket[] = []
+  const backlogResults = await Promise.all(
+    departments.map((dept) => reportsRepository.getDepartmentBacklog(dept.id, filters))
+  )
 
-  for (const dept of departments) {
-    const { entries, agingBuckets } = await reportsRepository.getDepartmentBacklog(dept.id, filters)
-    allEntries.push(...entries)
-    allBuckets.push(...agingBuckets)
-  }
+  const allEntries: BacklogEntry[] = backlogResults.flatMap((r) => r.entries)
+  const allBuckets: BacklogAgingBucket[] = backlogResults.flatMap((r) => r.agingBuckets)
 
   const bucketLabels = ["0 - 3 Days", "4 - 7 Days", "8 - 14 Days", "More Than 14 Days"]
   const mergedBuckets: BacklogAgingBucket[] = bucketLabels.map((label) => {

@@ -216,6 +216,7 @@ export interface UpsertAvailabilityRuleInput {
 
 export interface IAvailabilityRuleRepository {
   listByFaculty(facultyId: string): Promise<AvailabilityRuleData[]>
+  listByFaculties(facultyIds: string[]): Promise<Map<string, AvailabilityRuleData[]>>
   findByFacultyAndDay(facultyId: string, dayOfWeek: number, startDate?: string): Promise<AvailabilityRuleData | null>
   upsert(input: UpsertAvailabilityRuleInput): Promise<AvailabilityRuleData>
   delete(id: string): Promise<void>

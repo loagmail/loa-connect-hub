@@ -18,18 +18,14 @@ export async function getWorkloadDistributionData(
 
   const departments = await departmentRepository.listAll()
 
-  const allEntries: WorkloadDistributionEntry[] = []
-  let overallTotal = 0
-  let overallCompleted = 0
-  let overallPending = 0
+  const distResults = await Promise.all(
+    departments.map((dept) => reportsRepository.getWorkloadDistribution(dept.id, filters))
+  )
 
-  for (const dept of departments) {
-    const { entries, departmentTotal } = await reportsRepository.getWorkloadDistribution(dept.id, filters)
-    allEntries.push(...entries)
-    overallTotal += departmentTotal
-    overallCompleted += entries.reduce((s, e) => s + e.completed, 0)
-    overallPending += entries.reduce((s, e) => s + e.pending, 0)
-  }
+  const allEntries: WorkloadDistributionEntry[] = distResults.flatMap((r) => r.entries)
+  const overallTotal = distResults.reduce((s, r) => s + r.departmentTotal, 0)
+  const overallCompleted = distResults.reduce((s, r) => s + r.entries.reduce((s2, e) => s2 + e.completed, 0), 0)
+  const overallPending = distResults.reduce((s, r) => s + r.entries.reduce((s2, e) => s2 + e.pending, 0), 0)
 
   const recalculated = allEntries.map((e) => ({
     ...e,
