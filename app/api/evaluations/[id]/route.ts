@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { supabase } from "@/lib/supabase"
-import { getEvaluation } from "@/features/evaluations/evaluations.service"
+import { getEvaluation, getEvaluationRatings, getEvaluationComment } from "@/features/evaluations/evaluations.service"
+import { getActiveSemester } from "@/features/admin-data/semesters.service"
+import { rubricRepository } from "@/lib/repositories/factory"
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const userId = (session.user as Record<string, unknown>).id as string
   const { id } = await params
+
+  const searchParams = new URL(request.url).searchParams
+  const includeRaw = searchParams.get("include") || ""
+  const includes = new Set(includeRaw ? includeRaw.split(",").map((s) => s.trim()).filter(Boolean) : [])
+
   try {
     const evaluation = await getEvaluation(id)
     if (!evaluation) return NextResponse.json({ error: "Not found" }, { status: 404 })
@@ -41,7 +48,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       }
     }
 
-    const responseBody = {
+    const responseBody: Record<string, unknown> = {
       evaluation: {
         ...evaluation,
         evaluateeName: (facultyRes.data as { name: string } | null)?.name || "Unknown",
@@ -51,6 +58,25 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         sectionName,
       },
     }
+
+    if (includes.has("ratings")) {
+      const ratings = await getEvaluationRatings(id)
+      responseBody.ratings = ratings
+    }
+
+    if (includes.has("comments")) {
+      const comment = await getEvaluationComment(id)
+      responseBody.comment = comment
+    }
+
+    if (includes.has("rubric")) {
+      const activePeriod = await getActiveSemester()
+      if (activePeriod) {
+        const rubric = await rubricRepository.getCategoriesWithItems(activePeriod.id)
+        responseBody.rubric = rubric
+      }
+    }
+
     return NextResponse.json(responseBody)
   } catch (err) {
     console.error("[EVAL API ERROR]", err)

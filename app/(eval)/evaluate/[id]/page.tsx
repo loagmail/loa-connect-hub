@@ -117,11 +117,11 @@ export default function StandaloneEvaluationPage() {
   useEffect(() => {
     async function load() {
       try {
-        const evalRes = await fetch(`/api/evaluations/${params.id}`)
-        if (evalRes.status === 403) { setLockedEndpoint(`/api/evaluations/${params.id}`); return }
-        if (!evalRes.ok) { window.close(); return }
-        const evalData = await evalRes.json()
-        const ev = evalData.evaluation
+        const res = await fetch(`/api/evaluations/${params.id}?include=ratings,rubric`)
+        if (res.status === 403) { setLockedEndpoint(`/api/evaluations/${params.id}`); return }
+        if (!res.ok) { window.close(); return }
+        const data = await res.json()
+        const ev = data.evaluation
         if (!ev) { window.close(); return }
 
         if (ev.status === "SUBMITTED") {
@@ -137,28 +137,18 @@ export default function StandaloneEvaluationPage() {
         setSubjectCode(ev.subjectCode || "")
         setSectionName(ev.sectionName || "")
 
-        const ratingsRes = await fetch(`/api/evaluations/${ev.id}/ratings`)
-        if (ratingsRes.status === 403) { setLockedEndpoint(`/api/evaluations/${ev.id}/ratings`); return }
-        const ratingsData = await ratingsRes.json()
-        if (ratingsData.ratings?.length > 0) {
+        if (data.ratings?.length > 0) {
           const map: Record<string, number> = {}
-          for (const r of ratingsData.ratings) map[r.itemId] = r.rating
+          for (const r of data.ratings) map[r.itemId] = r.rating
           setRatings(map)
         }
 
-        const periodRes = await fetch("/api/evaluation-periods")
-        if (periodRes.status === 403) { setLockedEndpoint("/api/evaluation-periods"); return }
-        const periodData = await periodRes.json()
-        const activePeriod = (periodData.periods || []).find((p: { isActive: boolean }) => p.isActive)
-        if (activePeriod) {
+        if (data.rubric?.length) {
+          setCategories(data.rubric)
+        } else {
           const cached = localStorage.getItem("eval_rubric_cache")
           if (cached) {
             try { const p = JSON.parse(cached); if (p.categories?.length) setCategories(p.categories) } catch {}
-          } else {
-            const rubricRes = await fetch(`/api/evaluation-periods/${activePeriod.id}/rubric`)
-            if (rubricRes.status === 403) { setLockedEndpoint(`/api/evaluation-periods/${activePeriod.id}/rubric`); return }
-            const rubricData = await rubricRes.json()
-            setCategories(rubricData.rubric || [])
           }
         }
         setPageLoading(false)
