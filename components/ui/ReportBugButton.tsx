@@ -22,7 +22,7 @@ export default function ReportBugButton() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-slate-900 border border-slate-700/50 rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 space-y-4"
+            className="bg-surface border border-default rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">

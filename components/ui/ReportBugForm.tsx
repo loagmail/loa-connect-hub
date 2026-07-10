@@ -41,13 +41,13 @@ export default function ReportBugForm({ onSubmitted }: { onSubmitted?: () => voi
   return (
     <div className="space-y-4">
       {status === "success" && (
-        <div className="rounded-lg bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-400">
+        <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/20 px-4 py-3 text-sm text-green-700 dark:text-green-400">
           Bug report submitted successfully. Thank you!
         </div>
       )}
 
       {status === "error" && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/20 px-4 py-3 text-sm text-red-700 dark:text-red-400">
           {errorMsg}
         </div>
       )}
