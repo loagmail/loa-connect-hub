@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
 import { supabase } from "@/lib/db"
-import { departmentRepository } from "@/lib/repositories/factory"
+import { departmentRepository, evaluationResultRepository } from "@/lib/repositories/factory"
 import { findHighestLowestRubrics, getRemark } from "@/lib/evaluation-utils"
 
 export async function GET(request: NextRequest) {
@@ -20,31 +20,24 @@ export async function GET(request: NextRequest) {
     const dept = await departmentRepository.findByDeanId(userId)
     if (!dept) return NextResponse.json({ departments: [] })
 
-    const [resultsResult, sentimentResult] = await Promise.all([
-      supabase
-        .from("evaluation_results")
-        .select("*")
-        .eq("semesterId", semesterId)
-        .eq("departmentId", dept.id),
-      supabase
-        .from("evaluations")
-        .select("evaluateeId, evaluation_comments(sentimentScore)")
-        .eq("semesterId", semesterId)
-        .eq("status", "SUBMITTED")
-        .eq("isDisabled", false)
-        .not("facultySubjectId", "is", null),
-    ])
-    if (resultsResult.error) throw resultsResult.error
-    if (sentimentResult.error) throw sentimentResult.error
-
-    const results = resultsResult.data ?? []
-    if (results.length === 0) return NextResponse.json({ departments: [] })
+    let results = await evaluationResultRepository.list(semesterId, { departmentId: dept.id })
+    if (results.length === 0) {
+      await evaluationResultRepository.computeAll(semesterId)
+      results = await evaluationResultRepository.list(semesterId, { departmentId: dept.id })
+      if (results.length === 0) return NextResponse.json({ departments: [] })
+    }
 
     const facIds = new Set(results.map((r) => r.facultyId))
-    const sentimentRows = sentimentResult.data ?? []
+    const { data: sentimentRows } = await supabase
+      .from("evaluations")
+      .select("evaluateeId, evaluation_comments(sentimentScore)")
+      .eq("semesterId", semesterId)
+      .eq("status", "SUBMITTED")
+      .eq("isDisabled", false)
+      .not("facultySubjectId", "is", null)
 
     const sentByFaculty = new Map<string, number[]>()
-    for (const row of sentimentRows) {
+    for (const row of sentimentRows ?? []) {
       const facId = row.evaluateeId as string
       if (!facIds.has(facId)) continue
       const comments = (row as unknown as { evaluation_comments: { sentimentScore: number | null }[] }).evaluation_comments ?? []
@@ -81,7 +74,7 @@ export async function GET(request: NextRequest) {
       totalRespondents += row.totalRespondents
       if (row.generalRating !== null) generalRatings.push(row.generalRating)
       for (const key of catKeys) {
-        const val = (row as Record<string, unknown>)[key]
+        const val = (row as unknown as Record<string, unknown>)[key]
         if (typeof val === "number") catSums[key].push(val)
       }
       const fs = avgSentByFaculty.get(row.facultyId)

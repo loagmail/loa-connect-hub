@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/route-guard"
 import { supabase } from "@/lib/db"
 import { findHighestLowestRubrics, getRemark } from "@/lib/evaluation-utils"
+import { evaluationResultRepository } from "@/lib/repositories/factory"
 
 export async function GET(request: NextRequest) {
   const authErr = await requireAdmin(request)
@@ -12,26 +13,23 @@ export async function GET(request: NextRequest) {
     const semesterId = searchParams.get("semesterId")
     if (!semesterId) return NextResponse.json({ error: "periodId is required" }, { status: 400 })
 
-    const [resultsResult, sentimentResult] = await Promise.all([
-      supabase.from("evaluation_results").select("*").eq("semesterId", semesterId),
-      supabase
-        .from("evaluations")
-        .select("evaluateeId, evaluation_comments(sentimentScore)")
-        .eq("semesterId", semesterId)
-        .eq("status", "SUBMITTED")
-        .eq("isDisabled", false)
-        .not("facultySubjectId", "is", null),
-    ])
-    if (resultsResult.error) throw resultsResult.error
-    if (sentimentResult.error) throw sentimentResult.error
+    let results = await evaluationResultRepository.list(semesterId)
+    if (results.length === 0) {
+      await evaluationResultRepository.computeAll(semesterId)
+      results = await evaluationResultRepository.list(semesterId)
+      if (results.length === 0) return NextResponse.json({ departments: [] })
+    }
 
-    const results = resultsResult.data ?? []
-    if (results.length === 0) return NextResponse.json({ departments: [] })
-
-    const sentimentRows = sentimentResult.data ?? []
+    const { data: sentimentRows } = await supabase
+      .from("evaluations")
+      .select("evaluateeId, evaluation_comments(sentimentScore)")
+      .eq("semesterId", semesterId)
+      .eq("status", "SUBMITTED")
+      .eq("isDisabled", false)
+      .not("facultySubjectId", "is", null)
 
     const sentByFaculty = new Map<string, number[]>()
-    for (const row of sentimentRows) {
+    for (const row of sentimentRows ?? []) {
       const facId = row.evaluateeId as string
       const comments = (row as unknown as { evaluation_comments: { sentimentScore: number | null }[] }).evaluation_comments ?? []
       for (const c of comments) {
@@ -85,7 +83,7 @@ export async function GET(request: NextRequest) {
       g.totalRespondents += row.totalRespondents
       if (row.generalRating !== null) g.generalRatings.push(row.generalRating)
       for (const key of catKeys) {
-        const val = (row as Record<string, unknown>)[key]
+        const val = (row as unknown as Record<string, unknown>)[key]
         if (typeof val === "number") g.catSums[key].push(val)
       }
       const fs = avgSentByFaculty.get(row.facultyId)
