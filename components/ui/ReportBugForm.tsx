@@ -3,7 +3,7 @@
 import { useState, useRef } from "react"
 import SubmitButton from "@/components/ui/SubmitButton"
 
-export default function ReportBugForm() {
+export default function ReportBugForm({ onSubmitted }: { onSubmitted?: () => void }) {
   const [url, setUrl] = useState("")
   const [description, setDescription] = useState("")
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
@@ -31,6 +31,7 @@ export default function ReportBugForm() {
       setUrl("")
       setDescription("")
       formRef.current?.reset()
+      onSubmitted?.()
     } catch (err) {
       setStatus("error")
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong")
@@ -38,12 +39,7 @@ export default function ReportBugForm() {
   }
 
   return (
-    <div className="card bg-surface p-6 space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-primary">Report a Bug</h2>
-        <p className="text-sm text-tertiary mt-1">Found something wrong? Let us know and we&apos;ll look into it.</p>
-      </div>
-
+    <div className="space-y-4">
       {status === "success" && (
         <div className="rounded-lg bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-400">
           Bug report submitted successfully. Thank you!
@@ -58,11 +54,11 @@ export default function ReportBugForm() {
 
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="bug-url" className="block text-sm font-medium text-secondary mb-1.5">
+          <label htmlFor="bug-url-modal" className="block text-sm font-medium text-secondary mb-1.5">
             Page URL
           </label>
           <input
-            id="bug-url"
+            id="bug-url-modal"
             type="url"
             required
             placeholder="https://..."
@@ -73,11 +69,11 @@ export default function ReportBugForm() {
         </div>
 
         <div>
-          <label htmlFor="bug-description" className="block text-sm font-medium text-secondary mb-1.5">
+          <label htmlFor="bug-desc-modal" className="block text-sm font-medium text-secondary mb-1.5">
             Description
           </label>
           <textarea
-            id="bug-description"
+            id="bug-desc-modal"
             required
             rows={4}
             placeholder="What happened? What did you expect to happen?"

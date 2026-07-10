@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import ReportBugForm from "./report-bug-form"
+import ReportBugForm from "@/components/ui/ReportBugForm"
 
 const faqs = [
   {
@@ -93,7 +93,13 @@ export default async function FaqPage() {
       </div>
 
       <div className="border-t border-default pt-8">
-        <ReportBugForm />
+        <div className="card bg-surface p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-primary">Report a Bug</h2>
+            <p className="text-sm text-tertiary mt-1">Found something wrong? Let us know and we&apos;ll look into it.</p>
+          </div>
+          <ReportBugForm />
+        </div>
       </div>
     </div>
   )

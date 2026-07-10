@@ -53,6 +53,10 @@ export const pageApiMap: Record<string, PageApiEntry> = {
     label: "Audit Trail",
     apis: ["/api/admin/audit-logs"],
   },
+  "/admin/system/reported-bugs": {
+    label: "Reported Bugs",
+    apis: ["/api/bug-reports", "/api/bug-reports/[id]"],
+  },
   "/admin/data/maintenance": {
     label: "Maintenance",
     apis: ["/api/admin/data/delete-students", "/api/admin/data/export-consultations"],

@@ -95,6 +95,7 @@ function pageLabel(p: string): string {
     "/admin/access-config": "Access Configuration (legacy)",
     "/admin/system/user-permissions": "User Permissions",
     "/admin/system/audit-trail": "Audit Trail",
+    "/admin/system/reported-bugs": "Reported Bugs",
     "/student": "Student Dashboard",
     "/student/book": "Book Consultation",
     "/student/meetings": "Student Consultations",
