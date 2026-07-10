@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { hasRole } from "@/lib/utils/roles"
 import { supabase } from "@/lib/db"
 import { departmentRepository } from "@/lib/repositories/factory"
+import { findHighestLowestRubrics, getRemark } from "@/lib/evaluation-utils"
 
 export async function GET(request: NextRequest) {
   const session = await auth()
@@ -19,160 +20,87 @@ export async function GET(request: NextRequest) {
     const dept = await departmentRepository.findByDeanId(userId)
     if (!dept) return NextResponse.json({ departments: [] })
 
-    // Forward to a shared handler using the same logic
-    const url = new URL(request.url)
-    url.pathname = `/api/admin/evaluation-results`
-    // The actual fetching is done via supabase directly, so let's inline the logic
-    // but filtered to this department
+    const [resultsResult, sentimentResult] = await Promise.all([
+      supabase
+        .from("evaluation_results")
+        .select("*")
+        .eq("semesterId", semesterId)
+        .eq("departmentId", dept.id),
+      supabase
+        .from("evaluations")
+        .select("evaluateeId, evaluation_comments(sentimentScore)")
+        .eq("semesterId", semesterId)
+        .eq("status", "SUBMITTED")
+        .eq("isDisabled", false)
+        .not("facultySubjectId", "is", null),
+    ])
+    if (resultsResult.error) throw resultsResult.error
+    if (sentimentResult.error) throw sentimentResult.error
 
-    const { data: facUsers, error: fuErr } = await supabase
-      .from("users")
-      .select("id, name, email")
-      .eq("departmentId", dept.id)
-    if (fuErr) throw fuErr
-    if (!facUsers || facUsers.length === 0) return NextResponse.json({ departments: [] })
+    const results = resultsResult.data ?? []
+    if (results.length === 0) return NextResponse.json({ departments: [] })
 
-    const facIds = facUsers.map((u) => u.id)
+    const facIds = new Set(results.map((r) => r.facultyId))
+    const sentimentRows = sentimentResult.data ?? []
 
-    const { data: evals, error: evErr } = await supabase
-      .from("evaluations")
-      .select("id, evaluateeId, facultySubjectId, submittedAt")
-      .eq("semesterId", semesterId)
-      .eq("status", "SUBMITTED")
-      .in("evaluateeId", facIds)
-    if (evErr) throw evErr
-    if (!evals || evals.length === 0) return NextResponse.json({ departments: [] })
-
-    const evaluationIds = evals.map((e) => e.id)
-
-    const { data: ratings, error: rErr } = await supabase
-      .from("evaluation_ratings")
-      .select("evaluationId, rating, rubric_items!inner(categoryId, rubric_categories!inner(name))")
-      .in("evaluationId", evaluationIds)
-    if (rErr) throw rErr
-
-    const { data: comments, error: cErr } = await supabase
-      .from("evaluation_comments")
-      .select("evaluationId, sentimentScore")
-      .in("evaluationId", evaluationIds)
-    if (cErr) throw cErr
-
-    const commentsByEval = new Map<string, { sentimentScore: number | null }[]>()
-    for (const c of comments ?? []) {
-      if (!commentsByEval.has(c.evaluationId)) commentsByEval.set(c.evaluationId, [])
-      commentsByEval.get(c.evaluationId)!.push(c)
-    }
-
-    // Same aggregation as admin but for single department
-    const CATEGORY_NAMES_MAP: Record<string, string> = {
-      "Professional Manner": "professionalManner",
-      "Communication with Students": "communicationWithStudent",
-      "Student Engagement": "studentEngagement",
-      "Learning Materials": "learningMaterials",
-      "Time Management": "timeManagement",
-      "Experiential Learning Provided to Students": "experientialLearning",
-      "Experiential Learning": "experientialLearning",
-      "Respect the Uniqueness of the Students": "respectUniqueness",
-      "Respect for Uniqueness": "respectUniqueness",
-      "Assessment and Feedback": "assessmentAndFeedback",
-    }
-
-    const CATEGORY_LABELS_MAP: Record<string, string> = {
-      professionalManner: "Professional Manner",
-      communicationWithStudent: "Communication w/ Students",
-      studentEngagement: "Student Engagement",
-      learningMaterials: "Learning Materials",
-      timeManagement: "Time Management",
-      experientialLearning: "Experiential Learning",
-      respectUniqueness: "Respect for Uniqueness",
-      assessmentAndFeedback: "Assessment & Feedback",
-    }
-
-    function computeCatAvg(ratings: Array<{ rating: number; rubric_items: { categoryId: string; rubric_categories: { name: string } } }>): Record<string, number> {
-      const groups: Record<string, number[]> = {}
-      for (const r of ratings) {
-        const n = r.rubric_items.rubric_categories.name
-        if (!groups[n]) groups[n] = []
-        groups[n].push(r.rating)
+    const sentByFaculty = new Map<string, number[]>()
+    for (const row of sentimentRows) {
+      const facId = row.evaluateeId as string
+      if (!facIds.has(facId)) continue
+      const comments = (row as unknown as { evaluation_comments: { sentimentScore: number | null }[] }).evaluation_comments ?? []
+      for (const c of comments) {
+        if (c.sentimentScore !== null) {
+          if (!sentByFaculty.has(facId)) sentByFaculty.set(facId, [])
+          sentByFaculty.get(facId)!.push(c.sentimentScore)
+        }
       }
-      const avgs: Record<string, number> = {}
-      for (const [k, v] of Object.entries(groups)) avgs[k] = v.reduce((a, b) => a + b, 0) / v.length
-      return avgs
+    }
+    const avgSentByFaculty = new Map<string, number>()
+    for (const [facId, scores] of sentByFaculty) {
+      avgSentByFaculty.set(facId, Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 100) / 100)
     }
 
-    function getRemark(g: number | null): string | null {
-      if (g === null) return null
-      if (g >= 4.5) return "Outstanding"
-      if (g >= 3.5) return "Very Satisfactory"
-      if (g >= 2.5) return "Satisfactory"
-      if (g >= 1.5) return "Unsatisfactory"
-      return "Poor"
-    }
+    const catKeys = [
+      "professionalManner", "communicationWithStudent", "studentEngagement",
+      "learningMaterials", "timeManagement", "experientialLearning",
+      "respectUniqueness", "assessmentAndFeedback",
+    ] as const
 
-    const facEvalMap = new Map<string, string[]>()
-    for (const ev of evals) {
-      if (!facEvalMap.has(ev.evaluateeId)) facEvalMap.set(ev.evaluateeId, [])
-      facEvalMap.get(ev.evaluateeId)!.push(ev.id)
-    }
-
-    const catSums: Record<string, number[]> = {
-      professionalManner: [], communicationWithStudent: [], studentEngagement: [],
-      learningMaterials: [], timeManagement: [], experientialLearning: [],
-      respectUniqueness: [], assessmentAndFeedback: [],
-    }
     let facultyCount = 0
     let totalRespondents = 0
     const generalRatings: number[] = []
+    const catSums: Record<string, number[]> = Object.fromEntries(catKeys.map((k) => [k, [] as number[]]))
     const sentimentScores: number[] = []
+    const seenFacIds = new Set<string>()
 
-    for (const [, evalIds] of facEvalMap) {
-      facultyCount++
-      totalRespondents += evalIds.length
-
-      const facRatings = (ratings ?? []).filter((r) => evalIds.includes(r.evaluationId as string)) as unknown as Array<{
-        rating: number
-        rubric_items: { categoryId: string; rubric_categories: { name: string } }
-      }>
-      const ca = computeCatAvg(facRatings)
-      const gen = Object.keys(ca).length > 0
-        ? Object.values(ca).reduce((a, b) => a + b, 0) / Object.keys(ca).length
-        : null
-      if (gen !== null) generalRatings.push(Math.round(gen * 100) / 100)
-
-      for (const [catName, avg] of Object.entries(ca)) {
-        const col = CATEGORY_NAMES_MAP[catName]
-        if (col && catSums[col]) catSums[col].push(avg)
+    for (const row of results) {
+      if (!seenFacIds.has(row.facultyId)) {
+        seenFacIds.add(row.facultyId)
+        facultyCount++
       }
-
-      const facComments = evalIds.flatMap((eid) => commentsByEval.get(eid) ?? [])
-      const scored = facComments.filter((c) => c.sentimentScore !== null).map((c) => c.sentimentScore as number)
-      if (scored.length > 0) sentimentScores.push(scored.reduce((a, b) => a + b, 0) / scored.length)
+      totalRespondents += row.totalRespondents
+      if (row.generalRating !== null) generalRatings.push(row.generalRating)
+      for (const key of catKeys) {
+        const val = (row as Record<string, unknown>)[key]
+        if (typeof val === "number") catSums[key].push(val)
+      }
+      const fs = avgSentByFaculty.get(row.facultyId)
+      if (fs !== undefined) sentimentScores.push(fs)
     }
 
-    const avgDeptRating = generalRatings.length > 0
+    const avgRating = generalRatings.length > 0
       ? Math.round(generalRatings.reduce((a, b) => a + b, 0) / generalRatings.length * 100) / 100
       : null
 
     const deptCatAverages: Record<string, number | null> = {}
-    for (const key of Object.keys(catSums)) {
+    for (const key of catKeys) {
       const vals = catSums[key]
       deptCatAverages[key] = vals.length > 0
         ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 100) / 100
         : null
     }
 
-    const highest: { key: string; label: string; score: number }[] = []
-    const lowest: { key: string; label: string; score: number }[] = []
-    const entries = Object.entries(deptCatAverages)
-      .filter(([, v]) => v !== null)
-      .map(([k, v]) => ({ key: k, label: CATEGORY_LABELS_MAP[k] || k, score: v as number }))
-    if (entries.length > 0) {
-      const maxS = Math.max(...entries.map((e) => e.score))
-      const minS = Math.min(...entries.map((e) => e.score))
-      highest.push(...entries.filter((e) => e.score === maxS))
-      lowest.push(...entries.filter((e) => e.score === minS))
-    }
-
+    const rubrics = findHighestLowestRubrics(deptCatAverages)
     const avgSentiment = sentimentScores.length > 0
       ? Math.round(sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length * 100) / 100
       : null
@@ -184,10 +112,10 @@ export async function GET(request: NextRequest) {
         departmentCode: dept.code ?? "",
         facultyCount,
         totalRespondents,
-        avgRating: avgDeptRating,
-        remarks: getRemark(avgDeptRating),
-        highestRubrics: highest,
-        lowestRubrics: lowest,
+        avgRating,
+        remarks: getRemark(avgRating),
+        highestRubrics: rubrics.highest,
+        lowestRubrics: rubrics.lowest,
         sentimentScore: avgSentiment,
       }],
     })
