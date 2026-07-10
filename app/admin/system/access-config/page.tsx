@@ -1,11 +1,12 @@
 "use client"
 
-import { Suspense, useEffect, useState, useCallback, useRef, useMemo } from "react"
+import { Suspense, useEffect, useState, useRef, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import SubmitButton from "@/components/ui/SubmitButton"
 import ErrorState from "@/components/ui/ErrorState"
+import { useApiGet, invalidate } from "@/lib/api/client"
 import type { PageApiEntry } from "@/lib/page-api-map"
 import { getDefaultPages } from "@/lib/default-access"
 
@@ -168,32 +169,11 @@ function AdminAccessConfigPageInner({ readOnly }: { readOnly?: boolean }) {
 }
 
 function RBACTab({ readOnly }: { readOnly?: boolean }) {
-  const [groups, setGroups] = useState<GroupAccess[]>([])
-  const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [newGroupName, setNewGroupName] = useState("")
-  const [error, setError] = useState("")
 
-  const loadGroups = () => {
-    setError("")
-    return fetch("/api/admin/access-config")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) throw new Error(data.error)
-        if (data.groups) setGroups(data.groups)
-      })
-      .catch((err) => {
-        setError(err.message || "Failed to load groups")
-      })
-  }
-
-  useEffect(() => {
-    const run = async () => {
-      await loadGroups()
-      setLoading(false)
-    }
-    Promise.resolve().then(run)
-  }, [])
+  const { data, error, isLoading, mutate } = useApiGet<{ groups: GroupAccess[] }>("/api/admin/access-config")
+  const groups = data?.groups ?? []
 
   const handleAddGroup = async () => {
     const name = newGroupName.trim()
@@ -207,7 +187,7 @@ function RBACTab({ readOnly }: { readOnly?: boolean }) {
       })
       if (res.ok) {
         setNewGroupName("")
-        loadGroups()
+        mutate()
       } else {
         const data = await res.json()
         alert(data.error || "Failed to create group")
@@ -217,7 +197,7 @@ function RBACTab({ readOnly }: { readOnly?: boolean }) {
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <Skeleton variant="card" />
@@ -228,7 +208,7 @@ function RBACTab({ readOnly }: { readOnly?: boolean }) {
   }
 
   if (error) {
-    return <ErrorState message={error} onRetry={() => { setLoading(true); loadGroups().finally(() => setLoading(false)) }} />
+    return <ErrorState message={error.message} onRetry={() => mutate()} />
   }
 
   return (
@@ -304,40 +284,30 @@ function prim(roles: string): string {
 }
 
 function UserPermissionsTab({ readOnly }: { readOnly?: boolean }) {
-  const [users, setUsers] = useState<UserRow[]>([])
   const [search, setSearch] = useState("")
-  const [loading, setLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
   const [permissions, setPermissions] = useState<Permission[]>([])
-  const [catalog, setCatalog] = useState<Catalog | null>(null)
-  const [pageApiMap, setPageApiMap] = useState<Record<string, PageApiEntry> | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [sidebarFilter, setSidebarFilter] = useState("")
 
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/admin/users").then((r) => r.json()).catch(() => ({ users: [] })),
-      fetch("/api/admin/access-config").then((r) => r.json()).catch(() => ({})),
-    ])
-      .then(([usersData, configData]) => {
-        setUsers(usersData.users ?? [])
-        if (configData.catalog) setCatalog(configData.catalog)
-        if (configData.pageApiMap) setPageApiMap(configData.pageApiMap)
-      })
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: usersData, isLoading: usersLoading } = useApiGet<{ users: UserRow[] }>("/api/admin/users")
+  const { data: configData, isLoading: configLoading } = useApiGet<{ catalog: Catalog; pageApiMap: Record<string, PageApiEntry> }>("/api/admin/access-config")
+
+  const users = usersData?.users ?? []
+  const catalog = configData?.catalog ?? null
+  const pageApiMap = configData?.pageApiMap ?? null
 
   const filteredUsers = search.trim()
     ? users.filter((u) => (u.name || "").toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
     : []
 
-  const loadPermissions = useCallback(async (userId: string) => {
-    const perms = await fetch(`/api/admin/user-permissions/${userId}`).then((r) => r.json())
+  const handleSelectUser = async (user: UserRow) => {
+    setSelectedUser(user)
+    setSaved(false)
+    const perms = await fetch(`/api/admin/user-permissions/${user.id}`).then((r) => r.json())
     setPermissions(Array.isArray(perms) ? perms : [])
-  }, [])
-
-  const handleSelectUser = (user: UserRow) => { setSelectedUser(user); loadPermissions(user.id); setSaved(false) }
+  }
 
   const isSelectedUserAdmin = selectedUser ? prim(selectedUser.role ?? "") === "ADMIN" : false
   const irrevocablePaths = useMemo(() => {
@@ -370,8 +340,11 @@ function UserPermissionsTab({ readOnly }: { readOnly?: boolean }) {
       const res = await fetch(`/api/admin/user-permissions/${selectedUser.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(permissions),
       })
-      if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
-      else { const d = await res.json(); alert(d.error || "Failed to save") }
+      if (res.ok) {
+        invalidate(`/api/admin/user-permissions/${selectedUser.id}`)
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000)
+      } else { const d = await res.json(); alert(d.error || "Failed to save") }
     } finally { setSaving(false) }
   }
 
@@ -436,7 +409,7 @@ function UserPermissionsTab({ readOnly }: { readOnly?: boolean }) {
     return rows
   }
 
-  if (loading) {
+  if (usersLoading || configLoading) {
     return <div className="space-y-4"><Skeleton variant="card" /></div>
   }
 

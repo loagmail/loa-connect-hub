@@ -7,7 +7,7 @@ import Skeleton from "@/components/ui/Skeleton"
 import SubmitButton from "@/components/ui/SubmitButton"
 import ErrorState from "@/components/ui/ErrorState"
 import ErrorBoundary from "@/components/ui/ErrorBoundary"
-import { invalidate } from "@/lib/api/client"
+import { useApiGet, invalidate } from "@/lib/api/client"
 import { getDefaultUIPages } from "@/lib/default-access"
 import type { PageApiEntry } from "@/lib/page-api-map"
 
@@ -62,10 +62,6 @@ export default function EditAccessGroupPage() {
   const router = useRouter()
   const groupName = params.groupName as string
 
-  const [group, setGroup] = useState<GroupAccess | null>(null)
-  const [catalog, setCatalog] = useState<Catalog | null>(null)
-  const [pageApiMap, setPageApiMap] = useState<Record<string, PageApiEntry> | null>(null)
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -74,31 +70,30 @@ export default function EditAccessGroupPage() {
   const [selectedPages, setSelectedPages] = useState<string[]>([])
   const [overrides, setOverrides] = useState<OverrideMap>({})
   const [search, setSearch] = useState("")
-  const [readOnly, setReadOnly] = useState(true)
+
+  const { data: accessData, isLoading: accessLoading } = useApiGet<{ groups: GroupAccess[]; catalog: Catalog; pageApiMap: Record<string, PageApiEntry> }>("/api/admin/access-config")
+  const { data: meData, isLoading: meLoading } = useApiGet<{ user: { role: string } }>("/api/auth/me")
+
+  const group = useMemo(() => {
+    const g = (accessData?.groups ?? []).find((grp: GroupAccess) => grp.groupName === groupName) ?? null
+    return g
+  }, [accessData, groupName])
+
+  const catalog = accessData?.catalog ?? null
+  const pageApiMap = accessData?.pageApiMap ?? null
+  const readOnly = useMemo(() => !meData?.user?.role?.split("|").includes("ADMIN"), [meData])
+
+  const loading = accessLoading || meLoading
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/admin/access-config").then((r) => r.json()),
-      fetch("/api/auth/me").then((r) => r.json()).catch(() => ({ user: null })),
-    ])
-      .then(([data, me]) => {
-        const g = (data.groups || []).find((grp: GroupAccess) => grp.groupName === groupName)
-        if (g) {
-          setGroup(g)
-          // API paths are expanded in stored pages — extract only page paths for selections
-          const isApiPath = (p: string) => p.startsWith("/api/")
-          const defaults = new Set(getDefaultUIPages(g.groupName))
-          setSelectedPages((g.pages || []).filter((p: string) => !isApiPath(p) && !defaults.has(p)))
-          setOverrides(g.api_overrides || {})
-        }
-        if (data.catalog) setCatalog(data.catalog)
-        if (data.pageApiMap) setPageApiMap(data.pageApiMap)
-        const role = me?.user?.role ?? ""
-        setReadOnly(!role.split("|").includes("ADMIN"))
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [groupName])
+    if (!group) return
+    Promise.resolve().then(() => {
+      const isApiPath = (p: string) => p.startsWith("/api/")
+      const defaults = new Set(getDefaultUIPages(group.groupName))
+      setSelectedPages((group.pages || []).filter((p: string) => !isApiPath(p) && !defaults.has(p)))
+      setOverrides(group.api_overrides || {})
+    })
+  }, [group])
 
   const defaultPageSet = useMemo(() => group ? new Set(getDefaultUIPages(group.groupName)) : new Set<string>(), [group])
 
@@ -191,15 +186,8 @@ export default function EditAccessGroupPage() {
       })
 
       if (res.ok) {
-        const data = await res.json()
-        if (data.group) {
-          setGroup(data.group)
-          const isApiPath = (p: string) => p.startsWith("/api/")
-          const defaults = new Set(getDefaultUIPages(data.group.groupName))
-          setSelectedPages((data.group.pages || []).filter((p: string) => !isApiPath(p) && !defaults.has(p)))
-          setOverrides(data.group.api_overrides || {})
-        }
         invalidate("/api/auth/access")
+        invalidate("/api/admin/access-config")
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
       } else {
@@ -222,6 +210,7 @@ export default function EditAccessGroupPage() {
       })
       if (res.ok) {
         invalidate("/api/auth/access")
+        invalidate("/api/admin/access-config")
         router.push("/admin/system/access-config")
       } else {
         const data = await res.json()
