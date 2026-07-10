@@ -64,10 +64,11 @@ export default function StudentEvaluationsPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const periodRes = await fetch("/api/evaluation-periods")
-        if (periodRes.status === 403) { setLockedEndpoint("/api/evaluation-periods"); return }
-        const periodData = await periodRes.json()
-        const active = (periodData.periods || []).find((p: { isActive: boolean }) => p.isActive)
+        const res = await fetch("/api/student/evaluations/bootstrap")
+        if (res.status === 403) { setLockedEndpoint("/api/student/evaluations/bootstrap"); return }
+        const data = await res.json()
+
+        const active = (data.periods || []).find((p: { isActive: boolean }) => p.isActive)
         if (active?.evalStartDate) {
           const now = Date.now()
           const start = new Date(active.evalStartDate).getTime()
@@ -81,29 +82,12 @@ export default function StudentEvaluationsPage() {
           setOutOfRange(true)
         }
 
-        if (active) {
-          fetch(`/api/evaluation-periods/${active.id}/rubric`)
-            .then((r) => {
-              if (r.status === 403) { setLockedEndpoint(`/api/evaluation-periods/${active.id}/rubric`); return null }
-              return r.json()
-            })
-            .then((rubricData) => {
-              if (rubricData?.rubric) {
-                localStorage.setItem("eval_rubric_cache", JSON.stringify({ categories: rubricData.rubric, fetchedAt: Date.now() }))
-              }
-            })
-            .catch(() => {})
+        if (data.rubric) {
+          localStorage.setItem("eval_rubric_cache", JSON.stringify({ categories: data.rubric, fetchedAt: Date.now() }))
         }
 
-        const [pendingRes, evalRes] = await Promise.all([
-          fetch("/api/evaluations/pending"),
-          fetch("/api/evaluations"),
-        ])
-        if (pendingRes.status === 403) { setLockedEndpoint("/api/evaluations/pending"); return }
-        if (evalRes.status === 403) { setLockedEndpoint("/api/evaluations"); return }
-        const [pendingData, evalData] = await Promise.all([pendingRes.json(), evalRes.json()])
-        setPending(pendingData.pending || [])
-        setEvaluations(evalData.evaluations || [])
+        setPending(data.pending || [])
+        setEvaluations(data.evaluations || [])
       } catch {
         setErrorMessage("Failed to load evaluations")
       } finally {
