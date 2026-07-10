@@ -17,7 +17,6 @@ export function EnrollmentsTab() {
   const [locked, setLocked] = useState("")
   const [search, setSearch] = useState("")
 
-  const [activeSemesterId, setActiveSemesterId] = useState<string>("")
   const [showImport, setShowImport] = useState(false)
 
   // ── Quick Add state ──────────────────────────────────────
@@ -43,15 +42,8 @@ export function EnrollmentsTab() {
 
   useEffect(() => { Promise.resolve().then(() => fetchData()) }, [fetchData])
 
-  useEffect(() => {
-    fetch("/api/evaluation-periods")
-      .then((r) => r.json())
-      .then((d) => {
-        const active = (d.periods || []).find((p: { isActive: boolean }) => p.isActive)
-        if (active) setActiveSemesterId(active.id)
-      })
-      .catch(() => {})
-  }, [])
+  const { data: periodsData } = useApiGet<{ periods: { id: string; isActive: boolean }[] }>("/api/evaluation-periods")
+  const activeSemesterId = useMemo(() => periodsData?.periods?.find((p) => p.isActive)?.id ?? "", [periodsData])
 
   const { data: fsData } = useApiGet<{ data: FacultyMapping[] }>("/api/data/evaluation-mappings?type=faculty")
   const facultySubjects = fsData?.data ?? []

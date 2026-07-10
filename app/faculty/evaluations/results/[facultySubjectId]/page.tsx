@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import ErrorState from "@/components/ui/ErrorState"
+import { useApiGet } from "@/lib/api/client"
 import { getRemarkColor, CATEGORY_KEYS, CATEGORY_LABELS } from "@/lib/evaluation-utils"
 import { SentimentBadge } from "@/features/evaluations/components/evaluation/SentimentBadge"
 import { DownloadEvalPdfButton } from "@/features/evaluations/components/DownloadEvalPdfButton"
@@ -47,29 +47,13 @@ export default function FacultySubjectDetailPage() {
   const facultySubjectId = params.facultySubjectId as string
   const semesterId = searchParams.get("semesterId") || ""
 
-  const [data, setData] = useState<FacultyEvalData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-
-  useEffect(() => {
-    if (!semesterId) return
-    Promise.resolve().then(async () => {
-      setLoading(true)
-      setError("")
-      try {
-        const r = await fetch(
-          `/api/faculty/evaluation-results/subjects/${encodeURIComponent(facultySubjectId)}?semesterId=${encodeURIComponent(semesterId)}`,
-        )
-        const d = await r.json()
-        if (d.error) throw new Error(d.error)
-        setData(d)
-      } catch (err) {
-        setError((err as Error).message)
-      } finally {
-        setLoading(false)
-      }
-    })
-  }, [facultySubjectId, semesterId])
+  const { data, error: dataError, isLoading } = useApiGet<FacultyEvalData>(
+    semesterId
+      ? `/api/faculty/evaluation-results/subjects/${encodeURIComponent(facultySubjectId)}?semesterId=${encodeURIComponent(semesterId)}`
+      : null,
+  )
+  const error = dataError?.message || ""
+  const loading = isLoading && !!semesterId
 
   const formatScore = (v: number | null) => (v !== null ? v.toFixed(2) : "\u2014")
 

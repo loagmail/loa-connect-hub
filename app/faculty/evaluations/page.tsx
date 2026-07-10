@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import { SkeletonCard } from "@/components/ui/Skeleton"
 import LockedTab from "@/components/ui/LockedTab"
 import ErrorState from "@/components/ui/ErrorState"
 import ErrorBoundary from "@/components/ui/ErrorBoundary"
+import { useApiGet, invalidate } from "@/lib/api/client"
 import { EVALUATION_CATEGORIES } from "@/features/evaluations/constants"
 
 interface Period {
@@ -51,55 +52,30 @@ function getRemarkColor(remarks: string | null): string {
 }
 
 export default function FacultyEvaluationsPage() {
-  const [periods, setPeriods] = useState<Period[]>([])
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>("")
-  const [result, setResult] = useState<FacultyResult | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [lockedEndpoint, setLockedEndpoint] = useState("")
-  const [errorMessage, setErrorMessage] = useState("")
+
+  const { data: periodsData, error: periodsError } = useApiGet<{ periods: Period[] }>("/api/evaluation-periods")
+  const periods = useMemo(() => periodsData?.periods ?? [], [periodsData])
+  const loading = !periodsData && !periodsError
 
   useEffect(() => {
-    Promise.resolve().then(async () => {
-      try {
-        const res = await fetch("/api/evaluation-periods")
-        if (res.status === 403) {
-          const data = await res.json()
-          setLockedEndpoint(data.endpoint || "/api/evaluation-periods")
-          return
-        }
-        const data = await res.json()
-        const list: Period[] = data.periods || []
-        setPeriods(list)
-        const active = list.find((p: Period) => p.isActive)
-        if (active) setSelectedPeriodId(active.id)
-      } catch {
-        setErrorMessage("Failed to load periods")
-      } finally {
-        setLoading(false)
-      }
-    })
-  }, [])
+    if (periods.length > 0 && !selectedPeriodId) {
+      const active = periods.find((p: Period) => p.isActive)
+      if (active) Promise.resolve().then(() => setSelectedPeriodId(active.id))
+    }
+  }, [periods, selectedPeriodId])
 
-  useEffect(() => {
-    if (!selectedPeriodId) return
-    Promise.resolve().then(async () => {
-      setLoading(true)
-      try {
-        const res = await fetch(`/api/faculty/evaluation-results?periodId=${selectedPeriodId}`)
-        if (res.status === 403) {
-          const data = await res.json()
-          setLockedEndpoint(data.endpoint || `/api/faculty/evaluation-results?periodId=${selectedPeriodId}`)
-          return
-        }
-        const data: FacultyResultsResponse = await res.json()
-        setResult(data.results?.[0] ?? null)
-      } catch {
-        setResult(null)
-      } finally {
-        setLoading(false)
-      }
-    })
-  }, [selectedPeriodId])
+  const { data: resultData, error: resultError } = useApiGet<FacultyResultsResponse>(
+    selectedPeriodId ? `/api/faculty/evaluation-results?periodId=${selectedPeriodId}` : null,
+  )
+  const result = resultData?.results?.[0] ?? null
+
+  const lockedEndpoint = periodsError?.message?.includes("403")
+    ? "/api/evaluation-periods"
+    : resultError?.message?.includes("403")
+      ? `/api/faculty/evaluation-results?periodId=${selectedPeriodId}`
+      : ""
+  const errorMessage = (!periodsError?.message?.includes("403") && periodsError?.message) || (!resultError?.message?.includes("403") && resultError?.message) || ""
 
   if (loading) {
     return (
@@ -122,7 +98,7 @@ export default function FacultyEvaluationsPage() {
   if (errorMessage) {
     return (
       <div className="w-full pb-12">
-        <ErrorState message={errorMessage} onRetry={() => setErrorMessage("")} />
+        <ErrorState message={errorMessage} onRetry={() => { invalidate("/api/evaluation-periods"); invalidate(`/api/faculty/evaluation-results?periodId=${selectedPeriodId}`) }} />
       </div>
     )
   }

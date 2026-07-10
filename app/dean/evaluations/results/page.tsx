@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
+import { useApiGet } from "@/lib/api/client"
 
 interface Period {
   id: string
@@ -14,30 +15,19 @@ export default function DeanEvaluationResultsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const semesterId = searchParams.get("semesterId")
+  const redirectedRef = useRef(false)
 
-  const [periods, setPeriods] = useState<Period[]>([])
-  const [loading, setLoading] = useState(true)
-  const [deptId, setDeptId] = useState<string | null>(null)
-
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/evaluation-periods").then((r) => r.json()),
-      fetch("/api/dean/evaluation-results/department").then((r) => r.json()),
-    ])
-      .then(([periodData, deptData]) => {
-        const list: Period[] = periodData.periods ?? periodData ?? []
-        setPeriods(list)
-        setDeptId(deptData.departmentId ?? null)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: periodsData } = useApiGet<{ periods: Period[] }>("/api/evaluation-periods")
+  const { data: deptData } = useApiGet<{ departmentId: string | null }>("/api/dean/evaluation-results/department")
+  const periods = useMemo(() => (Array.isArray(periodsData?.periods) ? periodsData.periods : Array.isArray(periodsData) ? periodsData : []) as Period[], [periodsData])
+  const deptId = deptData?.departmentId ?? null
+  const loading = deptData === undefined
 
   useEffect(() => {
-    if (!semesterId || !deptId) return
-    Promise.resolve().then(() => {
+    if (semesterId && deptId && !redirectedRef.current) {
+      redirectedRef.current = true
       router.replace(`/dean/evaluations/results/${deptId}?semesterId=${encodeURIComponent(semesterId)}`)
-    })
+    }
   }, [semesterId, deptId, router])
 
   const handleSelect = (id: string) => {

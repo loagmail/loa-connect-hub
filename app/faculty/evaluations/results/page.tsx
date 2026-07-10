@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
+import { useApiGet } from "@/lib/api/client"
 import { getRemarkColor } from "@/lib/evaluation-utils"
 
 interface SubjectRow {
@@ -28,50 +29,29 @@ export default function FacultyEvaluationResultsPage() {
   const searchParams = useSearchParams()
   const semesterId = searchParams.get("semesterId")
 
-  const [periods, setPeriods] = useState<Period[]>([])
   const [selectedSemester, setSelectedSemester] = useState(semesterId ?? "")
-  const [subjects, setSubjects] = useState<SubjectRow[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+
+  const { data: periodsData } = useApiGet<{ periods: Period[] }>("/api/evaluation-periods")
+  const periods = useMemo(() => periodsData?.periods ?? [], [periodsData])
 
   useEffect(() => {
-    fetch("/api/evaluation-periods")
-      .then((r) => r.json())
-      .then((data) => {
-        const list: Period[] = data.periods ?? data ?? []
-        setPeriods(list)
-        if (!semesterId) {
-          const active = list.find((p) => p.title?.toLowerCase().includes("active") || p.name?.toLowerCase().includes("active"))
-          if (active) {
-            setSelectedSemester(active.id)
-            router.replace(`/faculty/evaluations/results?semesterId=${encodeURIComponent(active.id)}`)
-          }
-        }
-      })
-      .catch(() => {})
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!selectedSemester) return
-    Promise.resolve().then(async () => {
-      setLoading(true)
-      setError("")
-      try {
-        const r = await fetch(`/api/faculty/evaluation-results/subjects?semesterId=${encodeURIComponent(selectedSemester)}`)
-        if (r.status === 403) {
-          const body = await r.json()
-          throw new Error(body.error || "Results are not visible yet")
-        }
-        const data = await r.json()
-        if (data.error) throw new Error(data.error)
-        setSubjects(data.subjects ?? [])
-      } catch (err) {
-        setError((err as Error).message)
-      } finally {
-        setLoading(false)
+    if (periods.length > 0 && !semesterId) {
+      const active = periods.find((p) => p.title?.toLowerCase().includes("active") || p.name?.toLowerCase().includes("active"))
+      if (active) {
+        Promise.resolve().then(() => {
+          setSelectedSemester(active.id)
+          router.replace(`/faculty/evaluations/results?semesterId=${encodeURIComponent(active.id)}`)
+        })
       }
-    })
-  }, [selectedSemester])
+    }
+  }, [periods, semesterId, router])
+
+  const { data: subjectsData, error: subjectsError } = useApiGet<{ subjects: SubjectRow[] }>(
+    selectedSemester ? `/api/faculty/evaluation-results/subjects?semesterId=${encodeURIComponent(selectedSemester)}` : null,
+  )
+  const subjects = subjectsData?.subjects ?? []
+  const error = subjectsError?.message || ""
+  const loading = !subjectsData && !subjectsError && !!selectedSemester
 
   const handlePeriodChange = (id: string) => {
     setSelectedSemester(id)

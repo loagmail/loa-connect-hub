@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Skeleton from "@/components/ui/Skeleton"
 import ErrorState from "@/components/ui/ErrorState"
+import { useApiGet } from "@/lib/api/client"
 import { getRemarkColor } from "@/lib/evaluation-utils"
 import { downloadDeptPdf } from "@/lib/evaluation-pdf"
 import DepartmentSubjectView from "@/features/evaluations/components/DepartmentSubjectView"
@@ -45,12 +46,16 @@ export default function DepartmentDetailPage() {
   const departmentId = params.departmentId as string
   const semesterId = searchParams.get("semesterId") || ""
 
-  const [department, setDepartment] = useState<DepartmentInfo | null>(null)
-  const [subjects, setSubjects] = useState<SubjectRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
   const [search, setSearch] = useState("")
   const [pdfMode, setPdfMode] = useState<"per_subject" | "per_faculty">("per_subject")
+
+  const { data: resultsData, error: resultsError } = useApiGet<{ department: DepartmentInfo; subjects: SubjectRow[] }>(
+    semesterId ? `/api/admin/evaluation-results/departments/${encodeURIComponent(departmentId)}?semesterId=${encodeURIComponent(semesterId)}` : null,
+  )
+  const department = resultsData?.department ?? null
+  const subjects = useMemo(() => resultsData?.subjects ?? [], [resultsData])
+  const error = resultsError?.message || ""
+  const loading = !resultsData && !resultsError && !!semesterId
 
   const deptMetrics = useMemo(() => {
     if (subjects.length === 0) return null
@@ -129,25 +134,6 @@ export default function DepartmentDetailPage() {
       mode: pdfMode,
     })
   }, [department, subjects, pdfMode])
-
-  useEffect(() => {
-    if (!semesterId) return
-    Promise.resolve().then(async () => {
-      setLoading(true)
-      setError("")
-      try {
-        const r = await fetch(`/api/admin/evaluation-results/departments/${encodeURIComponent(departmentId)}?semesterId=${encodeURIComponent(semesterId)}`)
-        const data = await r.json()
-        if (data.error) throw new Error(data.error)
-        setDepartment(data.department)
-        setSubjects(data.subjects ?? [])
-      } catch (err) {
-        setError((err as Error).message)
-      } finally {
-        setLoading(false)
-      }
-    })
-  }, [departmentId, semesterId])
 
   return (
     <div className="w-full space-y-6 pb-12">

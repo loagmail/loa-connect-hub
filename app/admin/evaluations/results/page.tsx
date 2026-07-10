@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
 import ErrorState from "@/components/ui/ErrorState"
+import { useApiGet } from "@/lib/api/client"
 import { getRemarkColor } from "@/lib/evaluation-utils"
 
 interface DepartmentRow {
@@ -30,43 +31,26 @@ type SortKey = "departmentName" | "avgRating" | "facultyCount" | "totalResponden
 
 export default function AdminEvaluationResultsPage() {
   const router = useRouter()
-  const [periods, setPeriods] = useState<Period[]>([])
   const [selectedPeriod, setSelectedPeriod] = useState("")
-  const [departments, setDepartments] = useState<DepartmentRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("avgRating")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
 
-  useEffect(() => {
-    fetch("/api/evaluation-periods")
-      .then((r) => r.json())
-      .then((data) => {
-        const list: Period[] = data.periods ?? data ?? []
-        setPeriods(list)
-        const active = list.find((p) => p.isActive)
-        if (active) setSelectedPeriod(active.id)
-      })
-      .catch(() => {})
-  }, [])
+  const { data: periodsData } = useApiGet<{ periods: Period[] }>("/api/evaluation-periods")
+  const periods = useMemo(() => periodsData?.periods ?? [], [periodsData])
 
   useEffect(() => {
-    if (!selectedPeriod) return
-    Promise.resolve().then(async () => {
-      setLoading(true)
-      setError("")
-      try {
-        const r = await fetch(`/api/admin/evaluation-results?semesterId=${encodeURIComponent(selectedPeriod)}`)
-        const data = await r.json()
-        if (data.error) throw new Error(data.error)
-        setDepartments(data.departments ?? [])
-      } catch (err) {
-        setError((err as Error).message)
-      } finally {
-        setLoading(false)
-      }
-    })
-  }, [selectedPeriod])
+    if (periods.length > 0 && !selectedPeriod) {
+      const active = periods.find((p) => p.isActive)
+      if (active) Promise.resolve().then(() => setSelectedPeriod(active.id))
+    }
+  }, [periods, selectedPeriod])
+
+  const { data: resultsData, error: resultsError } = useApiGet<{ departments: DepartmentRow[] }>(
+    selectedPeriod ? `/api/admin/evaluation-results?semesterId=${encodeURIComponent(selectedPeriod)}` : null,
+  )
+  const departments = useMemo(() => resultsData?.departments ?? [], [resultsData])
+  const error = resultsError?.message || ""
+  const loading = !resultsData && !resultsError
 
   const sortedDepartments = useMemo(() => {
     const sorted = [...departments]

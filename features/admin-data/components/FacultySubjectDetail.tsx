@@ -15,16 +15,8 @@ export function FacultySubjectDetail({ mapping, onClose }: FacultySubjectDetailP
   const { data: allUsers } = useApiGet<{ users: { id: string; name: string; email: string; role: string; departmentId: string | null }[] }>("/api/admin/users")
   const { data: enrollmentsData } = useApiGet<{ data: Enrollment[] }>("/api/data/evaluation-mappings?type=student")
 
-  const [activeSemesterId, setActiveSemesterId] = useState("")
-  useEffect(() => {
-    fetch("/api/evaluation-periods")
-      .then((r) => r.json())
-      .then((d) => {
-        const active = (d.periods || []).find((p: { isActive: boolean }) => p.isActive)
-        if (active) setActiveSemesterId(active.id)
-      })
-      .catch(() => {})
-  }, [])
+  const { data: periodsData } = useApiGet<{ periods: { id: string; isActive: boolean }[] }>("/api/evaluation-periods")
+  const activeSemesterId = useMemo(() => periodsData?.periods?.find((p) => p.isActive)?.id ?? "", [periodsData])
 
   const faculties = useMemo(
     () => (allUsers?.users ?? []).filter((u) => (u.role.includes("FACULTY") || u.role.includes("DEAN")) && u.id !== "a0000000-0000-0000-0000-000000000001"),
