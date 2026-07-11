@@ -7,6 +7,7 @@ import { getMeetingsForUser } from "@/features/appointments/appointments.control
 import { getWeekRange, getMonthRange } from "@/lib/utils/date"
 
 import SegmentedControl from "@/components/ui/SegmentedControl"
+import Toggle from "@/components/ui/Toggle"
 
 interface ParticipantData {
   id: string
@@ -45,7 +46,6 @@ const filterSegments = [
   { key: "all", label: "All" },
   { key: "this_week", label: "This Week" },
   { key: "this_month", label: "This Month" },
-  { key: "created_by_me", label: "My Meetings" },
 ]
 
 const statusLabels: Record<string, string> = {
@@ -58,7 +58,7 @@ const statusLabels: Record<string, string> = {
 }
 
 export default async function MeetingsPage(props: {
-  searchParams?: Promise<{ filter?: string; sort?: string; tab?: string; q?: string; showInternal?: string }>
+  searchParams?: Promise<{ filter?: string; sort?: string; tab?: string; q?: string; showInternal?: string; mine?: string }>
 }) {
   const session = await auth()
   if (!session?.user) redirect("/login")
@@ -74,6 +74,7 @@ export default async function MeetingsPage(props: {
   const activeSort = searchParams?.sort === "desc" ? "desc" : "asc"
   const searchQuery = searchParams?.q || ""
   const showInternal = searchParams?.showInternal === "1"
+  const mineOnly = searchParams?.mine === "1"
 
   const userId = (session.user as Record<string, unknown>).id as string
   const meetings = (await getMeetingsForUser(userId)) as unknown as MeetingData[]
@@ -91,7 +92,7 @@ export default async function MeetingsPage(props: {
       const d = new Date(m.date)
       if (!(d >= monthRange.start && d <= monthRange.end)) return false
     }
-    if (activeFilter === "created_by_me" && m.organizerId !== userId) {
+    if (mineOnly && m.organizerId !== userId) {
       return false
     }
     if (activeTab !== "all" && m.status.toLowerCase() !== activeTab) {
@@ -168,42 +169,27 @@ export default async function MeetingsPage(props: {
 
       {/* Filters */}
       <div className="card p-4 bg-surface">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <SegmentedControl
-            segments={filterSegments}
-            activeKey={activeFilter}
-            paramName="filter"
-            basePath="/faculty/meetings"
-            className="flex-1"
-          />
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/faculty/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "" : "&showInternal=1"}`}
-              className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${showInternal ? "border-gold-500 bg-gold-500 text-white" : "border-default bg-surface text-secondary"}`}
-            >
-              <svg className={`w-3.5 h-3.5 ${showInternal ? "text-white" : "text-tertiary"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                {showInternal ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                )}
-              </svg>
-              {showInternal ? "Showing all" : "Consultations only"}
-            </Link>
-            <Link
-            href={`/faculty/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort === "asc" ? "desc" : "asc"}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "&showInternal=1" : ""}`}
-            className="text-xs font-semibold text-tertiary hover:text-secondary transition-colors flex items-center gap-1"
+        <SegmentedControl
+          segments={filterSegments}
+          activeKey={activeFilter}
+          paramName="filter"
+          basePath="/faculty/meetings"
+        />
+        <div className="flex items-center justify-end gap-3 mt-3">
+          <Toggle paramName="mine" label="My Meetings" basePath="/faculty/meetings" />
+          <Link
+            href={`/faculty/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "" : "&showInternal=1"}${mineOnly ? "&mine=1" : ""}`}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors border ${showInternal ? "border-gold-500 bg-gold-500 text-white" : "border-default bg-surface text-secondary"}`}
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              {activeSort === "asc" ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            <svg className={`w-3.5 h-3.5 ${showInternal ? "text-white" : "text-tertiary"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              {showInternal ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               )}
             </svg>
-            {activeSort === "asc" ? "Oldest First" : "Newest First"}
+            {showInternal ? "Showing all" : "Consultations only"}
           </Link>
-        </div>
         </div>
 
         <div className="mt-4 space-y-4">
@@ -224,7 +210,23 @@ export default async function MeetingsPage(props: {
           <p className="text-tertiary font-medium">No meetings found</p>
         </div>
       ) : (
-        <div className="ios-table-section">
+        <div>
+          <div className="flex justify-end">
+            <Link
+              href={`/faculty/meetings?filter=${activeFilter}&tab=${activeTab}&sort=${activeSort === "asc" ? "desc" : "asc"}${searchQuery ? `&q=${searchQuery}` : ""}${showInternal ? "&showInternal=1" : ""}${mineOnly ? "&mine=1" : ""}`}
+              className="text-xs font-semibold text-tertiary hover:text-secondary transition-colors flex items-center gap-1 px-3 py-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                {activeSort === "asc" ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                )}
+              </svg>
+              {activeSort === "asc" ? "Oldest First" : "Newest First"}
+            </Link>
+          </div>
+          <div className="ios-table-section">
           {sorted.map((meeting: MeetingData) => {
             const isOrganizer = meeting.organizerId === userId
 
@@ -274,6 +276,7 @@ export default async function MeetingsPage(props: {
               </Link>
             )
           })}
+          </div>
         </div>
       )}
     </div>
