@@ -21,6 +21,16 @@ export async function GET(request: NextRequest) {
     const semesterId = searchParams.get("semesterId")
     if (!semesterId) return NextResponse.json({ error: "semesterId is required" }, { status: 400 })
 
+    const { data: visRow } = await supabase
+      .from("evaluation_results")
+      .select("is_results_visible")
+      .eq("semesterId", semesterId)
+      .eq("facultyId", userId)
+      .maybeSingle()
+    if (!visRow || !visRow.is_results_visible) {
+      return NextResponse.json({ error: "Evaluation results are not visible yet" }, { status: 403 })
+    }
+
     const { data: evals, error: evErr } = await supabase
       .from("evaluations")
       .select("id, facultySubjectId, submittedAt")

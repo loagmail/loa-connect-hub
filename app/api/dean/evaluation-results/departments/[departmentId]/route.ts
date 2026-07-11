@@ -34,6 +34,16 @@ export async function GET(
     const semesterId = searchParams.get("semesterId")
     if (!semesterId) return NextResponse.json({ error: "periodId is required" }, { status: 400 })
 
+    const { data: visRows } = await supabase
+      .from("evaluation_results")
+      .select("facultyId, is_results_visible")
+      .eq("semesterId", semesterId)
+      .eq("departmentId", departmentId)
+    const anyVisible = visRows?.some((r) => r.is_results_visible)
+    if (!anyVisible) {
+      return NextResponse.json({ error: "Evaluation results are not visible yet" }, { status: 403 })
+    }
+
     const { data: facUsers, error: fuErr } = await supabase
       .from("users")
       .select("id, name, email")

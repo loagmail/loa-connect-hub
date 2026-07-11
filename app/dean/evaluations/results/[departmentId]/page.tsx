@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
+import LockedTab from "@/components/ui/LockedTab"
 import { useApiGet } from "@/lib/api/client"
 import { getRemarkColor } from "@/lib/evaluation-utils"
 import { downloadDeptPdf } from "@/lib/evaluation-pdf"
@@ -52,7 +53,7 @@ export default function DeanDepartmentDetailPage() {
   )
   const department = resultsData?.department ?? null
   const subjects = useMemo(() => resultsData?.subjects ?? [], [resultsData])
-  const error = resultsError?.message || ""
+  const isLocked = !!resultsError && !!semesterId
   const loading = !resultsData && !resultsError && !!semesterId
 
   const deptMetrics = useMemo(() => {
@@ -142,7 +143,9 @@ export default function DeanDepartmentDetailPage() {
         </p>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {isLocked && (
+        <LockedTab endpoint="/api/dean/evaluation-results" message="Evaluation Results not ready" />
+      )}
 
       {loading && (
         <div className="space-y-4">
@@ -151,11 +154,11 @@ export default function DeanDepartmentDetailPage() {
         </div>
       )}
 
-      {!loading && subjects.length === 0 && (
+      {!loading && !isLocked && subjects.length === 0 && (
         <p className="text-sm text-tertiary text-center py-8">No evaluation data found for this department.</p>
       )}
 
-      {!loading && subjects.length > 0 && deptMetrics && (
+      {!loading && !isLocked && subjects.length > 0 && deptMetrics && (
         <>
           <div className="card p-5 space-y-4">
             <div className="flex items-center justify-between">

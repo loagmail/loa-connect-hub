@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
 import { SkeletonCard } from "@/components/ui/Skeleton"
 import LockedTab from "@/components/ui/LockedTab"
@@ -33,7 +32,6 @@ interface ExistingEvaluation {
 
 
 export default function StudentEvaluationsPage() {
-  const router = useRouter()
   const [pending, setPending] = useState<PendingItem[]>([])
   const [evaluations, setEvaluations] = useState<ExistingEvaluation[]>([])
   const [loading, setLoading] = useState(true)
@@ -153,8 +151,8 @@ export default function StudentEvaluationsPage() {
     }
   }
 
-  const total = pending.length + evaluations.length
-  const completed = evaluations.length
+  const total = pending.length + evaluations.filter((e) => e.status === "DRAFT").length
+  const completed = evaluations.filter((e) => e.status === "SUBMITTED").length
 
   if (lockedEndpoint) {
     return (
@@ -222,10 +220,9 @@ export default function StudentEvaluationsPage() {
 
       {!outOfRange && total > 0 && (
         <div className="animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {[
               { label: "Pending", value: pending.length, color: "from-amber-500 to-orange-500", bg: "bg-amber-50 border-amber-200", icon: "⏳" },
-              { label: "Submitted", value: evaluations.filter((e) => e.status === "SUBMITTED").length, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-50 border-emerald-200", icon: "✅" },
               { label: "Drafts", value: evaluations.filter((e) => e.status === "DRAFT").length, color: "from-blue-500 to-blue-600", bg: "bg-blue-50 border-blue-200", icon: "📄" },
             ].map((s, i) => (
               <div
@@ -387,13 +384,13 @@ export default function StudentEvaluationsPage() {
         </div>
       )} */}
 
-      {!outOfRange && evaluations.length > 0 && (
+      {!outOfRange && evaluations.filter((e) => e.status === "DRAFT").length > 0 && (
         <div className="animate-fade-in" style={{ animationDelay: "0.25s" }}>
           <h2 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
-            <span>📋</span> Submitted & Drafts
+            <span>📋</span> Drafts
           </h2>
           <div className="space-y-2">
-            {evaluations.map((ev) => (
+            {evaluations.filter((e) => e.status === "DRAFT").map((ev) => (
               <button
                 key={ev.id}
                   onClick={async () => {
@@ -407,29 +404,21 @@ export default function StudentEvaluationsPage() {
                       if (res.status === 403) { setLockedEndpoint("/api/evaluations"); setNavigatingId(null); return }
                       const data = await res.json()
                     if (data.evaluation?.id) {
-                      if (ev.status === "SUBMITTED") {
-                        router.push(`/student/evaluations/${data.evaluation.id}`)
-                      } else {
-                        openEvalTab(data.evaluation.id); setNavigatingId(null)
-                      }
+                      openEvalTab(data.evaluation.id); setNavigatingId(null)
                     }
                   } catch {
                     setNavigatingId(null)
                   }
                 }}
                 disabled={navigatingId === ev.id}
-                className={`card w-full p-4 bg-surface flex items-center justify-between transition-all duration-200 text-left ${
-                  ev.status === "SUBMITTED" ? "opacity-80" : "hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99]"
-                }`}
+                className="card w-full p-4 bg-surface flex items-center justify-between hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 text-left"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-primary">{ev.subjectName || ev.evaluateeName}</p>
                   <p className="text-xs text-tertiary mt-0.5">
                     {ev.evaluateeName}{ev.subjectCode ? ` · ${ev.subjectCode}` : ""}
                     {" · "}
-                    {ev.status === "SUBMITTED"
-                      ? `Submitted ${new Date(ev.submittedAt!).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-                      : `Draft · ${new Date(ev.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`}
+                    Draft · {new Date(ev.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -437,13 +426,9 @@ export default function StudentEvaluationsPage() {
                     <svg className="animate-spin ios-spinner w-4 h-4 text-gold-600" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
                     </svg>
-                  ) : ev.status === "DRAFT" ? (
+                  ) : (
                     <span className="text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-full">
                       Continue
-                    </span>
-                  ) : (
-                    <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-full">
-                      View
                     </span>
                   )}
                 </div>
@@ -458,9 +443,9 @@ export default function StudentEvaluationsPage() {
           <div className="w-16 h-16 bg-gold-50 border border-gold-200 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <span className="text-3xl">📝</span>
           </div>
-          <h2 className="text-lg font-bold text-primary mb-2">No evaluations yet</h2>
+          <h2 className="text-lg font-bold text-primary mb-2">No pending evaluations</h2>
           <p className="text-sm text-tertiary max-w-md mx-auto">
-            You don&apos;t have any faculty evaluations to complete right now. Check back when the evaluation period opens.
+            You don&apos;t have any pending evaluations right now. Check back when new evaluation periods open.
           </p>
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Skeleton from "@/components/ui/Skeleton"
+import LockedTab from "@/components/ui/LockedTab"
 import { useApiGet } from "@/lib/api/client"
 import { getRemarkColor } from "@/lib/evaluation-utils"
 
@@ -37,10 +38,11 @@ export default function FacultyEvaluationResultsPage() {
   useEffect(() => {
     if (periods.length > 0 && !semesterId) {
       const active = periods.find((p) => p.title?.toLowerCase().includes("active") || p.name?.toLowerCase().includes("active"))
-      if (active) {
+      const target = active || periods[0]
+      if (target) {
         Promise.resolve().then(() => {
-          setSelectedSemester(active.id)
-          router.replace(`/faculty/evaluations/results?semesterId=${encodeURIComponent(active.id)}`)
+          setSelectedSemester(target.id)
+          router.replace(`/faculty/evaluations/results?semesterId=${encodeURIComponent(target.id)}`)
         })
       }
     }
@@ -50,7 +52,7 @@ export default function FacultyEvaluationResultsPage() {
     selectedSemester ? `/api/faculty/evaluation-results/subjects?semesterId=${encodeURIComponent(selectedSemester)}` : null,
   )
   const subjects = subjectsData?.subjects ?? []
-  const error = subjectsError?.message || ""
+  const isLocked = !!subjectsError && selectedSemester
   const loading = !subjectsData && !subjectsError && !!selectedSemester
 
   const handlePeriodChange = (id: string) => {
@@ -83,24 +85,22 @@ export default function FacultyEvaluationResultsPage() {
         </select>
       </div>
 
-      {error && (
-        <div className="card p-4">
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
+      {isLocked && (
+        <LockedTab endpoint="/api/faculty/evaluation-results" message="Evaluation Results not ready" />
       )}
 
-      {loading && (
+      {!isLocked && loading && (
         <div className="space-y-4">
           <Skeleton variant="table-row" />
           <Skeleton variant="table-row" />
         </div>
       )}
 
-      {!loading && !error && subjects.length === 0 && selectedSemester && (
+      {!isLocked && !loading && subjects.length === 0 && selectedSemester && (
         <p className="text-sm text-tertiary text-center py-8">No evaluation data found for this period.</p>
       )}
 
-      {!loading && subjects.length > 0 && (
+      {!isLocked && !loading && subjects.length > 0 && (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
