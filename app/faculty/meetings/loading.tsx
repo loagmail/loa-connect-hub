@@ -1,4 +1,4 @@
-import Skeleton, { SkeletonMetricGrid } from "@/components/ui/Skeleton"
+import Skeleton from "@/components/ui/Skeleton"
 
 export default function FacultyMeetingsLoading() {
   return (
